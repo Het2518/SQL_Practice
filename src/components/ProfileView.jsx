@@ -96,7 +96,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   }, [progress, totalPlatformUsers]);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div className="page-enter" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       {/* Identity Sidebar */}
       <aside style={{
         width: 320,

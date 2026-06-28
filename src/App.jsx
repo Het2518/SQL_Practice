@@ -50,7 +50,7 @@ function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, set
   const score = gameState?.score ?? 0;
   const badges = (gameState?.badges ?? []).length;
 
-  return <div className="home-root">
+  return <div className="home-root page-enter">
 
     {/* ── Sticky Navbar ── */}
     <header className="home-header">
@@ -521,12 +521,12 @@ function PracticeView({
   }
 
     const fontSizeClass = settings.editorFontSize >= 18 ? 'large' : settings.editorFontSize <= 12 ? 'small' : 'medium';
-    return <div className="practice-root" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
+    return <div className="practice-root page-enter" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
     {/* Top Nav */}
     <nav className="practice-nav" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)', gap: 12 }}>
-      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 5 }}>
-        <Play size={14} strokeWidth={2.5} />
-        Run
+      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 6, width: 85, justifyContent: 'center' }}>
+        {isLoading ? <RotateCcw size={14} className="spin" /> : <Play size={14} strokeWidth={2.5} fill="currentColor" />}
+        {isLoading ? 'Running' : 'Run'}
       </button>
       <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)', gap: 6 }}>
         <BookOpen size={14} />
