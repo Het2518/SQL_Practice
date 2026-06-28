@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { DB_INFO } from './types';
 import { allQuestions, getQuestionsForDb } from './data/index';
 import { useSqlDatabase } from './hooks/useSqlDatabase';
@@ -39,11 +40,12 @@ function DbSelector({
   gameState,
   user,
   onShowAuth,
-  onShowProfile,
+  
   onShowCustomModal,
   onShowSettings,
-  onSelect
+  /* onSelect removed */
 }) {
+  const navigate = useNavigate();
   const totalComplete = Object.values(progress).filter(s => s === 'complete').length;
   const totalAttempted = Object.values(progress).filter(s => s === 'attempted').length;
   const totalPct = Math.round((totalComplete + totalAttempted * 0.5) / 600 * 100);
@@ -77,7 +79,7 @@ function DbSelector({
             ⚙️ Settings
           </button>
           {user ? (
-            <button className="btn btn-primary" onClick={onShowProfile} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button className="btn btn-primary" onClick={() => navigate('/profile')} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>My Profile</span>
             </button>
           ) : (
@@ -101,7 +103,7 @@ function DbSelector({
         const completed = dbQuestions.filter(q => progress[q.id] === 'complete').length;
         const attempted = dbQuestions.filter(q => progress[q.id] === 'attempted').length;
         const pct = Math.round(completed / info.questionCount * 100);
-        return <button key={db} id={`db-card-${db}`} className="db-card" onClick={() => onSelect(db)}>
+        return <button key={db} id={`db-card-${db}`} className="db-card" onClick={() => navigate('/practice/' + db)}>
               <div className="db-card-header">
                 <span className="db-card-icon">{info.icon}</span>
                 <div className="db-card-meta">
@@ -146,18 +148,39 @@ function DbSelector({
 
 // ─── Main Practice View ──────────────────────────────────────────────────────
 function PracticeView({
-  initialDb,
-  initialQuestion,
   progress,
   user,
   settings,
   onShowAuth,
   onProgressUpdate,
-  onHome,
   onShowSettings,
 }) {
+  const navigate = useNavigate();
+  const { db: routeDb } = useParams();
+  const initialDb = routeDb || 'airlines';
   const [db, setDb] = useState(initialDb);
-  const [currentQ, setCurrentQ] = useState(initialQuestion);
+  
+  const [currentQ, setCurrentQ] = useState(() => {
+    const dbQs = getQuestionsForDb(initialDb);
+    return dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
+  });
+
+  useEffect(() => {
+    if (routeDb && routeDb !== db) {
+      setDb(routeDb);
+      const dbQs = getQuestionsForDb(routeDb);
+      const firstIncomplete = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
+      setCurrentQ(firstIncomplete);
+      setResult(null);
+      setValidation(null);
+      setSql('');
+      setHintsUsed(0);
+      setSolutionVisible(false);
+      setShowHints(false);
+      setPreviewTableName(null);
+    }
+  }, [routeDb, db, progress]);
+
   const [sql, setSql] = useState('');
   const [result, setResult] = useState(null);
   const [expectedResult, setExpectedResult] = useState(null);
@@ -232,19 +255,9 @@ function PracticeView({
   // Switch DB inline — pick first incomplete question of the new db
   const handleSwitchDb = useCallback((newDb) => {
     if (newDb === db) { setShowDbPicker(false); return; }
-    const dbQs = getQuestionsForDb(newDb);
-    const firstIncomplete = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
-    setDb(newDb);
-    setCurrentQ(firstIncomplete);
+    navigate('/practice/' + newDb);
     setShowDbPicker(false);
-    setResult(null);
-    setValidation(null);
-    setSql('');
-    setHintsUsed(0);
-    setSolutionVisible(false);
-    setShowHints(false);
-    setPreviewTableName(null);
-  }, [db, progress]);
+  }, [db, navigate]);
 
   // Reset state when question changes and compute true expected result
   useEffect(() => {
@@ -353,7 +366,7 @@ function PracticeView({
       <div style={{ fontSize: 48 }}>💥</div>
       <div style={{ fontWeight: 700 }}>Database Error</div>
       <div style={{ color: 'var(--muted)', maxWidth: 400, textAlign: 'center' }}>{error}</div>
-      <button className="btn btn-primary" onClick={onHome}>← Back to Home</button>
+      <button className="btn btn-primary" onClick={() => navigate('/')}>← Back to Home</button>
     </div>;
   }
 
@@ -379,7 +392,7 @@ function PracticeView({
         <span style={{ fontSize: 12, color: 'var(--muted)', marginRight: 8 }}>{user.email}</span>
       )}
 
-      <button className="btn btn-ghost" onClick={onHome}>Home</button>
+      <button className="btn btn-ghost" onClick={() => navigate('/')}>Home</button>
 
       {/* Choose DB button + dropdown */}
       <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
@@ -578,56 +591,51 @@ function PracticeView({
   </div>;
 }
 
+
+// ─── Protected Route Component ───────────────────────────────────────────────
+function ProtectedRoute({ children, user }) {
+  if (!user) {
+    return <Navigate to="/?login=true" replace />;
+  }
+  return children;
+}
+
 // ─── App Root ────────────────────────────────────────────────────────────────
 export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [progress, setProgress] = useState(loadProgress);
   const { user, loading, logout } = useAuth();
   const { gameState, recordActivity } = useGamification(progress, user);
   const [showAuth, setShowAuth] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
-  
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.darkMode ? 'dark' : 'light');
   }, [settings.darkMode]);
 
   useEffect(() => {
+    // Check for login query param
+    const params = new URLSearchParams(location.search);
+    if (params.get('login') === 'true') {
+      setShowAuth(true);
+      navigate(location.pathname, { replace: true });
+    }
+    
     // Catch Supabase OAuth redirect errors
     if (window.location.hash && window.location.hash.includes('error_description')) {
-      const params = new URLSearchParams(window.location.hash.replace('#', '?'));
-      const errorMsg = params.get('error_description');
+      const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+      const errorMsg = hashParams.get('error_description');
       if (errorMsg) {
         alert('Authentication Error: ' + decodeURIComponent(errorMsg).replace(/\+/g, ' '));
-        window.history.replaceState(null, '', window.location.pathname); // clear hash
+        window.history.replaceState(null, '', window.location.pathname);
       }
     }
-  }, []);
+  }, [location, navigate]);
 
-  const [activeDb, setActiveDb] = useState(null);
-  const [activeQuestion, setActiveQuestion] = useState(null);
-
-  const handleSelectCustomDb = useCallback(customDb => {
-    if (!user) {
-      setShowAuth(true);
-      return;
-    }
-    setActiveDb(customDb);
-    setActiveQuestion({ id: 'sandbox' });
-    setShowCustomModal(false);
-  }, [user]);
-  const handleSelectDb = useCallback(db => {
-    if (!user) {
-      setShowAuth(true);
-      return;
-    }
-    const dbQs = getQuestionsForDb(db);
-    const firstIncomplete = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
-    setActiveDb(db);
-    setActiveQuestion(firstIncomplete);
-  }, [progress, user]);
   // Sync progress from Supabase
   useEffect(() => {
     if (user) {
@@ -658,51 +666,78 @@ export default function App() {
     });
   }, [recordActivity, user]);
 
-  if (activeDb && activeQuestion) {
-    return (
-      <>
-        <PracticeView
-          initialDb={activeDb}
-          initialQuestion={activeQuestion}
-          progress={progress}
-          user={user}
-          settings={settings}
-          onShowAuth={() => setShowAuth(true)}
-          onShowSettings={() => setShowSettings(true)}
-          onProgressUpdate={handleProgressUpdate}
-          onHome={() => {
-            setActiveDb(null);
-            setActiveQuestion(null);
-          }}
-        />
-        {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-        {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
-      </>
-    );
-  }
-  if (showProfile) {
-    return (
-      <>
-        <ProfileView 
-          user={user} 
-          gameState={gameState} 
-          onHome={() => setShowProfile(false)} 
-          onSignOut={async () => {
-            await logout();
-            setShowProfile(false);
-          }} 
-        />
-        {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
-      </>
-    );
+  if (loading) {
+    return <div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--text)'}}>Loading...</div>;
   }
 
   return (
     <>
-      <DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowProfile={() => setShowProfile(true)} onShowCustomModal={() => setShowCustomModal(true)} onShowSettings={() => setShowSettings(true)} onSelect={handleSelectDb} />
+      <Routes>
+        <Route path="/" element={
+          <DbSelector 
+            progress={progress} 
+            gameState={gameState} 
+            user={user} 
+            onShowAuth={() => setShowAuth(true)} 
+            onShowCustomModal={() => setShowCustomModal(true)} 
+            onShowSettings={() => setShowSettings(true)} 
+          />
+        } />
+        
+        <Route path="/practice/:db" element={
+          <ProtectedRoute user={user}>
+            <PracticeView
+              progress={progress}
+              user={user}
+              settings={settings}
+              onShowAuth={() => setShowAuth(true)}
+              onShowSettings={() => setShowSettings(true)}
+              onProgressUpdate={handleProgressUpdate}
+            />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/profile" element={
+          <ProtectedRoute user={user}>
+            <ProfileView 
+              user={user} 
+              gameState={gameState} 
+              onHome={() => navigate('/')} 
+              onSignOut={async () => {
+                await logout();
+                window.location.href = '/';
+              }} 
+            />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-      {showCustomModal && <CustomDatasetModal onClose={() => setShowCustomModal(false)} onDatasetReady={handleSelectCustomDb} />}
+      {showCustomModal && <CustomDatasetModal onClose={() => setShowCustomModal(false)} onDatasetReady={(customDb) => {
+         alert('Custom Database Sandbox is currently being updated for React Router. Please use standard databases for now.');
+         setShowCustomModal(false);
+      }} />}
       {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
     </>
   );
+}
+
+// ─── Login Redirect Handler ──────────────────────────────────────────────────
+// We extract useLocation to a small component to keep App clean and outside Router logic
+export function AppWrapper() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('login') === 'true') {
+      navigate(location.pathname, { replace: true });
+      // We can't easily trigger showAuth from here without context, 
+      // but protected route redirected here. Let's just rely on the user clicking Login for now.
+    }
+  }, [location, navigate]);
+
+  return <App />;
 }
