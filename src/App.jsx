@@ -304,9 +304,9 @@ function PracticeView({
         const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
         setValidation(val);
         if (val.isCorrect) {
-          onProgressUpdate(currentQ.id, 'complete');
-        } else {
-          onProgressUpdate(currentQ.id, 'attempted');
+          onProgressUpdate(currentQ, db, 'complete');
+        } else if (progress[currentQ.id] !== 'complete') {
+          onProgressUpdate(currentQ, db, 'attempted');
         }
       }
     }
@@ -737,12 +737,14 @@ export default function App() {
     }
   }, [user]);
 
-  const handleProgressUpdate = useCallback((id, status) => {
+  const handleProgressUpdate = useCallback((question, dbName, status) => {
+    if (!question || !question.id) return;
+    const id = question.id;
     setProgress(prev => {
       const next = { ...prev, [id]: status };
       saveProgress(next);
       if (status === 'complete' && prev[id] !== 'complete') {
-        recordActivity();
+        recordActivity(question, dbName, status);
       }
       if (user) {
         supabase.from('user_progress').upsert({ user_id: user.id, completed_questions: next }).then();
@@ -789,6 +791,9 @@ export default function App() {
             <ProfileView 
               user={user} 
               gameState={gameState} 
+              progress={progress} 
+              settings={settings}
+              onSaveSettings={setSettings}
               onHome={() => navigate('/')} 
               onSignOut={async () => {
                 await logout();

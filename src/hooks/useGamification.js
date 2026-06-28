@@ -9,6 +9,7 @@ const DEFAULT_STATE = {
   currentStreak: 0,
   maxStreak: 0,
   badges: [],
+  recentSubmissions: [],
 };
 
 export const BADGE_DEFS = [
@@ -40,7 +41,8 @@ export function useGamification(progress, user) {
         current_streak: gameState.currentStreak,
         max_streak: gameState.maxStreak,
         badges: gameState.badges,
-        last_practice_date: gameState.lastPracticeDate
+        last_practice_date: gameState.lastPracticeDate,
+        recent_submissions: gameState.recentSubmissions
       }).then(({ error }) => {
         if (error) console.error('Error syncing gamification state:', error.message);
       });
@@ -59,17 +61,18 @@ export function useGamification(progress, user) {
             currentStreak: Math.max(prev.currentStreak, data.current_streak || 0),
             maxStreak: Math.max(prev.maxStreak, data.max_streak || 0),
             badges: Array.from(new Set([...prev.badges, ...(data.badges || [])])),
-            lastPracticeDate: data.last_practice_date || prev.lastPracticeDate
+            lastPracticeDate: data.last_practice_date || prev.lastPracticeDate,
+            recentSubmissions: data.recent_submissions || prev.recentSubmissions || []
           }));
         }
       });
     }
   }, [user]);
 
-  const recordActivity = useCallback(() => {
+  const recordActivity = useCallback((question = null, dbName = null, status = 'Attempted') => {
     setGameState(prev => {
       const today = new Date().toISOString().slice(0, 10);
-      const newState = { ...prev, activity: { ...prev.activity } };
+      const newState = { ...prev, activity: { ...prev.activity }, recentSubmissions: [...(prev.recentSubmissions || [])] };
 
       // Increment today's activity
       newState.activity[today] = (newState.activity[today] || 0) + 1;
@@ -105,6 +108,24 @@ export function useGamification(progress, user) {
       if (totalSolved >= 50) newBadges.add('solved_50');
 
       newState.badges = Array.from(newBadges);
+
+      // Track recent submission
+      if (question && dbName) {
+        const sub = {
+          id: question.id,
+          title: question.title || question.prompt.substring(0, 40) + '...',
+          db: dbName,
+          difficulty: question.difficulty,
+          status,
+          timestamp: new Date().toISOString()
+        };
+        newState.recentSubmissions.unshift(sub);
+        // keep only last 20
+        if (newState.recentSubmissions.length > 20) {
+          newState.recentSubmissions = newState.recentSubmissions.slice(0, 20);
+        }
+      }
+
       return newState;
     });
   }, [progress]);
