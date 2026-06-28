@@ -471,7 +471,11 @@ function PracticeView({
       <button className="btn btn-ghost" onClick={() => setShowERDiagram(true)} title="View ER Diagram">
         {dbInfo.label} Schema
       </button>
-      <button id="reset-btn" className="btn btn-ghost" onClick={resetDb} disabled={isLoading}>
+      <button id="reset-btn" className="btn btn-ghost" onClick={async () => {
+        await resetDb();
+        setResult(null);
+        setValidation({ isCorrect: true, message: 'Database successfully restored to original state!' });
+      }} disabled={isLoading}>
         Reset DB
       </button>
     </nav>
