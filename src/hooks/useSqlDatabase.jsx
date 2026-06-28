@@ -167,45 +167,26 @@ export function useSqlDatabase(dbInput) {
       };
     }
     try {
-      const dbData = dbRef.current.export();
-      const cloneDb = new sqlJsRef.current.Database(dbData);
+      dbRef.current.run('SAVEPOINT check_solution');
       let finalResult;
-      const solResults = cloneDb.exec(solutionSQL);
+      const solResults = dbRef.current.exec(solutionSQL);
+      
       if (verificationSQL) {
-        const verResults = cloneDb.exec(verificationSQL);
+        const verResults = dbRef.current.exec(verificationSQL);
         if (verResults.length === 0) {
-          finalResult = {
-            columns: [],
-            rows: []
-          };
+          finalResult = { columns: [], rows: [] };
         } else {
-          const {
-            columns,
-            values
-          } = verResults[verResults.length - 1];
-          finalResult = {
-            columns,
-            rows: values
-          };
+          const { columns, values } = verResults[verResults.length - 1];
+          finalResult = { columns, rows: values };
         }
       } else {
         if (solResults.length === 0) {
-          finalResult = {
-            columns: [],
-            rows: []
-          };
+          finalResult = { columns: [], rows: [] };
         } else {
-          const {
-            columns,
-            values
-          } = solResults[solResults.length - 1];
-          finalResult = {
-            columns,
-            rows: values
-          };
+          const { columns, values } = solResults[solResults.length - 1];
+          finalResult = { columns, rows: values };
         }
       }
-      cloneDb.close();
       return finalResult;
     } catch (err) {
       return {
@@ -213,6 +194,13 @@ export function useSqlDatabase(dbInput) {
         rows: [],
         error: err instanceof Error ? err.message : String(err)
       };
+    } finally {
+      try {
+        // Always rollback so the DB state remains pristine
+        dbRef.current.run('ROLLBACK TO check_solution');
+      } catch (e) {
+        console.error('Failed to rollback expected result calculation:', e);
+      }
     }
   }, []);
   const validateAnswer = useCallback((userResult, expectedResult, requiresOrder) => {
