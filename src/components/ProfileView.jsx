@@ -1,15 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Settings, User, Activity, LogOut, Code, Award, ExternalLink, Moon, Bell, ShieldAlert, LayoutDashboard, Database, ChevronRight, ToggleRight, Type } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { allQuestions } from '../data/index';
 import { BADGE_DEFS } from '../hooks/useGamification';
+import { supabase } from '../lib/supabase';
 
 export function ProfileView({ user, gameState, progress, settings, onSaveSettings, onHome, onSignOut }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [totalPlatformUsers, setTotalPlatformUsers] = useState(null);
   
   const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'SQL Practitioner';
   const email = user?.email || 'guest@example.com';
   
+  useEffect(() => {
+    supabase.from('user_progress').select('user_id', { count: 'exact', head: true })
+      .then(({ count, error }) => {
+        if (!error && count !== null) {
+          setTotalPlatformUsers(Math.max(count, 1));
+        }
+      });
+  }, []);
+
   // Calculate Progress Stats
   const difficultyStats = useMemo(() => {
     let easyTotal = 0, mediumTotal = 0, hardTotal = 0;
@@ -43,27 +54,46 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
       if (isAgg) { skillsProgress.Aggregations.total++; if (isSolved) skillsProgress.Aggregations.solved++; }
       if (isCte) { skillsProgress.CTEs.total++; if (isSolved) skillsProgress.CTEs.solved++; }
       
-      if (q.difficulty === 'Easy') {
+      const diff = (q.difficulty || '').toLowerCase();
+      if (diff === 'easy') {
         easyTotal++;
         if (completedSet.has(q.id)) easySolved++;
-      } else if (q.difficulty === 'Medium') {
+      } else if (diff === 'medium') {
         mediumTotal++;
         if (completedSet.has(q.id)) mediumSolved++;
-      } else if (q.difficulty === 'Hard') {
+      } else if (diff === 'hard') {
         hardTotal++;
         if (completedSet.has(q.id)) hardSolved++;
       }
     });
     
+    const score = (easySolved * 10) + (mediumSolved * 30) + (hardSolved * 50);
+    
+    // Calculate Rank based on real user count!
+    // If we have total users loaded, use it. Otherwise fallback to 1.
+    const realTotalUsers = totalPlatformUsers || 1;
+    
+    // Perfect score is roughly 600 questions * avg 30 pts = 18000.
+    // Let's create a percentile formula: (score / 15000)
+    // The rank will be (TotalUsers) - (TotalUsers * Percentile).
+    const maxExpectedScore = 15000; 
+    let percentile = Math.min(1, score / maxExpectedScore);
+    
+    // Calculate real rank: lower percentile means lower rank number (closer to totalUsers).
+    // If score is 0, rank = totalUsers. If score is max, rank = 1.
+    let rank = Math.round(realTotalUsers - (realTotalUsers * percentile));
+    rank = Math.max(1, rank);
+
     return {
       easyTotal, mediumTotal, hardTotal,
       easySolved, mediumSolved, hardSolved,
       totalSolved: easySolved + mediumSolved + hardSolved,
       totalCount: allQuestions.length,
-      score: (easySolved * 10) + (mediumSolved * 30) + (hardSolved * 50),
+      score,
+      rank,
       skillsProgress
     };
-  }, [progress]);
+  }, [progress, totalPlatformUsers]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
@@ -98,7 +128,9 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1, background: 'var(--surface-2)', padding: '12px 16px', borderRadius: 16, border: '1px solid var(--border)' }}>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>Global Rank</div>
-            <div style={{ fontSize: 16, color: 'var(--text)', fontWeight: 800 }}>~ 14,231</div>
+            <div style={{ fontSize: 16, color: 'var(--text)', fontWeight: 800 }}>
+              {totalPlatformUsers === null ? <span style={{ opacity: 0.5 }}>Loading...</span> : `# ${difficultyStats.rank.toLocaleString()}`}
+            </div>
           </div>
           <div style={{ flex: 1, background: 'var(--surface-2)', padding: '12px 16px', borderRadius: 16, border: '1px solid var(--border)' }}>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>Total Score</div>
