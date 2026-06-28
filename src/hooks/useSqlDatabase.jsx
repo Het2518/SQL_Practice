@@ -105,12 +105,15 @@ export function useSqlDatabase(dbInput) {
       const end = performance.now();
       const execTimeMs = end - start;
       if (results.length === 0) {
-        // DML statement (no rows returned)
+        // If it's a SELECT that returned 0 rows, it's not DML.
+        const isActuallyDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(sql);
+        
         return {
           columns: [],
           rows: [],
-          affectedRows: dbRef.current.getRowsModified(),
-          execTimeMs
+          affectedRows: isActuallyDML ? dbRef.current.getRowsModified() : 0,
+          execTimeMs,
+          isDML: isActuallyDML
         };
       }
       const {

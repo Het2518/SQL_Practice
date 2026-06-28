@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { DiffTable } from './DiffTable';
 import { TableCell, NullSummaryPanel } from './NullVisualizer';
 import { ExecutionOrderExplainer } from './ExecutionOrderExplainer';
-import { JoinVisualizer } from './JoinVisualizer';
 import { IndexAdvisor } from './IndexAdvisor';
 import { TheoryConnector } from './TheoryConnector';
 import { GroupedResultRow } from './AggregateVisualizer';
@@ -75,7 +74,7 @@ export function ResultsPanel({
   }
 
   const isError = !!result.error;
-  const isDML = !isError && result.columns.length === 0;
+  const isDML = !isError && (result.isDML !== undefined ? result.isDML : result.columns.length === 0);
 
   // Pagination logic
   const totalRows = isError || isDML ? 0 : result.rows.length;
@@ -163,7 +162,7 @@ export function ResultsPanel({
       )}
 
       {/* Content Area */}
-      {!isError && !isDML && result.columns.length > 0 && (
+      {!isError && !isDML && (
         <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
           {validation && !validation.isCorrect && validation.diff ? (
             <DiffTable diff={validation.diff} expectedColumns={validation.expectedColumns} />
@@ -180,6 +179,13 @@ export function ResultsPanel({
                   {currentRows.map((row, ri) => (
                     <GroupedResultRow key={ri} row={row} sql={sql} db={db} columns={result.columns} />
                   ))}
+                  {result.columns.length === 0 && (
+                    <tr>
+                      <td colSpan="100%" style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
+                        No rows matched the query conditions.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
               
@@ -259,7 +265,6 @@ export function ResultsPanel({
                 <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface-2)' }}>
                   <TheoryConnector sql={sql} />
                   <ExecutionOrderExplainer sql={sql} db={db} />
-                  <JoinVisualizer sql={sql} db={db} />
                   <IndexAdvisor sql={sql} db={db} />
                 </div>
               )}

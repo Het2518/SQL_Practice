@@ -20,6 +20,7 @@ import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { AuthModal } from './components/AuthModal';
 import { UserGuide } from './components/UserGuide';
+import { JoinAnalysisModal } from './components/JoinAnalysisModal';
 import { hasSubquery, convertSubqueryToCTE } from './utils/sqlAnalysis';
 import './styles.css';
 
@@ -181,11 +182,20 @@ function PracticeView({
   const [validation, setValidation] = useState(null);
   const [showBrowser, setShowBrowser] = useState(false);
   const [showERDiagram, setShowERDiagram] = useState(false);
+  const [previewTableName, setPreviewTableName] = useState(null);
   const [showCteModal, setShowCteModal] = useState(false);
   const [showDbPicker, setShowDbPicker] = useState(false);
+  const [joinAnalysisData, setJoinAnalysisData] = useState(null);
+
+  useEffect(() => {
+    const handleOpenJoinAnalysis = (e) => {
+      setJoinAnalysisData(e.detail);
+    };
+    window.addEventListener('open-join-analysis', handleOpenJoinAnalysis);
+    return () => window.removeEventListener('open-join-analysis', handleOpenJoinAnalysis);
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [previewTableName, setPreviewTableName] = useState(null);
 
   // Global Keyboard Shortcuts (Moved downwards to unify)
   // Resizable Panes State
@@ -538,6 +548,16 @@ function PracticeView({
           <div className="editor-actions" style={{ position: 'relative' }}>
             <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || !sql.trim()}>▶ Run Query</button>
             <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || !sql.trim()} title="View Query Execution Plan">🔍 Explain</button>
+            {/\bJOIN\b/i.test(sql) && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setJoinAnalysisData({ db: dbInstance, sql })}
+                title="Open Advanced Join Analysis"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+              >
+                🔗 Visualize Joins
+              </button>
+            )}
             <EdgeCaseTester db={dbInstance} sql={sql} />
             
             {hasSubquery(sql) && (
@@ -604,15 +624,14 @@ function PracticeView({
       <aside className="question-pane-wrap">
         <QuestionCard
           question={currentQ}
-          total={dbQuestions.length}
-          currentIdx={currentIdx}
-          onPrev={() => setCurrentQ(dbQuestions[currentIdx - 1])}
-          onNext={() => setCurrentQ(dbQuestions[currentIdx + 1])}
-          onJumpTo={() => setShowBrowser(true)}
-          validation={validation}
-          isCorrect={validation?.isCorrect}
-          error={validation && !validation.isCorrect ? validation.message : null}
-          progress={progress}
+          expectedResult={expectedResult}
+          status={progress[currentQ.id] ?? 'incomplete'}
+          onOpenBrowser={() => setShowBrowser(true)}
+          onNavigate={navigateTo}
+          hasPrev={currentIdx > 0}
+          hasNext={currentIdx < dbQuestions.length - 1}
+          questionNumber={currentIdx + 1}
+          totalQuestions={dbQuestions.length}
         />
       </aside>
     </div>
@@ -631,6 +650,15 @@ function PracticeView({
 
     {/* Table Preview Modal */}
     {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
+
+    {/* Join Analysis Modal */}
+    {joinAnalysisData && (
+      <JoinAnalysisModal 
+        db={joinAnalysisData.db} 
+        sql={joinAnalysisData.sql} 
+        onClose={() => setJoinAnalysisData(null)} 
+      />
+    )}
 
     <CteConverterModal 
       isOpen={showCteModal}
