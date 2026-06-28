@@ -19,7 +19,6 @@ import { useGamification } from './hooks/useGamification';
 import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { AuthModal } from './components/AuthModal';
-import { CustomDatasetModal } from './components/CustomDatasetModal';
 import { UserGuide } from './components/UserGuide';
 import { hasSubquery, convertSubqueryToCTE } from './utils/sqlAnalysis';
 import './styles.css';
@@ -44,8 +43,6 @@ function DbSelector({
   gameState,
   user,
   onShowAuth,
-  
-  onShowCustomModal,
   onShowSettings,
   /* onSelect removed */
 }) {
@@ -142,16 +139,6 @@ function DbSelector({
             </button>;
       })}
       </main>
-
-      <div style={{ padding: '0 40px 60px', maxWidth: 1100, margin: '0 auto' }}>
-        <button className="db-card" onClick={onShowCustomModal} style={{ border: '2px dashed var(--border)', background: 'transparent', width: '100%', minHeight: 120 }}>
-          <div style={{ textAlign: 'center', padding: '30px 0' }}>
-            <span style={{ fontSize: 32 }}>📁</span>
-            <h3 style={{ margin: '16px 0 8px', color: 'var(--text)' }}>Upload Custom Dataset (CSV)</h3>
-            <p style={{ margin: 0, color: 'var(--muted)', fontSize: 14 }}>Practice SQL queries directly against your own CSV files.</p>
-          </div>
-        </button>
-      </div>
     </div>;
 }
 
@@ -166,6 +153,7 @@ function PracticeView({
 }) {
   const navigate = useNavigate();
   const { db: routeDb } = useParams();
+  
   const initialDb = routeDb || 'airlines';
   const [db, setDb] = useState(initialDb);
   
@@ -173,8 +161,6 @@ function PracticeView({
     const dbQs = getQuestionsForDb(initialDb);
     return dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
   });
-
-  const isSandbox = currentQ?.id === 'sandbox';
 
   useEffect(() => {
     if (routeDb && routeDb !== db) {
@@ -244,8 +230,8 @@ function PracticeView({
     }
   }, [sql, settings.persistEditorText, EDITOR_KEY]);
 
-  const dbInfo = isSandbox ? { label: db.name, icon: '📁' } : DB_INFO[db];
-  const dbQuestions = useMemo(() => isSandbox ? [] : getQuestionsForDb(db), [isSandbox, db]);
+  const dbInfo = DB_INFO[db];
+  const dbQuestions = useMemo(() => getQuestionsForDb(db), [db]);
 
   const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan, dbInstance } = useSqlDatabase(db);
 
@@ -270,11 +256,11 @@ function PracticeView({
     setSql('');
     setResult(null);
     setValidation(null);
-    if (!isLoading && !dbError && !isSandbox) {
+    if (!isLoading && !dbError) {
       const er = getExpectedResultDynamic(currentQ.solutionSQL, currentQ.verificationSQL);
       setExpectedResult(er);
     }
-  }, [currentQ.id, currentQ.solutionSQL, currentQ.verificationSQL, isLoading, dbError, getExpectedResultDynamic, isSandbox]);
+  }, [currentQ.id, currentQ.solutionSQL, currentQ.verificationSQL, isLoading, dbError, getExpectedResultDynamic]);
 
   const handleRun = useCallback(() => {
     if (!sql.trim()) return;
@@ -287,18 +273,16 @@ function PracticeView({
 
     let originalRes = executeQuery(sql);
     let finalRes = { ...originalRes };
-    if (!originalRes.error && !isSandbox && currentQ.verificationSQL) {
+    if (!originalRes.error && currentQ.verificationSQL) {
       const verRes = runVerification(currentQ.verificationSQL);
       finalRes = { ...verRes, execTimeMs: originalRes.execTimeMs };
     }
     setResult(finalRes);
     if (finalRes.error) {
       setValidation({ isCorrect: false, message: finalRes.error });
-      if (!isSandbox) onProgressUpdate(currentQ.id, 'attempted');
+      onProgressUpdate(currentQ.id, 'attempted');
     } else {
-      if (isSandbox) {
-        setValidation({ isCorrect: true, message: 'Query executed successfully.' });
-      } else if (!expectedResult || expectedResult.columns.length === 0) {
+      if (!expectedResult || expectedResult.columns.length === 0) {
         setValidation({ isCorrect: false, message: 'Loading expected results...' });
       } else {
         const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
@@ -310,7 +294,7 @@ function PracticeView({
         }
       }
     }
-  }, [sql, executeQuery, runVerification, currentQ, isSandbox, validateAnswer, expectedResult, onProgressUpdate]);
+  }, [sql, executeQuery, runVerification, currentQ, validateAnswer, expectedResult, onProgressUpdate]);
 
   const handleExplain = useCallback(() => {
     if (!sql.trim()) return;
@@ -612,39 +596,24 @@ function PracticeView({
             sql={sql}
             db={dbInstance}
             isRunning={false}
-            hasQuestion={!isSandbox}
           />
         </div>
       </main>
 
       {/* 3. Right Panel: Question & Hints */}
       <aside className="question-pane-wrap">
-        {!isSandbox ? (
-          <aside className="question-pane">
-            <QuestionCard
-              question={currentQ}
-              expectedResult={expectedResult}
-              status={progress[currentQ.id] ?? 'incomplete'}
-              onOpenBrowser={() => setShowBrowser(true)}
-              onNavigate={navigateTo}
-              hasPrev={currentIdx > 0}
-              hasNext={currentIdx < dbQuestions.length - 1}
-              questionNumber={currentIdx + 1}
-              totalQuestions={dbQuestions.length}
-            />
-          </aside>
-        ) : (
-          <aside className="question-pane" style={{ padding: 24 }}>
-            <div style={{ background: 'var(--surface-2)', padding: 24, borderRadius: 12, border: '1px solid var(--border)' }}>
-              <h2 style={{ margin: '0 0 8px', color: 'var(--text)' }}>Sandbox Mode</h2>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
-                You are querying a custom CSV database. Use the <strong>Schema Panel</strong> on the left to explore your table structure.
-                <br/><br/>
-                Write any `SELECT` query in the editor and click Run to analyze your data!
-              </p>
-            </div>
-          </aside>
-        )}
+        <QuestionCard
+          question={currentQ}
+          total={dbQuestions.length}
+          currentIdx={currentIdx}
+          onPrev={() => setCurrentQ(dbQuestions[currentIdx - 1])}
+          onNext={() => setCurrentQ(dbQuestions[currentIdx + 1])}
+          onJumpTo={() => setShowBrowser(true)}
+          validation={validation}
+          isCorrect={validation?.isCorrect}
+          error={validation && !validation.isCorrect ? validation.message : null}
+          progress={progress}
+        />
       </aside>
     </div>
 
@@ -693,7 +662,6 @@ export default function App() {
   const { user, loading, logout } = useAuth();
   const { gameState, recordActivity } = useGamification(progress, user);
   const [showAuth, setShowAuth] = useState(false);
-  const [showCustomModal, setShowCustomModal] = useState(false);
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
@@ -760,16 +728,7 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={
-          <DbSelector 
-            progress={progress} 
-            gameState={gameState} 
-            user={user} 
-            onShowAuth={() => setShowAuth(true)} 
-            onShowCustomModal={() => setShowCustomModal(true)} 
-            onShowSettings={() => setShowSettings(true)} 
-          />
-        } />
+        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} />} />
 
         <Route path="/guide" element={<UserGuide />} />
         
@@ -807,10 +766,6 @@ export default function App() {
       </Routes>
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
-      {showCustomModal && <CustomDatasetModal onClose={() => setShowCustomModal(false)} onDatasetReady={(customDb) => {
-         alert('Custom Database Sandbox is currently being updated for React Router. Please use standard databases for now.');
-         setShowCustomModal(false);
-      }} />}
       {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
     </>
   );

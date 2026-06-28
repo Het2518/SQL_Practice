@@ -62,53 +62,64 @@ export function ERDiagramModal({ dbName, onClose }) {
     });
 
     // 2. Define relationships
+    // SQLite doesn't strictly enforce relationship directions in PRAGMA, but based on typical ER logic:
+    // A table with a foreign key belongs to the referenced table (Many-to-One).
     dbInfo.tables.forEach(t => {
       t.columns.forEach(c => {
         if (c.isForeignKey && c.references) {
-          if (c.references !== t.name) {
-            erDef += `  ${c.references} ||--o{ ${t.name} : ""\n`;
-          }
+          // Format: Entity1 ||--o{ Entity2 : "Relationship"
+          // In Mermaid: "One Entity1 has many Entity2"
+          erDef += `  ${c.references} ||--o{ ${t.name} : "has"\n`;
         }
       });
     });
 
-    // Render SVG dynamically
+    // Handle single table databases gracefully
+    if (dbInfo.tables.length === 1 && !erDef.includes('||--')) {
+      erDef += `\n  %% Single table database\n`;
+    }
+
+    setSvgContent('');
+    setIsRendering(true);
+
     const renderDiagram = async () => {
       try {
-        setIsRendering(true);
-        const { svg } = await mermaid.render('mermaid-er-diagram', erDef);
+        const { svg } = await mermaid.render('er-diagram-svg', erDef);
         setSvgContent(svg);
       } catch (err) {
-        console.error('Mermaid rendering failed:', err);
-        setSvgContent('<div style="color: #f87171; padding: 20px;">Failed to render diagram</div>');
+        console.error('Failed to render ER diagram:', err);
+        setSvgContent(`<div style="padding: 20px; color: var(--error);">Failed to generate ER diagram. Please try again.</div>`);
       } finally {
         setIsRendering(false);
       }
     };
+
     renderDiagram();
   }, [dbName]);
 
   const handleDownload = () => {
     if (!svgContent) return;
-    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${dbName}-schema.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dbName}-schema.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
+  const dbInfo = DB_INFO[dbName];
+
   return (
-    <div className="modal-overlay animate-fade-in" onClick={onClose} style={{ padding: 40, zIndex: 9999, background: 'rgba(0,0,0,0.85)' }}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '95vw', height: '95vh', background: 'var(--surface)', display: 'flex', flexDirection: 'column', boxShadow: '0 30px 100px rgba(0,0,0,0.8)' }}>
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()} style={{ zIndex: 99999 }}>
+      <div className="modal-content" style={{ width: '90vw', height: '90vh', maxWidth: '1400px', padding: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         <div style={{ padding: '16px 24px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 24 }}>{DB_INFO[dbName].icon}</span>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{DB_INFO[dbName].label} Schema</h2>
+            <span style={{ fontSize: 24 }}>{dbInfo.icon}</span>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{dbInfo.label} Schema</h2>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
              <button className="btn btn-secondary" onClick={handleDownload} disabled={!svgContent} style={{ fontSize: 14 }}>

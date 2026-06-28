@@ -41,8 +41,8 @@ export function useGamification(progress, user) {
         current_streak: gameState.currentStreak,
         max_streak: gameState.maxStreak,
         badges: gameState.badges,
-        last_practice_date: gameState.lastPracticeDate,
-        recent_submissions: gameState.recentSubmissions
+        last_practice_date: gameState.lastPracticeDate
+        // omitted recent_submissions to prevent 400 Bad Request on legacy Supabase schemas
       }).then(({ error }) => {
         if (error) console.error('Error syncing gamification state:', error.message);
       });

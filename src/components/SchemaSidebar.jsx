@@ -14,10 +14,7 @@ export function SchemaSidebar({
   const [relationships, setRelationships] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
   const [joinPath, setJoinPath] = useState(null);
-  const dbInfo = typeof dbName === 'string' ? DB_INFO[dbName] : {
-    name: dbName.name,
-    tables: dbName.schema
-  };
+  const dbInfo = DB_INFO[dbName];
   const toggleTable = tableName => {
     setExpandedTables(prev => {
       const next = new Set(prev);

@@ -12,8 +12,7 @@ export function ResultsPanel({
   validation,
   sql,
   db,
-  isRunning,
-  hasQuestion
+  isRunning
 }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
