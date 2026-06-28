@@ -8,16 +8,20 @@ import { SqlEditor } from './components/SqlEditor';
 import { ResultsPanel } from './components/ResultsPanel';
 import { ERDiagramModal } from './components/ERDiagramModal';
 import { QuestionCard } from './components/QuestionCard';
-import { HintDrawer } from './components/HintDrawer';
 import { QuestionBrowser } from './components/QuestionBrowser';
-import { SettingsModal, loadSettings, defaultSettings } from './components/SettingsModal';
+import { loadSettings, SettingsModal, defaultSettings } from './components/SettingsModal';
+import { loadShortcuts, isShortcutMatch } from './utils/shortcutManager';
 import { ProfileView } from './components/ProfileView';
 import { TablePreviewModal } from './components/TablePreviewModal';
+import { EdgeCaseTester } from './components/EdgeCaseTester';
+import { CteConverterModal } from './components/CteConverterModal';
 import { useGamification } from './hooks/useGamification';
 import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import { AuthModal } from './components/AuthModal';
 import { CustomDatasetModal } from './components/CustomDatasetModal';
+import { UserGuide } from './components/UserGuide';
+import { hasSubquery, convertSubqueryToCTE } from './utils/sqlAnalysis';
 import './styles.css';
 
 // ─── Progress persistence ────────────────────────────────────────────────────
@@ -75,9 +79,14 @@ function DbSelector({
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button className="btn btn-ghost" title="Settings" onClick={onShowSettings} style={{ padding: '6px 12px' }}>
-            ⚙️ Settings
-          </button>
+          <nav className="home-nav">
+            <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)' }}>
+              <span style={{ marginRight: 6 }}>📖</span>Docs
+            </button>
+            <button className="btn btn-ghost" title="Settings" onClick={onShowSettings} style={{ padding: '6px 12px' }}>
+              ⚙️ Settings
+            </button>
+          </nav>
           {user ? (
             <button className="btn btn-primary" onClick={() => navigate('/profile')} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600 }}>My Profile</span>
@@ -165,6 +174,8 @@ function PracticeView({
     return dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
   });
 
+  const isSandbox = currentQ?.id === 'sandbox';
+
   useEffect(() => {
     if (routeDb && routeDb !== db) {
       setDb(routeDb);
@@ -174,9 +185,6 @@ function PracticeView({
       setResult(null);
       setValidation(null);
       setSql('');
-      setHintsUsed(0);
-      setSolutionVisible(false);
-      setShowHints(false);
       setPreviewTableName(null);
     }
   }, [routeDb, db, progress]);
@@ -185,15 +193,15 @@ function PracticeView({
   const [result, setResult] = useState(null);
   const [expectedResult, setExpectedResult] = useState(null);
   const [validation, setValidation] = useState(null);
-  const [hintsUsed, setHintsUsed] = useState(0);
-  const [solutionVisible, setSolutionVisible] = useState(false);
-  const [showHints, setShowHints] = useState(false);
   const [showBrowser, setShowBrowser] = useState(false);
   const [showERDiagram, setShowERDiagram] = useState(false);
+  const [showCteModal, setShowCteModal] = useState(false);
   const [showDbPicker, setShowDbPicker] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [previewTableName, setPreviewTableName] = useState(null);
 
+  // Global Keyboard Shortcuts (Moved downwards to unify)
   // Resizable Panes State
   const workspaceRef = useRef(null);
   const [editorHeightPct, setEditorHeightPct] = useState(50);
@@ -222,8 +230,6 @@ function PracticeView({
     };
   }, [isDragging]);
 
-  // Apply dark mode to document root (now handled in App Root)
-
   // Persist editor text
   const EDITOR_KEY = `sql-persist-${currentQ.id}`;
   useEffect(() => {
@@ -238,43 +244,47 @@ function PracticeView({
     }
   }, [sql, settings.persistEditorText, EDITOR_KEY]);
 
-  const isSandbox = currentQ.id === 'sandbox';
   const dbInfo = isSandbox ? { label: db.name, icon: '📁' } : DB_INFO[db];
   const dbQuestions = useMemo(() => isSandbox ? [] : getQuestionsForDb(db), [isSandbox, db]);
 
-  const {
-    isLoading,
-    error,
-    executeQuery,
-    resetDb,
-    validateAnswer,
-    runVerification,
-    getExpectedResultDynamic,
-  } = useSqlDatabase(db);
+  const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan, dbInstance } = useSqlDatabase(db);
 
-  // Switch DB inline — pick first incomplete question of the new db
+  // Switch DB inline
   const handleSwitchDb = useCallback((newDb) => {
     if (newDb === db) { setShowDbPicker(false); return; }
     navigate('/practice/' + newDb);
     setShowDbPicker(false);
   }, [db, navigate]);
 
+  const [queryHistory, setQueryHistory] = useState(() => {
+    const saved = localStorage.getItem('sql-practice-history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sql-practice-history', JSON.stringify(queryHistory.slice(0, 50)));
+  }, [queryHistory]);
+
   // Reset state when question changes and compute true expected result
   useEffect(() => {
     setSql('');
     setResult(null);
     setValidation(null);
-    setHintsUsed(0);
-    setSolutionVisible(false);
-    setShowHints(false);
-    if (!isLoading && !error && !isSandbox) {
+    if (!isLoading && !dbError && !isSandbox) {
       const er = getExpectedResultDynamic(currentQ.solutionSQL, currentQ.verificationSQL);
       setExpectedResult(er);
     }
-  }, [currentQ.id, currentQ.solutionSQL, currentQ.verificationSQL, isLoading, error, getExpectedResultDynamic, isSandbox]);
+  }, [currentQ.id, currentQ.solutionSQL, currentQ.verificationSQL, isLoading, dbError, getExpectedResultDynamic, isSandbox]);
 
   const handleRun = useCallback(() => {
     if (!sql.trim()) return;
+    
+    // Add to history if not duplicate of last
+    setQueryHistory(prev => {
+      const next = [sql, ...prev.filter(q => q !== sql)].slice(0, 50);
+      return next;
+    });
+
     let originalRes = executeQuery(sql);
     let finalRes = { ...originalRes };
     if (!originalRes.error && !isSandbox && currentQ.verificationSQL) {
@@ -289,16 +299,67 @@ function PracticeView({
       if (isSandbox) {
         setValidation({ isCorrect: true, message: 'Query executed successfully.' });
       } else if (!expectedResult || expectedResult.columns.length === 0) {
-        setValidation({ isCorrect: true, message: '✓ Query ran successfully! Review the results below.' });
-        onProgressUpdate(currentQ.id, 'complete');
+        setValidation({ isCorrect: false, message: 'Loading expected results...' });
       } else {
-        const requiresOrder = currentQ.solutionSQL.toUpperCase().includes('ORDER BY');
-        const vr = validateAnswer(finalRes, expectedResult, requiresOrder);
-        setValidation(vr);
-        onProgressUpdate(currentQ.id, vr.isCorrect ? 'complete' : 'attempted');
+        const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
+        setValidation(val);
+        if (val.isCorrect) {
+          onProgressUpdate(currentQ.id, 'complete');
+        } else {
+          onProgressUpdate(currentQ.id, 'attempted');
+        }
       }
     }
   }, [sql, executeQuery, runVerification, currentQ, isSandbox, validateAnswer, expectedResult, onProgressUpdate]);
+
+  const handleExplain = useCallback(() => {
+    if (!sql.trim()) return;
+    const plan = getExplainPlan(sql);
+    if (plan.error) {
+       setResult({ error: plan.error });
+       setValidation({ isCorrect: false, message: 'Syntax Error while parsing EXPLAIN plan.' });
+    } else {
+       setResult(plan);
+       setValidation({ isCorrect: true, message: 'Query Execution Plan' });
+    }
+  }, [sql, getExplainPlan]);
+
+  const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
+  // Listen for shortcut changes across the app
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'sql-practice-shortcuts' || !e.key) setShortcuts(loadShortcuts());
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  // Global Shortcuts (Unified)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if typing in an input/textarea (except Monaco which stops propagation appropriately)
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        return;
+      }
+      
+      if (isShortcutMatch(e, shortcuts.toggleSidebar.combo)) {
+        e.preventDefault();
+        setSidebarOpen(prev => !prev);
+      } else if (isShortcutMatch(e, shortcuts.toggleRightPanel.combo)) {
+        e.preventDefault();
+        setRightPanelOpen(prev => !prev);
+      } else if (isShortcutMatch(e, shortcuts.explainQuery.combo)) {
+        e.preventDefault();
+        handleExplain();
+      } else if (isShortcutMatch(e, shortcuts.runQuery.combo)) {
+        e.preventDefault();
+        handleRun();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [shortcuts, handleExplain, handleRun, setSidebarOpen, setRightPanelOpen]);
 
   // Auto-run timer (after handleRun is defined)
   useEffect(() => {
@@ -308,15 +369,6 @@ function PracticeView({
   }, [sql, settings.autoRunAfterTyping, handleRun]);
 
   const handlePreviewTable = useCallback(tableName => { setPreviewTableName(tableName); }, []);
-  const handleRevealSolution = useCallback(() => {
-    setSolutionVisible(true);
-    setShowHints(true);
-    onProgressUpdate(currentQ.id, 'attempted');
-  }, [currentQ, onProgressUpdate]);
-  const handleRevealHint = useCallback(() => {
-    setHintsUsed(n => Math.min(n + 1, 3));
-    onProgressUpdate(currentQ.id, progress[currentQ.id] === 'complete' ? 'complete' : 'attempted');
-  }, [currentQ, progress, onProgressUpdate]);
 
   const navigateTo = useCallback(direction => {
     const idx = dbQuestions.findIndex(q => q.id === currentQ.id);
@@ -334,24 +386,11 @@ function PracticeView({
     setResult(null);
     setValidation(null);
     setSql('');
-    setHintsUsed(0);
-    setSolutionVisible(false);
-    setShowHints(false);
   }, [db]);
 
   const currentIdx = dbQuestions.findIndex(q => q.id === currentQ.id);
-  const completed = dbQuestions.filter(q => progress[q.id] === 'complete').length;
 
-  const handleKeyDown = useCallback(e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      handleRun();
-    }
-  }, [handleRun]);
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  // (handleKeyDown replaced by Unified Global Shortcuts above)
 
   // Close DB picker when clicking outside
   useEffect(() => {
@@ -361,11 +400,11 @@ function PracticeView({
     return () => document.removeEventListener('click', handler);
   }, [showDbPicker]);
 
-  if (error) {
+  if (dbError) {
     return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16, color: 'var(--error)' }}>
       <div style={{ fontSize: 48 }}>💥</div>
       <div style={{ fontWeight: 700 }}>Database Error</div>
-      <div style={{ color: 'var(--muted)', maxWidth: 400, textAlign: 'center' }}>{error}</div>
+      <div style={{ color: 'var(--muted)', maxWidth: 400, textAlign: 'center' }}>{dbError}</div>
       <button className="btn btn-primary" onClick={() => navigate('/')}>← Back to Home</button>
     </div>;
   }
@@ -376,6 +415,9 @@ function PracticeView({
     <nav className="practice-nav" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)', gap: 12 }}>
       <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600 }}>
         Run ▶
+      </button>
+      <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)' }}>
+        <span style={{ marginRight: 6 }}>📖</span>Docs
       </button>
       <button className="btn btn-ghost" title="Settings" onClick={onShowSettings}>
         Settings
@@ -487,10 +529,13 @@ function PracticeView({
     </div>}
 
     {/* Main layout */}
-    <div className="practice-layout" style={{ '--sidebar-width': sidebarOpen ? '280px' : '0px' }}>
+    <div className="practice-layout" style={{ 
+      '--sidebar-width': sidebarOpen ? '280px' : '0px',
+      '--right-panel-width': rightPanelOpen ? '350px' : '0px'
+    }}>
       {/* 1. Left Panel: Schema Sidebar */}
-      <aside className="sidebar-wrap" style={{ display: sidebarOpen ? 'block' : 'none' }}>
-        <SchemaSidebar dbName={db} onPreviewTable={handlePreviewTable} />
+      <aside className="sidebar-wrap">
+        <SchemaSidebar dbName={db} dbInstance={dbInstance} onPreviewTable={handlePreviewTable} />
       </aside>
 
       {/* 2. Center Panel: Editor + Results */}
@@ -506,10 +551,40 @@ function PracticeView({
           <div className="monaco-wrap">
             <SqlEditor value={sql} onChange={setSql} onRun={handleRun} disabled={isLoading} dbName={db} fontSize={settings.editorFontSize} autoComplete={settings.autoCompleteSql} darkMode={settings.darkMode} />
           </div>
-          <div className="editor-actions">
+          <div className="editor-actions" style={{ position: 'relative' }}>
             <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || !sql.trim()}>▶ Run Query</button>
-            {!isSandbox && <button id="hint-btn" className="btn btn-ghost btn-sm" onClick={() => setShowHints(true)}>💡 Hints</button>}
-            {!isSandbox && <button id="solution-btn" className="btn btn-ghost btn-sm" onClick={handleRevealSolution}>👁 Solution</button>}
+            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || !sql.trim()} title="View Query Execution Plan">🔍 Explain</button>
+            <EdgeCaseTester db={dbInstance} sql={sql} />
+            
+            {hasSubquery(sql) && (
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowCteModal(true)} 
+                title="Convert subquery to a Common Table Expression (CTE)"
+                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+              >
+                🪄 Convert to CTE
+              </button>
+            )}
+
+            {queryHistory.length > 0 && (
+              <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                <select 
+                  className="btn btn-ghost btn-sm"
+                  style={{ appearance: 'none', paddingRight: '24px', maxWidth: '200px' }}
+                  onChange={(e) => {
+                    if (e.target.value) setSql(e.target.value);
+                    e.target.value = "";
+                  }}
+                  value=""
+                >
+                  <option value="" disabled>📜 History</option>
+                  {queryHistory.map((q, i) => (
+                    <option key={i} value={q}>{q.substring(0, 30) + (q.length > 30 ? '...' : '')}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
@@ -534,48 +609,44 @@ function PracticeView({
           <ResultsPanel
             result={result}
             validation={validation}
+            sql={sql}
+            db={dbInstance}
             isRunning={false}
-            onHint={isSandbox ? undefined : () => { setShowHints(true); handleRevealHint(); }}
-            onShowSolution={isSandbox ? undefined : handleRevealSolution}
             hasQuestion={!isSandbox}
-            hintsUsed={hintsUsed}
           />
         </div>
       </main>
 
       {/* 3. Right Panel: Question & Hints */}
-      {!isSandbox ? (
-        <aside className="question-pane">
-          <QuestionCard
-            question={currentQ}
-            expectedResult={expectedResult}
-            status={progress[currentQ.id] ?? 'incomplete'}
-            onOpenBrowser={() => setShowBrowser(true)}
-            onNavigate={navigateTo}
-            hasPrev={currentIdx > 0}
-            hasNext={currentIdx < dbQuestions.length - 1}
-            questionNumber={currentIdx + 1}
-            totalQuestions={dbQuestions.length}
-            onHint={() => setShowHints(true)}
-            onSolution={handleRevealSolution}
-          />
-        </aside>
-      ) : (
-        <aside className="question-pane" style={{ padding: 24 }}>
-          <div style={{ background: 'var(--surface-2)', padding: 24, borderRadius: 12, border: '1px solid var(--border)' }}>
-            <h2 style={{ margin: '0 0 8px', color: 'var(--text)' }}>Sandbox Mode</h2>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
-              You are querying a custom CSV database. Use the <strong>Schema Panel</strong> on the left to explore your table structure.
-              <br/><br/>
-              Write any `SELECT` query in the editor and click Run to analyze your data!
-            </p>
-          </div>
-        </aside>
-      )}
+      <aside className="question-pane-wrap">
+        {!isSandbox ? (
+          <aside className="question-pane">
+            <QuestionCard
+              question={currentQ}
+              expectedResult={expectedResult}
+              status={progress[currentQ.id] ?? 'incomplete'}
+              onOpenBrowser={() => setShowBrowser(true)}
+              onNavigate={navigateTo}
+              hasPrev={currentIdx > 0}
+              hasNext={currentIdx < dbQuestions.length - 1}
+              questionNumber={currentIdx + 1}
+              totalQuestions={dbQuestions.length}
+            />
+          </aside>
+        ) : (
+          <aside className="question-pane" style={{ padding: 24 }}>
+            <div style={{ background: 'var(--surface-2)', padding: 24, borderRadius: 12, border: '1px solid var(--border)' }}>
+              <h2 style={{ margin: '0 0 8px', color: 'var(--text)' }}>Sandbox Mode</h2>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.5, fontSize: 14 }}>
+                You are querying a custom CSV database. Use the <strong>Schema Panel</strong> on the left to explore your table structure.
+                <br/><br/>
+                Write any `SELECT` query in the editor and click Run to analyze your data!
+              </p>
+            </div>
+          </aside>
+        )}
+      </aside>
     </div>
-
-    {/* Hint Drawer */}
-    {showHints && <HintDrawer question={currentQ} hintsUsed={hintsUsed} onRevealHint={handleRevealHint} solutionVisible={solutionVisible} onRevealSolution={handleRevealSolution} onClose={() => setShowHints(false)} />}
 
     {/* Question Browser */}
     {showBrowser && <QuestionBrowser
@@ -592,6 +663,16 @@ function PracticeView({
     {/* Table Preview Modal */}
     {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
 
+    <CteConverterModal 
+      isOpen={showCteModal}
+      onClose={() => setShowCteModal(false)}
+      originalSql={sql}
+      convertedSql={convertSubqueryToCTE(sql) || sql}
+      onUseConverted={(newSql) => {
+        setSql(newSql);
+        setResult(null);
+      }}
+    />
   </div>;
 }
 
@@ -687,6 +768,8 @@ export default function App() {
             onShowSettings={() => setShowSettings(true)} 
           />
         } />
+
+        <Route path="/guide" element={<UserGuide />} />
         
         <Route path="/practice/:db" element={
           <ProtectedRoute user={user}>

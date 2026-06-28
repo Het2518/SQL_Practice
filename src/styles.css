@@ -7,80 +7,82 @@
 
 /* ── CSS Variables ── */
 :root {
-  /* Earthy / Editorial Colors */
-  --bg:              #E4E0E1;
-  --bg-2:            #D6C0B3;
-  --surface:         #FFFFFF;
-  --surface-2:       #F5F2F0;
-  --border:          #D6C0B3;
-  --border-hover:    #AB886D;
+  /* Modern Developer Light Theme (VS Code / GitHub style) */
+  --bg:              #f3f4f6;
+  --bg-2:            #e5e7eb;
+  --surface:         #ffffff;
+  --surface-2:       #f9fafb;
+  --surface-3:       #f3f4f6;
+  --border:          #e5e7eb;
+  --border-hover:    #d1d5db;
 
-  --text:            #493628;
-  --text-secondary:  #AB886D;
-  --muted:           #9A887A;
+  --text:            #111827;
+  --text-secondary:  #4b5563;
+  --muted:           #6b7280;
 
-  --primary:         #493628;
-  --primary-hover:   #AB886D;
-  --primary-muted:   rgba(171, 136, 109, 0.15);
+  --primary:         #2563eb;
+  --primary-hover:   #1d4ed8;
+  --primary-muted:   rgba(37, 99, 235, 0.1);
+  --primary-light:   rgba(37, 99, 235, 0.15);
 
-  --success:         #15803d;
-  --success-muted:   rgba(21, 128, 61, 0.15);
-  --warning:         #ca8a04;
-  --warning-muted:   rgba(202, 138, 4, 0.15);
-  --error:           #b91c1c;
-  --error-muted:     rgba(185, 28, 28, 0.15);
+  --success:         #059669;
+  --success-muted:   rgba(5, 150, 105, 0.1);
+  --warning:         #d97706;
+  --warning-muted:   rgba(217, 119, 6, 0.1);
+  --error:           #dc2626;
+  --error-muted:     rgba(220, 38, 38, 0.1);
 
-  --accent-1:        #AB886D;  
-  --accent-2:        #493628;  
-  --accent-3:        #D6C0B3;  
+  --accent-1:        #8b5cf6;  
+  --accent-2:        #ec4899;  
+  --accent-3:        #3b82f6;  
 
-  /* Gradients removed for flat aesthetic, kept variables for compatibility */
-  --gradient-hero:   linear-gradient(135deg, #E4E0E1 0%, #D6C0B3 100%);
-  --gradient-card:   #FFFFFF;
-  --gradient-primary: #493628;
+  --gradient-hero:   linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  --gradient-card:   #ffffff;
+  --gradient-primary: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 
   /* Typography */
-  --font-sans:   'Inter', system-ui, sans-serif;
-  --font-mono:   'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:   'JetBrains Mono', 'Fira Code', Consolas, monospace;
 
   /* Sizing */
-  --radius:      8px;
-  --radius-lg:   12px;
+  --radius:      6px;
+  --radius-lg:   10px;
   --radius-xl:   16px;
 
   /* Transitions */
-  --transition:  150ms cubic-bezier(0.4,0,0.2,1);
-  --transition-slow: 300ms cubic-bezier(0.4,0,0.2,1);
+  --transition:  150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html[data-theme="dark"],
 [data-theme="dark"] {
-  /* Earthy Dark Colors */
-  --bg:              #1A1714;
-  --bg-2:            #221E1B;
-  --surface:         #2A2421;
-  --surface-2:       #322C29;
-  --border:          #3D342F;
-  --border-hover:    #6B5548;
+  /* VS Code Dark Theme Aesthetic */
+  --bg:              #1e1e1e;
+  --bg-2:            #2d2d2d;
+  --surface:         #252526;
+  --surface-2:       #2d2d2d;
+  --surface-3:       #333333;
+  --border:          #3e3e42;
+  --border-hover:    #4d4d4d;
 
-  --text:            #F0EBE8;
-  --text-secondary:  #C4AFA7;
-  --muted:           #8A7268;
+  --text:            #cccccc;
+  --text-secondary:  #999999;
+  --muted:           #666666;
 
-  --primary:         #C4AFA7;
-  --primary-hover:   #DDD0CA;
-  --primary-muted:   rgba(196, 175, 167, 0.15);
-  --primary-light:   rgba(196, 175, 167, 0.12);
+  --primary:         #007acc;
+  --primary-hover:   #005f9e;
+  --primary-muted:   rgba(0, 122, 204, 0.15);
+  --primary-light:   rgba(0, 122, 204, 0.2);
 
-  --success:         #4ade80;
-  --success-muted:   rgba(74, 222, 128, 0.12);
-  --warning:         #fbbf24;
-  --warning-muted:   rgba(251, 191, 36, 0.12);
-  --error:           #f87171;
-  --error-muted:     rgba(248, 113, 113, 0.12);
+  --success:         #89d185;
+  --success-muted:   rgba(137, 209, 133, 0.15);
+  --warning:         #cca700;
+  --warning-muted:   rgba(204, 167, 0, 0.15);
+  --error:           #f48771;
+  --error-muted:     rgba(244, 135, 113, 0.15);
 
-  --gradient-card:   #2A2421;
-  --gradient-primary: #C4AFA7;
+  --gradient-card:   #252526;
+  --gradient-primary: linear-gradient(135deg, #007acc 0%, #005f9e 100%);
 }
 
 /* ── Reset ── */
@@ -631,12 +633,13 @@ input::placeholder { color: var(--muted); }
 /* — Main layout: CSS Grid */
 .practice-layout {
   display: grid;
-  /* Sidebar width is controlled via CSS variable in App.tsx */
-  grid-template-columns: var(--sidebar-width, 280px) 1fr 350px;
+  /* Sidebar widths controlled via CSS variables in App.jsx */
+  grid-template-columns: var(--sidebar-width, 280px) 1fr var(--right-panel-width, 350px);
   flex: 1;
   overflow: hidden;
   min-height: 0;
   width: 100%;
+  transition: grid-template-columns 0.3s ease;
 }
 
 .sidebar-wrap {
@@ -645,6 +648,14 @@ input::placeholder { color: var(--muted); }
   border-right: 1px solid var(--border);
   overflow: hidden auto;
   background: var(--surface);
+}
+
+.question-pane-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
 }
 
 /* center-workspace: CSS Grid for vertical split */
@@ -868,3 +879,54 @@ tr:hover td {
 .db-grid .db-card:nth-child(8)  { animation-delay: 0.40s; }
 .db-grid .db-card:nth-child(9)  { animation-delay: 0.45s; }
 .db-grid .db-card:nth-child(10) { animation-delay: 0.50s; }
+
+/* ── Accessibility ── */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Responsive Layout ── */
+@media (max-width: 1024px) {
+  .practice-layout {
+    grid-template-columns: var(--sidebar-width, 240px) 1fr var(--right-panel-width, 350px) !important;
+  }
+}
+
+@media (max-width: 850px) {
+  /* Hide sidebars physically, make them absolute */
+  .practice-layout {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .sidebar-wrap, .question-pane-wrap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    height: 100%;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    background: var(--surface);
+    transition: transform 0.3s ease, width 0.3s ease;
+  }
+  .sidebar-wrap {
+    left: 0;
+    /* When 'width' is 0, we can use it to slide it out */
+    width: 280px !important;
+    transform: translateX(var(--sidebar-width) == '0px' ? -100% : 0);
+  }
+  /* Fallback hack for CSS variables in transform */
+  .sidebar-wrap[style*="--sidebar-width: 0px"] { transform: translateX(-100%); }
+  
+  .question-pane-wrap {
+    right: 0;
+    width: 320px !important;
+  }
+  .question-pane-wrap[style*="--right-panel-width: 0px"] { transform: translateX(100%); }
+  
+  .center-workspace {
+    flex: 1;
+    width: 100%;
+  }
+}

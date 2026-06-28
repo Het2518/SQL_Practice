@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { DB_INFO } from '../types';
-export function ERDiagramModal({
-  dbName,
-  onClose
-}) {
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+
+export function ERDiagramModal({ dbName, onClose }) {
   const [svgContent, setSvgContent] = useState('');
   const [isRendering, setIsRendering] = useState(true);
+  const containerRef = useRef(null);
+
   useEffect(() => {
     // Grab computed hex colors from the active theme to pass valid colors to Mermaid
     const root = document.querySelector('.practice-root') || document.documentElement;
@@ -46,7 +47,7 @@ export function ERDiagramModal({
     const dbInfo = DB_INFO[dbName];
 
     // Build ER Diagram string based on our internal schema definition
-    let erDef = '%%{init: {\'er\': {\'layoutDirection\': \'LR\'}}}%%\nerDiagram\n';
+    let erDef = "%%{init: {'er': {'layoutDirection': 'LR'}}}%%\nerDiagram\n";
 
     // 1. Define entities and their attributes
     dbInfo.tables.forEach(t => {
@@ -64,9 +65,6 @@ export function ERDiagramModal({
     dbInfo.tables.forEach(t => {
       t.columns.forEach(c => {
         if (c.isForeignKey && c.references) {
-          // Skip self-referencing lines (e.g. categories -> categories) because 
-          // Mermaid's layout engine draws them as massive broken loops into empty space.
-          // The column still shows "FK" inside the entity box, which is sufficient.
           if (c.references !== t.name) {
             erDef += `  ${c.references} ||--o{ ${t.name} : ""\n`;
           }
@@ -78,9 +76,7 @@ export function ERDiagramModal({
     const renderDiagram = async () => {
       try {
         setIsRendering(true);
-        const {
-          svg
-        } = await mermaid.render('mermaid-er-diagram', erDef);
+        const { svg } = await mermaid.render('mermaid-er-diagram', erDef);
         setSvgContent(svg);
       } catch (err) {
         console.error('Mermaid rendering failed:', err);
@@ -91,84 +87,72 @@ export function ERDiagramModal({
     };
     renderDiagram();
   }, [dbName]);
-  return <div className="modal-overlay animate-fade-in" onClick={onClose} style={{
-    padding: 40,
-    zIndex: 9999,
-    background: 'rgba(0,0,0,0.85)'
-  }}>
-      <div className="modal-content" onClick={e => e.stopPropagation()} style={{
-      width: '100%',
-      maxWidth: '95vw',
-      height: '95vh',
-      background: 'var(--surface)',
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: '0 30px 100px rgba(0,0,0,0.8)'
-    }}>
-        <div style={{
-        padding: '16px 24px',
-        background: 'var(--surface-2)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexShrink: 0
-      }}>
-          <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12
-        }}>
-            <span style={{
-            fontSize: 24
-          }}>{DB_INFO[dbName].icon}</span>
-            <h2 style={{
-            margin: 0,
-            fontSize: 18,
-            fontWeight: 700
-          }}>{DB_INFO[dbName].label} Schema</h2>
+
+  const handleDownload = () => {
+    if (!svgContent) return;
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${dbName}-schema.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="modal-overlay animate-fade-in" onClick={onClose} style={{ padding: 40, zIndex: 9999, background: 'rgba(0,0,0,0.85)' }}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '95vw', height: '95vh', background: 'var(--surface)', display: 'flex', flexDirection: 'column', boxShadow: '0 30px 100px rgba(0,0,0,0.8)' }}>
+        
+        <div style={{ padding: '16px 24px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 24 }}>{DB_INFO[dbName].icon}</span>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>{DB_INFO[dbName].label} Schema</h2>
           </div>
-          <button className="btn btn-ghost" onClick={onClose} style={{
-          fontSize: 14
-        }}>✕ Close</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+             <button className="btn btn-secondary" onClick={handleDownload} disabled={!svgContent} style={{ fontSize: 14 }}>
+               💾 Download SVG
+             </button>
+             <button className="btn btn-ghost" onClick={onClose} style={{ fontSize: 14 }}>
+               ✕ Close
+             </button>
+          </div>
         </div>
         
-        <div style={{
-        flex: 1,
-        overflow: 'auto',
-        padding: 40,
-        background: 'var(--bg)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-          {isRendering ? <div style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
+        <div style={{ flex: 1, overflow: 'hidden', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
+          {isRendering ? (
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <div className="spinner" />
-            </div> : <div style={{
-          margin: 'auto',
-          display: 'grid',
-          placeItems: 'center',
-          minWidth: '100%',
-          minHeight: '100%'
-        }}>
-              <style>{`
-                /* Ensure SVG renders large enough to be readable and allows scrolling if necessary */
-                #mermaid-container svg {
-                  min-width: 1000px;
-                  max-width: 100%;
-                  height: auto;
-                  font-size: 16px;
-                }
-              `}</style>
-              <div id="mermaid-container" dangerouslySetInnerHTML={{
-            __html: svgContent
-          }} />
-            </div>}
+            </div>
+          ) : (
+            <TransformWrapper
+               initialScale={1}
+               minScale={0.1}
+               maxScale={4}
+               centerOnInit={true}
+            >
+              {({ zoomIn, zoomOut, resetTransform }) => (
+                <>
+                  <div style={{ position: 'absolute', bottom: '30px', right: '30px', zIndex: 10, display: 'flex', gap: '8px', background: 'var(--surface)', padding: '8px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', border: '1px solid var(--border)' }}>
+                     <button className="btn btn-ghost btn-icon" onClick={() => zoomIn()}>➕</button>
+                     <button className="btn btn-ghost btn-icon" onClick={() => zoomOut()}>➖</button>
+                     <button className="btn btn-ghost btn-icon" onClick={() => resetTransform()}>🔄 Reset</button>
+                  </div>
+                  <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
+                     <div 
+                       ref={containerRef}
+                       id="mermaid-container" 
+                       style={{ minWidth: '100%', minHeight: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px' }}
+                       dangerouslySetInnerHTML={{ __html: svgContent }} 
+                     />
+                  </TransformComponent>
+                </>
+              )}
+            </TransformWrapper>
+          )}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

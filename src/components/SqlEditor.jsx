@@ -3,6 +3,8 @@ import Editor from '@monaco-editor/react';
 import { format } from 'sql-formatter';
 import { DB_INFO } from '../types';
 import { sqlKeywords } from '../data/sqlKeywords';
+import { loadShortcuts, comboToMonaco } from '../utils/shortcutManager';
+
 export function SqlEditor({
   value,
   onChange,
@@ -12,46 +14,56 @@ export function SqlEditor({
   fontSize = 14,
   autoComplete = true,
   darkMode = false,
+  readOnly = false,
 }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
   const [monacoInstance, setMonacoInstance] = useState(null);
-  const handleFormat = useCallback(() => {
+  
+  // Use a ref to store the LATEST callbacks to prevent stale closures wiping the editor
+  const callbacksRef = useRef({ onRun, onChange, value, disabled });
+  useEffect(() => {
+    callbacksRef.current = { onRun, onChange, value, disabled };
+  }, [onRun, onChange, value, disabled]);
+
+  const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
+  // Listen for shortcut changes across the app
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'sql-practice-shortcuts') setShortcuts(loadShortcuts());
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const handleFormatProxy = useCallback(() => {
     try {
-      const formatted = format(value, {
+      const current = callbacksRef.current;
+      const formatted = format(current.value, {
         language: 'sqlite',
         tabWidth: 2,
         keywordCase: 'upper'
       });
-      onChange(formatted);
+      current.onChange(formatted);
     } catch {
       // ignore formatting errors
     }
-  }, [value, onChange]);
+  }, []);
+
   const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
     setMonacoInstance(monaco);
 
-    // Ctrl+Enter → Run
-    editor?.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      if (!disabled) onRun();
+    // Bind shortcuts using the proxy ref so we NEVER use stale values
+    editor?.addCommand(comboToMonaco(shortcuts.runQuery.combo, monaco), () => {
+      if (!callbacksRef.current.disabled) callbacksRef.current.onRun();
     });
 
-    // Ctrl+Q → Format
-    editor?.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyQ, () => {
-      handleFormat();
+    editor?.addCommand(comboToMonaco(shortcuts.formatCode.combo, monaco), () => {
+      handleFormatProxy();
     });
-  }, [disabled, onRun, handleFormat]);
-
-  // Update Ctrl+Enter handler when deps change
-  useEffect(() => {
-    if (editorRef.current && monacoRef.current) {
-      editorRef.current.addCommand(monacoRef.current.KeyMod.CtrlCmd | monacoRef.current.KeyCode.Enter, () => {
-        if (!disabled) onRun();
-      });
-    }
-  }, [disabled, onRun]);
+  }, [shortcuts.runQuery.combo, shortcuts.formatCode.combo, handleFormatProxy]);
 
   // Register SQL autocomplete for tables and columns (only if enabled)
   useEffect(() => {
@@ -233,7 +245,7 @@ export function SqlEditor({
         <div style={{
         flex: 1
       }} />
-        <button onClick={handleFormat} className="btn btn-ghost" style={{
+        <button onClick={handleFormatProxy} className="btn btn-ghost" style={{
         padding: '2px 8px',
         fontSize: 11
       }}>
@@ -252,6 +264,7 @@ export function SqlEditor({
           onMount={handleEditorMount}
           theme={darkMode ? 'earthy-dark' : 'earthy-light'}
           options={{
+            readOnly: readOnly,
             fontSize: fontSize,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             fontLigatures: true,

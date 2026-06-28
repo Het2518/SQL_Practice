@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
 const difficultyLabel = {
   easy: 'EASY',
   medium: 'MEDIUM',
   hard: 'HARD'
 };
+
 const statusIcon = {
   complete: '✅',
   attempted: '🔄',
   incomplete: '○'
 };
+
 export function QuestionCard({
   question,
   expectedResult,
@@ -19,135 +22,111 @@ export function QuestionCard({
   hasNext,
   questionNumber,
   totalQuestions,
-  onHint,
-  onSolution
 }) {
   const [elapsed, setElapsed] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
+  
+  // Hint/Solution State locally
+  const [showHints, setShowHints] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
+  const [showSolution, setShowSolution] = useState(false);
+
   useEffect(() => {
     setElapsed(0);
     setTimerActive(false);
+    setShowHints(false);
+    setHintsUsed(0);
+    setShowSolution(false);
   }, [question.id]);
+
   useEffect(() => {
     if (!timerActive) return;
     const t = setInterval(() => setElapsed(e => e + 1), 1000);
     return () => clearInterval(t);
   }, [timerActive]);
-  const formatTime = s => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, '0')}`;
+
+  const handleToggleHint = () => {
+    if (!showHints) {
+      setShowHints(true);
+      if (hintsUsed === 0) setHintsUsed(1);
+    } else {
+      setShowHints(false);
+    }
   };
-  return <div style={{
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    background: 'var(--surface)',
-    borderLeft: '1px solid var(--border)',
-    overflow: 'hidden'
-  }}>
+
+  const handleNextHint = () => {
+    setHintsUsed(n => Math.min(n + 1, 3));
+  };
+
+  return (
+    <div style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--surface)',
+      borderLeft: '1px solid var(--border)',
+      overflow: 'hidden'
+    }}>
       {/* Header */}
       <div style={{
-      padding: '10px 14px',
-      borderBottom: '1px solid var(--border)',
-      background: 'var(--surface-2)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      flexShrink: 0
-    }}>
-        <button onClick={onOpenBrowser} className="btn btn-ghost" style={{
-        fontSize: 12,
-        padding: '4px 8px',
-        fontWeight: 600
-      }}>
-          ☰ All Questions
-        </button>
-        <div style={{
-        flex: 1
-      }} />
-        <button onClick={() => onNavigate('prev')} disabled={!hasPrev} className="btn btn-ghost btn-icon" style={{
-        fontSize: 12
-      }}>
-          ←
-        </button>
-        <span style={{
-        fontSize: 12,
-        color: 'var(--muted)',
-        fontWeight: 500
-      }}>
-          {questionNumber} / {totalQuestions}
-        </span>
-        <button onClick={() => onNavigate('next')} disabled={!hasNext} className="btn btn-ghost btn-icon" style={{
-        fontSize: 12
-      }}>
-          →
-        </button>
-      </div>
-
-      {/* Question Content */}
-      <div style={{
-      flex: 1,
-      overflowY: 'auto',
-      padding: 20
-    }}>
-        {/* Difficulty + Status */}
-        <div style={{
+        padding: '10px 14px',
+        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface-2)',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        marginBottom: 16
+        flexShrink: 0
       }}>
+        <button onClick={onOpenBrowser} className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 8px', fontWeight: 600 }}>
+          ☰ All Questions
+        </button>
+        <div style={{ flex: 1 }} />
+        <button onClick={() => onNavigate('prev')} disabled={!hasPrev} className="btn btn-ghost btn-icon" style={{ fontSize: 12 }}>←</button>
+        <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
+          {questionNumber} / {totalQuestions}
+        </span>
+        <button onClick={() => onNavigate('next')} disabled={!hasNext} className="btn btn-ghost btn-icon" style={{ fontSize: 12 }}>→</button>
+      </div>
+
+      {/* Question Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        {/* Difficulty + Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <span style={{
-          background: 'var(--primary-muted)',
-          color: 'var(--primary)',
-          padding: '2px 8px',
-          borderRadius: 4,
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.5px'
-        }}>
+            background: 'var(--primary-muted)',
+            color: 'var(--primary)',
+            padding: '2px 8px',
+            borderRadius: 4,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.5px'
+          }}>
             {difficultyLabel[question.difficulty]}
           </span>
-          <span style={{
-          fontSize: 12,
-          color: 'var(--text-secondary)',
-          fontWeight: 500
-        }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
             {statusIcon[status]} {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
 
         {/* Prompt */}
-        <div style={{
-        fontSize: 15,
-        lineHeight: 1.6,
-        color: 'var(--text)',
-        marginBottom: 20,
-        fontWeight: 500
-      }}>
+        <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text)', marginBottom: 20, fontWeight: 500 }}>
           {question.prompt}
         </div>
 
         {/* Keywords */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 8,
-          marginBottom: 24
-        }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
           {question.keywords.map(kw => {
             if (kw.startsWith('company:')) {
               const company = kw.split(':')[1];
               return (
                 <span key={kw} style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                   color: 'white',
                   padding: '4px 12px',
                   borderRadius: 20,
                   fontSize: 12,
                   fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+                  boxShadow: '0 2px 8px rgba(5,150,105,0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6
@@ -160,13 +139,13 @@ export function QuestionCard({
               const topic = kw.split(':')[1];
               return (
                 <span key={kw} style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
                   color: 'white',
                   padding: '4px 12px',
                   borderRadius: 20,
                   fontSize: 12,
                   fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                  boxShadow: '0 2px 8px rgba(79,70,229,0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6
@@ -191,99 +170,187 @@ export function QuestionCard({
           })}
         </div>
 
-        {/* Actions (Hints / Solution) */}
+        {/* Unified Hint/Solution Section */}
         <div style={{
-        display: 'flex',
-        gap: 10,
-        marginBottom: 24
-      }}>
-          <button onClick={onHint} className="btn btn-ghost" style={{
-          flex: 1,
-          padding: '8px 0',
-          fontSize: 13
+          background: 'var(--surface-2)',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          overflow: 'hidden',
+          marginBottom: 24
         }}>
-            💡 Get Hint
-          </button>
-          <button onClick={onSolution} className="btn btn-ghost" style={{
-          flex: 1,
-          padding: '8px 0',
-          fontSize: 13
-        }}>
-            👁 View Solution
-          </button>
+          {/* Action Buttons Header */}
+          <div style={{
+            display: 'flex',
+            borderBottom: (showHints || showSolution) ? '1px solid var(--border)' : 'none',
+            background: 'var(--surface)'
+          }}>
+            <button 
+              onClick={handleToggleHint} 
+              className="btn btn-ghost" 
+              style={{
+                flex: 1,
+                padding: '12px 0',
+                fontSize: 13,
+                borderRadius: 0,
+                borderRight: '1px solid var(--border)',
+                color: showHints ? 'var(--warning)' : 'var(--text-secondary)',
+                background: showHints ? 'var(--warning-muted)' : 'transparent',
+                fontWeight: showHints ? 600 : 500,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              💡 {showHints ? 'Hide Hints' : (hintsUsed > 0 ? `Hints (${hintsUsed}/3)` : 'Get Hint')}
+            </button>
+            <button 
+              onClick={() => setShowSolution(!showSolution)} 
+              className="btn btn-ghost" 
+              style={{
+                flex: 1,
+                padding: '12px 0',
+                fontSize: 13,
+                borderRadius: 0,
+                color: showSolution ? 'var(--success)' : 'var(--text-secondary)',
+                background: showSolution ? 'var(--success-muted)' : 'transparent',
+                fontWeight: showSolution ? 600 : 500,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              👁 {showSolution ? 'Hide Solution' : 'View Solution'}
+            </button>
+          </div>
+
+          {/* Expandable Hints Area */}
+          <div style={{
+            maxHeight: showHints ? '500px' : '0px',
+            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'hidden'
+          }}>
+            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {hintsUsed >= 1 && (
+                <div>
+                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>💡</span> Conceptual Hint
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {question.hint_conceptual || "Use a basic SELECT statement to retrieve specific columns from the table."}
+                  </p>
+                </div>
+              )}
+              {hintsUsed >= 2 && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🏗️</span> Structural Hint
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    {question.hint_structural || "SELECT column1, column2 FROM table_name;"}
+                  </p>
+                </div>
+              )}
+              {hintsUsed >= 3 && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🎯</span> Near-Solution Hint
+                  </h4>
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                    {question.hint_near_solution || "SELECT first_name, last_name, gender FROM patients;"}
+                  </p>
+                </div>
+              )}
+              
+              {hintsUsed < 3 && (
+                <button 
+                  onClick={handleNextHint} 
+                  className="btn btn-secondary" 
+                  style={{ marginTop: 8, fontSize: 12, padding: '6px 12px', alignSelf: 'flex-start' }}
+                >
+                  Reveal Next Hint
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Expandable Solution Area */}
+          <div style={{
+            maxHeight: showSolution ? '500px' : '0px',
+            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            overflow: 'hidden',
+            borderTop: (showSolution && showHints) ? '1px solid var(--border)' : 'none'
+          }}>
+            <div style={{ padding: 16, background: 'var(--success-muted)' }}>
+              <h4 style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>🗝️</span> Solution SQL
+              </h4>
+              <pre style={{
+                margin: 0,
+                fontSize: 13,
+                color: 'var(--text)',
+                fontFamily: 'var(--font-mono)',
+                whiteSpace: 'pre-wrap',
+                background: 'var(--surface)',
+                padding: 12,
+                borderRadius: 6,
+                border: '1px solid var(--success-muted)'
+              }}>
+                {question.solutionSQL}
+              </pre>
+            </div>
+          </div>
         </div>
 
         {/* Expected Output */}
-        <div style={{
-        borderTop: '1px solid var(--border)',
-        paddingTop: 16,
-        marginTop: 8
-      }}>
-          <h3 style={{
-          fontSize: 14,
-          color: 'var(--text)',
-          marginBottom: 12
-        }}>Expected Output</h3>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <h3 style={{ fontSize: 14, color: 'var(--text)', marginBottom: 12 }}>Expected Output</h3>
           <div style={{
-          background: 'var(--surface)',
-          borderRadius: 6,
-          border: '1px solid var(--border)',
-          overflow: 'auto',
-          maxHeight: 300
-        }}>
-            {!expectedResult ? <div style={{
-            padding: 16,
-            textAlign: 'center',
-            color: 'var(--muted)',
-            fontSize: 12
+            background: 'var(--surface)',
+            borderRadius: 6,
+            border: '1px solid var(--border)',
+            overflow: 'auto',
+            maxHeight: 300
           }}>
+            {!expectedResult ? (
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>
                 Computing expected result...
-              </div> : expectedResult.columns.length > 0 ? <table style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: 12
-          }}>
+              </div>
+            ) : expectedResult.columns.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                 <thead>
                   <tr>
-                    {expectedResult.columns.map(col => <th key={col} style={{
-                  padding: '6px 10px',
-                  textAlign: 'left',
-                  borderBottom: '1px solid var(--border)',
-                  background: 'var(--surface-2)',
-                  position: 'sticky',
-                  top: 0,
-                  fontWeight: 600,
-                  color: 'var(--text)'
-                }}>
+                    {expectedResult.columns.map(col => (
+                      <th key={col} style={{
+                        padding: '8px 12px',
+                        textAlign: 'left',
+                        borderBottom: '1px solid var(--border)',
+                        background: 'var(--surface-2)',
+                        position: 'sticky',
+                        top: 0,
+                        fontWeight: 600,
+                        color: 'var(--text)'
+                      }}>
                         {col}
-                      </th>)}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {(expectedResult.rows || []).map((row, i) => <tr key={i} style={{
-                borderBottom: '1px solid var(--border)'
-              }}>
-                      {row.map((val, j) => <td key={j} style={{
-                  padding: '6px 10px',
-                  color: 'var(--text-secondary)'
-                }}>
-                          {val === null ? <span style={{
-                    color: 'var(--muted)',
-                    fontStyle: 'italic'
-                  }}>null</span> : String(val)}
-                        </td>)}
-                    </tr>)}
+                  {(expectedResult.rows || []).map((row, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                      {row.map((val, j) => (
+                        <td key={j} style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>
+                          {val === null ? <span style={{ color: 'var(--muted)', fontStyle: 'italic' }}>null</span> : String(val)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
-              </table> : <div style={{
-            padding: 16,
-            textAlign: 'center',
-            color: 'var(--muted)',
-            fontSize: 12
-          }}>
+              </table>
+            ) : (
+              <div style={{ padding: 16, textAlign: 'center', color: 'var(--muted)', fontSize: 12 }}>
                 No specific output required.
-              </div>}
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

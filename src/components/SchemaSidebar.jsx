@@ -1,11 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { DB_INFO } from '../types';
+import { buildRelationshipMap, findJoinPath, generateJoinSQL, analyzeNormalForm } from '../utils/sqlAnalysis';
+
 export function SchemaSidebar({
   dbName,
+  dbInstance,
   onPreviewTable
 }) {
   const [expandedTables, setExpandedTables] = useState(new Set());
   const [expandedSection, setExpandedSection] = useState('schema');
+  
+  // Relationship Navigator State
+  const [relationships, setRelationships] = useState([]);
+  const [selectedTables, setSelectedTables] = useState([]);
+  const [joinPath, setJoinPath] = useState(null);
   const dbInfo = typeof dbName === 'string' ? DB_INFO[dbName] : {
     name: dbName.name,
     tables: dbName.schema
@@ -46,6 +54,39 @@ export function SchemaSidebar({
     url: 'https://mode.com/sql-tutorial/sql-is-null/',
     icon: '⚠️'
   }];
+
+  // Load relationships
+  useEffect(() => {
+    if (dbInstance) {
+      setRelationships(buildRelationshipMap(dbInstance));
+    } else {
+      setRelationships([]);
+    }
+    setSelectedTables([]);
+    setJoinPath(null);
+  }, [dbInstance]);
+
+  const handleTableSelect = (e, tableName) => {
+    e.stopPropagation();
+    let newSelected = [...selectedTables];
+    if (newSelected.includes(tableName)) {
+      newSelected = newSelected.filter(t => t !== tableName);
+    } else {
+      newSelected.push(tableName);
+      if (newSelected.length > 2) newSelected.shift();
+    }
+    setSelectedTables(newSelected);
+
+    if (newSelected.length === 2) {
+      const path = findJoinPath(newSelected[0], newSelected[1], relationships);
+      setJoinPath(path);
+    } else {
+      setJoinPath(null);
+    }
+  };
+
+  const generatedJoinSQL = useMemo(() => generateJoinSQL(joinPath), [joinPath]);
+
   return <div style={{
     height: '100%',
     overflowY: 'auto',
@@ -124,14 +165,41 @@ export function SchemaSidebar({
               alignItems: 'center',
               padding: '10px 14px',
               cursor: 'pointer',
-              background: isExpanded ? 'var(--surface-2)' : 'transparent',
-              color: isExpanded ? 'var(--primary)' : 'var(--text)'
+              background: isExpanded ? 'var(--surface-2)' : selectedTables.includes(table.name) ? 'var(--primary-light)' : 'transparent',
+              color: isExpanded || selectedTables.includes(table.name) ? 'var(--primary)' : 'var(--text)'
             }}>
                     <span style={{
                 fontSize: 13,
                 fontWeight: 600,
-                flex: 1
-              }}>{table.name}</span>
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                      {table.name}
+                      <span title="Normal Form" style={{
+                        fontSize: '9px',
+                        background: 'var(--surface)',
+                        color: 'var(--text-secondary)',
+                        padding: '2px 4px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--border)'
+                      }}>
+                        {dbInstance ? analyzeNormalForm(dbInstance, table.name).nf : ''}
+                      </span>
+                    </span>
+                    <button onClick={e => handleTableSelect(e, table.name)} title="Select for Join Path" style={{
+                      background: selectedTables.includes(table.name) ? 'var(--primary)' : 'transparent',
+                      color: selectedTables.includes(table.name) ? 'white' : 'var(--muted)',
+                      border: '1px solid ' + (selectedTables.includes(table.name) ? 'var(--primary)' : 'var(--border)'),
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      padding: '2px 4px',
+                      marginRight: '6px',
+                      cursor: 'pointer',
+                    }}>
+                      🔗
+                    </button>
                     <button onClick={e => {
                 e.stopPropagation();
                 onPreviewTable(table.name);
@@ -168,7 +236,10 @@ export function SchemaSidebar({
               padding: '0 14px 10px 14px',
               background: 'var(--surface-2)'
             }}>
-                      {table.columns.map(col => <div key={col.name} style={{
+                      {table.columns.map(col => {
+                const isFK = relationships.some(r => r.fromTable === table.name && r.fromColumn === col.name);
+                const isPK = col.isPrimaryKey || (col.name === 'id' && !isFK) || (col.name.endsWith('_id') && !isFK);
+                return <div key={col.name} style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -183,20 +254,29 @@ export function SchemaSidebar({
                   gap: 6,
                   overflow: 'hidden'
                 }}>
-                            {col.isPrimaryKey ? <span title="Primary Key" style={{
-                    fontSize: 13,
-                    lineHeight: 1
-                  }}>🔑</span> : col.isForeignKey ? <span title="Foreign Key" style={{
-                    fontSize: 13,
-                    lineHeight: 1
-                  }}>🗝️</span> : <span style={{
-                    width: 13
+                            {isPK ? <span title="Primary Key" style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    background: 'rgba(239, 175, 0, 0.15)',
+                    color: '#d4a000',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                  }}>PK</span> : isFK ? <span title="Foreign Key" style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#3b82f6',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                  }}>FK</span> : <span style={{
+                    width: 18 // Match badge width roughly to align
                   }} />}
                             <span style={{
                     color: 'var(--text)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    textOverflow: 'ellipsis',
+                    fontWeight: isPK || isFK ? 600 : 400
                   }}>
                               {col.name}
                               {col.isNullable && <span style={{
@@ -215,10 +295,42 @@ export function SchemaSidebar({
                 }}>
                             {col.type}
                           </span>
-                        </div>)}
+                        </div>
+                })}
                     </div>}
                 </div>;
         })}
+
+            {/* Join Path Finder Result */}
+            {selectedTables.length === 2 && (
+              <div style={{ padding: '12px 14px', background: 'var(--primary-light)', borderBottom: '1px solid var(--border)', fontSize: '12px' }}>
+                <div style={{ fontWeight: 700, marginBottom: '6px', color: 'var(--primary)' }}>🔗 Join Path Suggestion</div>
+                {joinPath ? (
+                  <>
+                    <div style={{ marginBottom: '8px', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                      {joinPath.map((step, i) => (
+                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontWeight: 600, background: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border)' }}>{step.table}</span>
+                          {i < joinPath.length - 1 && <span style={{ color: 'var(--muted)' }}>→</span>}
+                        </span>
+                      ))}
+                    </div>
+                    <pre style={{ margin: 0, padding: '8px', background: 'var(--bg)', borderRadius: '6px', overflowX: 'auto', border: '1px solid var(--border)' }}>
+                      <code>{generatedJoinSQL}</code>
+                    </pre>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ marginTop: '8px', width: '100%', padding: '4px', fontSize: '11px' }}
+                      onClick={() => navigator.clipboard.writeText(generatedJoinSQL).then(() => alert('Copied to clipboard!'))}
+                    >
+                      Copy SQL
+                    </button>
+                  </>
+                ) : (
+                  <div style={{ color: 'var(--error)' }}>No direct relationship found between these tables.</div>
+                )}
+              </div>
+            )}
 
             {/* Key Concepts */}
             <div style={{

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { computeDiff } from '../utils/sqlAnalysis';
 
 // Declare sql.js types
 
@@ -131,6 +132,23 @@ export function useSqlDatabase(dbInput) {
   const runVerification = useCallback(verificationSQL => {
     return executeQuery(verificationSQL);
   }, [executeQuery]);
+
+  const getExplainPlan = useCallback(sql => {
+    if (!sql.trim()) return null;
+    try {
+      // EXPLAIN QUERY PLAN returns rows with id, parent, notused, detail (in SQLite)
+      const results = dbRef.current.exec(`EXPLAIN QUERY PLAN ${sql}`);
+      if (results.length > 0) {
+        return {
+          columns: results[0].columns,
+          rows: results[0].values
+        };
+      }
+      return { columns: [], rows: [] };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  }, []);
   const resetDb = useCallback(async () => {
     if (currentDbRef.current) {
       await initDb(currentDbRef.current);
@@ -232,10 +250,22 @@ export function useSqlDatabase(dbInput) {
       };
     }
 
-    // Helper to stringify a row for sorting/comparison
-    const rowToString = row => row.map(normalize).join('|||');
-    if (requiresOrder) {
+    // Return diff regardless of requiresOrder for educational purposes
+    const diff = computeDiff(expectedRows, userResult.rows);
+    
+    // Order-agnostic comparison (Multiset)
+    if (!requiresOrder) {
+      if (diff.missingRows.length > 0 || diff.extraRows.length > 0 || diff.mismatchedRows.length > 0) {
+        return {
+          isCorrect: false,
+          message: `Result set does not match. Missing: ${diff.missingRows.length}, Extra: ${diff.extraRows.length}, Mismatched: ${diff.mismatchedRows.length}`,
+          diff,
+          expectedColumns
+        };
+      }
+    } else {
       // Strict order comparison
+      const rowToString = row => row.map(normalize).join('|||');
       const mismatchedRows = [];
       for (let i = 0; i < expectedRows.length; i++) {
         if (rowToString(userResult.rows[i]) !== rowToString(expectedRows[i])) {
@@ -246,29 +276,18 @@ export function useSqlDatabase(dbInput) {
         return {
           isCorrect: false,
           message: `${mismatchedRows.length} row(s) don't match the expected result. Order matters for this question.`,
-          mismatchedRows
-        };
-      }
-    } else {
-      // Order-agnostic comparison (Multiset)
-      const userRowStrings = userResult.rows.map(rowToString).sort();
-      const expectedRowStrings = expectedRows.map(rowToString).sort();
-      let mismatches = 0;
-      for (let i = 0; i < expectedRowStrings.length; i++) {
-        if (userRowStrings[i] !== expectedRowStrings[i]) {
-          mismatches++;
-        }
-      }
-      if (mismatches > 0) {
-        return {
-          isCorrect: false,
-          message: `Result set does not match. Found differences in ${mismatches} row(s).`
+          mismatchedRows,
+          diff,
+          expectedColumns
         };
       }
     }
+
     return {
       isCorrect: true,
-      message: 'Correct! Great work!'
+      message: 'Correct! Great work!',
+      diff,
+      expectedColumns
     };
   }, []);
   return {
@@ -278,6 +297,8 @@ export function useSqlDatabase(dbInput) {
     resetDb,
     validateAnswer,
     runVerification,
-    getExpectedResultDynamic
+    getExpectedResultDynamic,
+    getExplainPlan,
+    dbInstance: dbRef.current
   };
 }
