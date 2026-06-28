@@ -23,18 +23,18 @@ function loadSqlJs() {
   return sqlJsPromise;
 }
 
-// Import all SQL seed files as raw strings
-const seedModules = {
-  hospital: () => import('../data/databases/hospital.sql?raw').then(m => m.default),
-  ecommerce: () => import('../data/databases/ecommerce.sql?raw').then(m => m.default),
-  university: () => import('../data/databases/university.sql?raw').then(m => m.default),
-  airlines: () => import('../data/databases/airlines.sql?raw').then(m => m.default),
-  banking: () => import('../data/databases/banking.sql?raw').then(m => m.default),
-  hr: () => import('../data/databases/hr.sql?raw').then(m => m.default),
-  movies: () => import('../data/databases/movies.sql?raw').then(m => m.default),
-  library: () => import('../data/databases/library.sql?raw').then(m => m.default),
-  sports: () => import('../data/databases/sports.sql?raw').then(m => m.default),
-  music: () => import('../data/databases/music.sql?raw').then(m => m.default)
+// We no longer import raw text files since they have been scaled to 50k rows binary files
+const dbPaths = {
+  hospital: '/databases/hospital.sqlite',
+  ecommerce: '/databases/ecommerce.sqlite',
+  university: '/databases/university.sqlite',
+  airlines: '/databases/airlines.sqlite',
+  banking: '/databases/banking.sqlite',
+  hr: '/databases/hr.sqlite',
+  movies: '/databases/movies.sqlite',
+  library: '/databases/library.sqlite',
+  sports: '/databases/sports.sqlite',
+  music: '/databases/music.sqlite'
 };
 export function useSqlDatabase(dbInput) {
   const [isLoading, setIsLoading] = useState(true);
@@ -57,21 +57,22 @@ export function useSqlDatabase(dbInput) {
         dbRef.current = null;
       }
 
-      let seedSql = '';
+      let db;
       let dbName = '';
+      
       if (typeof input === 'string') {
-        seedSql = await seedModules[input]();
         dbName = input;
+        const response = await fetch(dbPaths[input]);
+        if (!response.ok) throw new Error(`Failed to fetch database file for ${input}`);
+        const buffer = await response.arrayBuffer();
+        db = new sqlJsRef.current.Database(new Uint8Array(buffer));
       } else if (input && input.initSql) {
-        seedSql = input.initSql;
         dbName = input.id;
+        db = new sqlJsRef.current.Database();
+        db.run(input.initSql);
       } else {
         throw new Error('Invalid database input');
       }
-
-      // Create new DB and run seed
-      const db = new sqlJsRef.current.Database();
-      db.run(seedSql);
       dbRef.current = db;
       currentDbRef.current = dbName;
       setIsLoading(false);
