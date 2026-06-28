@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database } from 'lucide-react';
+import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database, CheckCircle2, Timer, Trophy, BarChart3, Award, TrendingUp, ArrowRight } from 'lucide-react';
 import { DB_INFO } from './types';
 import { allQuestions, getQuestionsForDb } from './data/index';
 import { useSqlDatabase } from './hooks/useSqlDatabase';
@@ -119,7 +119,7 @@ function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, set
     <section className="home-hero">
       <div className="home-hero-content">
         <div className="home-hero-badge">
-          <Zap size={11} />
+          <Database size={11} />
           Real-World SQL Practice Platform
         </div>
         <h2>Master SQL with <span>Real Data</span></h2>
@@ -127,40 +127,53 @@ function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, set
 
         <div className="hero-cta-row">
           <button className="hero-btn-start" onClick={() => navigate('/practice/airlines')}>
-            <Play size={15} strokeWidth={2.5} />
+            <Play size={15} strokeWidth={2.5} fill="currentColor" />
             Start Practicing
+            <ArrowRight size={15} strokeWidth={2} style={{ marginLeft: 2 }} />
           </button>
           <span className="hero-meta">
-            🏆 {score.toLocaleString()} pts · 🎖 {badges} badges earned
+            <Trophy size={13} strokeWidth={2} style={{ flexShrink: 0, color: '#f59e0b' }} />
+            {score.toLocaleString()} pts
+            <span style={{ width: 1, height: 12, background: 'var(--border)', display: 'inline-block', margin: '0 4px' }} />
+            <Award size={13} strokeWidth={2} style={{ flexShrink: 0, color: '#8b5cf6' }} />
+            {badges} badges
           </span>
         </div>
 
         <div className="hero-stats-row">
           <div className="hero-stat-card">
-            <div className="hero-stat-icon" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.15)' }}>✅</div>
+            <div className="hero-stat-icon" style={{ background: 'rgba(5,150,105,0.1)', border: '1px solid rgba(5,150,105,0.2)' }}>
+              <CheckCircle2 size={20} color="#059669" strokeWidth={2} />
+            </div>
             <div className="hero-stat-info">
               <span className="hero-stat-value" style={{ color: 'var(--success)' }}>{totalComplete}</span>
               <span className="hero-stat-label">Solved</span>
             </div>
           </div>
           <div className="hero-stat-card">
-            <div className="hero-stat-icon" style={{ background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.15)' }}>⚡</div>
+            <div className="hero-stat-icon" style={{ background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.2)' }}>
+              <Timer size={20} color="#d97706" strokeWidth={2} />
+            </div>
             <div className="hero-stat-info">
               <span className="hero-stat-value" style={{ color: '#d97706' }}>{totalAttempted}</span>
               <span className="hero-stat-label">In Progress</span>
             </div>
           </div>
           <div className="hero-stat-card">
-            <div className="hero-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.15)' }}>🏆</div>
+            <div className="hero-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
+              <Trophy size={20} color="#7c3aed" strokeWidth={2} />
+            </div>
             <div className="hero-stat-info">
               <span className="hero-stat-value" style={{ color: '#7c3aed' }}>{score.toLocaleString()}</span>
               <span className="hero-stat-label">Score</span>
             </div>
           </div>
           <div className="hero-stat-card">
-            <div className="hero-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)' }}>📊</div>
+            <div className="hero-stat-icon" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.2)' }}>
+              <BarChart3 size={20} color="#2563eb" strokeWidth={2} />
+            </div>
             <div className="hero-stat-info">
-              <span className="hero-stat-value" style={{ color: '#059669' }}>{totalPct}%</span>
+              <span className="hero-stat-value" style={{ color: '#2563eb' }}>{totalPct}%</span>
               <span className="hero-stat-label">Complete</span>
             </div>
           </div>
