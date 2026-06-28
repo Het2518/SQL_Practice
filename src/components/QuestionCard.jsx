@@ -131,22 +131,64 @@ export function QuestionCard({
 
         {/* Keywords */}
         <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 6,
-        marginBottom: 24
-      }}>
-          {question.keywords.map(kw => <span key={kw} style={{
-          background: 'var(--surface-2)',
-          border: '1px solid var(--border)',
-          color: 'var(--text-secondary)',
-          padding: '2px 8px',
-          borderRadius: 4,
-          fontSize: 11,
-          fontWeight: 600
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 24
         }}>
-              {kw}
-            </span>)}
+          {question.keywords.map(kw => {
+            if (kw.startsWith('company:')) {
+              const company = kw.split(':')[1];
+              return (
+                <span key={kw} style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  🏢 {company} Interview
+                </span>
+              );
+            }
+            if (kw.startsWith('topic:')) {
+              const topic = kw.split(':')[1];
+              return (
+                <span key={kw} style={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}>
+                  🎯 {topic}
+                </span>
+              );
+            }
+            return (
+              <span key={kw} style={{
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+                padding: '4px 10px',
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 600
+              }}>
+                {kw}
+              </span>
+            );
+          })}
         </div>
 
         {/* Actions (Hints / Solution) */}

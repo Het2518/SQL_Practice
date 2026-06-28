@@ -2,7 +2,7 @@
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS branches (
-  branch_id INTEGER PRIMARY KEY, name TEXT, city TEXT, country TEXT, manager_employee_id INTEGER
+  branch_id INTEGER PRIMARY KEY, name TEXT, city TEXT, country TEXT, manager_employee_id INTEGER REFERENCES employees(employee_id)
 );
 CREATE TABLE IF NOT EXISTS customers (
   customer_id INTEGER PRIMARY KEY, first_name TEXT, last_name TEXT, email TEXT,
@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS employees (
 CREATE TABLE IF NOT EXISTS accounts (
   account_id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customers(customer_id),
   branch_id INTEGER REFERENCES branches(branch_id), type TEXT, balance REAL,
-  opened_at DATE, overdraft_limit REAL DEFAULT 0, is_active INTEGER DEFAULT 1
+  opened_at DATE, overdraft_limit REAL DEFAULT 0, is_active INTEGER DEFAULT 1,
+  rate_id INTEGER REFERENCES interest_rates(rate_id)
 );
 CREATE TABLE IF NOT EXISTS transactions (
   txn_id INTEGER PRIMARY KEY, account_id INTEGER REFERENCES accounts(account_id),
@@ -87,26 +88,26 @@ INSERT INTO customers VALUES
   (20,'Tina','Wright','tina@email.com','+1-555-1020','1969-09-12','SSN020');
 
 INSERT INTO accounts VALUES
-  (1,1,1,'Savings',15000.00,'2020-01-15',500,1),
-  (2,1,1,'Checking',3200.00,'2020-01-15',1000,1),
-  (3,2,2,'Savings',42000.00,'2018-06-10',0,1),
-  (4,3,1,'Savings',8500.00,'2021-03-22',0,1),
-  (5,4,3,'Savings',125000.00,'2015-11-05',2000,1),
-  (6,5,2,'Checking',2100.00,'2022-07-18',500,1),
-  (7,6,1,'Savings',67000.00,'2017-04-30',0,1),
-  (8,7,4,'Savings',4200.00,'2023-01-10',0,1),
-  (9,8,2,'Savings',0.00,'2010-08-25',0,0),
-  (10,9,1,'Checking',11500.00,'2019-12-01',1000,1),
-  (11,10,3,'Savings',89000.00,'2016-03-15',0,1),
-  (12,11,5,'Checking',5600.00,'2022-09-20',500,1),
-  (13,12,2,'Savings',234000.00,'2008-05-12',5000,1),
-  (14,13,4,'Savings',1200.00,'2023-06-05',0,1),
-  (15,14,1,'Savings',35000.00,'2018-10-18',1000,1),
-  (16,15,5,'Checking',7800.00,'2021-02-28',500,1),
-  (17,2,2,'Checking',6400.00,'2018-06-10',500,1),
-  (18,5,3,'Savings',15600.00,'2022-07-18',0,1),
-  (19,6,1,'Checking',4300.00,'2017-04-30',500,1),
-  (20,9,5,'Savings',22000.00,'2019-12-01',0,1);
+  (1,1,1,'Savings',15000.00,'2020-01-15',500,1,1),
+  (2,1,1,'Checking',3200.00,'2020-01-15',1000,1,2),
+  (3,2,2,'Savings',42000.00,'2018-06-10',0,1,1),
+  (4,3,1,'Savings',8500.00,'2021-03-22',0,1,1),
+  (5,4,3,'Savings',125000.00,'2015-11-05',2000,1,1),
+  (6,5,2,'Checking',2100.00,'2022-07-18',500,1,2),
+  (7,6,1,'Savings',67000.00,'2017-04-30',0,1,1),
+  (8,7,4,'Savings',4200.00,'2023-01-10',0,1,1),
+  (9,8,2,'Savings',0.00,'2010-08-25',0,0,1),
+  (10,9,1,'Checking',11500.00,'2019-12-01',1000,1,2),
+  (11,10,3,'Savings',89000.00,'2016-03-15',0,1,1),
+  (12,11,5,'Checking',5600.00,'2022-09-20',500,1,2),
+  (13,12,2,'Savings',234000.00,'2008-05-12',5000,1,1),
+  (14,13,4,'Savings',1200.00,'2023-06-05',0,1,1),
+  (15,14,1,'Savings',35000.00,'2018-10-18',1000,1,1),
+  (16,15,5,'Checking',7800.00,'2021-02-28',500,1,2),
+  (17,2,2,'Checking',6400.00,'2018-06-10',500,1,2),
+  (18,5,3,'Savings',15600.00,'2022-07-18',0,1,1),
+  (19,6,1,'Checking',4300.00,'2017-04-30',500,1,2),
+  (20,9,5,'Savings',22000.00,'2019-12-01',0,1,1);
 
 INSERT INTO transactions VALUES
   (1,1,'Deposit',5000.00,'Initial deposit','2020-01-15 09:00:00',3),

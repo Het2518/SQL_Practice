@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS patients (
 CREATE TABLE IF NOT EXISTS departments (
   department_id   INTEGER PRIMARY KEY,
   department_name TEXT    NOT NULL,
-  head_doctor_id  INTEGER
+  head_doctor_id  INTEGER REFERENCES doctors(doctor_id)
 );
 
 CREATE TABLE IF NOT EXISTS doctors (

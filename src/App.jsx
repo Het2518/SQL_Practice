@@ -610,16 +610,24 @@ export default function App() {
   const [activeQuestion, setActiveQuestion] = useState(null);
 
   const handleSelectCustomDb = useCallback(customDb => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     setActiveDb(customDb);
     setActiveQuestion({ id: 'sandbox' });
     setShowCustomModal(false);
-  }, []);
+  }, [user]);
   const handleSelectDb = useCallback(db => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
     const dbQs = getQuestionsForDb(db);
     const firstIncomplete = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
     setActiveDb(db);
     setActiveQuestion(firstIncomplete);
-  }, [progress]);
+  }, [progress, user]);
   // Sync progress from Supabase
   useEffect(() => {
     if (user) {

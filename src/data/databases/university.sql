@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS departments (
   department_id    INTEGER PRIMARY KEY,
   name             TEXT NOT NULL,
   building         TEXT,
-  head_professor_id INTEGER
+  head_professor_id INTEGER REFERENCES professors(professor_id)
 );
 
 CREATE TABLE IF NOT EXISTS professors (
@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS classrooms (
   building      TEXT,
   room_number   TEXT,
   capacity      INTEGER,
-  has_projector INTEGER DEFAULT 1
+  has_projector INTEGER DEFAULT 1,
+  department_id INTEGER REFERENCES departments(department_id)
 );
 
 CREATE TABLE IF NOT EXISTS enrollments (
@@ -140,12 +141,16 @@ INSERT INTO courses VALUES
   (20,'Marketing',3,8,NULL);
 
 INSERT INTO classrooms VALUES
-  (1,'Tech Hall','101',30,1),(2,'Tech Hall','102',40,1),
-  (3,'Science Building','201',50,1),(4,'Science Building','202',60,1),
-  (5,'Arts Building','301',35,0),(6,'Arts Building','302',45,1),
-  (7,'Life Sciences','401',55,1),(8,'Business School','501',80,1),
-  (9,'Tech Hall','103',25,1),(10,'Science Building','203',70,1);
-
+  (1,'Tech Hall','101',30,1,1),
+  (2,'Tech Hall','102',40,1,1),
+  (3,'Science Building','201',50,1,2),
+  (4,'Science Building','202',60,1,2),
+  (5,'Arts Building','301',35,0,4),
+  (6,'Arts Building','302',45,1,4),
+  (7,'Life Sciences','401',55,1,6),
+  (8,'Business School','501',80,1,8),
+  (9,'Tech Hall','103',25,1,1),
+  (10,'Science Building','203',70,1,2);
 INSERT INTO students VALUES
   (1,'Emma','Wilson','e.wilson@student.edu','2001-03-15','Computer Science',1,'2022-09-01'),
   (2,'Liam','Johnson','l.johnson@student.edu','2000-07-22','Mathematics',3,'2021-09-01'),

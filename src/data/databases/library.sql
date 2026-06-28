@@ -84,7 +84,7 @@ INSERT INTO members VALUES
   (11,'Karen','Anderson','karen@email.com','2020-05-07',2),
   (12,'Leo','Thomas','leo@email.com','2021-10-16',4),
   (13,'Mia','Jackson','mia@email.com','2023-01-04',1),
-  (14,'Nathan','White','nathan@email.com','2019-03-19','2019-03-19'),
+  (14,'Nathan','White','nathan@email.com','2019-03-19',3),
   (15,'Olivia','Harris','olivia@email.com','2022-11-30',5);
 
 INSERT INTO loans VALUES
