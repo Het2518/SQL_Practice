@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, User, Activity, LogOut, Code, Award, ExternalLink, Moon, Bell, ShieldAlert, LayoutDashboard, Database, ChevronRight, ToggleRight, Type } from 'lucide-react';
+import { Settings, User, Activity, LogOut, Code, Award, ExternalLink, Moon, Bell, ShieldAlert, LayoutDashboard, Database, ChevronRight, ToggleRight, Type, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { allQuestions } from '../data/index';
 import { BADGE_DEFS } from '../hooks/useGamification';
@@ -141,6 +141,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         {/* Navigation Tabs */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
           <SidebarItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<Trophy size={18} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
           <SidebarItem icon={<Settings size={18} />} label="Preferences" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
           <SidebarItem icon={<User size={18} />} label="Account" active={activeTab === 'account'} onClick={() => setActiveTab('account')} />
         </nav>
@@ -156,6 +157,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
       <main style={{ flex: 1, padding: '48px 64px', overflowY: 'auto' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           {activeTab === 'dashboard' && <DashboardTab gameState={gameState} difficultyStats={difficultyStats} />}
+          {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={difficultyStats.score} />}
           {activeTab === 'settings' && <SettingsTab settings={settings} onSaveSettings={onSaveSettings} />}
           {activeTab === 'account' && <AccountTab user={user} onSignOut={onSignOut} />}
         </div>
@@ -500,6 +502,175 @@ function AccountTab({ user, onSignOut }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leaderboard Tab Component
+// ─────────────────────────────────────────────────────────────────────────────
+function LeaderboardTab({ currentUser, currentScore }) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    // Fetch top 50 users by score from user_progress
+    // Score = easy*10 + medium*30 + hard*50 is computed server side through completed_questions count
+    // We store score indirectly — fetch all user_progress rows and compute client-side
+    supabase
+      .from('user_progress')
+      .select('user_id, badges, activity, completed_questions')
+      .order('user_id', { ascending: true })
+      .limit(200)
+      .then(({ data, error: err }) => {
+        if (err) { setError(err.message); setLoading(false); return; }
+        if (!data || data.length === 0) { setEntries([]); setLoading(false); return; }
+
+        // Compute scores per user
+        const processed = data.map(row => {
+          const completed = Object.values(row.completed_questions || {}).filter(v => v === 'complete').length;
+          // Without difficulty info per-question per-user, use flat 20pts each for simplicity
+          const score = completed * 20;
+          const badges = (row.badges || []).length;
+          const activityDays = Object.keys(row.activity || {}).length;
+          const isCurrentUser = row.user_id === currentUser?.id;
+          return { userId: row.user_id, score, badges, activityDays, isCurrentUser };
+        });
+
+        // Sort by score descending
+        processed.sort((a, b) => b.score - a.score);
+
+        setEntries(processed.slice(0, 50));
+        setLoading(false);
+      });
+  }, [currentUser]);
+
+  const MEDAL = ['🥇', '🥈', '🥉'];
+
+  const getRankColor = (idx) => {
+    if (idx === 0) return '#FFD700';
+    if (idx === 1) return '#C0C0C0';
+    if (idx === 2) return '#CD7F32';
+    return 'var(--text-secondary)';
+  };
+
+  return (
+    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <div style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px' }}>🏆 Global Leaderboard</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 15 }}>
+          Top {entries.length} practitioners ranked by total score. Practice more to climb!
+        </p>
+      </div>
+
+      {loading && (
+        <div style={{ textAlign: 'center', padding: 80, color: 'var(--muted)' }}>
+          <div style={{ fontSize: 40, marginBottom: 16, animation: 'spin 1s linear infinite' }}>⏳</div>
+          <div style={{ fontWeight: 600 }}>Fetching rankings from the server…</div>
+        </div>
+      )}
+
+      {error && (
+        <div style={{ padding: 24, background: 'var(--error-muted)', borderRadius: 16, color: 'var(--error)', border: '1px solid var(--error)' }}>
+          Failed to load leaderboard: {error}
+        </div>
+      )}
+
+      {!loading && !error && entries.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 80, color: 'var(--muted)' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+          <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 8 }}>No Rankings Yet</div>
+          <div>Be the first to solve problems and claim the #1 spot!</div>
+        </div>
+      )}
+
+      {!loading && !error && entries.length > 0 && (
+        <div style={{ background: 'var(--surface)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
+          {/* Header Row */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '60px 1fr 100px 80px 80px',
+            padding: '12px 24px', background: 'var(--surface-2)',
+            borderBottom: '1px solid var(--border)',
+            fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8,
+          }}>
+            <div>Rank</div>
+            <div>User</div>
+            <div style={{ textAlign: 'right' }}>Score</div>
+            <div style={{ textAlign: 'right' }}>Badges</div>
+            <div style={{ textAlign: 'right' }}>Days</div>
+          </div>
+
+          {entries.map((entry, idx) => (
+            <div
+              key={entry.userId}
+              style={{
+                display: 'grid', gridTemplateColumns: '60px 1fr 100px 80px 80px',
+                padding: '16px 24px',
+                borderBottom: idx < entries.length - 1 ? '1px solid var(--border)' : 'none',
+                background: entry.isCurrentUser
+                  ? 'linear-gradient(90deg, var(--primary-muted) 0%, transparent 100%)'
+                  : idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)',
+                transition: 'background 0.2s',
+                cursor: 'default',
+              }}
+              onMouseEnter={e => { if (!entry.isCurrentUser) e.currentTarget.style.background = 'var(--primary-muted)'; }}
+              onMouseLeave={e => { if (!entry.isCurrentUser) e.currentTarget.style.background = idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)'; }}
+            >
+              {/* Rank */}
+              <div style={{ display: 'flex', alignItems: 'center', fontWeight: 800, fontSize: 18, color: getRankColor(idx) }}>
+                {idx < 3 ? MEDAL[idx] : (
+                  <span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 600 }}>#{idx + 1}</span>
+                )}
+              </div>
+
+              {/* User */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: entry.isCurrentUser
+                    ? 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)'
+                    : `hsl(${(entry.userId.charCodeAt(0) * 37) % 360}, 60%, 55%)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0,
+                }}>
+                  {entry.isCurrentUser ? '👤' : (idx + 1)}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 14 }}>
+                    {entry.isCurrentUser ? (
+                      <span>You <span style={{ fontSize: 12, color: 'var(--primary)', background: 'var(--primary-muted)', padding: '2px 8px', borderRadius: 99, marginLeft: 6, fontWeight: 600 }}>← YOU</span></span>
+                    ) : `Player ${idx + 1}`}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                    {entry.userId.slice(0, 8)}…
+                  </div>
+                </div>
+              </div>
+
+              {/* Score */}
+              <div style={{ textAlign: 'right', fontWeight: 800, fontSize: 16, color: idx === 0 ? '#FFD700' : 'var(--text)' }}>
+                {entry.score.toLocaleString()}
+              </div>
+
+              {/* Badges */}
+              <div style={{ textAlign: 'right', color: 'var(--accent-1)', fontWeight: 600 }}>
+                {'🏅'.repeat(Math.min(entry.badges, 5))} {entry.badges === 0 ? '—' : ''}
+              </div>
+
+              {/* Days Active */}
+              <div style={{ textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                {entry.activityDays}d
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <p style={{ marginTop: 16, fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
+        Rankings update live. Scores based on questions solved (20 pts each).
+      </p>
     </div>
   );
 }

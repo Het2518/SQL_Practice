@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database } from 'lucide-react';
 import { DB_INFO } from './types';
 import { allQuestions, getQuestionsForDb } from './data/index';
 import { useSqlDatabase } from './hooks/useSqlDatabase';
@@ -22,6 +23,8 @@ import { AuthModal } from './components/AuthModal';
 import { UserGuide } from './components/UserGuide';
 import { JoinAnalysisModal } from './components/JoinAnalysisModal';
 import { hasSubquery, convertSubqueryToCTE } from './utils/sqlAnalysis';
+import { useToast } from './components/ToastSystem';
+import { useConfetti } from './components/ConfettiBlast';
 import './styles.css';
 
 // ─── Progress persistence ────────────────────────────────────────────────────
@@ -39,111 +42,198 @@ function saveProgress(p) {
 
 // ─── DB Selector Screen ──────────────────────────────────────────────────────
 const DB_NAMES = Object.keys(DB_INFO);
-function DbSelector({
-  progress,
-  gameState,
-  user,
-  onShowAuth,
-  onShowSettings,
-  /* onSelect removed */
-}) {
+function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, settings, onToggleDark }) {
   const navigate = useNavigate();
   const totalComplete = Object.values(progress).filter(s => s === 'complete').length;
   const totalAttempted = Object.values(progress).filter(s => s === 'attempted').length;
   const totalPct = Math.round((totalComplete + totalAttempted * 0.5) / 600 * 100);
-  return <div className="home-root">
-      {/* Hero Header */}
-      <header className="home-header">
-        <div className="home-logo">
-          <span className="home-logo-icon">⚡</span>
-          <div>
-            <h1 className="home-title">SQL Practice Platform</h1>
-            <p className="home-subtitle">Master SQL across 10 real-world databases · 600 questions</p>
-          </div>
-        </div>
-        <div className="home-stats">
-          <div className="stat-pill">
-            <span className="stat-num">{totalComplete}</span>
-            <span className="stat-label">Complete</span>
-          </div>
-          <div className="stat-pill attempted">
-            <span className="stat-num">{totalAttempted}</span>
-            <span className="stat-label">Attempted</span>
-          </div>
-          <div className="stat-pill">
-            <span className="stat-num">{totalPct}%</span>
-            <span className="stat-label">Progress</span>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <nav className="home-nav">
-            <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)' }}>
-              <span style={{ marginRight: 6 }}>📖</span>Docs
-            </button>
-            <button className="btn btn-ghost" title="Settings" onClick={onShowSettings} style={{ padding: '6px 12px' }}>
-              ⚙️ Settings
-            </button>
-          </nav>
-          {user ? (
-            <button className="btn btn-primary" onClick={() => navigate('/profile')} style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>My Profile</span>
-            </button>
-          ) : (
-            <button className="btn btn-primary" onClick={onShowAuth}>Login / Sync</button>
-          )}
-        </div>
-      </header>
+  const score = gameState?.score ?? 0;
+  const badges = (gameState?.badges ?? []).length;
 
-      {/* Progress bar */}
-      <div className="global-progress-bar">
-        <div className="global-progress-fill" style={{
-        width: `${totalPct}%`
-      }} />
+  return <div className="home-root">
+
+    {/* ── Sticky Navbar ── */}
+    <header className="home-header">
+      <div className="home-logo" onClick={() => {}} style={{ cursor: 'default' }}>
+        <div className="home-logo-badge">
+          <Zap size={17} color="#fff" strokeWidth={2.5} />
+        </div>
+        <div>
+          <div className="home-title">SQL Practice Platform</div>
+          <div className="home-subtitle">10 databases · 600 questions</div>
+        </div>
       </div>
 
-      {/* DB Grid */}
-      <main className="db-grid">
-        {DB_NAMES.map(db => {
+      <div className="home-header-sep" />
+
+      <div className="home-stats">
+        <div className="stat-pill solved">
+          <span className="stat-num">{totalComplete}</span>
+          <span className="stat-label">Solved</span>
+        </div>
+        <div className="stat-pill tried">
+          <span className="stat-num">{totalAttempted}</span>
+          <span className="stat-label">Tried</span>
+        </div>
+        <div className="stat-pill done">
+          <span className="stat-num">{totalPct}%</span>
+          <span className="stat-label">Done</span>
+        </div>
+      </div>
+
+      <nav className="home-nav">
+        <button className="nav-btn" onClick={() => navigate('/guide')}>
+          <BookOpen size={14} />
+          Docs
+        </button>
+        <button className="nav-btn" onClick={onShowSettings}>
+          <SettingsIcon size={14} />
+          Settings
+        </button>
+        <button
+          className="nav-btn nav-btn-icon"
+          onClick={onToggleDark}
+          title={settings?.darkMode ? 'Light Mode' : 'Dark Mode'}
+        >
+          {settings?.darkMode ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
+        </button>
+        {user ? (
+          <button className="nav-btn-primary" onClick={() => navigate('/profile')}>
+            <User size={14} strokeWidth={2.5} />
+            My Profile
+          </button>
+        ) : (
+          <button className="nav-btn-primary" onClick={onShowAuth}>
+            Sign In
+          </button>
+        )}
+      </nav>
+    </header>
+
+    {/* ── Progress Strip ── */}
+    <div className="global-progress-bar">
+      <div className="global-progress-fill" style={{ width: `${totalPct}%` }} />
+    </div>
+
+    {/* ── Hero Banner ── */}
+    <section className="home-hero">
+      <div className="home-hero-content">
+        <div className="home-hero-badge">
+          <Zap size={11} />
+          Real-World SQL Practice Platform
+        </div>
+        <h2>Master SQL with <span>Real Data</span></h2>
+        <p>10 hand-crafted databases. 600 progressive questions. From beginner JOINs to advanced Window Functions — practice the SQL that matters in real jobs.</p>
+
+        <div className="hero-cta-row">
+          <button className="hero-btn-start" onClick={() => navigate('/practice/airlines')}>
+            <Play size={15} strokeWidth={2.5} />
+            Start Practicing
+          </button>
+          <span className="hero-meta">
+            🏆 {score.toLocaleString()} pts · 🎖 {badges} badges earned
+          </span>
+        </div>
+
+        <div className="hero-stats-row">
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon" style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.15)' }}>✅</div>
+            <div className="hero-stat-info">
+              <span className="hero-stat-value" style={{ color: 'var(--success)' }}>{totalComplete}</span>
+              <span className="hero-stat-label">Solved</span>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon" style={{ background: 'rgba(217,119,6,0.1)', border: '1px solid rgba(217,119,6,0.15)' }}>⚡</div>
+            <div className="hero-stat-info">
+              <span className="hero-stat-value" style={{ color: '#d97706' }}>{totalAttempted}</span>
+              <span className="hero-stat-label">In Progress</span>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.15)' }}>🏆</div>
+            <div className="hero-stat-info">
+              <span className="hero-stat-value" style={{ color: '#7c3aed' }}>{score.toLocaleString()}</span>
+              <span className="hero-stat-label">Score</span>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.15)' }}>📊</div>
+            <div className="hero-stat-info">
+              <span className="hero-stat-value" style={{ color: '#059669' }}>{totalPct}%</span>
+              <span className="hero-stat-label">Complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ── Grid Header ── */}
+    <div className="db-grid-header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Choose a Database
+        </h3>
+        <span style={{ background: 'var(--primary-muted)', color: 'var(--primary)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>
+          10
+        </span>
+      </div>
+      <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
+        {600 - totalComplete} questions remaining
+      </span>
+    </div>
+
+    {/* ── DB Cards ── */}
+    <main className="db-grid">
+      {DB_NAMES.map((db, i) => {
         const info = DB_INFO[db];
-        const dbQuestions = getQuestionsForDb(db);
-        const completed = dbQuestions.filter(q => progress[q.id] === 'complete').length;
-        const attempted = dbQuestions.filter(q => progress[q.id] === 'attempted').length;
+        const dbQs = getQuestionsForDb(db);
+        const completed = dbQs.filter(q => progress[q.id] === 'complete').length;
+        const attempted = dbQs.filter(q => progress[q.id] === 'attempted').length;
         const pct = Math.round(completed / info.questionCount * 100);
-        return <button key={db} id={`db-card-${db}`} className="db-card" onClick={() => navigate('/practice/' + db)}>
+        return (
+          <button
+            key={db}
+            id={`db-card-${db}`}
+            className="db-card"
+            onClick={() => navigate('/practice/' + db)}
+            style={{ animationDelay: `${i * 0.04}s` }}
+          >
+            <div className="db-card-body">
               <div className="db-card-header">
                 <span className="db-card-icon">{info.icon}</span>
                 <div className="db-card-meta">
                   <span className="db-card-name">{info.label}</span>
                   <span className="db-card-count">{info.tableCount} tables · {info.questionCount} questions</span>
                 </div>
-                <div className="db-card-pct">{pct}%</div>
+                <div className={`db-card-pct${pct === 100 ? ' complete' : ''}`}>{pct}%</div>
               </div>
               <p className="db-card-desc">{info.description}</p>
               <div className="db-card-concepts">
-                {info.concepts.map(c => <span key={c} className="tag">{c}</span>)}
+                {info.concepts.slice(0, 4).map(c => <span key={c} className="tag">{c}</span>)}
               </div>
-              <div className="db-card-progress">
-                <div className="db-progress-bar">
-                  <div className="db-progress-fill" style={{
-                width: `${pct}%`
-              }} />
-                  {attempted > 0 && <div className="db-progress-attempted" style={{
-                width: `${Math.round(attempted / info.questionCount * 100)}%`,
-                left: `${pct}%`
-              }} />}
-                </div>
-                <span className="db-progress-label">
-                  {completed}/{info.questionCount}
-                </span>
+            </div>
+            <div className="db-card-footer">
+              <div className="db-progress-bar">
+                <div className="db-progress-fill" style={{ width: `${pct}%` }} />
+                {attempted > 0 && (
+                  <div className="db-progress-attempted" style={{
+                    width: `${Math.round(attempted / info.questionCount * 100)}%`,
+                    left: `${pct}%`
+                  }} />
+                )}
               </div>
-            </button>;
+              <span className="db-progress-label">{completed}/{info.questionCount}</span>
+            </div>
+          </button>
+        );
       })}
-      </main>
-    </div>;
+    </main>
+  </div>;
 }
 
 // ─── Main Practice View ──────────────────────────────────────────────────────
+
 function PracticeView({
   progress,
   user,
@@ -151,6 +241,7 @@ function PracticeView({
   onShowAuth,
   onProgressUpdate,
   onShowSettings,
+  onToggleDark,
 }) {
   const navigate = useNavigate();
   const { db: routeDb } = useParams();
@@ -202,6 +293,8 @@ function PracticeView({
   const workspaceRef = useRef(null);
   const [editorHeightPct, setEditorHeightPct] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const toast = useToast();
+  const { fire: fireConfetti, node: confettiNode } = useConfetti();
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -299,6 +392,17 @@ function PracticeView({
         setValidation(val);
         if (val.isCorrect) {
           onProgressUpdate(currentQ, db, 'complete');
+          // Only fire celebration if this is the FIRST time solving it
+          if (progress[currentQ.id] !== 'complete') {
+            const diff = (currentQ.difficulty || '').toLowerCase();
+            const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
+            fireConfetti();
+            toast({
+              type: 'success',
+              title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
+              message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
+            });
+          }
         } else if (progress[currentQ.id] !== 'complete') {
           onProgressUpdate(currentQ, db, 'attempted');
         }
@@ -407,17 +511,21 @@ function PracticeView({
     return <div className="practice-root" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
     {/* Top Nav */}
     <nav className="practice-nav" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)', gap: 12 }}>
-      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600 }}>
-        Run ▶
+      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 5 }}>
+        <Play size={14} strokeWidth={2.5} />
+        Run
       </button>
-      <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)' }}>
-        <span style={{ marginRight: 6 }}>📖</span>Docs
+      <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)', gap: 6 }}>
+        <BookOpen size={14} />
+        Docs
       </button>
-      <button className="btn btn-ghost" title="Settings" onClick={onShowSettings}>
+      <button className="btn btn-ghost" title="Settings" onClick={onShowSettings} style={{ gap: 6 }}>
+        <SettingsIcon size={14} />
         Settings
       </button>
-      <button id="browse-btn" className="btn btn-ghost" onClick={() => setShowBrowser(true)}>
-        View Questions
+      <button id="browse-btn" className="btn btn-ghost" onClick={() => setShowBrowser(true)} style={{ gap: 6 }}>
+        <List size={14} />
+        Questions
       </button>
 
       <div style={{ flex: 1 }} />
@@ -428,7 +536,10 @@ function PracticeView({
         <span style={{ fontSize: 12, color: 'var(--muted)', marginRight: 8 }}>{user.email}</span>
       )}
 
-      <button className="btn btn-ghost" onClick={() => navigate('/')}>Home</button>
+      <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5 }}>
+        <Home size={14} />
+        Home
+      </button>
 
       {/* Choose DB button + dropdown */}
       <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
@@ -439,7 +550,7 @@ function PracticeView({
         >
           <span>{dbInfo.icon}</span>
           <span>{dbInfo.label}</span>
-          <span style={{ fontSize: 10, opacity: 0.6 }}>▼</span>
+          <ChevronDown size={13} strokeWidth={2} style={{ opacity: 0.6 }} />
         </button>
         {showDbPicker && (
           <div style={{
@@ -504,15 +615,27 @@ function PracticeView({
         )}
       </div>
 
-      <button className="btn btn-ghost" onClick={() => setShowERDiagram(true)} title="View ER Diagram">
+      <button className="btn btn-ghost" onClick={() => setShowERDiagram(true)} title="View ER Diagram" style={{ gap: 5 }}>
+        <Database size={14} />
         {dbInfo.label} Schema
       </button>
-      <button id="reset-btn" className="btn btn-ghost" onClick={async () => {
+      <button className="btn btn-ghost" id="reset-btn" onClick={async () => {
         await resetDb();
         setResult(null);
         setValidation({ isCorrect: true, message: 'Database successfully restored to original state!' });
-      }} disabled={isLoading}>
+      }} disabled={isLoading} style={{ gap: 5 }}>
+        <RotateCcw size={14} />
         Reset DB
+      </button>
+      <button
+        className="btn btn-ghost"
+        onClick={onToggleDark}
+        title={settings.darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        style={{ padding: '6px 9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        {settings.darkMode
+          ? <Sun size={16} strokeWidth={2} />
+          : <Moon size={16} strokeWidth={2} />}
       </button>
     </nav>
 
@@ -670,6 +793,7 @@ function PracticeView({
         setResult(null);
       }}
     />
+    {confettiNode}
   </div>;
 }
 
@@ -693,6 +817,14 @@ export default function App() {
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
+
+  const toggleDark = useCallback(() => {
+    setSettings(prev => {
+      const next = { ...prev, darkMode: !prev.darkMode };
+      localStorage.setItem('sql-platform-settings', JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.darkMode ? 'dark' : 'light');
@@ -756,7 +888,7 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} />} />
+        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
 
         <Route path="/guide" element={<UserGuide />} />
         
@@ -769,6 +901,7 @@ export default function App() {
               onShowAuth={() => setShowAuth(true)}
               onShowSettings={() => setShowSettings(true)}
               onProgressUpdate={handleProgressUpdate}
+              onToggleDark={toggleDark}
             />
           </ProtectedRoute>
         } />
