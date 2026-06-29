@@ -15,9 +15,32 @@ export function QuestionBrowser({
   const [selectedDiffs, setSelectedDiffs] = useState(new Set());
   const [selectedStatuses, setSelectedStatuses] = useState(new Set());
   const [selectedKeywords, setSelectedKeywords] = useState(new Set());
+  const [selectedTopics, setSelectedTopics] = useState(new Set());
+  const [selectedCompanies, setSelectedCompanies] = useState(new Set());
+
+  const dynamicTopics = useMemo(() => {
+    const topics = new Set();
+    questions.forEach(q => {
+      q.keywords?.forEach(k => {
+        if (k.startsWith('topic:')) topics.add(k.replace('topic:', ''));
+      });
+    });
+    return Array.from(topics).sort();
+  }, [questions]);
+
+  const dynamicCompanies = useMemo(() => {
+    const comps = new Set();
+    questions.forEach(q => {
+      q.keywords?.forEach(k => {
+        if (k.startsWith('company:')) comps.add(k.replace('company:', ''));
+      });
+    });
+    return Array.from(comps).sort();
+  }, [questions]);
+
   const toggleSet = (set, item) => {
     const next = new Set(set);
-    if (next.has(item)) next.delete(item);else next.add(item);
+    if (next.has(item)) next.delete(item); else next.add(item);
     return next;
   };
   const filtered = useMemo(() => {
@@ -26,11 +49,26 @@ export function QuestionBrowser({
       if (selectedDiffs.size > 0 && !selectedDiffs.has(q.difficulty)) return false;
       const status = progress[q.id] ?? 'incomplete';
       if (selectedStatuses.size > 0 && !selectedStatuses.has(status)) return false;
-      if (selectedKeywords.size > 0 && !q.keywords.some(k => selectedKeywords.has(k))) return false;
+      
+      if (selectedKeywords.size > 0) {
+         const syntaxKws = q.keywords?.filter(k => !k.startsWith('company:') && !k.startsWith('topic:')) || [];
+         if (!syntaxKws.some(k => selectedKeywords.has(k))) return false;
+      }
+      
+      if (selectedTopics.size > 0) {
+         const qTopics = q.keywords?.filter(k => k.startsWith('topic:')).map(k => k.replace('topic:', '')) || [];
+         if (!qTopics.some(t => selectedTopics.has(t))) return false;
+      }
+      
+      if (selectedCompanies.size > 0) {
+         const qComps = q.keywords?.filter(k => k.startsWith('company:')).map(k => k.replace('company:', '')) || [];
+         if (!qComps.some(c => selectedCompanies.has(c))) return false;
+      }
+
       if (search && !q.prompt.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, search]);
+  }, [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, search]);
   const stats = useMemo(() => {
     const total = questions.length;
     const complete = questions.filter(q => progress[q.id] === 'complete').length;
@@ -116,15 +154,35 @@ export function QuestionBrowser({
             <hr className="divider" />
 
             {/* Keyword Filter */}
-            <FilterSection title="Keywords">
+            <FilterSection title="Syntax Keywords">
               {ALL_KEYWORDS.map(kw => <FilterCheckbox key={kw} label={kw} checked={selectedKeywords.has(kw)} onChange={() => setSelectedKeywords(toggleSet(selectedKeywords, kw))} />)}
             </FilterSection>
 
-            {(selectedDbs.size > 0 || selectedDiffs.size > 0 || selectedStatuses.size > 0 || selectedKeywords.size > 0 || search) && <button onClick={() => {
+            {dynamicTopics.length > 0 && (
+              <>
+                <hr className="divider" />
+                <FilterSection title="Topic">
+                  {dynamicTopics.map(t => <FilterCheckbox key={t} label={t} checked={selectedTopics.has(t)} onChange={() => setSelectedTopics(toggleSet(selectedTopics, t))} />)}
+                </FilterSection>
+              </>
+            )}
+
+            {dynamicCompanies.length > 0 && (
+              <>
+                <hr className="divider" />
+                <FilterSection title="Company">
+                  {dynamicCompanies.map(c => <FilterCheckbox key={c} label={c} checked={selectedCompanies.has(c)} onChange={() => setSelectedCompanies(toggleSet(selectedCompanies, c))} />)}
+                </FilterSection>
+              </>
+            )}
+
+            {(selectedDbs.size > 0 || selectedDiffs.size > 0 || selectedStatuses.size > 0 || selectedKeywords.size > 0 || selectedTopics.size > 0 || selectedCompanies.size > 0 || search) && <button onClick={() => {
             setSelectedDbs(new Set());
             setSelectedDiffs(new Set());
             setSelectedStatuses(new Set());
             setSelectedKeywords(new Set());
+            setSelectedTopics(new Set());
+            setSelectedCompanies(new Set());
             setSearch('');
           }} className="btn btn-ghost" style={{
             width: '100%',

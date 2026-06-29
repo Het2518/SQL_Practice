@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Lightbulb, Code } from 'lucide-react';
 
 const difficultyLabel = {
   easy: 'EASY',
@@ -210,128 +211,135 @@ export function QuestionCard({
         </div>
 
         {/* Unified Hint/Solution Section */}
-        <div style={{
-          background: 'var(--surface-2)',
-          borderRadius: 8,
-          border: '1px solid var(--border)',
-          overflow: 'hidden',
-          marginBottom: 24
-        }}>
-          {/* Action Buttons Header */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+          
+          {/* Hints Accordion */}
           <div style={{
-            display: 'flex',
-            borderBottom: (showHints || showSolution) ? '1px solid var(--border)' : 'none',
-            background: 'var(--surface)'
+            background: 'var(--surface-2)',
+            borderRadius: 8,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
           }}>
             <button 
               onClick={handleToggleHint} 
-              className="btn btn-ghost" 
               style={{
-                flex: 1,
-                padding: '12px 0',
-                fontSize: 13,
-                borderRadius: 0,
-                borderRight: '1px solid var(--border)',
-                color: showHints ? 'var(--warning)' : 'var(--text-secondary)',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 16px',
                 background: showHints ? 'var(--warning-muted)' : 'transparent',
-                fontWeight: showHints ? 600 : 500,
-                transition: 'all 0.2s ease'
+                border: 'none',
+                cursor: 'pointer',
+                color: showHints ? 'var(--warning)' : 'var(--text-secondary)',
+                fontWeight: 600,
+                fontSize: 14,
+                transition: 'all 0.2s ease',
               }}
+              onMouseEnter={e => { if (!showHints) e.currentTarget.style.background = 'var(--surface)'; }}
+              onMouseLeave={e => { if (!showHints) e.currentTarget.style.background = 'transparent'; }}
             >
-              💡 {showHints ? 'Hide Hints' : (hintsUsed > 0 ? `Hints (${hintsUsed}/3)` : 'Get Hint')}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Lightbulb size={18} strokeWidth={2.5} />
+                <span>Hints {hintsUsed > 0 ? `(${hintsUsed}/3)` : ''}</span>
+              </div>
+              <ChevronDown size={18} style={{ transform: showHints ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
             </button>
-            <button 
-              onClick={() => setShowSolution(!showSolution)} 
-              className="btn btn-ghost" 
-              style={{
-                flex: 1,
-                padding: '12px 0',
-                fontSize: 13,
-                borderRadius: 0,
-                color: showSolution ? 'var(--success)' : 'var(--text-secondary)',
-                background: showSolution ? 'var(--success-muted)' : 'transparent',
-                fontWeight: showSolution ? 600 : 500,
-                transition: 'all 0.2s ease'
-              }}
-            >
-              👁 {showSolution ? 'Hide Solution' : 'View Solution'}
-            </button>
-          </div>
-
-          {/* Expandable Hints Area */}
-          <div style={{
-            maxHeight: showHints ? '500px' : '0px',
-            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            overflow: 'hidden'
-          }}>
-            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {hintsUsed >= 1 && (
-                <div>
-                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>💡</span> Conceptual Hint
-                  </h4>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    {question.hint_conceptual || "Use a basic SELECT statement to retrieve specific columns from the table."}
-                  </p>
-                </div>
-              )}
-              {hintsUsed >= 2 && (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🏗️</span> Structural Hint
-                  </h4>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    {question.hint_structural || "SELECT column1, column2 FROM table_name;"}
-                  </p>
-                </div>
-              )}
-              {hintsUsed >= 3 && (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                  <h4 style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🎯</span> Near-Solution Hint
-                  </h4>
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                    {question.hint_near_solution || "SELECT first_name, last_name, gender FROM patients;"}
-                  </p>
-                </div>
-              )}
-              
-              {hintsUsed < 3 && (
-                <button 
-                  onClick={handleNextHint} 
-                  className="btn btn-secondary" 
-                  style={{ marginTop: 8, fontSize: 12, padding: '6px 12px', alignSelf: 'flex-start' }}
-                >
-                  Reveal Next Hint
-                </button>
-              )}
+            <div style={{
+              maxHeight: showHints ? '500px' : '0px',
+              transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              overflow: 'hidden'
+            }}>
+              <div style={{ padding: '0 16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {hintsUsed >= 1 && (
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                    <h4 style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>Conceptual Hint</h4>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      {question.hint_conceptual || "Use a basic SELECT statement to retrieve specific columns from the table."}
+                    </p>
+                  </div>
+                )}
+                {hintsUsed >= 2 && (
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                    <h4 style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>Structural Hint</h4>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                      {question.hint_structural || "SELECT column1, column2 FROM table_name;"}
+                    </p>
+                  </div>
+                )}
+                {hintsUsed >= 3 && (
+                  <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                    <h4 style={{ margin: '0 0 6px', fontSize: 13, color: 'var(--text)', fontWeight: 600 }}>Near-Solution Hint</h4>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                      {question.hint_near_solution || "SELECT first_name, last_name, gender FROM patients;"}
+                    </p>
+                  </div>
+                )}
+                
+                {hintsUsed < 3 && (
+                  <button 
+                    onClick={handleNextHint} 
+                    className="btn btn-secondary" 
+                    style={{ marginTop: (hintsUsed === 0 ? 16 : 8), fontSize: 13, padding: '8px 16px', alignSelf: 'flex-start' }}
+                  >
+                    Reveal Next Hint
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Expandable Solution Area */}
+          {/* Solution Accordion */}
           <div style={{
-            maxHeight: showSolution ? '500px' : '0px',
-            transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            overflow: 'hidden',
-            borderTop: (showSolution && showHints) ? '1px solid var(--border)' : 'none'
+            background: 'var(--surface-2)',
+            borderRadius: 8,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
           }}>
-            <div style={{ padding: 16, background: 'var(--success-muted)' }}>
-              <h4 style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>🗝️</span> Solution SQL
-              </h4>
-              <pre style={{
-                margin: 0,
-                fontSize: 13,
-                color: 'var(--text)',
-                fontFamily: 'var(--font-mono)',
-                whiteSpace: 'pre-wrap',
-                background: 'var(--surface)',
-                padding: 12,
-                borderRadius: 6,
-                border: '1px solid var(--success-muted)'
-              }}>
-                {question.solutionSQL}
-              </pre>
+            <button 
+              onClick={() => setShowSolution(!showSolution)} 
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 16px',
+                background: showSolution ? 'var(--success-muted)' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: showSolution ? 'var(--success)' : 'var(--text-secondary)',
+                fontWeight: 600,
+                fontSize: 14,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => { if (!showSolution) e.currentTarget.style.background = 'var(--surface)'; }}
+              onMouseLeave={e => { if (!showSolution) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Code size={18} strokeWidth={2.5} />
+                <span>Solution SQL</span>
+              </div>
+              <ChevronDown size={18} style={{ transform: showSolution ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
+            </button>
+            <div style={{
+              maxHeight: showSolution ? '500px' : '0px',
+              transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              overflow: 'hidden',
+            }}>
+              <div style={{ padding: '0 16px 16px 16px' }}>
+                <div style={{
+                  background: 'var(--bg)',
+                  padding: 12,
+                  borderRadius: 6,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 13,
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  marginTop: 16
+                }}>
+                  {question.solutionSQL}
+                </div>
+              </div>
             </div>
           </div>
         </div>

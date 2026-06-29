@@ -295,12 +295,14 @@ function PracticeView({
       const dbQs = getQuestionsForDb(routeDb);
       let targetQ;
       if (qParam) {
-        targetQ = dbQs.find(q => q.id === qParam);
+        targetQ = dbQs.find(q => String(q.id) === qParam);
       }
-      if (!targetQ) {
+      if (!targetQ && !currentQ) {
+        // Only auto-select first incomplete question if we don't already have a currentQ
         targetQ = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
       }
       
+      // If we found a targetQ (either from qParam, or initial load), and it's different
       if (targetQ && targetQ.id !== currentQ?.id) {
         setCurrentQ(targetQ);
         setResult(null);
@@ -310,7 +312,10 @@ function PracticeView({
         setPreviewTableName(null);
       }
     }
-  }, [routeDb, db, progress, qParam, currentQ?.id]);
+    // intentionally omit 'progress' to prevent auto-advancing when user solves a question
+    // intentionally omit 'currentQ' so we don't re-run this when currentQ is set
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeDb, qParam]);
 
   const [sql, setSql] = useState('');
   const [result, setResult] = useState(null);
@@ -403,11 +408,9 @@ function PracticeView({
     localStorage.setItem('sql-practice-history-v2', JSON.stringify(queryHistory.slice(0, 50)));
   }, [queryHistory]);
 
-  // Reset result/validation when question changes (SQL restore is handled by navigation handlers)
+  // Fetch expected results when question changes (SQL restore is handled by navigation handlers)
   useEffect(() => {
     let mounted = true;
-    setResult(null);
-    setValidation(null);
     setExpectedResult(null);
     if (!isLoading && !dbError) {
       getExpectedResultDynamic(currentQ.solutionSQL, currentQ.verificationSQL)
@@ -439,7 +442,7 @@ function PracticeView({
       setResult(finalRes);
       if (finalRes.error) {
         setValidation({ isCorrect: false, message: finalRes.error });
-        onProgressUpdate(currentQ.id, 'attempted');
+        onProgressUpdate(currentQ, db, 'attempted');
       } else {
         if (!expectedResult || expectedResult.columns.length === 0) {
           setValidation({ isCorrect: false, message: 'Loading expected results...' });
