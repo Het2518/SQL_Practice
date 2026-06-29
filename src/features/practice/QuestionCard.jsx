@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Lightbulb, Code, Building2, Tag } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -14,7 +14,7 @@ const statusIcon = {
   incomplete: '○'
 };
 
-export function QuestionCard({
+export const QuestionCard = React.memo(function QuestionCard({
   question,
   expectedResult,
   status,
@@ -436,4 +436,4 @@ export function QuestionCard({
       </div>
     </div>
   );
-}
+});

@@ -446,14 +446,7 @@ export function PracticeView({
         <Database size={14} />
         {dbInfo.label} Schema
       </button>
-      <button className="btn btn-ghost" id="reset-btn" onClick={async () => {
-        await resetDb();
-        setResult(null);
-        setValidation({ isCorrect: true, message: 'Database successfully restored to original state!' });
-      }} disabled={isLoading} style={{ gap: 5 }}>
-        <RotateCcw size={14} />
-        Reset DB
-      </button>
+
       <button
         className="btn btn-ghost"
         onClick={onToggleDark}

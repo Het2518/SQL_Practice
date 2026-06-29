@@ -15,13 +15,10 @@ export function ResultsPanel({
   isRunning
 }) {
   const [activeTab, setActiveTab] = useState('data');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
 
-  // Reset tab and page when result changes
+  // Reset tab when result changes (removed pagination state as Virtuoso handles it)
   useEffect(() => {
     setActiveTab('data');
-    setPage(1);
   }, [result]);
 
   if (isRunning) {
@@ -111,11 +108,8 @@ export function ResultsPanel({
   const isDML = !isError && (result.isDML !== undefined ? result.isDML : result.columns.length === 0);
 
   const totalRows = isError || isDML ? 0 : result.rows.length;
-  const totalPages = pageSize === 'All' ? 1 : Math.ceil(totalRows / pageSize);
-  const safePage = Math.max(1, Math.min(page, totalPages || 1));
-  const startIndex = pageSize === 'All' ? 0 : (safePage - 1) * pageSize;
-  const endIndex = pageSize === 'All' ? totalRows : Math.min(startIndex + pageSize, totalRows);
-  const currentRows = isError || isDML ? [] : result.rows.slice(startIndex, endIndex);
+  // currentRows is no longer paginated manually, Virtuoso handles the full array
+  const currentRows = isError || isDML ? [] : result.rows;
 
   return (
     <div style={{
@@ -239,24 +233,31 @@ export function ResultsPanel({
                 {/* Data Tab */}
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                      <table className="results-table" style={{ borderSpacing: 0, width: '100%' }}>
-                        <thead>
+                    <div style={{ flex: 1, minHeight: 0 }}>
+                      <TableVirtuoso
+                        data={currentRows}
+                        style={{ height: '100%' }}
+                        components={{
+                          Table: (props) => <table {...props} className="results-table" style={{ borderSpacing: 0, width: '100%', margin: 0 }} />,
+                          TableRow: (props) => {
+                            // Render a tbody for each item so GroupedResultRow can safely return multiple TRs (fragment)
+                            return <tbody {...props} />;
+                          }
+                        }}
+                        fixedHeaderContent={() => (
                           <tr>
-                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)', position: 'sticky', top: 0, zIndex: 1 }}></th>}
+                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)', zIndex: 1 }}></th>}
                             {result.columns.map((col, i) => (
-                              <th key={i} style={{ background: 'var(--surface-2)', position: 'sticky', top: 0, zIndex: 1 }}>
+                              <th key={i} style={{ background: 'var(--surface-2)', zIndex: 1 }}>
                                 {col}
                               </th>
                             ))}
                           </tr>
-                        </thead>
-                        <tbody>
-                          {currentRows.map((row, i) => (
-                            <GroupedResultRow key={i} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
-                          ))}
-                        </tbody>
-                      </table>
+                        )}
+                        itemContent={(index, row) => (
+                          <GroupedResultRow row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
+                        )}
+                      />
                       
                       {result.columns.length === 0 && (
                         <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
@@ -264,84 +265,6 @@ export function ResultsPanel({
                         </div>
                       )}
                     </div>
-
-                    {/* Pagination Controls */}
-                    {totalRows > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 16px',
-                        borderTop: '1px solid var(--border)',
-                        background: 'var(--surface-2)',
-                        flexShrink: 0,
-                        fontSize: 13
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>
-                            Showing {startIndex + 1}-{endIndex} of {totalRows}
-                          </span>
-                          <select
-                            value={pageSize}
-                            onChange={(e) => {
-                              const val = e.target.value === 'All' ? 'All' : Number(e.target.value);
-                              setPageSize(val);
-                              setPage(1);
-                            }}
-                            style={{
-                              background: 'var(--surface)',
-                              border: '1px solid var(--border)',
-                              color: 'var(--text)',
-                              padding: '4px 8px',
-                              borderRadius: 4,
-                              fontSize: 13,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <option value={50}>50 / page</option>
-                            <option value={100}>100 / page</option>
-                            <option value={500}>500 / page</option>
-                            <option value="All">All rows</option>
-                          </select>
-                        </div>
-
-                        {pageSize !== 'All' && totalPages > 1 && (
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button
-                              onClick={() => setPage(p => Math.max(1, p - 1))}
-                              disabled={safePage === 1}
-                              style={{
-                                background: safePage === 1 ? 'var(--surface)' : 'var(--primary)',
-                                color: safePage === 1 ? 'var(--muted)' : 'white',
-                                border: 'none',
-                                padding: '4px 12px',
-                                borderRadius: 4,
-                                cursor: safePage === 1 ? 'not-allowed' : 'pointer'
-                              }}
-                            >
-                              Prev
-                            </button>
-                            <span style={{ padding: '4px 12px', color: 'var(--text)' }}>
-                              {safePage} / {totalPages}
-                            </span>
-                            <button
-                              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                              disabled={safePage === totalPages}
-                              style={{
-                                background: safePage === totalPages ? 'var(--surface)' : 'var(--primary)',
-                                color: safePage === totalPages ? 'var(--muted)' : 'white',
-                                border: 'none',
-                                padding: '4px 12px',
-                                borderRadius: 4,
-                                cursor: safePage === totalPages ? 'not-allowed' : 'pointer'
-                              }}
-                            >
-                              Next
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
                 

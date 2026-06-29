@@ -17,7 +17,6 @@ export const defaultSettings = {
   autoCompleteSql: true,
   persistEditorText: false,
   timedChallenges: false,
-  disableAdvertisements: true,
   editorFontSize: 14,
 };
 
@@ -318,7 +317,6 @@ export function SettingsModal({ settings, onSave, onClose }) {
 
               <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '1px', marginBottom: '12px', fontWeight: 600 }}>Experience</h3>
               <ToggleRow label="Timed Challenges" description="Enable a countdown timer for practice sessions" checked={local.timedChallenges} onChange={v => set('timedChallenges', v)} />
-              <ToggleRow label="Disable Advertisements" description="Hide promotional content and banners" checked={local.disableAdvertisements} onChange={v => set('disableAdvertisements', v)} />
 
               <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '1px', marginTop: '24px', marginBottom: '12px', fontWeight: 600 }}>Data & Backup</h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

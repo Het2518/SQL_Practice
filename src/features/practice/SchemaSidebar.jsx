@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DB_INFO } from '@/types';
 import { analyzeNormalForm } from '@/utils/sqlAnalysis';
 
@@ -19,7 +19,7 @@ const learningResources = [
   { label: 'NULL Handling', url: 'https://mode.com/sql-tutorial/sql-is-null/', icon: '⚠️' },
 ];
 
-export function SchemaSidebar({ dbName, executeQuery, onPreviewTable }) {
+export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, executeQuery, onPreviewTable }) {
   const [expandedTables, setExpandedTables] = useState(new Set());
   const [activeTab, setActiveTab] = useState('schema');
   const [liveTables, setLiveTables] = useState({}); // { tableName: [{ name, type, pk, notNull }] }
@@ -430,4 +430,4 @@ export function SchemaSidebar({ dbName, executeQuery, onPreviewTable }) {
       </div>
     </div>
   );
-}
+});

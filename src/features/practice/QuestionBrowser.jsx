@@ -3,7 +3,7 @@ import { DB_INFO } from '@/types';
 const ALL_KEYWORDS = ['Select', 'Where', 'Order By', 'Group By', 'Having', 'Join', 'Left Join', 'Subquery', 'CTE', 'Recursive CTE', 'Window Function', 'Rank', 'Row Number', 'Lag', 'Lead', 'Case', 'Union', 'Insert', 'Update', 'Delete', 'Date Function', 'String Function', 'Null Handling'];
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const DB_NAMES = Object.keys(DB_INFO);
-export function QuestionBrowser({
+export const QuestionBrowser = React.memo(function QuestionBrowser({
   questions,
   progress,
   currentQuestionId,
@@ -284,7 +284,7 @@ export function QuestionBrowser({
         </div>
       </div>
     </div>;
-}
+});
 function FilterSection({
   title,
   children
