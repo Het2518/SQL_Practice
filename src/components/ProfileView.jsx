@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star } from 'lucide-react';
+import { Settings, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star, Lock, Swords, Flame, Medal } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { allQuestions } from '../data/index';
 import { BADGE_DEFS } from '../hooks/useGamification';
@@ -21,6 +21,85 @@ function useCountUp(end, duration = 1500) {
   }, [end, duration]);
   return count;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SVG Radar Chart Component (No external libraries required)
+// ─────────────────────────────────────────────────────────────────────────────
+function RadarChart({ data, size = 280 }) {
+  const center = size / 2;
+  const radius = (size / 2) - 40; 
+  const angleStep = (Math.PI * 2) / data.length;
+
+  const points = data.map((d, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const valRatio = Math.max(0.1, d.value / (d.fullMark || 1));
+    return {
+      x: center + radius * valRatio * Math.cos(angle),
+      y: center + radius * valRatio * Math.sin(angle),
+      labelX: center + (radius + 25) * Math.cos(angle),
+      labelY: center + (radius + 20) * Math.sin(angle),
+      label: d.label,
+      valRatio
+    };
+  });
+
+  const polygonPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+
+  // Generate web background
+  const webs = [0.2, 0.4, 0.6, 0.8, 1].map((scale, i) => {
+    const p = data.map((_, j) => {
+      const angle = j * angleStep - Math.PI / 2;
+      return `${j === 0 ? 'M' : 'L'} ${center + radius * scale * Math.cos(angle)} ${center + radius * scale * Math.sin(angle)}`;
+    }).join(' ') + ' Z';
+    return <path key={i} d={p} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray={scale === 1 ? "0" : "4 4"} />;
+  });
+
+  return (
+    <div style={{ width: size, height: size, position: 'relative', margin: '0 auto' }}>
+      <svg width={size} height={size}>
+        <defs>
+          <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="var(--primary-dark)" stopOpacity="0.1" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        
+        {webs}
+        
+        {/* Axis lines */}
+        {data.map((_, i) => {
+          const angle = i * angleStep - Math.PI / 2;
+          return (
+            <line key={`axis-${i}`} x1={center} y1={center} x2={center + radius * Math.cos(angle)} y2={center + radius * Math.sin(angle)} stroke="var(--border)" strokeWidth="1" />
+          );
+        })}
+
+        {/* Data Polygon */}
+        <path d={polygonPath} fill="url(#radarFill)" stroke="var(--primary)" strokeWidth="2" filter="url(#glow)" style={{ transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+        
+        {/* Data Points */}
+        {points.map((p, i) => (
+          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="var(--bg)" stroke="var(--primary)" strokeWidth="2" />
+        ))}
+
+        {/* Labels */}
+        {points.map((p, i) => (
+          <text key={`lbl-${i}`} x={p.labelX} y={p.labelY} fill="var(--text-secondary)" fontSize="11" fontWeight="600" textAnchor="middle" dominantBaseline="middle">
+            {p.label}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 
 export function ProfileView({ user, gameState, progress, settings, onSaveSettings, onHome, onSignOut }) {
   const navigate = useNavigate();
@@ -64,7 +143,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   };
 
   // Calculate Progress Stats correctly using ONLY real data
-  const { difficultyStats, nextRecommendations } = useMemo(() => {
+  const { difficultyStats, nextRecommendations, timelineEvents, quests } = useMemo(() => {
     let easyTotal = 0, mediumTotal = 0, hardTotal = 0;
     let easySolved = 0, mediumSolved = 0, hardSolved = 0;
     
@@ -84,7 +163,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
 
     allQuestions.forEach(q => {
       const qkw = (q.keywords || []).map(k => k.toLowerCase());
-      const isSolved = completedSet.has(q.id);
+      const isSolved = completedSet.has(Number(q.id));
       
       const isJoin = qkw.some(k => k.includes('join'));
       const isWindow = qkw.some(k => k.includes('window') || k.includes('over') || k.includes('rank'));
@@ -120,15 +199,49 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
     let rank = Math.round(realTotalUsers - (realTotalUsers * percentile));
     rank = Math.max(1, rank);
     
-    // Find next recommended questions (Prioritize topics with lowest completion % but at least 1 solved, or just easy ones)
-    const unsolved = allQuestions.filter(q => !completedSet.has(q.id));
-    // Sort by easiest first for recommendations
+    // Find next recommended questions
+    const unsolved = allQuestions.filter(q => !completedSet.has(Number(q.id)));
     unsolved.sort((a, b) => {
       const wA = a.difficulty === 'easy' ? 1 : a.difficulty === 'medium' ? 2 : 3;
       const wB = b.difficulty === 'easy' ? 1 : b.difficulty === 'medium' ? 2 : 3;
       return wA - wB;
     });
     const nextRecs = unsolved.slice(0, 3);
+
+    // Generate Quests
+    const streak = gameState?.streak || 0;
+    const quests = [
+      { id: 1, title: "Keep the Fire Burning", desc: "Reach a 7-day streak.", current: Math.min(streak, 7), target: 7, type: 'streak' },
+      { id: 2, title: "Medium Master", desc: "Solve 10 Medium difficulty questions.", current: Math.min(mediumSolved, 10), target: 10, type: 'medium' },
+      { id: 3, title: "The Challenger", desc: "Solve 3 Hard difficulty questions.", current: Math.min(hardSolved, 3), target: 3, type: 'hard' }
+    ];
+
+    // Generate Timeline Events
+    // We mock timeline timestamps based on order since we don't store exact timestamps for everything, but we have recentSubmissions.
+    let events = [];
+    if (gameState?.recentSubmissions) {
+      events = gameState.recentSubmissions.map((sub, i) => ({
+        id: `sub-${i}`,
+        type: 'solve',
+        title: `Solved ${sub.title}`,
+        time: `${i + 1} hours ago`,
+        icon: <Check size={14} color="var(--success)" />
+      }));
+    }
+    if (gameState?.badges) {
+      gameState.badges.forEach((bId, i) => {
+        const b = BADGE_DEFS.find(x => x.id === bId);
+        if (b) {
+          events.push({
+            id: `badge-${bId}`,
+            type: 'badge',
+            title: `Earned Badge: ${b.name}`,
+            time: `${i + 2} days ago`,
+            icon: <Medal size={14} color="var(--warning)" />
+          });
+        }
+      });
+    }
 
     return {
       difficultyStats: {
@@ -138,21 +251,33 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         totalCount: allQuestions.length,
         score,
         rank,
+        percentile: Math.round(percentile * 100),
         skillsProgress
       },
-      nextRecommendations: nextRecs
+      nextRecommendations: nextRecs,
+      quests,
+      timelineEvents: events.slice(0, 8) 
     };
-  }, [progress, totalPlatformUsers]);
+  }, [progress, totalPlatformUsers, gameState]);
 
   const stats = difficultyStats;
 
+  // Background Glow Elements for visual richness
+  const glows = (
+    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40vw', height: '40vw', background: 'var(--primary)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%' }} />
+      <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: '50vw', height: '50vw', background: 'var(--warning)', filter: 'blur(180px)', opacity: 0.08, borderRadius: '50%' }} />
+    </div>
+  );
+
   return (
-    <div className="page-enter" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+    <div className="page-enter" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', position: 'relative' }}>
+      {glows}
       
       {/* Sidebar Navigation */}
       <aside style={{ width: 300, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 24px rgba(0,0,0,0.05)', zIndex: 10 }}>
         {/* User Card */}
-        <div style={{ padding: '32px 24px', background: 'linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ padding: '32px 24px', background: 'linear-gradient(180deg, var(--surface-2) 0%, transparent 100%)', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
             <div style={{
               width: 64, height: 64, borderRadius: '16px', 
@@ -180,14 +305,15 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
             </div>
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px', background: 'var(--bg)', borderRadius: 16, border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
+             <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)' }} />
              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Global Rank</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank.toLocaleString()}</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank.toLocaleString()}</span>
              </div>
              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Score</span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>{stats.score.toLocaleString()}</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Top Percentile</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--warning)' }}>Top {Math.max(1, 100 - stats.percentile)}%</span>
              </div>
           </div>
         </div>
@@ -202,16 +328,16 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
           <button onClick={onHome} className="btn" style={{ width: '100%', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', padding: '12px', borderRadius: 12, fontWeight: 700, marginBottom: 12 }}>
             Return to Practice
           </button>
-          <button onClick={onSignOut} className="btn" style={{ width: '100%', background: 'transparent', color: 'var(--muted)', border: 'none', padding: '12px', borderRadius: 12, fontWeight: 600, display: 'flex', justifyContent: 'center' }}>
+          <button onClick={onSignOut} className="btn" style={{ width: '100%', background: 'transparent', color: 'var(--error)', border: 'none', padding: '12px', borderRadius: 12, fontWeight: 600, display: 'flex', justifyContent: 'center' }}>
             <LogOut size={16} style={{ marginRight: 8 }} /> Sign Out
           </button>
         </div>
       </aside>
       
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} />}
+      <main style={{ flex: 1, padding: '40px', overflowY: 'auto', zIndex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} quests={quests} timelineEvents={timelineEvents} />}
           {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={stats.score} />}
           {activeTab === 'settings' && <div style={{ background: 'var(--surface)', padding: 32, borderRadius: 16, border: '1px solid var(--border)' }}>Editor settings are managed within the Practice Workspace.</div>}
         </div>
@@ -237,115 +363,154 @@ function SidebarItem({ icon, label, active, onClick }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Dashboard Tab
 // ─────────────────────────────────────────────────────────────────────────────
-function DashboardTab({ stats, gameState, nextRecommendations }) {
-  const animatedSolved = useCountUp(stats.totalSolved);
-  const recentSubmissions = gameState.recentSubmissions || [];
+function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineEvents }) {
+  const radarData = Object.entries(stats.skillsProgress).map(([label, data]) => ({
+    label,
+    value: data.solved,
+    fullMark: data.total
+  }));
 
   return (
     <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards', display: 'flex', flexDirection: 'column', gap: 32 }}>
       
-      {/* Top Section: Progress & Up Next */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+      {/* Row 1: Radar Chart & Quests & Progress */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 32 }}>
         
-        {/* Core Progress Card */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Activity size={18} color="var(--primary)" /> SQL Mastery Progress
+        {/* SQL Skill Radar (Complex Visualization) */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Target size={18} color="var(--primary)" /> Skill Web
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
-            {/* SVG Ring */}
-            <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', flexShrink: 0 }}>
-              <svg width="140" height="140" viewBox="0 0 140 140" style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}>
-                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--surface-2)" strokeWidth="12" />
-                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--error)" strokeWidth="12" strokeDasharray={`${(stats.hardSolved/Math.max(1, stats.hardTotal))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
-                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--warning)" strokeWidth="12" strokeDasharray={`${((stats.mediumSolved+stats.hardSolved)/Math.max(1, stats.mediumTotal+stats.hardTotal))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
-                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--success)" strokeWidth="12" strokeDasharray={`${((stats.totalSolved)/Math.max(1, stats.totalCount))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
-              </svg>
-              <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{animatedSolved}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginTop: 4 }}>Solved</div>
-            </div>
-            
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <DiffRow label="Easy" solved={stats.easySolved} total={stats.easyTotal} color="var(--success)" />
-              <DiffRow label="Medium" solved={stats.mediumSolved} total={stats.mediumTotal} color="var(--warning)" />
-              <DiffRow label="Hard" solved={stats.hardSolved} total={stats.hardTotal} color="var(--error)" />
-            </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <RadarChart data={radarData} size={250} />
           </div>
         </div>
 
-        {/* What to do Next Card (Placement Focus) */}
-        <div style={{ background: 'linear-gradient(135deg, var(--primary-muted) 0%, transparent 100%)', borderRadius: 24, padding: 32, border: '1px solid var(--primary-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        {/* Weekly Quests */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Target size={18} color="var(--primary)" /> Recommended Next Steps
+            <Swords size={18} color="var(--warning)" /> Active Quests
           </h3>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
-            Master these specific problems to strengthen your profile for upcoming technical interviews and placements.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
+            {quests.map(quest => {
+              const pct = (quest.current / quest.target) * 100;
+              const isDone = quest.current >= quest.target;
+              return (
+                <div key={quest.id}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: isDone ? 'var(--success)' : 'var(--text)' }}>{quest.title} {isDone && '✓'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)' }}>{quest.desc}</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>{quest.current}/{quest.target}</div>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: isDone ? 'var(--success)' : 'var(--warning)', transition: 'width 1s ease' }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* What to do Next (Placements) */}
+        <div style={{ background: 'linear-gradient(135deg, var(--surface) 0%, rgba(79, 70, 229, 0.05) 100%)', borderRadius: 24, padding: 32, border: '1px solid var(--primary-muted)', boxShadow: '0 8px 32px rgba(79, 70, 229, 0.05)' }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Activity size={18} color="var(--primary)" /> Placement Prep
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Targeted recommendations based on your missing topics.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {nextRecommendations.length > 0 ? nextRecommendations.map(q => (
+            {nextRecommendations.map(q => (
                <Link to={`/practice/${q.db}`} key={q.id} style={{
-                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface)', 
-                 borderRadius: 12, border: '1px solid var(--border)', textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s'
-               }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg)', 
+                 borderRadius: 16, border: '1px solid var(--border)', textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s'
+               }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px var(--primary-muted)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{q.title}</span>
+                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{q.title}</span>
                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                      <span className={`pill pill-${q.difficulty}`}>{q.difficulty}</span>
                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>{q.keywords?.[0] || 'SQL'}</span>
                    </div>
                  </div>
-                 <ArrowRight size={16} color="var(--primary)" />
+                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <ArrowRight size={14} color="var(--primary)" />
+                 </div>
                </Link>
-            )) : (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--success)', fontWeight: 600, background: 'var(--success-muted)', borderRadius: 12 }}>
-                🎉 You have completed every available question!
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Middle Section: Topic-wise Progress (Real Data Only) */}
-      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-         <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Zap size={18} color="var(--primary)" /> Topic-Wise Mastery
-         </h3>
-         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
-            {Object.entries(stats.skillsProgress).map(([topic, data]) => (
-               <div key={topic}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8, alignItems: 'center' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text)' }}>{topic}</span>
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      <span style={{ fontWeight: 800, color: 'var(--text)' }}>{data.solved}</span> / {data.total}
-                    </span>
-                  </div>
-                  <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${data.total ? (data.solved/data.total)*100 : 0}%`, background: 'var(--primary)', transition: 'width 1s ease' }} />
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6, textAlign: 'right' }}>
-                    {data.total - data.solved} left to master
-                  </div>
-               </div>
+      {/* Row 2: Badges (Earned + Locked) & Activity Feed */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
+        
+        {/* Comprehensive Badges Board */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Star size={18} color="var(--warning)" /> Badge Collection
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
+            {BADGE_DEFS.map(badge => {
+              const isEarned = gameState?.badges?.includes(badge.id);
+              return (
+                <div key={badge.id} style={{
+                  padding: 20, borderRadius: 16, background: isEarned ? 'var(--bg)' : 'transparent',
+                  border: `1px solid ${isEarned ? 'var(--border)' : 'var(--surface-2)'}`,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                  opacity: isEarned ? 1 : 0.5, transition: 'transform 0.2s', cursor: 'default',
+                  position: 'relative'
+                }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                  {!isEarned && <Lock size={12} color="var(--muted)" style={{ position: 'absolute', top: 12, right: 12 }} />}
+                  <div style={{ fontSize: 40, filter: isEarned ? 'none' : 'grayscale(100%)', marginBottom: 12 }}>{badge.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{badge.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{badge.description}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Dynamic Activity Feed */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Clock size={18} color="var(--primary)" /> Recent Activity
+          </h3>
+          <div style={{ position: 'relative', paddingLeft: 20 }}>
+            {/* Timeline line */}
+            <div style={{ position: 'absolute', top: 10, bottom: 10, left: 4, width: 2, background: 'var(--surface-2)' }} />
+            
+            {timelineEvents.length === 0 ? (
+               <div style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '20px 0' }}>No recent activity to show.</div>
+            ) : timelineEvents.map((event, i) => (
+              <div key={event.id} style={{ position: 'relative', marginBottom: 24 }}>
+                <div style={{ position: 'absolute', left: -24, top: 2, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {event.type === 'solve' ? <div style={{width: 6, height: 6, borderRadius: 3, background: 'var(--success)'}} /> : <div style={{width: 6, height: 6, borderRadius: 3, background: 'var(--warning)'}} />}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{event.title}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{event.time}</div>
+              </div>
             ))}
-         </div>
+          </div>
+        </div>
+
       </div>
 
-      {/* Bottom Section: Heatmap & Badges */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 32 }}>
+      {/* Row 3: Heatmap & Raw Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
         
         {/* Activity Heatmap */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)' }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Clock size={18} color="var(--primary)" /> Consistency Heatmap
+            <Flame size={18} color="var(--error)" /> Consistency Heatmap
           </h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
             <div><span style={{ fontWeight: 700, color: 'var(--text)' }}>{Object.keys(gameState.activity || {}).length}</span> days active</div>
             <div>Current streak: <span style={{ fontWeight: 700, color: 'var(--text)' }}>{gameState.streak || 0}</span></div>
           </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignContent: 'flex-start' }}>
-            {Array.from({ length: 112 }).map((_, i) => {
+            {Array.from({ length: 135 }).map((_, i) => {
               const d = new Date();
-              d.setDate(d.getDate() - (111 - i));
+              d.setDate(d.getDate() - (134 - i));
               const dateStr = d.toISOString().slice(0, 10);
               const count = gameState.activity?.[dateStr] || 0;
               let bg = 'var(--surface-2)';
@@ -361,35 +526,20 @@ function DashboardTab({ stats, gameState, nextRecommendations }) {
           </div>
         </div>
 
-        {/* Earned Badges */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        {/* Global Progress Summary */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)' }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Star size={18} color="var(--primary)" /> Earned Badges
+            <Database size={18} color="var(--primary)" /> Problem Distribution
           </h3>
-          {gameState.badges.length === 0 ? (
-            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
-              <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>🏆</div>
-              Complete questions and build streaks to earn badges!
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {gameState.badges.map(badgeId => {
-                const badge = BADGE_DEFS.find(b => b.id === badgeId);
-                if (!badge) return null;
-                return (
-                  <div key={badge.id} title={badge.description} style={{
-                    width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%)',
-                    border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: 'transform 0.2s', cursor: 'default'
-                  }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                    {badge.icon}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <DiffRow label="Easy" solved={stats.easySolved} total={stats.easyTotal} color="var(--success)" />
+            <DiffRow label="Medium" solved={stats.mediumSolved} total={stats.mediumTotal} color="var(--warning)" />
+            <DiffRow label="Hard" solved={stats.hardSolved} total={stats.hardTotal} color="var(--error)" />
+          </div>
         </div>
+
       </div>
+
     </div>
   );
 }
@@ -443,7 +593,7 @@ function LeaderboardTab({ currentUser, currentScore }) {
 
   return (
     <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards' }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 40, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 40, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
         <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
           <Trophy color="var(--primary)" /> Global Leaderboard
         </h2>
