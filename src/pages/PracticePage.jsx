@@ -201,7 +201,7 @@ export function PracticeView({
         setValidation({ isCorrect: false, message: finalRes.error });
         onProgressUpdate(currentQ, db, 'attempted');
       } else {
-        if (!expectedResult || expectedResult.columns.length === 0) {
+        if (!expectedResult) {
           setValidation({ isCorrect: false, message: 'Loading expected results...' });
         } else {
           const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
