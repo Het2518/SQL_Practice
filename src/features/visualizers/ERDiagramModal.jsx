@@ -41,7 +41,10 @@ export function ERDiagramModal({ dbName, onClose }) {
         background: bg
       },
       er: {
-        layoutDirection: 'LR'
+        layoutDirection: 'LR',
+        minEntityWidth: 130,
+        minEntityHeight: 75,
+        entityPadding: 15
       }
     });
     const dbInfo = DB_INFO[dbName];
