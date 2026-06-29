@@ -1,0 +1,389 @@
+/* ── Top Navbar ── */
+.home-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 60px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.home-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-logo-icon { font-size: 32px; line-height: 1; }
+
+.home-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}
+
+.home-subtitle {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 0;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+/* Divider between logo and stats */
+.home-header-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.home-stats {
+  display: flex;
+  gap: 0;
+  align-items: center;
+}
+
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 20px;
+  position: relative;
+}
+.stat-pill + .stat-pill::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 1px;
+  background: var(--border);
+}
+.stat-pill.attempted .stat-num { color: #d97706; }
+
+.stat-num {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-top: 2px;
+  font-weight: 600;
+}
+
+.home-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PRACTICE VIEW
+═══════════════════════════════════════════════════════════════ */
+
+
+.practice-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
+}
+
+.practice-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 48px;
+}
+
+.nav-db-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nav-db-name {
+  color: var(--text);
+}
+
+.nav-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-progress-bar {
+  width: 100px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.nav-progress-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 99px;
+  transition: width var(--transition-slow);
+}
+
+.nav-progress-text {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* — Main layout: CSS Grid */
+.practice-layout {
+  display: grid;
+  /* Sidebar widths controlled via CSS variables in App.jsx */
+  grid-template-columns: var(--sidebar-width, 280px) 1fr var(--right-panel-width, 350px);
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  width: 100%;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.sidebar-wrap {
+  width: 100%;
+  height: 100%;
+  border-right: 1px solid var(--border);
+  overflow: hidden auto;
+  background: var(--surface);
+}
+
+.question-pane-wrap {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+/* center-workspace: CSS Grid for vertical split */
+.center-workspace {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0; /* Important for preventing grid blowout */
+}
+
+/* TOP zone — question card, scrollable */
+.question-pane {
+  width: 100%;
+  height: 100%;
+  overflow: hidden auto;
+  background: var(--surface-2);
+}
+
+/* Editor column */
+.editor-col {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Monaco fills all middle space — MUST have explicit height parent */
+.monaco-wrap {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+/* Results column */
+.results-col {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* — Responsive: stack on narrow screens */
+@media (max-width: 900px) {
+  .bottom-pane {
+    flex-direction: column;
+  }
+  .sidebar-wrap {
+    display: none;
+  }
+}
+
+/* ── Validation Colors & Banners ── */
+.banner-correct {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--success-muted);
+  border-left: 3px solid var(--success);
+  color: var(--success);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.banner-incorrect, .banner-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--error-muted);
+  border-left: 3px solid var(--error);
+  color: var(--error);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.banner-neutral {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--primary-muted);
+  border-left: 3px solid var(--primary);
+  color: var(--primary);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ── Table Styles ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 14px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  border-bottom: 2px solid var(--border);
+}
+
+td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  white-space: nowrap;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+tr:hover td {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+
+/* ── Hint Drawer ── */
+.hint-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 90;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hint-drawer {
+  width: 380px;
+  background: var(--bg-2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  animation: slide-in-right 0.2s ease;
+  height: 100%;
+  overflow-y: auto;
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+/* ── Schema sidebar ── */
+.schema-table-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  margin: 2px 8px;
+  transition: background var(--transition);
+}
+.schema-table-header:hover { background: var(--surface-2); }

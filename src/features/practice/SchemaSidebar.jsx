@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DB_INFO } from '../types';
-import { analyzeNormalForm } from '../utils/sqlAnalysis';
+import { DB_INFO } from '@/types';
+import { analyzeNormalForm } from '@/utils/sqlAnalysis';
 
 // ─── Icons (inline SVG to avoid extra deps) ──────────────────────────────────
 const ChevronIcon = ({ open }) => (

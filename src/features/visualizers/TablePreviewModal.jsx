@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { DB_INFO } from '../types';
-import { useSqlDatabase } from '../hooks/useSqlDatabase';
+import { DB_INFO } from '@/types';
+import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 export function TablePreviewModal({
   db,
   tableName,

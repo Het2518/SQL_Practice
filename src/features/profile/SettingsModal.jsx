@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { loadShortcuts, saveShortcuts, DEFAULT_SHORTCUTS, eventToComboString } from '../utils/shortcutManager';
+import { loadShortcuts, saveShortcuts, DEFAULT_SHORTCUTS, eventToComboString } from '@/utils/shortcutManager';
 
 const SETTINGS_KEY = 'sql-platform-settings';
 

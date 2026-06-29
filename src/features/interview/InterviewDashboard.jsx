@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Building2, Briefcase, Code, Cloud, Server, Database, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { CompanyGrid } from './CompanyGrid';
 import { CompanyFilterPanel } from './CompanyFilterPanel';
 

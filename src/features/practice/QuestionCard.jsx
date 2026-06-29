@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Lightbulb, Code } from 'lucide-react';
+import { ChevronDown, Lightbulb, Code, Building2, Tag } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 const difficultyLabel = {
   easy: 'EASY',
@@ -36,6 +37,9 @@ export function QuestionCard({
   const [showHints, setShowHints] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
+  
+  // Real companies from Supabase mapping
+  const [realCompanies, setRealCompanies] = useState([]);
 
   // Reset all state when question changes
   useEffect(() => {
@@ -45,7 +49,37 @@ export function QuestionCard({
     setShowHints(false);
     setHintsUsed(0);
     setShowSolution(false);
-  }, [question.id, timedChallenges]);
+    
+    // Fetch actual mapped companies for this question from Supabase
+    async function fetchCompanies() {
+      try {
+        const { data, error } = await supabase
+          .from('questions')
+          .select(`
+            id,
+            question_company_mapping (
+              companies ( name )
+            )
+          `)
+          .eq('prompt', question.prompt)
+          .single();
+          
+        if (data && data.question_company_mapping) {
+          const comps = data.question_company_mapping
+            .map(m => m.companies?.name)
+            .filter(Boolean);
+          setRealCompanies([...new Set(comps)]);
+        } else {
+          setRealCompanies([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch companies", err);
+        setRealCompanies([]);
+      }
+    }
+    
+    fetchCompanies();
+  }, [question.id, question.prompt, timedChallenges]);
 
   // Countdown tick
   useEffect(() => {
@@ -155,42 +189,44 @@ export function QuestionCard({
 
         {/* Keywords */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+          {/* Dynamic Supabase Companies */}
+          {realCompanies.length > 0 && (
+            <span key={'comp-group'} style={{
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              fontSize: 12,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '2px 0',
+            }}>
+              <Building2 size={13} style={{ color: 'var(--primary)' }} />
+              <span><strong style={{color: 'var(--text)', fontWeight: 600}}>Asked in:</strong> {realCompanies.join(', ')}</span>
+            </span>
+          )}
+
           {question.keywords.map(kw => {
+            // Ignore the local hardcoded fake company tags
             if (kw.startsWith('company:')) {
-              const company = kw.split(':')[1];
-              return (
-                <span key={kw} style={{
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                  color: 'white',
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(5,150,105,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  🏢 {company} Interview
-                </span>
-              );
+              return null;
             }
             if (kw.startsWith('topic:')) {
               const topic = kw.split(':')[1];
               return (
                 <span key={kw} style={{
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)',
-                  color: 'white',
-                  padding: '4px 12px',
-                  borderRadius: 20,
+                  background: 'var(--primary-muted)',
+                  color: 'var(--primary)',
+                  border: '1px solid var(--primary-light)',
+                  padding: '4px 10px',
+                  borderRadius: 6,
                   fontSize: 12,
-                  fontWeight: 700,
-                  boxShadow: '0 2px 8px rgba(79,70,229,0.2)',
+                  fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6
                 }}>
-                  🎯 {topic}
+                  <Tag size={13} /> {topic}
                 </span>
               );
             }

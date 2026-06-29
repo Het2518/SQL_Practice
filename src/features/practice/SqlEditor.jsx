@@ -1,9 +1,9 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { format } from 'sql-formatter';
-import { DB_INFO } from '../types';
-import { sqlKeywords } from '../data/sqlKeywords';
-import { loadShortcuts, comboToMonaco } from '../utils/shortcutManager';
+import { DB_INFO } from '@/types';
+import { sqlKeywords } from '@/data/sqlKeywords';
+import { loadShortcuts, comboToMonaco } from '@/utils/shortcutManager';
 
 export function SqlEditor({
   value,

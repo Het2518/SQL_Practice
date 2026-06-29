@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TableCell } from './NullVisualizer';
+import { TableCell } from '@/features/visualizers/NullVisualizer';
 
 export const DiffTable = ({ diff, expectedColumns }) => {
   const [showFullActual, setShowFullActual] = useState(false);

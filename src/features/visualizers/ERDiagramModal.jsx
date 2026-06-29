@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
-import { DB_INFO } from '../types';
+import { DB_INFO } from '@/types';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 export function ERDiagramModal({ dbName, onClose }) {

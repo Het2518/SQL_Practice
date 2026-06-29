@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { parseQueryClauses, extractFromTable, buildWhereOnlySql } from '../utils/sqlAnalysis';
+import { parseQueryClauses, extractFromTable, buildWhereOnlySql } from '@/utils/sqlAnalysis';
 
 export function ExecutionOrderExplainer({ sql, executeQuery }) {
   const [steps, setSteps] = useState([]);

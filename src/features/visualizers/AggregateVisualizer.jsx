@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TableCell } from './NullVisualizer';
+import { TableCell } from '@/features/visualizers/NullVisualizer';
 
 const getGroupConstituents = async (executeQuery, sql, groupByCols, rowData, allColumns) => {
   // Find the base FROM and WHERE clauses

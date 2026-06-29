@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Settings as SettingsIcon, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star, Lock, Swords, Flame, Medal } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { allQuestions } from '../data/index';
-import { BADGE_DEFS } from '../hooks/useGamification';
-import { supabase } from '../lib/supabase';
+import { allQuestions } from '@/data/index';
+import { BADGE_DEFS } from '@/hooks/useGamification';
+import { supabase } from '@/lib/supabase';
 
 // Helper for count up animation
 function useCountUp(end, duration = 1500) {

@@ -7,6 +7,11 @@ export default defineConfig({
     exclude: ['sql.js'],
   },
   assetsInclude: ['**/*.sql'],
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',

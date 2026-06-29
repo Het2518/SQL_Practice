@@ -1,5 +1,5 @@
 import React from 'react';
-import { SqlEditor } from './SqlEditor';
+import { SqlEditor } from '@/features/practice/SqlEditor';
 
 export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, onUseConverted }) => {
   if (!isOpen) return null;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getIndexInfo } from '../utils/sqlAnalysis';
+import { getIndexInfo } from '@/utils/sqlAnalysis';
 
 const extractTable = (detail) => {
   const match = detail.match(/TABLE\s+(\w+)/i);

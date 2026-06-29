@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { DiffTable } from './DiffTable';
-import { TableCell, NullSummaryPanel } from './NullVisualizer';
-import { ExecutionOrderExplainer } from './ExecutionOrderExplainer';
-import { IndexAdvisor } from './IndexAdvisor';
-import { TheoryConnector } from './TheoryConnector';
-import { GroupedResultRow } from './AggregateVisualizer';
+import { TableCell, NullSummaryPanel } from '@/features/visualizers/NullVisualizer';
+import { ExecutionOrderExplainer } from '@/features/visualizers/ExecutionOrderExplainer';
+import { IndexAdvisor } from '@/features/visualizers/IndexAdvisor';
+import { TheoryConnector } from '@/features/gamification/TheoryConnector';
+import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
 import { TableVirtuoso } from 'react-virtuoso';
 
 export function ResultsPanel({

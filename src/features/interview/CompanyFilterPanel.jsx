@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, BarChart, Tag, Play, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 function extractSqlTopics(sql) {
   if (!sql) return ['Basic Queries'];

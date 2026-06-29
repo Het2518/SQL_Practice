@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CONCEPTS, CONCEPT_TRIGGERS } from '../data/concepts';
+import { CONCEPTS, CONCEPT_TRIGGERS } from '@/data/concepts';
 
 const detectConcept = (sql) => {
   const upperSql = sql.toUpperCase();
