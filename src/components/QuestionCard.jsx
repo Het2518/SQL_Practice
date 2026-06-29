@@ -22,28 +22,52 @@ export function QuestionCard({
   hasNext,
   questionNumber,
   totalQuestions,
+  timedChallenges = false,
+  onTimerExpire,
 }) {
-  const [elapsed, setElapsed] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
+  // Timer challenge state
+  const TIMER_DURATION = 5 * 60; // 5 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
+  const [timerStarted, setTimerStarted] = useState(false);
+  const timerExpiredRef = useRef(false);
   
   // Hint/Solution State locally
   const [showHints, setShowHints] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [showSolution, setShowSolution] = useState(false);
 
+  // Reset all state when question changes
   useEffect(() => {
-    setElapsed(0);
-    setTimerActive(false);
+    setTimeLeft(TIMER_DURATION);
+    setTimerStarted(timedChallenges); // auto-start if timed mode is on
+    timerExpiredRef.current = false;
     setShowHints(false);
     setHintsUsed(0);
     setShowSolution(false);
-  }, [question.id]);
+  }, [question.id, timedChallenges]);
 
+  // Countdown tick
   useEffect(() => {
-    if (!timerActive) return;
-    const t = setInterval(() => setElapsed(e => e + 1), 1000);
+    if (!timerStarted || !timedChallenges) return;
+    if (timeLeft <= 0) {
+      if (!timerExpiredRef.current) {
+        timerExpiredRef.current = true;
+        if (onTimerExpire) onTimerExpire();
+      }
+      return;
+    }
+    const t = setInterval(() => setTimeLeft(s => s - 1), 1000);
     return () => clearInterval(t);
-  }, [timerActive]);
+  }, [timerStarted, timeLeft, timedChallenges, onTimerExpire]);
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const timerColor = timeLeft <= 60 ? 'var(--error)' : timeLeft <= 120 ? 'var(--warning)' : 'var(--success)';
+
 
   const handleToggleHint = () => {
     if (!showHints) {
@@ -81,6 +105,21 @@ export function QuestionCard({
           ☰ All Questions
         </button>
         <div style={{ flex: 1 }} />
+        {/* Timed Challenge Timer */}
+        {timedChallenges && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: timeLeft <= 60 ? 'rgba(239,68,68,0.1)' : 'var(--surface)',
+            border: `1px solid ${timerColor}`,
+            borderRadius: 8, padding: '4px 10px',
+            animation: timeLeft <= 30 ? 'pulse 1s ease infinite' : 'none'
+          }}>
+            <span style={{ fontSize: 16 }}>⏱</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: timerColor, fontFamily: 'var(--font-mono)', letterSpacing: 1 }}>
+              {timeLeft <= 0 ? 'Time\'s Up!' : formatTime(timeLeft)}
+            </span>
+          </div>
+        )}
         <button onClick={() => onNavigate('prev')} disabled={!hasPrev} className="btn btn-ghost btn-icon" style={{ fontSize: 12 }}>←</button>
         <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
           {questionNumber} / {totalQuestions}

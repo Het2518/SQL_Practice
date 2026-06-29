@@ -25,13 +25,13 @@ export function useGamification(progress, user) {
   const [gameState, setGameState] = useState(() => {
     try {
       const saved = localStorage.getItem(GAMIFICATION_KEY);
-      return saved ? JSON.parse(saved) : DEFAULT_STATE;
+      return saved ? { ...DEFAULT_STATE, ...JSON.parse(saved) } : DEFAULT_STATE;
     } catch {
       return DEFAULT_STATE;
     }
   });
 
-  // Save on state change
+  // Save on state change (only if user is logged in)
   useEffect(() => {
     localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
     if (user) {
@@ -42,15 +42,25 @@ export function useGamification(progress, user) {
           current_streak: gameState.currentStreak,
           max_streak: gameState.maxStreak,
           badges: gameState.badges,
-          last_practice_date: gameState.lastPracticeDate
+          last_practice_date: gameState.lastPracticeDate,
+          activity_history: gameState.recentSubmissions,
+          display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
         }).then(({ error }) => {
           if (error) console.error('Error syncing gamification state:', error.message);
         });
-      }, 2000); // Debounce sync by 2 seconds
+      }, 2000);
 
       return () => clearTimeout(syncTimeout);
     }
   }, [gameState, user]);
+
+  // Reset gamification to zero when user logs out
+  useEffect(() => {
+    if (!user) {
+      setGameState(DEFAULT_STATE);
+      localStorage.removeItem(GAMIFICATION_KEY);
+    }
+  }, [user]);
 
   // Sync from Supabase on user login
   useEffect(() => {
@@ -65,7 +75,7 @@ export function useGamification(progress, user) {
             maxStreak: Math.max(prev.maxStreak, data.max_streak || 0),
             badges: Array.from(new Set([...prev.badges, ...(data.badges || [])])),
             lastPracticeDate: data.last_practice_date || prev.lastPracticeDate,
-            recentSubmissions: data.recent_submissions || prev.recentSubmissions || []
+            recentSubmissions: Array.isArray(data.activity_history) ? data.activity_history : (prev.recentSubmissions || [])
           }));
         }
       });

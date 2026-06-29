@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database, CheckCircle2, Timer, Trophy, BarChart3, Award, TrendingUp, ArrowRight } from 'lucide-react';
 import { DB_INFO } from './types';
 import { allQuestions, getQuestionsForDb } from './data/index';
@@ -47,7 +47,22 @@ function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, set
   const totalComplete = Object.values(progress).filter(s => s === 'complete').length;
   const totalAttempted = Object.values(progress).filter(s => s === 'attempted').length;
   const totalPct = Math.round((totalComplete + totalAttempted * 0.5) / 600 * 100);
-  const score = gameState?.score ?? 0;
+
+  const score = useMemo(() => {
+    let s = 0;
+    Object.keys(progress).forEach(qId => {
+      if (progress[qId] === 'complete') {
+        const q = allQuestions.find(x => String(x.id) === String(qId));
+        if (q) {
+          if (q.difficulty === 'easy') s += 10;
+          else if (q.difficulty === 'medium') s += 30;
+          else if (q.difficulty === 'hard') s += 50;
+        }
+      }
+    });
+    return s;
+  }, [progress]);
+
   const badges = (gameState?.badges ?? []).length;
 
   return <div className="home-root page-enter">
@@ -262,23 +277,40 @@ function PracticeView({
   const initialDb = routeDb || 'airlines';
   const [db, setDb] = useState(initialDb);
   
+  const [searchParams] = useSearchParams();
+  const qParam = searchParams.get('q');
+  
   const [currentQ, setCurrentQ] = useState(() => {
     const dbQs = getQuestionsForDb(initialDb);
+    if (qParam) {
+      const found = dbQs.find(q => q.id === qParam);
+      if (found) return found;
+    }
     return dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
   });
 
   useEffect(() => {
-    if (routeDb && routeDb !== db) {
-      setDb(routeDb);
+    if (routeDb) {
+      if (routeDb !== db) setDb(routeDb);
       const dbQs = getQuestionsForDb(routeDb);
-      const firstIncomplete = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
-      setCurrentQ(firstIncomplete);
-      setResult(null);
-      setValidation(null);
-      setSql('');
-      setPreviewTableName(null);
+      let targetQ;
+      if (qParam) {
+        targetQ = dbQs.find(q => q.id === qParam);
+      }
+      if (!targetQ) {
+        targetQ = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
+      }
+      
+      if (targetQ && targetQ.id !== currentQ?.id) {
+        setCurrentQ(targetQ);
+        setResult(null);
+        setValidation(null);
+        const savedSql = localStorage.getItem(`sql-persist-${targetQ.id}`);
+        setSql(savedSql || '');
+        setPreviewTableName(null);
+      }
     }
-  }, [routeDb, db, progress]);
+  }, [routeDb, db, progress, qParam, currentQ?.id]);
 
   const [sql, setSql] = useState('');
   const [result, setResult] = useState(null);
@@ -332,19 +364,19 @@ function PracticeView({
     };
   }, [isDragging]);
 
-  // Persist editor text
+  // Persist editor text — always save per question, always restore on question switch
   const EDITOR_KEY = `sql-persist-${currentQ.id}`;
   useEffect(() => {
-    if (settings.persistEditorText) {
-      const saved = localStorage.getItem(EDITOR_KEY);
-      if (saved) setSql(saved);
-    }
-  }, [currentQ.id, settings.persistEditorText, EDITOR_KEY]);
+    // Always restore saved SQL when switching questions
+    const saved = localStorage.getItem(EDITOR_KEY);
+    setSql(saved || '');
+  }, [currentQ.id, EDITOR_KEY]);
   useEffect(() => {
-    if (settings.persistEditorText && sql) {
+    // Always save current SQL for this question
+    if (sql !== undefined) {
       localStorage.setItem(EDITOR_KEY, sql);
     }
-  }, [sql, settings.persistEditorText, EDITOR_KEY]);
+  }, [sql, EDITOR_KEY]);
 
   const dbInfo = DB_INFO[db];
   const dbQuestions = useMemo(() => getQuestionsForDb(db), [db]);
@@ -359,19 +391,21 @@ function PracticeView({
     setShowDbPicker(false);
   }, [db, navigate]);
 
+  // History now stores { sql, questionId, dbName } objects for full context restore
   const [queryHistory, setQueryHistory] = useState(() => {
-    const saved = localStorage.getItem('sql-practice-history');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('sql-practice-history-v2');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
   });
 
   useEffect(() => {
-    localStorage.setItem('sql-practice-history', JSON.stringify(queryHistory.slice(0, 50)));
+    localStorage.setItem('sql-practice-history-v2', JSON.stringify(queryHistory.slice(0, 50)));
   }, [queryHistory]);
 
-  // Reset state when question changes and compute true expected result
+  // Reset result/validation when question changes (SQL restore is handled by navigation handlers)
   useEffect(() => {
     let mounted = true;
-    setSql('');
     setResult(null);
     setValidation(null);
     setExpectedResult(null);
@@ -388,10 +422,11 @@ function PracticeView({
     if (!sql.trim()) return;
     setIsExecuting(true);
     
-    // Add to history if not duplicate of last
+    // Add full context entry to history if not a duplicate of last
     setQueryHistory(prev => {
-      const next = [sql, ...prev.filter(q => q !== sql)].slice(0, 50);
-      return next;
+      const entry = { sql, questionId: currentQ.id, dbName: db, prompt: currentQ.prompt?.substring(0, 50) };
+      const filtered = prev.filter(h => h.sql !== sql);
+      return [entry, ...filtered].slice(0, 50);
     });
 
     try {
@@ -499,8 +534,17 @@ function PracticeView({
 
   const navigateTo = useCallback(direction => {
     const idx = dbQuestions.findIndex(q => q.id === currentQ.id);
-    if (direction === 'prev' && idx > 0) setCurrentQ(dbQuestions[idx - 1]);
-    if (direction === 'next' && idx < dbQuestions.length - 1) setCurrentQ(dbQuestions[idx + 1]);
+    let nextQ = null;
+    if (direction === 'prev' && idx > 0) nextQ = dbQuestions[idx - 1];
+    if (direction === 'next' && idx < dbQuestions.length - 1) nextQ = dbQuestions[idx + 1];
+    if (nextQ) {
+      setCurrentQ(nextQ);
+      // Restore persisted SQL for this question
+      const savedSql = localStorage.getItem(`sql-persist-${nextQ.id}`);
+      setSql(savedSql || '');
+      setResult(null);
+      setValidation(null);
+    }
   }, [currentQ, dbQuestions]);
 
   // Handle selecting question from browser — auto-switch DB if needed
@@ -512,7 +556,9 @@ function PracticeView({
     setShowBrowser(false);
     setResult(null);
     setValidation(null);
-    setSql('');
+    // Restore persisted SQL for this specific question
+    const savedSql = localStorage.getItem(`sql-persist-${q.id}`);
+    setSql(savedSql || '');
   }, [db]);
 
   const currentIdx = dbQuestions.findIndex(q => q.id === currentQ.id);
@@ -724,16 +770,30 @@ function PracticeView({
               <div style={{ position: 'relative', marginLeft: 'auto' }}>
                 <select 
                   className="btn btn-ghost btn-sm"
-                  style={{ appearance: 'none', paddingRight: '24px', maxWidth: '200px' }}
+                  style={{ appearance: 'none', paddingRight: '24px', maxWidth: '220px', cursor: 'pointer' }}
                   onChange={(e) => {
-                    if (e.target.value) setSql(e.target.value);
+                    const idx = parseInt(e.target.value, 10);
+                    if (!isNaN(idx) && queryHistory[idx]) {
+                      const entry = queryHistory[idx];
+                      // Restore full context: switch DB + question + SQL
+                      if (entry.dbName && entry.dbName !== db) {
+                        navigate('/practice/' + entry.dbName);
+                      }
+                      if (entry.questionId) {
+                        const q = allQuestions.find(q => q.id === entry.questionId);
+                        if (q) setCurrentQ(q);
+                      }
+                      setSql(entry.sql);
+                    }
                     e.target.value = "";
                   }}
                   value=""
                 >
                   <option value="" disabled>📜 History</option>
-                  {queryHistory.map((q, i) => (
-                    <option key={i} value={q}>{q.substring(0, 30) + (q.length > 30 ? '...' : '')}</option>
+                  {queryHistory.map((entry, i) => (
+                    <option key={i} value={i}>
+                      {entry.prompt ? `${entry.prompt.substring(0,25)}… | ${entry.sql.substring(0,20)}` : entry.sql?.substring(0, 40)}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -781,6 +841,11 @@ function PracticeView({
           hasNext={currentIdx < dbQuestions.length - 1}
           questionNumber={currentIdx + 1}
           totalQuestions={dbQuestions.length}
+          timedChallenges={settings.timedChallenges}
+          onTimerExpire={() => {
+            // Auto-run when timer expires so user sees their result
+            if (sql.trim()) handleRun();
+          }}
         />
       </aside>
     </div>
@@ -893,7 +958,11 @@ export default function App() {
   useEffect(() => {
     if (user && Object.keys(progress).length > 0) {
       const syncTimeout = setTimeout(() => {
-        supabase.from('user_progress').upsert({ user_id: user.id, completed_questions: progress }).then();
+        supabase.from('user_progress').upsert({ 
+          user_id: user.id, 
+          completed_questions: progress,
+          display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
+        }).then();
       }, 2000);
       return () => clearTimeout(syncTimeout);
     }
@@ -947,7 +1016,16 @@ export default function App() {
               onSaveSettings={setSettings}
               onHome={() => navigate('/')} 
               onSignOut={async () => {
+                // Full data reset on logout
                 await logout();
+                // Clear all localStorage keys owned by this app
+                Object.keys(localStorage).forEach(key => {
+                  if (key.startsWith('sql-') || key === 'sql-platform-settings' || key === 'sql-practice-gamification') {
+                    localStorage.removeItem(key);
+                  }
+                });
+                // Reset in-memory progress so UI shows zeros immediately
+                setProgress({});
                 window.location.href = '/';
               }} 
             />

@@ -104,27 +104,68 @@ export const computeDiff = (expectedRows, actualRows) => {
 
 // ---- Schema Introspection (Phase 2) ----
 
-// Extract FK relationships from sqlite
+// Extract FK relationships from sqlite — uses PRAGMA FKs first, then heuristic column naming
 export const buildRelationshipMap = async (executeQuery) => {
   if (!executeQuery) return [];
   try {
     const res = await executeQuery("SELECT name FROM sqlite_master WHERE type='table'");
     if (res.error) return [];
-    const tables = res.rows || [];
+    const tables = (res.rows || []).map(r => r[0]);
     const relationships = [];
+    const tableSet = new Set(tables);
 
-    for (const [tableName] of tables) {
-      const fkInfo = await executeQuery(`PRAGMA foreign_key_list(${tableName})`);
+    // Strategy 1: Explicit FK constraints via PRAGMA
+    for (const tableName of tables) {
+      const fkInfo = await executeQuery(`PRAGMA foreign_key_list("${tableName}")`);
       if (fkInfo.rows && fkInfo.rows.length > 0) {
         fkInfo.rows.forEach(fk => {
           // PRAGMA foreign_key_list format: [id, seq, table, from, to, on_update, on_delete, match]
           relationships.push({
             fromTable: tableName,
-            fromColumn: fk[3],   
-            toTable: fk[2],      
-            toColumn: fk[4],     
+            fromColumn: fk[3],
+            toTable: fk[2],
+            toColumn: fk[4],
           });
         });
+      }
+    }
+
+    // Strategy 2: Heuristic — if no FK constraints found, detect by _id column naming patterns
+    if (relationships.length === 0) {
+      for (const tableName of tables) {
+        const colInfo = await executeQuery(`PRAGMA table_info("${tableName}")`);
+        if (!colInfo.rows) continue;
+        for (const col of colInfo.rows) {
+          const colName = col[1]; // column name
+          if (colName.endsWith('_id') || colName.endsWith('Id')) {
+            // Derive the referenced table name
+            const baseName = colName.replace(/_id$/i, '').replace(/Id$/, '');
+            // Try singular and plural forms
+            const candidates = [
+              baseName,
+              baseName + 's',
+              baseName + 'es',
+              baseName.replace(/y$/, 'ies'),
+            ];
+            for (const candidate of candidates) {
+              if (tableSet.has(candidate) && candidate !== tableName) {
+                // Avoid duplicate relationships
+                const exists = relationships.some(
+                  r => r.fromTable === tableName && r.fromColumn === colName && r.toTable === candidate
+                );
+                if (!exists) {
+                  relationships.push({
+                    fromTable: tableName,
+                    fromColumn: colName,
+                    toTable: candidate,
+                    toColumn: 'id',
+                  });
+                }
+                break;
+              }
+            }
+          }
+        }
       }
     }
 

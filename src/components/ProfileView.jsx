@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star, Lock, Swords, Flame, Medal } from 'lucide-react';
+import { Settings as SettingsIcon, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star, Lock, Swords, Flame, Medal } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { allQuestions } from '../data/index';
 import { BADGE_DEFS } from '../hooks/useGamification';
@@ -51,19 +51,19 @@ function RadarChart({ data, size = 280 }) {
       const angle = j * angleStep - Math.PI / 2;
       return `${j === 0 ? 'M' : 'L'} ${center + radius * scale * Math.cos(angle)} ${center + radius * scale * Math.sin(angle)}`;
     }).join(' ') + ' Z';
-    return <path key={i} d={p} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray={scale === 1 ? "0" : "4 4"} />;
+    return <path key={i} d={p} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray={scale === 1 ? "0" : "2 4"} />;
   });
 
   return (
     <div style={{ width: size, height: size, position: 'relative', margin: '0 auto' }}>
-      <svg width={size} height={size}>
+      <svg width={size} height={size} style={{ overflow: 'visible' }}>
         <defs>
           <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.5" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.6" />
             <stop offset="100%" stopColor="var(--primary-dark)" stopOpacity="0.1" />
           </linearGradient>
           <filter id="glow">
-            <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
@@ -82,19 +82,29 @@ function RadarChart({ data, size = 280 }) {
         })}
 
         {/* Data Polygon */}
-        <path d={polygonPath} fill="url(#radarFill)" stroke="var(--primary)" strokeWidth="2" filter="url(#glow)" style={{ transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+        <path d={polygonPath} fill="url(#radarFill)" stroke="var(--primary)" strokeWidth="2.5" filter="url(#glow)" style={{ transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
         
         {/* Data Points */}
         {points.map((p, i) => (
-          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="4" fill="var(--bg)" stroke="var(--primary)" strokeWidth="2" />
+          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="5" fill="var(--bg)" stroke="var(--primary)" strokeWidth="2" style={{ transition: 'all 1s ease' }} />
         ))}
 
         {/* Labels */}
-        {points.map((p, i) => (
-          <text key={`lbl-${i}`} x={p.labelX} y={p.labelY} fill="var(--text-secondary)" fontSize="11" fontWeight="600" textAnchor="middle" dominantBaseline="middle">
-            {p.label}
-          </text>
-        ))}
+        {points.map((p, i) => {
+          const words = p.label.split(' ');
+          return (
+            <text key={`lbl-${i}`} x={p.labelX} y={p.labelY} fill="var(--text)" fontSize="12" fontWeight="700" textAnchor="middle" dominantBaseline="middle">
+              {words.length > 1 ? (
+                <>
+                  <tspan x={p.labelX} dy="-0.4em">{words[0]}</tspan>
+                  <tspan x={p.labelX} dy="1.2em">{words.slice(1).join(' ')}</tspan>
+                </>
+              ) : (
+                <tspan x={p.labelX} dy="0">{words[0]}</tspan>
+              )}
+            </text>
+          );
+        })}
       </svg>
     </div>
   );
@@ -113,14 +123,62 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'SQL Practitioner';
   const email = user?.email || 'guest@example.com';
   
+  const [realRank, setRealRank] = useState(null);
+  const [realPercentile, setRealPercentile] = useState(null);
+
   useEffect(() => {
-    supabase.from('user_progress').select('user_id', { count: 'exact', head: true })
-      .then(({ count, error }) => {
-        if (!error && count !== null) {
-          setTotalPlatformUsers(Math.max(count, 1));
+    supabase.from('user_progress').select('user_id, completed_questions')
+      .then(({ data, error }) => {
+        if (!error && data) {
+          const processed = data.map(row => {
+            let s = 0;
+            if (row.completed_questions) {
+              Object.entries(row.completed_questions).forEach(([qId, status]) => {
+                if (status === 'complete') {
+                  const q = allQuestions.find(x => String(x.id) === String(qId));
+                  if (q) {
+                    if (q.difficulty === 'easy') s += 10;
+                    else if (q.difficulty === 'medium') s += 30;
+                    else if (q.difficulty === 'hard') s += 50;
+                  }
+                }
+              });
+            }
+            return { userId: row.user_id, score: s };
+          });
+          
+          // Re-evaluate my own current score using my live progress state 
+          // because the DB might not be fully synced yet
+          let myScore = 0;
+          Object.entries(progress || {}).forEach(([qId, status]) => {
+            if (status === 'complete') {
+              const q = allQuestions.find(x => String(x.id) === String(qId));
+              if (q) {
+                if (q.difficulty === 'easy') myScore += 10;
+                else if (q.difficulty === 'medium') myScore += 30;
+                else if (q.difficulty === 'hard') myScore += 50;
+              }
+            }
+          });
+
+          const curr = processed.find(p => p.userId === user?.id);
+          if (curr) curr.score = myScore;
+          else processed.push({ userId: user?.id, score: myScore });
+
+          processed.sort((a, b) => b.score - a.score);
+          const totalUsers = processed.length;
+          setTotalPlatformUsers(totalUsers);
+          
+          const myIndex = processed.findIndex(p => p.userId === user?.id);
+          const rank = myIndex !== -1 ? myIndex + 1 : totalUsers;
+          setRealRank(rank);
+          
+          // Calculate percentile (e.g. top X%)
+          const percent = totalUsers > 1 ? Math.round(((totalUsers - rank) / (totalUsers - 1)) * 100) : 100;
+          setRealPercentile(Math.max(1, 100 - percent)); // 'Top 1%' instead of 'Top 99%'
         }
       });
-  }, []);
+  }, [user, progress]);
 
   const handleSaveName = async () => {
     if (!newName.trim() || newName === fullName) {
@@ -191,22 +249,25 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         if (isSolved) hardSolved++;
       }
     });
-    
     const score = (easySolved * 10) + (mediumSolved * 30) + (hardSolved * 50);
-    const realTotalUsers = totalPlatformUsers || 1; 
-    const maxExpectedScore = 15000; 
-    let percentile = Math.min(1, score / maxExpectedScore);
-    let rank = Math.round(realTotalUsers - (realTotalUsers * percentile));
-    rank = Math.max(1, rank);
     
-    // Find next recommended questions
+    // Find next recommended questions (1 Easy, 1 Medium, 1 Hard)
     const unsolved = allQuestions.filter(q => !completedSet.has(Number(q.id)));
-    unsolved.sort((a, b) => {
-      const wA = a.difficulty === 'easy' ? 1 : a.difficulty === 'medium' ? 2 : 3;
-      const wB = b.difficulty === 'easy' ? 1 : b.difficulty === 'medium' ? 2 : 3;
-      return wA - wB;
-    });
-    const nextRecs = unsolved.slice(0, 3);
+    const nextRecs = [];
+    const getNext = (diff) => unsolved.find(q => (q.difficulty || '').toLowerCase() === diff);
+    const recEasy = getNext('easy');
+    const recMedium = getNext('medium');
+    const recHard = getNext('hard');
+    
+    if (recEasy) nextRecs.push(recEasy);
+    if (recMedium) nextRecs.push(recMedium);
+    if (recHard) nextRecs.push(recHard);
+    
+    // Fill remainder if we don't have 3
+    for (const q of unsolved) {
+      if (nextRecs.length >= 3) break;
+      if (!nextRecs.includes(q)) nextRecs.push(q);
+    }
 
     // Generate Quests
     const streak = gameState?.streak || 0;
@@ -217,16 +278,22 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
     ];
 
     // Generate Timeline Events
-    // We mock timeline timestamps based on order since we don't store exact timestamps for everything, but we have recentSubmissions.
     let events = [];
-    if (gameState?.recentSubmissions) {
-      events = gameState.recentSubmissions.map((sub, i) => ({
-        id: `sub-${i}`,
-        type: 'solve',
-        title: `Solved ${sub.title}`,
-        time: `${i + 1} hours ago`,
-        icon: <Check size={14} color="var(--success)" />
-      }));
+    if (gameState?.recentSubmissions && Array.isArray(gameState.recentSubmissions)) {
+      events = gameState.recentSubmissions.map((sub, i) => {
+        let timeStr = 'Today';
+        if (i === 0) timeStr = 'Just now';
+        else if (i === 1) timeStr = 'A few hours ago';
+        else if (i > 3) timeStr = `${i} days ago`;
+        
+        return {
+          id: `sub-${i}`,
+          type: 'solve',
+          title: `Solved ${sub.title}`,
+          time: timeStr,
+          icon: <Check size={14} color="var(--success)" />
+        };
+      });
     }
     if (gameState?.badges) {
       gameState.badges.forEach((bId, i) => {
@@ -235,7 +302,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
           events.push({
             id: `badge-${bId}`,
             type: 'badge',
-            title: `Earned Badge: ${b.name}`,
+            title: `Earned Badge: ${b.title}`,
             time: `${i + 2} days ago`,
             icon: <Medal size={14} color="var(--warning)" />
           });
@@ -250,8 +317,8 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         totalSolved: easySolved + mediumSolved + hardSolved,
         totalCount: allQuestions.length,
         score,
-        rank,
-        percentile: Math.round(percentile * 100),
+        rank: realRank,
+        percentile: realPercentile,
         skillsProgress
       },
       nextRecommendations: nextRecs,
@@ -309,11 +376,11 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)' }} />
              <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Global Rank</span>
-                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank.toLocaleString()}</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank !== null ? stats.rank.toLocaleString() : '...'}</span>
              </div>
              <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
                 <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Top Percentile</span>
-                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--warning)' }}>Top {Math.max(1, 100 - stats.percentile)}%</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--warning)' }}>Top {stats.percentile !== null ? stats.percentile : '...'}%</span>
              </div>
           </div>
         </div>
@@ -321,7 +388,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '24px' }}>
           <SidebarItem icon={<User size={18} />} label="My Profile" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <SidebarItem icon={<Trophy size={18} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
-          <SidebarItem icon={<Settings size={18} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <SidebarItem icon={<SettingsIcon size={18} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
 
         <div style={{ marginTop: 'auto', padding: 24, borderTop: '1px solid var(--border)' }}>
@@ -339,7 +406,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} quests={quests} timelineEvents={timelineEvents} />}
           {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={stats.score} />}
-          {activeTab === 'settings' && <div style={{ background: 'var(--surface)', padding: 32, borderRadius: 16, border: '1px solid var(--border)' }}>Editor settings are managed within the Practice Workspace.</div>}
+          {activeTab === 'settings' && <SettingsTab settings={settings} onSaveSettings={onSaveSettings} />}
         </div>
       </main>
     </div>
@@ -377,7 +444,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: 32 }}>
         
         {/* SQL Skill Radar (Complex Visualization) */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+        <div className="glass-panel" style={{ padding: 32, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Target size={18} color="var(--primary)" /> Skill Web
           </h3>
@@ -387,7 +454,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </div>
 
         {/* Weekly Quests */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column' }}>
+        <div className="glass-panel" style={{ padding: 32, display: 'flex', flexDirection: 'column' }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Swords size={18} color="var(--warning)" /> Active Quests
           </h3>
@@ -421,7 +488,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Targeted recommendations based on your missing topics.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {nextRecommendations.map(q => (
-               <Link to={`/practice/${q.db}`} key={q.id} style={{
+               <Link to={`/practice/${q.db}?q=${q.id}`} key={q.id} style={{
                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg)', 
                  borderRadius: 16, border: '1px solid var(--border)', textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s'
                }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px var(--primary-muted)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
@@ -445,7 +512,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
         
         {/* Comprehensive Badges Board */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
+        <div className="glass-panel" style={{ padding: 32 }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Star size={18} color="var(--warning)" /> Badge Collection
           </h3>
@@ -471,7 +538,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </div>
 
         {/* Dynamic Activity Feed */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
+        <div className="glass-panel" style={{ padding: 32 }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Clock size={18} color="var(--primary)" /> Recent Activity
           </h3>
@@ -499,7 +566,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
         
         {/* Activity Heatmap */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)' }}>
+        <div className="glass-panel" style={{ padding: 32 }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Flame size={18} color="var(--error)" /> Consistency Heatmap
           </h3>
@@ -527,7 +594,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </div>
 
         {/* Global Progress Summary */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)' }}>
+        <div className="glass-panel" style={{ padding: 32 }}>
           <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
             <Database size={18} color="var(--primary)" /> Problem Distribution
           </h3>
@@ -561,6 +628,48 @@ function DiffRow({ label, solved, total, color }) {
   );
 }
 
+function SettingsTab({ settings, onSaveSettings }) {
+  return (
+    <div className="glass-panel page-enter" style={{ padding: 40, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text)' }}>
+        <SettingsIcon color="var(--primary)" /> Application Settings
+      </h2>
+      
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface-2)', borderRadius: 12 }}>
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text)' }}>Dark Mode</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Toggle application theme</div>
+        </div>
+        <button className={`toggle ${settings?.darkMode ? 'on' : 'off'}`} onClick={() => onSaveSettings && onSaveSettings({ ...settings, darkMode: !settings.darkMode })}>
+          <div className="toggle-thumb" />
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface-2)', borderRadius: 12 }}>
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text)' }}>Auto-run Queries</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Automatically execute SQL after you stop typing</div>
+        </div>
+        <button className={`toggle ${settings?.autoRunAfterTyping ? 'on' : 'off'}`} onClick={() => onSaveSettings && onSaveSettings({ ...settings, autoRunAfterTyping: !settings.autoRunAfterTyping })}>
+          <div className="toggle-thumb" />
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface-2)', borderRadius: 12 }}>
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text)' }}>Editor Font Size</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Adjust the size of the SQL editor font</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="btn btn-ghost" onClick={() => onSaveSettings && onSaveSettings({ ...settings, editorFontSize: Math.max(12, (settings.editorFontSize || 14) - 2) })}>-</button>
+          <span style={{ width: 30, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>{settings?.editorFontSize || 14}px</span>
+          <button className="btn btn-ghost" onClick={() => onSaveSettings && onSaveSettings({ ...settings, editorFontSize: Math.min(24, (settings.editorFontSize || 14) + 2) })}>+</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Leaderboard Tab 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -572,16 +681,27 @@ function LeaderboardTab({ currentUser, currentScore }) {
     setLoading(true);
     supabase
       .from('user_progress')
-      .select('user_id, badges, activity, completed_questions')
+      .select('user_id, badges, activity, completed_questions, display_name')
       .order('user_id', { ascending: true })
       .limit(200)
       .then(({ data }) => {
         if (!data) return;
         const processed = data.map(row => {
-          const completed = Object.values(row.completed_questions || {}).filter(v => v === 'complete').length;
-          const score = completed * 20;
+          let score = 0;
+          if (row.completed_questions) {
+            Object.entries(row.completed_questions).forEach(([qId, status]) => {
+              if (status === 'complete') {
+                const q = allQuestions.find(x => String(x.id) === String(qId));
+                if (q) {
+                  if (q.difficulty === 'easy') score += 10;
+                  else if (q.difficulty === 'medium') score += 30;
+                  else if (q.difficulty === 'hard') score += 50;
+                }
+              }
+            });
+          }
           const isCurrentUser = row.user_id === currentUser?.id;
-          return { userId: row.user_id, score, isCurrentUser };
+          return { userId: row.user_id, score, isCurrentUser, displayName: row.display_name };
         });
         const curr = processed.find(p => p.isCurrentUser);
         if (curr) curr.score = currentScore;
@@ -592,8 +712,8 @@ function LeaderboardTab({ currentUser, currentScore }) {
   }, [currentUser, currentScore]);
 
   return (
-    <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards' }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 40, border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.04)' }}>
+    <div className="page-enter">
+      <div className="glass-panel" style={{ padding: 40 }}>
         <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
           <Trophy color="var(--primary)" /> Global Leaderboard
         </h2>
@@ -616,9 +736,9 @@ function LeaderboardTab({ currentUser, currentScore }) {
                   </td>
                   <td style={{ padding: '20px 24px', fontWeight: e.isCurrentUser ? 800 : 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
-                      {e.isCurrentUser ? '👤' : e.userId.charAt(0).toUpperCase()}
+                      {e.isCurrentUser ? '👤' : (e.displayName ? e.displayName.charAt(0).toUpperCase() : e.userId.charAt(0).toUpperCase())}
                     </div>
-                    {e.isCurrentUser ? 'You' : `Player ${e.userId.slice(0, 8)}`}
+                    {e.isCurrentUser ? 'You' : (e.displayName || `Player ${e.userId.slice(0, 8)}`)}
                   </td>
                   <td style={{ padding: '20px 24px', textAlign: 'right', fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
                     {e.score.toLocaleString()}

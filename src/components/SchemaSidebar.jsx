@@ -1,86 +1,167 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { DB_INFO } from '../types';
-import { buildRelationshipMap, findJoinPath, generateJoinSQL, analyzeNormalForm } from '../utils/sqlAnalysis';
+import { analyzeNormalForm } from '../utils/sqlAnalysis';
 
-export function SchemaSidebar({
-  dbName,
-  executeQuery,
-  onPreviewTable
-}) {
+// ─── Icons (inline SVG to avoid extra deps) ──────────────────────────────────
+const ChevronIcon = ({ open }) => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none' }}>
+    <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const learningResources = [
+  { label: 'SQL Joins Explained', url: 'https://mode.com/sql-tutorial/sql-joins/', icon: '🔗' },
+  { label: 'Window Functions Guide', url: 'https://mode.com/sql-tutorial/sql-window-functions/', icon: '📊' },
+  { label: 'CTEs & Recursive Queries', url: 'https://www.sqlite.org/lang_with.html', icon: '🔄' },
+  { label: 'GROUP BY & HAVING', url: 'https://mode.com/sql-tutorial/sql-group-by/', icon: '📋' },
+  { label: 'Date Functions', url: 'https://www.sqlite.org/lang_datefunc.html', icon: '📅' },
+  { label: 'String Functions', url: 'https://www.sqlite.org/lang_corefunc.html', icon: '🔤' },
+  { label: 'NULL Handling', url: 'https://mode.com/sql-tutorial/sql-is-null/', icon: '⚠️' },
+];
+
+export function SchemaSidebar({ dbName, executeQuery, onPreviewTable }) {
   const [expandedTables, setExpandedTables] = useState(new Set());
-  const [expandedSection, setExpandedSection] = useState('schema');
-  
-  // Relationship Navigator State
-  const [relationships, setRelationships] = useState([]);
+  const [activeTab, setActiveTab] = useState('schema');
+  const [liveTables, setLiveTables] = useState({}); // { tableName: [{ name, type, pk, notNull }] }
   const [normalForms, setNormalForms] = useState({});
   const [selectedTables, setSelectedTables] = useState([]);
-  const [joinPath, setJoinPath] = useState(null);
+  const [joinPath, setJoinPath] = useState(null);    // null | 'loading' | array
+  const [joinSQL, setJoinSQL] = useState('');
+
   const dbInfo = DB_INFO[dbName];
-  const toggleTable = tableName => {
+
+  const toggleTable = (tableName) => {
     setExpandedTables(prev => {
       const next = new Set(prev);
-      if (next.has(tableName)) next.delete(tableName);else next.add(tableName);
+      if (next.has(tableName)) next.delete(tableName);
+      else next.add(tableName);
       return next;
     });
   };
-  const learningResources = [{
-    label: 'SQL Joins Explained',
-    url: 'https://mode.com/sql-tutorial/sql-joins/',
-    icon: '🔗'
-  }, {
-    label: 'Window Functions Guide',
-    url: 'https://mode.com/sql-tutorial/sql-window-functions/',
-    icon: '📊'
-  }, {
-    label: 'CTEs & Recursive Queries',
-    url: 'https://www.sqlite.org/lang_with.html',
-    icon: '🔄'
-  }, {
-    label: 'GROUP BY & HAVING',
-    url: 'https://mode.com/sql-tutorial/sql-group-by/',
-    icon: '📋'
-  }, {
-    label: 'Date Functions',
-    url: 'https://www.sqlite.org/lang_datefunc.html',
-    icon: '📅'
-  }, {
-    label: 'String Functions',
-    url: 'https://www.sqlite.org/lang_corefunc.html',
-    icon: '🔤'
-  }, {
-    label: 'NULL Handling',
-    url: 'https://mode.com/sql-tutorial/sql-is-null/',
-    icon: '⚠️'
-  }];
 
   useEffect(() => {
     let mounted = true;
-    if (executeQuery) {
-      buildRelationshipMap(executeQuery).then(rels => {
-        if (mounted) setRelationships(rels);
-      });
-      if (dbInfo?.tables) {
-        Promise.all(
-          dbInfo.tables.map(t => 
-            analyzeNormalForm(executeQuery, t.name).then(res => ({ name: t.name, nf: res.nf }))
-          )
-        ).then(results => {
-          if (!mounted) return;
-          const map = {};
-          results.forEach(r => { map[r.name] = r.nf; });
-          setNormalForms(map);
-        });
-      }
-    } else {
-      setRelationships([]);
-      setNormalForms({});
-    }
+    setNormalForms({});
+    setLiveTables({});
     setSelectedTables([]);
     setJoinPath(null);
+    setJoinSQL('');
+    setExpandedTables(new Set());
+
+    if (!executeQuery) return;
+
+    const init = async () => {
+      // Get live column data via PRAGMA for each table
+      if (dbInfo?.tables) {
+        const tableData = {};
+        const nfData = {};
+        await Promise.all(
+          dbInfo.tables.map(async (t) => {
+            try {
+              const colRes = await executeQuery(`PRAGMA table_info("${t.name}")`);
+              if (colRes.rows && colRes.rows.length > 0) {
+                tableData[t.name] = colRes.rows.map(row => ({
+                  name: row[1],
+                  type: row[2] || 'TEXT',
+                  notNull: row[3] === 1,
+                  pk: row[5] === 1,
+                }));
+              }
+              const nfRes = await analyzeNormalForm(executeQuery, t.name);
+              nfData[t.name] = nfRes.nf;
+            } catch {}
+          })
+        );
+        if (!mounted) return;
+        setLiveTables(tableData);
+        setNormalForms(nfData);
+      }
+    };
+
+    init();
     return () => { mounted = false; };
   }, [executeQuery, dbInfo]);
 
-  const handleTableSelect = (e, tableName) => {
+  // ── Live join path computation (runs fresh PRAGMA queries at selection time) ──
+  const computeLiveJoinPath = async (tableA, tableB) => {
+    if (!executeQuery) return null;
+    try {
+      // Fetch column info for both tables directly from the live DB
+      const [aRes, bRes] = await Promise.all([
+        executeQuery(`PRAGMA table_info("${tableA}")`),
+        executeQuery(`PRAGMA table_info("${tableB}")`),
+      ]);
+
+      const aCols = (aRes.rows || []).map(r => ({ name: r[1], type: r[2] || 'TEXT', pk: r[5] === 1 }));
+      const bCols = (bRes.rows || []).map(r => ({ name: r[1], type: r[2] || 'TEXT', pk: r[5] === 1 }));
+
+      const aPK = aCols.find(c => c.pk)?.name || aCols[0]?.name || 'id';
+      const bPK = bCols.find(c => c.pk)?.name || bCols[0]?.name || 'id';
+
+      // Helper: derive candidate table names from a FK column name
+      const getCandidates = (colName) => {
+        const base = colName.replace(/_id$/i, '').replace(/Id$/, '').toLowerCase();
+        return [base, base + 's', base + 'es', base.replace(/y$/, 'ies'), base.replace(/ies$/, 'y')];
+      };
+
+      // Strategy 1: tableA has a column pointing to tableB
+      for (const col of aCols) {
+        if (col.pk) continue;
+        const name = col.name.toLowerCase();
+        const candidates = getCandidates(name);
+        const bNameLower = tableB.toLowerCase();
+        if (
+          name === `${bNameLower}_id` ||
+          name === `${bNameLower.replace(/s$/, '')}_id` ||
+          candidates.some(c => c === bNameLower || c === bNameLower.replace(/s$/, ''))
+        ) {
+          const sql = `FROM ${tableA}\nJOIN ${tableB} ON ${tableA}.${col.name} = ${tableB}.${bPK}`;
+          return { path: [{ table: tableA }, { table: tableB, fromCol: col.name, toCol: bPK }], sql };
+        }
+      }
+
+      // Strategy 2: tableB has a column pointing to tableA
+      for (const col of bCols) {
+        if (col.pk) continue;
+        const name = col.name.toLowerCase();
+        const candidates = getCandidates(name);
+        const aNameLower = tableA.toLowerCase();
+        if (
+          name === `${aNameLower}_id` ||
+          name === `${aNameLower.replace(/s$/, '')}_id` ||
+          candidates.some(c => c === aNameLower || c === aNameLower.replace(/s$/, ''))
+        ) {
+          const sql = `FROM ${tableA}\nJOIN ${tableB} ON ${tableB}.${col.name} = ${tableA}.${aPK}`;
+          return { path: [{ table: tableA }, { table: tableB, fromCol: col.name, toCol: aPK }], sql };
+        }
+      }
+
+      // Strategy 3: Try intermediate table (multi-hop join)
+      const tablesRes = await executeQuery("SELECT name FROM sqlite_master WHERE type='table'");
+      const allTables = (tablesRes.rows || []).map(r => r[0]).filter(t => t !== tableA && t !== tableB);
+      for (const mid of allTables) {
+        const midRes = await executeQuery(`PRAGMA table_info("${mid}")`);  
+        const midCols = (midRes.rows || []).map(r => ({ name: r[1], pk: r[5] === 1 }));
+
+        const colToA = midCols.find(c => !c.pk && getCandidates(c.name).some(x => x === tableA.toLowerCase() || x === tableA.toLowerCase().replace(/s$/, '')));
+        const colToB = midCols.find(c => !c.pk && getCandidates(c.name).some(x => x === tableB.toLowerCase() || x === tableB.toLowerCase().replace(/s$/, '')));
+        if (colToA && colToB) {
+          const sql = `FROM ${tableA}\nJOIN ${mid} ON ${tableA}.${aPK} = ${mid}.${colToA.name}\nJOIN ${tableB} ON ${mid}.${colToB.name} = ${tableB}.${bPK}`;
+          return {
+            path: [{ table: tableA }, { table: mid, fromCol: colToA.name, toCol: aPK }, { table: tableB, fromCol: colToB.name, toCol: bPK }],
+            sql
+          };
+        }
+      }
+
+      return null; // no path found
+    } catch (err) {
+      console.error('computeLiveJoinPath error:', err);
+      return null;
+    }
+  };
+
+  const handleTableSelect = async (e, tableName) => {
     e.stopPropagation();
     let newSelected = [...selectedTables];
     if (newSelected.includes(tableName)) {
@@ -90,335 +171,263 @@ export function SchemaSidebar({
       if (newSelected.length > 2) newSelected.shift();
     }
     setSelectedTables(newSelected);
+    setJoinPath(null);
+    setJoinSQL('');
 
-    if (newSelected.length === 2) {
-      const path = findJoinPath(newSelected[0], newSelected[1], relationships);
-      setJoinPath(path);
-    } else {
-      setJoinPath(null);
+    if (newSelected.length === 2 && executeQuery) {
+      setJoinPath('loading');
+      const result = await computeLiveJoinPath(newSelected[0], newSelected[1]);
+      if (result) {
+        setJoinPath(result.path);
+        setJoinSQL(result.sql);
+      } else {
+        setJoinPath([]); // empty array = no path found
+        setJoinSQL('');
+      }
     }
   };
 
-  const generatedJoinSQL = useMemo(() => generateJoinSQL(joinPath), [joinPath]);
+  // Legacy: still derive a generatedJoinSQL fallback from the path (if needed)
+  const generatedJoinSQL = joinSQL;
 
-  return <div style={{
-    height: '100%',
-    overflowY: 'auto',
-    background: 'var(--surface)',
-    borderRight: '1px solid var(--border)',
-    display: 'flex',
-    flexDirection: 'column'
-  }}>
-      {/* DB Header */}
-      <div style={{
-      padding: '16px 14px',
-      borderBottom: '1px solid var(--border)',
-      background: 'var(--surface)'
-    }}>
-        <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        marginBottom: 4
-      }}>
-          <span style={{
-          fontWeight: 600,
-          fontSize: 15,
-          color: 'var(--text)'
-        }}>
-            SQL Database
-          </span>
+  const nfBadgeStyle = (nf) => {
+    const colors = { '3NF': '#059669', '2NF': '#d97706', '1NF': '#dc2626', 'Unnormalized': '#7c3aed', 'Unknown': '#6b7280' };
+    const color = colors[nf] || '#6b7280';
+    return { fontSize: 9, fontWeight: 700, background: `${color}20`, color, padding: '2px 5px', borderRadius: 4, border: `1px solid ${color}40`, flexShrink: 0 };
+  };
+
+  const tables = dbInfo?.tables || [];
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRight: '1px solid var(--border)' }}>
+      
+      {/* Header */}
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+            {dbInfo?.icon || '🗄️'}
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>{dbInfo?.label || 'Database'}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{tables.length} tables</div>
+          </div>
         </div>
       </div>
 
-      {/* Section Tabs */}
-      <div style={{
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-        {['schema', 'resources'].map(s => <button key={s} onClick={() => setExpandedSection(s)} style={{
-        flex: 1,
-        padding: '12px 0',
-        background: expandedSection === s ? 'var(--surface-2)' : 'transparent',
-        border: 'none',
-        borderBottom: '1px solid var(--border)',
-        color: expandedSection === s ? 'var(--primary)' : 'var(--muted)',
-        fontSize: 13,
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'all 0.15s'
-      }}>
-            {s === 'schema' ? 'View Schema' : 'Learning Resources'}
-          </button>)}
+      {/* Tab Bar */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
+        {[{ id: 'schema', label: 'Schema' }, { id: 'resources', label: 'Resources' }].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              flex: 1, padding: '10px 0', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13,
+              fontWeight: activeTab === tab.id ? 700 : 500,
+              color: activeTab === tab.id ? 'var(--primary)' : 'var(--muted)',
+              borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
+              transition: 'all 0.15s'
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div style={{
-      padding: '10px 10px',
-      flex: 1,
-      overflowY: 'auto'
-    }}>
-        {expandedSection === 'schema' ? <>
-            <div style={{
-          fontSize: 11,
-          color: 'var(--muted)',
-          marginBottom: 8,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}>
-              Tables
-            </div>
-            {dbInfo.tables.map(table => {
-          const isExpanded = expandedTables.has(table.name);
-          return <div key={table.name} className="schema-table-item" style={{
-            borderBottom: '1px solid var(--border)'
-          }}>
-                  <div className="schema-table-header" onClick={() => toggleTable(table.name)} style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px 14px',
-              cursor: 'pointer',
-              background: isExpanded ? 'var(--surface-2)' : selectedTables.includes(table.name) ? 'var(--primary-light)' : 'transparent',
-              color: isExpanded || selectedTables.includes(table.name) ? 'var(--primary)' : 'var(--text)'
-            }}>
-                    <span style={{
-                fontSize: 13,
-                fontWeight: 600,
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                      {table.name}
-                      <span title="Normal Form" style={{
-                        fontSize: '9px',
-                        background: 'var(--surface)',
-                        color: 'var(--text-secondary)',
-                        padding: '2px 4px',
-                        borderRadius: '4px',
-                        border: '1px solid var(--border)'
-                      }}>
-                        {normalForms[table.name] || ''}
-                      </span>
-                    </span>
-                    <button onClick={e => handleTableSelect(e, table.name)} title="Select for Join Path" style={{
-                      background: selectedTables.includes(table.name) ? 'var(--primary)' : 'transparent',
-                      color: selectedTables.includes(table.name) ? 'white' : 'var(--muted)',
-                      border: '1px solid ' + (selectedTables.includes(table.name) ? 'var(--primary)' : 'var(--border)'),
-                      borderRadius: '4px',
-                      fontSize: '10px',
-                      padding: '2px 4px',
-                      marginRight: '6px',
-                      cursor: 'pointer',
-                    }}>
-                      🔗
-                    </button>
-                    <button onClick={e => {
-                e.stopPropagation();
-                onPreviewTable(table.name);
-              }} style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 14,
-                color: 'var(--muted)',
-                padding: '2px 6px',
-                marginRight: 6,
-                borderRadius: 4,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s'
-              }} onMouseEnter={e => {
-                e.currentTarget.style.color = 'var(--primary)';
-                e.currentTarget.style.background = 'var(--surface)';
-              }} onMouseLeave={e => {
-                e.currentTarget.style.color = 'var(--muted)';
-                e.currentTarget.style.background = 'transparent';
-              }} title="Preview Data">
-                      👁
-                    </button>
-                    <span style={{
-                color: 'var(--primary-hover)',
-                fontSize: 10,
-                transition: 'transform 0.15s',
-                transform: isExpanded ? 'rotate(90deg)' : 'none'
-              }}>▶</span>
-                  </div>
-                  {isExpanded && <div style={{
-              padding: '0 14px 10px 14px',
-              background: 'var(--surface-2)'
-            }}>
-                      {table.columns.map(col => {
-                const isFK = relationships.some(r => r.fromTable === table.name && r.fromColumn === col.name);
-                const isPK = col.isPrimaryKey || (col.name === 'id' && !isFK) || (col.name.endsWith('_id') && !isFK);
-                return <div key={col.name} style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '6px 0',
-                fontSize: 12,
-                fontFamily: 'var(--font-sans)',
-                borderBottom: '1px solid var(--border)'
-              }}>
-                          <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  overflow: 'hidden'
-                }}>
-                            {isPK ? <span title="Primary Key" style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    background: 'rgba(239, 175, 0, 0.15)',
-                    color: '#d4a000',
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                  }}>PK</span> : isFK ? <span title="Foreign Key" style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    color: '#3b82f6',
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                  }}>FK</span> : <span style={{
-                    width: 18 // Match badge width roughly to align
-                  }} />}
-                            <span style={{
-                    color: 'var(--text)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    fontWeight: isPK || isFK ? 600 : 400
-                  }}>
-                              {col.name}
-                              {col.isNullable && <span style={{
-                      color: 'var(--muted)',
-                      fontSize: 10,
-                      marginLeft: 4
-                    }}>?</span>}
-                            </span>
-                          </div>
-                          <span style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  paddingLeft: 8
-                }}>
-                            {col.type}
-                          </span>
-                        </div>
-                })}
-                    </div>}
-                </div>;
-        })}
-
-            {/* Join Path Finder Result */}
+      {/* Body */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+        
+        {activeTab === 'schema' && (
+          <>
+            {/* Join Path Finder Banner */}
             {selectedTables.length === 2 && (
-              <div style={{ padding: '12px 14px', background: 'var(--primary-light)', borderBottom: '1px solid var(--border)', fontSize: '12px' }}>
-                <div style={{ fontWeight: 700, marginBottom: '6px', color: 'var(--primary)' }}>🔗 Join Path Suggestion</div>
-                {joinPath ? (
+              <div style={{ margin: '0 12px 12px', padding: 14, background: 'var(--primary-muted)', borderRadius: 10, border: '1px solid var(--primary-light)' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  🔗 Join Path: {selectedTables[0]} → {selectedTables[1]}
+                </div>
+                {joinPath === 'loading' && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    Computing join path…
+                  </div>
+                )}
+                {Array.isArray(joinPath) && joinPath.length > 0 && (
                   <>
-                    <div style={{ marginBottom: '8px', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 }}>
                       {joinPath.map((step, i) => (
-                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontWeight: 600, background: 'var(--surface)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--border)' }}>{step.table}</span>
-                          {i < joinPath.length - 1 && <span style={{ color: 'var(--muted)' }}>→</span>}
+                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, background: 'var(--surface)', padding: '2px 7px', borderRadius: 4, border: '1px solid var(--border)', color: 'var(--text)' }}>{step.table}</span>
+                          {i < joinPath.length - 1 && <span style={{ color: 'var(--primary)', fontSize: 10 }}>→</span>}
                         </span>
                       ))}
                     </div>
-                    <pre style={{ margin: 0, padding: '8px', background: 'var(--bg)', borderRadius: '6px', overflowX: 'auto', border: '1px solid var(--border)' }}>
+                    <pre style={{ margin: 0, padding: 10, background: 'var(--bg)', borderRadius: 6, overflowX: 'auto', border: '1px solid var(--border)', fontSize: 11, lineHeight: 1.6, color: 'var(--text)' }}>
                       <code>{generatedJoinSQL}</code>
                     </pre>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ marginTop: '8px', width: '100%', padding: '4px', fontSize: '11px' }}
-                      onClick={() => navigator.clipboard.writeText(generatedJoinSQL).then(() => alert('Copied to clipboard!'))}
+                    <button
+                      className="btn btn-primary"
+                      style={{ marginTop: 8, width: '100%', padding: '6px', fontSize: 11, justifyContent: 'center' }}
+                      onClick={() => navigator.clipboard.writeText(generatedJoinSQL).catch(() => {})}
                     >
-                      Copy SQL
+                      📋 Copy JOIN SQL
                     </button>
                   </>
-                ) : (
-                  <div style={{ color: 'var(--error)' }}>No direct relationship found between these tables.</div>
+                )}
+                {Array.isArray(joinPath) && joinPath.length === 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--error)', display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <span>⚠️</span>
+                    <span>No direct join path detected between <strong>{selectedTables[0]}</strong> and <strong>{selectedTables[1]}</strong>. These tables may not share a common key column.</span>
+                  </div>
                 )}
               </div>
             )}
 
+            {/* Section heading */}
+            <div style={{ padding: '0 16px 8px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Tables {selectedTables.length > 0 && <span style={{ color: 'var(--primary)' }}>({selectedTables.length}/2 selected)</span>}
+            </div>
+
+            {/* Table List */}
+            {tables.map(table => {
+              const isExpanded = expandedTables.has(table.name);
+              const isSelected = selectedTables.includes(table.name);
+              const cols = liveTables[table.name] || table.columns || [];
+              const nf = normalForms[table.name];
+
+              return (
+                <div key={table.name} style={{ borderBottom: '1px solid var(--border)' }}>
+                  {/* Table Row */}
+                  <div
+                    onClick={() => toggleTable(table.name)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', cursor: 'pointer',
+                      background: isSelected ? 'rgba(var(--primary-rgb, 107,114,128),0.08)' : isExpanded ? 'var(--surface-2)' : 'transparent',
+                      transition: 'background 0.15s'
+                    }}
+                    onMouseEnter={e => { if (!isExpanded && !isSelected) e.currentTarget.style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={e => { if (!isExpanded && !isSelected) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    {/* Expand arrow */}
+                    <span style={{ color: isExpanded ? 'var(--primary)' : 'var(--muted)', transition: 'color 0.15s' }}>
+                      <ChevronIcon open={isExpanded} />
+                    </span>
+
+                    {/* Table Name */}
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: isExpanded || isSelected ? 'var(--primary)' : 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {table.name}
+                    </span>
+
+                    {/* NF Badge */}
+                    {nf && <span style={nfBadgeStyle(nf)}>{nf}</span>}
+
+                    {/* Join Select Button */}
+                    <button
+                      onClick={e => handleTableSelect(e, table.name)}
+                      title="Select for Join Path Analysis"
+                      style={{
+                        width: 22, height: 22, borderRadius: 6, border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                        background: isSelected ? 'var(--primary)' : 'transparent',
+                        color: isSelected ? '#fff' : 'var(--muted)', fontSize: 11, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.15s'
+                      }}
+                    >🔗</button>
+
+                    {/* Preview Button */}
+                    <button
+                      onClick={e => { e.stopPropagation(); onPreviewTable(table.name); }}
+                      title="Preview Table Data"
+                      style={{
+                        width: 22, height: 22, borderRadius: 6, border: '1px solid var(--border)',
+                        background: 'transparent', color: 'var(--muted)', fontSize: 11, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--primary)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                    >👁</button>
+                  </div>
+
+                  {/* Expanded Columns */}
+                  {isExpanded && (
+                    <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)' }}>
+                      {cols.map((col, i) => {
+                        const isPK = col.pk || col.isPrimaryKey;
+                        const colName = col.name || col;
+                        const isFK = !isPK && typeof colName === 'string' && colName.toLowerCase().endsWith('_id');
+                        const colType = col.type || 'TEXT';
+                        return (
+                          <div
+                            key={i}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px',
+                              borderBottom: i < cols.length - 1 ? '1px solid var(--border)' : 'none',
+                              fontSize: 12, background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)'
+                            }}
+                          >
+                            {/* Key badges */}
+                            {isPK ? (
+                              <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(234,179,8,0.15)', color: '#ca8a04', padding: '2px 4px', borderRadius: 3, flexShrink: 0 }}>PK</span>
+                            ) : isFK ? (
+                              <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(59,130,246,0.15)', color: '#3b82f6', padding: '2px 4px', borderRadius: 3, flexShrink: 0 }}>FK</span>
+                            ) : (
+                              <span style={{ width: 20, flexShrink: 0 }} />
+                            )}
+                            
+                            <span style={{ flex: 1, color: 'var(--text)', fontWeight: isPK || isFK ? 600 : 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {colName}
+                              {col.notNull && <span style={{ color: 'var(--error)', marginLeft: 2, fontSize: 10 }} title="NOT NULL">*</span>}
+                            </span>
+                            <span style={{ color: 'var(--muted)', fontSize: 10, fontWeight: 600, textTransform: 'uppercase', flexShrink: 0 }}>{colType}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
             {/* Key Concepts */}
-            <div style={{
-          padding: '16px 14px'
-        }}>
-              <div style={{
-            fontSize: 11,
-            color: 'var(--muted)',
-            marginBottom: 12,
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}>
-                Key Concepts
+            {dbInfo?.concepts?.length > 0 && (
+              <div style={{ padding: '16px 16px 8px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Key Concepts</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {dbInfo.concepts.map(c => (
+                    <span key={c} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
+                      {c}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 6
-          }}>
-                {dbInfo.concepts.map(c => <span key={c} style={{
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-secondary)',
-              padding: '4px 10px',
-              borderRadius: 6,
-              fontSize: 11,
-              fontWeight: 600
-            }}>
-                    {c}
-                  </span>)}
-              </div>
-            </div>
-          </> : <div>
-            <div style={{
-          fontSize: 11,
-          color: 'var(--muted)',
-          marginBottom: 8,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em'
-        }}>
-              Learning Resources
-            </div>
-            {learningResources.map(r => <a key={r.label} href={r.url} target="_blank" rel="noopener noreferrer" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '8px 10px',
-          borderRadius: 'var(--radius)',
-          color: 'var(--text-secondary)',
-          textDecoration: 'none',
-          fontSize: 12,
-          marginBottom: 2,
-          transition: 'all 0.15s',
-          border: '1px solid transparent'
-        }} onMouseEnter={e => {
-          e.currentTarget.style.background = 'var(--surface-2)';
-          e.currentTarget.style.borderColor = 'var(--border)';
-          e.currentTarget.style.color = 'var(--text)';
-        }} onMouseLeave={e => {
-          e.currentTarget.style.background = 'transparent';
-          e.currentTarget.style.borderColor = 'transparent';
-          e.currentTarget.style.color = 'var(--text-secondary)';
-        }}>
-                <span>{r.icon}</span>
-                <span>{r.label}</span>
-                <span style={{
-            marginLeft: 'auto',
-            fontSize: 10,
-            opacity: 0.5
-          }}>→</span>
-              </a>)}
-          </div>}
+            )}
+          </>
+        )}
+
+        {activeTab === 'resources' && (
+          <div style={{ padding: '8px 12px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, padding: '0 4px' }}>Learning Resources</div>
+            {learningResources.map(r => (
+              <a
+                key={r.label}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8,
+                  color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 13, marginBottom: 4,
+                  transition: 'all 0.15s', border: '1px solid transparent'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{r.icon}</span>
+                <span style={{ flex: 1, fontWeight: 500 }}>{r.label}</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>→</span>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 }

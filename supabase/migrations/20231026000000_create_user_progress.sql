@@ -5,16 +5,17 @@ create table public.user_progress (
   current_streak integer default 0,
   max_streak integer default 0,
   badges jsonb default '[]'::jsonb,
-  last_practice_date text
+  last_practice_date text,
+  display_name text
 );
 
 -- Enable Row Level Security (RLS)
 alter table public.user_progress enable row level security;
 
--- Create policy to allow users to read their own progress
-create policy "Users can view their own progress"
+-- Create policy to allow users to view the leaderboard (public read)
+create policy "Anyone can view progress"
   on public.user_progress for select
-  using ( auth.uid() = user_id );
+  using ( true );
 
 -- Create policy to allow users to insert/update their own progress
 create policy "Users can update their own progress"
