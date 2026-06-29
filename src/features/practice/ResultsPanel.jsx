@@ -46,6 +46,37 @@ export function ResultsPanel({
   }
 
   if (!result) {
+    if (!sql || sql.trim() === '') {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          gap: 12,
+          color: 'var(--muted)',
+          background: 'var(--surface)'
+        }}>
+          <div style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            background: 'var(--surface-2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            color: 'var(--text-secondary)'
+          }}>⌨️</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>Write your SQL query</div>
+            <div style={{ fontSize: 13 }}>Type a query in the editor above to solve the problem</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={{
         display: 'flex',
