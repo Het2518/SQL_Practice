@@ -490,9 +490,11 @@ export function PracticeView({
           </div>
           <div className="editor-actions" style={{ position: 'relative' }}>
             <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
-              {isExecuting ? <RotateCcw size={16} className="spinner" /> : '▶ Run Query'}
+              {isExecuting ? <RotateCcw size={16} className="spinner" /> : !sql.trim() ? 'Type a query...' : '▶ Run Query'}
             </button>
-            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()} title="View Query Execution Plan">🔍 Explain</button>
+            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()} title="View Query Execution Plan">
+              {isExecuting ? '...' : !sql.trim() ? 'Explain (Empty)' : '🔍 Explain'}
+            </button>
             {/\bJOIN\b/i.test(sql) && (
               <button 
                 className="btn btn-secondary" 
