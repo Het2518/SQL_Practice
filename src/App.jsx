@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
-import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database, CheckCircle2, Timer, Trophy, BarChart3, Award, TrendingUp, ArrowRight } from 'lucide-react';
+import { Sun, Moon, BookOpen, Settings as SettingsIcon, User, Zap, ChevronDown, RotateCcw, Play, List, Home, Database, CheckCircle2, Timer, Trophy, BarChart3, Award, TrendingUp, ArrowRight, Briefcase } from 'lucide-react';
 import { DB_INFO } from './types';
 import { allQuestions, getQuestionsForDb } from './data/index';
 import { useSqlDatabase } from './hooks/useSqlDatabase';
@@ -10,6 +10,7 @@ import { ResultsPanel } from './components/ResultsPanel';
 import { ERDiagramModal } from './components/ERDiagramModal';
 import { QuestionCard } from './components/QuestionCard';
 import { QuestionBrowser } from './components/QuestionBrowser';
+import { InterviewDashboard } from './components/interview/InterviewDashboard';
 import { loadSettings, SettingsModal, defaultSettings } from './components/SettingsModal';
 import { loadShortcuts, isShortcutMatch } from './utils/shortcutManager';
 import { ProfileView } from './components/ProfileView';
@@ -42,7 +43,7 @@ function saveProgress(p) {
 
 // ─── DB Selector Screen ──────────────────────────────────────────────────────
 const DB_NAMES = Object.keys(DB_INFO);
-function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, settings, onToggleDark }) {
+function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, onShowInterview, settings, onToggleDark }) {
   const navigate = useNavigate();
   const totalComplete = Object.values(progress).filter(s => s === 'complete').length;
   const totalAttempted = Object.values(progress).filter(s => s === 'attempted').length;
@@ -100,6 +101,10 @@ function DbSelector({ progress, gameState, user, onShowAuth, onShowSettings, set
         <button className="nav-btn" onClick={() => navigate('/guide')}>
           <BookOpen size={14} />
           Docs
+        </button>
+        <button className="nav-btn" onClick={() => onShowInterview()} style={{ color: 'var(--primary)', fontWeight: 600 }}>
+          <Briefcase size={14} />
+          Interviews
         </button>
         <button className="nav-btn" onClick={onShowSettings}>
           <SettingsIcon size={14} />
@@ -910,6 +915,7 @@ export default function App() {
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
+  const [showInterview, setShowInterview] = useState(false);
 
   const toggleDark = useCallback(() => {
     setSettings(prev => {
@@ -991,7 +997,7 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
+        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={() => setShowInterview(true)} settings={settings} onToggleDark={toggleDark} />} />
 
         <Route path="/guide" element={<UserGuide />} />
         
@@ -1043,6 +1049,7 @@ export default function App() {
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
+      {showInterview && <InterviewDashboard onClose={() => setShowInterview(false)} />}
     </>
   );
 }
