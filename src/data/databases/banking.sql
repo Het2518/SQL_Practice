@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS employees (
   first_name TEXT, last_name TEXT, role TEXT, salary REAL, hired_at DATE,
   manager_id INTEGER REFERENCES employees(employee_id)
 );
+CREATE TABLE IF NOT EXISTS interest_rates (
+  rate_id INTEGER PRIMARY KEY, account_type TEXT, annual_rate REAL,
+  effective_from DATE, effective_to DATE
+);
 CREATE TABLE IF NOT EXISTS accounts (
   account_id INTEGER PRIMARY KEY, customer_id INTEGER REFERENCES customers(customer_id),
   branch_id INTEGER REFERENCES branches(branch_id), type TEXT, balance REAL,
@@ -33,10 +37,7 @@ CREATE TABLE IF NOT EXISTS loan_payments (
   payment_id INTEGER PRIMARY KEY, loan_id INTEGER REFERENCES loans(loan_id),
   amount REAL, paid_at DATE, method TEXT, is_late INTEGER DEFAULT 0
 );
-CREATE TABLE IF NOT EXISTS interest_rates (
-  rate_id INTEGER PRIMARY KEY, account_type TEXT, annual_rate REAL,
-  effective_from DATE, effective_to DATE
-);
+
 
 INSERT INTO branches VALUES
   (1,'Downtown Branch','New York','USA',NULL),
@@ -86,6 +87,14 @@ INSERT INTO customers VALUES
   (18,'Rose','Hernandez','rose@email.com',NULL,'1979-01-06','SSN018'),
   (19,'Sam','King','sam@email.com','+1-555-1019','1984-05-23','SSN019'),
   (20,'Tina','Wright','tina@email.com','+1-555-1020','1969-09-12','SSN020');
+
+INSERT INTO interest_rates VALUES
+  (1,'Savings',2.5,'2020-01-01',NULL),
+  (2,'Checking',0.5,'2020-01-01',NULL),
+  (3,'Savings',2.0,'2018-01-01','2019-12-31'),
+  (4,'Checking',0.25,'2018-01-01','2019-12-31'),
+  (5,'Savings',3.0,'2023-01-01',NULL),
+  (6,'Fixed Deposit',4.5,'2020-01-01',NULL);
 
 INSERT INTO accounts VALUES
   (1,1,1,'Savings',15000.00,'2020-01-15',500,1,1),
@@ -174,11 +183,3 @@ INSERT INTO loan_payments VALUES
   (18,9,1100.00,'2021-09-01','Bank Transfer',0),
   (19,10,620.00,'2020-05-01','Direct Debit',0),
   (20,10,620.00,'2020-06-01','Direct Debit',0);
-
-INSERT INTO interest_rates VALUES
-  (1,'Savings',2.5,'2020-01-01',NULL),
-  (2,'Checking',0.5,'2020-01-01',NULL),
-  (3,'Savings',2.0,'2018-01-01','2019-12-31'),
-  (4,'Checking',0.25,'2018-01-01','2019-12-31'),
-  (5,'Savings',3.0,'2023-01-01',NULL),
-  (6,'Fixed Deposit',4.5,'2020-01-01',NULL);

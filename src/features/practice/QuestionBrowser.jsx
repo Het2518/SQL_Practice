@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DB_INFO } from '@/types';
+import { supabase } from '@/lib/supabase';
 const ALL_KEYWORDS = ['Select', 'Where', 'Order By', 'Group By', 'Having', 'Join', 'Left Join', 'Subquery', 'CTE', 'Recursive CTE', 'Window Function', 'Rank', 'Row Number', 'Lag', 'Lead', 'Case', 'Union', 'Insert', 'Update', 'Delete', 'Date Function', 'String Function', 'Null Handling'];
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const DB_NAMES = Object.keys(DB_INFO);
@@ -28,15 +29,39 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     return Array.from(topics).sort();
   }, [questions]);
 
-  const dynamicCompanies = useMemo(() => {
-    const comps = new Set();
-    questions.forEach(q => {
-      q.keywords?.forEach(k => {
-        if (k.startsWith('company:')) comps.add(k.replace('company:', ''));
-      });
-    });
-    return Array.from(comps).sort();
-  }, [questions]);
+  const [dynamicCompanies, setDynamicCompanies] = useState([]);
+  const [qCompanyMap, setQCompanyMap] = useState({});
+
+  useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const { data, error } = await supabase
+          .from('question_company_mapping')
+          .select(`
+            questions ( prompt ),
+            companies ( name )
+          `);
+        if (data && !error) {
+          const comps = new Set();
+          const map = {};
+          data.forEach(row => {
+            const cName = row.companies?.name;
+            const qPrompt = row.questions?.prompt;
+            if (cName && qPrompt) {
+              comps.add(cName);
+              if (!map[qPrompt]) map[qPrompt] = new Set();
+              map[qPrompt].add(cName);
+            }
+          });
+          setDynamicCompanies(Array.from(comps).sort());
+          setQCompanyMap(map);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    fetchCompanies();
+  }, []);
 
   const toggleSet = (set, item) => {
     const next = new Set(set);
@@ -61,14 +86,14 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
       }
       
       if (selectedCompanies.size > 0) {
-         const qComps = q.keywords?.filter(k => k.startsWith('company:')).map(k => k.replace('company:', '')) || [];
+         const qComps = qCompanyMap[q.prompt] ? Array.from(qCompanyMap[q.prompt]) : [];
          if (!qComps.some(c => selectedCompanies.has(c))) return false;
       }
 
       if (search && !q.prompt.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, search]);
+  }, [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, search, qCompanyMap]);
   const stats = useMemo(() => {
     const total = questions.length;
     const complete = questions.filter(q => progress[q.id] === 'complete').length;
