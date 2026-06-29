@@ -11,53 +11,62 @@ const extractIndex = (detail) => {
   return match ? match[1] : null;
 };
 
-export const IndexAdvisor = ({ db, sql }) => {
+export const IndexAdvisor = ({ executeQuery, sql }) => {
   const [analysis, setAnalysis] = useState(null);
 
   useEffect(() => {
-    if (!db || !sql) return;
+    let mounted = true;
+    if (!executeQuery || !sql) return;
 
-    try {
-      const planRes = db.exec(`EXPLAIN QUERY PLAN ${sql}`);
-      const plan = planRes.length > 0 && planRes[0].values ? planRes[0].values : [];
-      
-      const tablesUsed = new Set();
-      const usedIndexes = new Set();
-      const fullScans = new Set();
+    const analyze = async () => {
+      try {
+        const planRes = await executeQuery(`EXPLAIN QUERY PLAN ${sql}`);
+        const plan = planRes.rows || [];
+        
+        const tablesUsed = new Set();
+        const usedIndexes = new Set();
+        const fullScans = new Set();
 
-      plan.forEach(step => {
-        // EXPLAIN QUERY PLAN format: [id, parent, notused, detail]
-        const detail = step[3] || '';
-        const table = extractTable(detail);
-        if (table) tablesUsed.add(table);
+        plan.forEach(step => {
+          // EXPLAIN QUERY PLAN format: [id, parent, notused, detail]
+          const detail = step[3] || '';
+          const table = extractTable(detail);
+          if (table) tablesUsed.add(table);
 
-        const index = extractIndex(detail);
-        if (index) {
-          usedIndexes.add(index);
+          const index = extractIndex(detail);
+          if (index) {
+            usedIndexes.add(index);
+          }
+
+          if (detail.includes('SCAN TABLE')) {
+            fullScans.add(table);
+          }
+        });
+
+        // Get index info for all used tables
+        let availableIndexes = [];
+        for (const table of tablesUsed) {
+          const idxInfo = await getIndexInfo(executeQuery, table);
+          availableIndexes = availableIndexes.concat(idxInfo);
         }
 
-        if (detail.includes('SCAN TABLE')) {
-          fullScans.add(table);
+        if (mounted) {
+          setAnalysis({
+            availableIndexes,
+            usedIndexes: Array.from(usedIndexes),
+            fullScans: Array.from(fullScans),
+          });
         }
-      });
 
-      // Get index info for all used tables
-      let availableIndexes = [];
-      tablesUsed.forEach(table => {
-        availableIndexes = availableIndexes.concat(getIndexInfo(db, table));
-      });
-
-      setAnalysis({
-        availableIndexes,
-        usedIndexes: Array.from(usedIndexes),
-        fullScans: Array.from(fullScans),
-      });
-
-    } catch (err) {
-      console.error("Index Advisor analysis failed", err);
-      setAnalysis(null);
-    }
-  }, [db, sql]);
+      } catch (err) {
+        console.error("Index Advisor analysis failed", err);
+        if (mounted) setAnalysis(null);
+      }
+    };
+    
+    analyze();
+    return () => { mounted = false; };
+  }, [executeQuery, sql]);
 
   if (!analysis) return null;
 

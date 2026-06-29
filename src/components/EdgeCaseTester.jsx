@@ -1,82 +1,13 @@
 import React, { useState } from 'react';
 
-// Use the globally loaded initSqlJs from the CDN (loaded in useSqlDatabase)
 
-const getNullableColumns = (db, tableName) => {
-  const colInfo = db.exec(`PRAGMA table_info(${tableName})`);
-  if (!colInfo.length) return [];
-  // column format: [cid, name, type, notnull, dflt_value, pk]
-  return colInfo[0].values.filter(col => col[3] === 0 && col[5] === 0).map(col => col[1]);
-};
 
-const getNumericColumns = (db, tableName) => {
-  const colInfo = db.exec(`PRAGMA table_info(${tableName})`);
-  if (!colInfo.length) return [];
-  return colInfo[0].values
-    .filter(col => col[5] === 0 && (col[2].toUpperCase().includes('INT') || col[2].toUpperCase().includes('NUM')))
-    .map(col => col[1]);
-};
-
-const EDGE_CASE_VARIANTS = [
-  {
-    id: 'empty_table',
-    label: 'Empty Table',
-    description: 'All rows deleted from the primary table',
-    transform: (db, tableName) => db.exec(`DELETE FROM ${tableName}`)
-  },
-  {
-    id: 'single_row',
-    label: 'Single Row',
-    description: 'Only one row remains in the primary table',
-    transform: (db, tableName) => {
-      const firstIdRes = db.exec(`SELECT rowid FROM ${tableName} LIMIT 1`);
-      if (firstIdRes.length && firstIdRes[0].values.length) {
-        const firstId = firstIdRes[0].values[0][0];
-        db.exec(`DELETE FROM ${tableName} WHERE rowid != ${firstId}`);
-      }
-    }
-  },
-  {
-    id: 'all_nulls',
-    label: 'NULL-heavy Data',
-    description: 'Non-PK/FK columns set to NULL',
-    transform: (db, tableName) => {
-      const nullableCols = getNullableColumns(db, tableName);
-      nullableCols.forEach(col => {
-        try { db.exec(`UPDATE ${tableName} SET ${col} = NULL`); } catch (e) {}
-      });
-    }
-  },
-  {
-    id: 'duplicates',
-    label: 'Duplicate Rows',
-    description: '50% of rows duplicated',
-    transform: (db, tableName) => {
-      try {
-        db.exec(`INSERT INTO ${tableName} SELECT * FROM ${tableName} LIMIT (SELECT COUNT(*)/2 FROM ${tableName})`);
-      } catch(e) {}
-    }
-  },
-  {
-    id: 'extreme_values',
-    label: 'Extreme Values',
-    description: 'Numeric columns set to 0, and max integer',
-    transform: (db, tableName) => {
-      const numericCols = getNumericColumns(db, tableName);
-      if (numericCols.length > 0) {
-        try { db.exec(`UPDATE ${tableName} SET ${numericCols[0]} = 0 WHERE rowid = (SELECT rowid FROM ${tableName} LIMIT 1)`); } catch (e) {}
-        try { db.exec(`UPDATE ${tableName} SET ${numericCols[0]} = 9999999 WHERE rowid = (SELECT rowid FROM ${tableName} LIMIT 1 OFFSET 1)`); } catch (e) {}
-      }
-    }
-  }
-];
-
-export const EdgeCaseTester = ({ db, sql }) => {
+export const EdgeCaseTester = ({ getEdgeCaseResults, sql }) => {
   const [testing, setTesting] = useState(false);
   const [results, setResults] = useState(null);
 
   const runTests = async () => {
-    if (!db || !sql) return;
+    if (!getEdgeCaseResults || !sql) return;
     setTesting(true);
     setResults(null);
 
@@ -91,37 +22,11 @@ export const EdgeCaseTester = ({ db, sql }) => {
     }
 
     try {
-      const SQL = await window.initSqlJs({ locateFile: () => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.wasm' });
-      const testResults = [];
-
-      for (const variant of EDGE_CASE_VARIANTS) {
-        // Export current DB to create a fresh isolated clone
-        const dbExport = db.export();
-        const dbCopy = new SQL.Database(dbExport);
-
-        try {
-          variant.transform(dbCopy, primaryTable);
-          const res = dbCopy.exec(sql);
-          testResults.push({
-            ...variant,
-            status: 'passed',
-            rowCount: res.length > 0 ? res[0].values.length : 0
-          });
-        } catch (err) {
-          testResults.push({
-            ...variant,
-            status: 'failed',
-            error: err.message
-          });
-        }
-        
-        dbCopy.close(); // Free WASM memory to prevent leaks
-      }
-
+      const testResults = await getEdgeCaseResults(sql, primaryTable);
       setResults(testResults);
     } catch (err) {
       console.error("Edge case testing failed", err);
-      setResults([{ id: 'error', status: 'error', error: 'Failed to initialize testing environment.' }]);
+      setResults([{ id: 'error', status: 'error', error: 'Failed to run tests.' }]);
     }
     
     setTesting(false);

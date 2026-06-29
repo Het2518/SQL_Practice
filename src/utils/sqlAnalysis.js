@@ -105,16 +105,18 @@ export const computeDiff = (expectedRows, actualRows) => {
 // ---- Schema Introspection (Phase 2) ----
 
 // Extract FK relationships from sqlite
-export const buildRelationshipMap = (db) => {
-  if (!db) return [];
+export const buildRelationshipMap = async (executeQuery) => {
+  if (!executeQuery) return [];
   try {
-    const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0]?.values ?? [];
+    const res = await executeQuery("SELECT name FROM sqlite_master WHERE type='table'");
+    if (res.error) return [];
+    const tables = res.rows || [];
     const relationships = [];
 
-    tables.forEach(([tableName]) => {
-      const fkInfo = db.exec(`PRAGMA foreign_key_list(${tableName})`);
-      if (fkInfo.length > 0 && fkInfo[0].values) {
-        fkInfo[0].values.forEach(fk => {
+    for (const [tableName] of tables) {
+      const fkInfo = await executeQuery(`PRAGMA foreign_key_list(${tableName})`);
+      if (fkInfo.rows && fkInfo.rows.length > 0) {
+        fkInfo.rows.forEach(fk => {
           // PRAGMA foreign_key_list format: [id, seq, table, from, to, on_update, on_delete, match]
           relationships.push({
             fromTable: tableName,
@@ -124,7 +126,7 @@ export const buildRelationshipMap = (db) => {
           });
         });
       }
-    });
+    }
 
     return relationships;
   } catch (err) {
@@ -181,24 +183,27 @@ export const generateJoinSQL = (path) => {
 };
 
 // Extract index metadata
-export const getIndexInfo = (db, tableName) => {
-  if (!db) return [];
+export const getIndexInfo = async (executeQuery, tableName) => {
+  if (!executeQuery) return [];
   try {
-    const indexes = db.exec(`PRAGMA index_list(${tableName})`);
-    if (indexes.length === 0 || !indexes[0].values) return [];
+    const res = await executeQuery(`PRAGMA index_list(${tableName})`);
+    const indexes = res.rows || [];
+    if (indexes.length === 0) return [];
     
-    return indexes[0].values.map(idx => {
+    const results = [];
+    for (const idx of indexes) {
       // PRAGMA index_list format: [seq, name, unique, origin, partial]
       const indexName = idx[1];
       const isUnique = idx[2] === 1;
       
-      const colInfo = db.exec(`PRAGMA index_info(${indexName})`);
-      const columns = colInfo.length > 0 && colInfo[0].values 
-        ? colInfo[0].values.map(col => col[2]) 
+      const colInfo = await executeQuery(`PRAGMA index_info(${indexName})`);
+      const columns = colInfo.rows && colInfo.rows.length > 0 
+        ? colInfo.rows.map(col => col[2]) 
         : [];
       
-      return { indexName, isUnique, columns, tableName };
-    });
+      results.push({ indexName, isUnique, columns, tableName });
+    }
+    return results;
   } catch (err) {
     console.error("Failed to get index info for", tableName, err);
     return [];
@@ -224,21 +229,21 @@ const hasTransitiveDependencies = (columns, fks) => {
   );
 };
 
-export const analyzeNormalForm = (db, tableName) => {
-  if (!db) return { nf: 'Unknown' };
+export const analyzeNormalForm = async (executeQuery, tableName) => {
+  if (!executeQuery) return { nf: 'Unknown' };
   
   try {
-    const colInfo = db.exec(`PRAGMA table_info(${tableName})`);
-    const columns = colInfo.length > 0 && colInfo[0].values 
-      ? colInfo[0].values.map(col => ({ name: col[1], type: col[2], isPrimaryKey: col[5] === 1 }))
+    const colRes = await executeQuery(`PRAGMA table_info(${tableName})`);
+    const columns = colRes.rows && colRes.rows.length > 0 
+      ? colRes.rows.map(col => ({ name: col[1], type: col[2], isPrimaryKey: col[5] === 1 }))
       : [];
       
-    const fkInfo = db.exec(`PRAGMA foreign_key_list(${tableName})`);
-    const fks = fkInfo.length > 0 && fkInfo[0].values 
-      ? fkInfo[0].values.map(fk => ({ from: fk[3], to: fk[4] })) 
+    const fkRes = await executeQuery(`PRAGMA foreign_key_list(${tableName})`);
+    const fks = fkRes.rows && fkRes.rows.length > 0 
+      ? fkRes.rows.map(fk => ({ from: fk[3], to: fk[4] })) 
       : [];
       
-    const indexes = getIndexInfo(db, tableName);
+    const indexes = await getIndexInfo(executeQuery, tableName);
     
     // 1NF: All columns atomic, has PK
     const is1NF = hasPrimaryKey(columns);
@@ -249,14 +254,12 @@ export const analyzeNormalForm = (db, tableName) => {
     // 3NF: 2NF + No transitive dependencies
     const is3NF = is2NF && !hasTransitiveDependencies(columns, fks);
     
-    return { 
-      nf: is3NF ? '3NF' : is2NF ? '2NF' : is1NF ? '1NF' : 'Unnormalized', 
-      is1NF, 
-      is2NF, 
-      is3NF 
-    };
+    if (is3NF) return { nf: '3NF', reason: 'Has primary key and no transitive or partial dependencies.' };
+    if (is2NF) return { nf: '2NF', reason: 'Contains transitive dependencies (e.g. address fields without separate table).' };
+    if (is1NF) return { nf: '1NF', reason: 'Contains partial dependencies.' };
+    return { nf: 'Unnormalized', reason: 'Lacks a primary key.' };
   } catch (err) {
-    return { nf: 'Unknown' };
+    return { nf: 'Unknown', reason: 'Error analyzing schema.' };
   }
 };
 

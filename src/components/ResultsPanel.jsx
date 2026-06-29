@@ -1,23 +1,26 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DiffTable } from './DiffTable';
 import { TableCell, NullSummaryPanel } from './NullVisualizer';
 import { ExecutionOrderExplainer } from './ExecutionOrderExplainer';
 import { IndexAdvisor } from './IndexAdvisor';
 import { TheoryConnector } from './TheoryConnector';
 import { GroupedResultRow } from './AggregateVisualizer';
+import { TableVirtuoso } from 'react-virtuoso';
 
 export function ResultsPanel({
   result,
   validation,
   sql,
-  db,
+  executeQuery,
   isRunning
 }) {
+  const [activeTab, setActiveTab] = useState('data');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
 
-  // Reset page when result changes
+  // Reset tab and page when result changes
   useEffect(() => {
+    setActiveTab('data');
     setPage(1);
   }, [result]);
 
@@ -76,13 +79,9 @@ export function ResultsPanel({
   const isError = !!result.error;
   const isDML = !isError && (result.isDML !== undefined ? result.isDML : result.columns.length === 0);
 
-  // Pagination logic
   const totalRows = isError || isDML ? 0 : result.rows.length;
   const totalPages = pageSize === 'All' ? 1 : Math.ceil(totalRows / pageSize);
-  
-  // Ensure page is within bounds
   const safePage = Math.max(1, Math.min(page, totalPages || 1));
-  
   const startIndex = pageSize === 'All' ? 0 : (safePage - 1) * pageSize;
   const endIndex = pageSize === 'All' ? totalRows : Math.min(startIndex + pageSize, totalRows);
   const currentRows = isError || isDML ? [] : result.rows.slice(startIndex, endIndex);
@@ -163,113 +162,176 @@ export function ResultsPanel({
 
       {/* Content Area */}
       {!isError && !isDML && (
-        <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-          {validation && !validation.isCorrect && validation.diff ? (
-            <DiffTable diff={validation.diff} expectedColumns={validation.expectedColumns} />
-          ) : (
-            <>
-              <table className="results-table">
-                <thead>
-                  <tr>
-                    {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px' }}></th>}
-                    {result.columns.map((col, i) => <th key={i}>{col}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentRows.map((row, ri) => (
-                    <GroupedResultRow key={ri} row={row} sql={sql} db={db} columns={result.columns} />
-                  ))}
-                  {result.columns.length === 0 && (
-                    <tr>
-                      <td colSpan="100%" style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
-                        No rows matched the query conditions.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              
-              {/* Pagination Controls */}
-              {totalRows > 0 && (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  padding: '10px 16px', 
-                  background: 'var(--surface-2)',
-                  borderTop: '1px solid var(--border)',
-                  borderBottom: '1px solid var(--border)',
-                  fontSize: 12,
-                  color: 'var(--text-secondary)'
-                }}>
-                  <div>
-                    Showing <strong>{startIndex + 1}–{endIndex}</strong> of <strong>{totalRows}</strong> rows
-                  </div>
-                  
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>Rows per page:</span>
-                      <select 
-                        value={pageSize}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setPageSize(val === 'All' ? 'All' : Number(val));
-                          setPage(1);
-                        }}
-                        style={{
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--text)',
-                          padding: '4px 8px',
-                          borderRadius: 4,
-                          outline: 'none'
-                        }}
-                      >
-                        <option value={10}>10</option>
-                        <option value={25}>25</option>
-                        <option value={50}>50</option>
-                        <option value={100}>100</option>
-                        <option value="All">All</option>
-                      </select>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {/* Tabs Navigation */}
+          {(!validation || validation.isCorrect) && executeQuery && sql && (
+            <div style={{ 
+              display: 'flex', 
+              borderBottom: '1px solid var(--border)', 
+              background: 'var(--surface-2)',
+              gap: 24,
+              padding: '0 16px'
+            }}>
+              {[
+                { id: 'data', label: '📊 Data' },
+                { id: 'analysis', label: '🔍 Null Analysis' },
+                { id: 'plan', label: '⏱️ Execution Plan' },
+                { id: 'index', label: '⚡ Index Advisor' },
+                { id: 'theory', label: '📚 Theory' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '12px 0',
+                    color: activeTab === tab.id ? 'var(--accent)' : 'var(--muted)',
+                    fontWeight: activeTab === tab.id ? 600 : 500,
+                    borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div style={{ flex: 1, overflowY: activeTab === 'data' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {validation && !validation.isCorrect && validation.diff ? (
+              <DiffTable diff={validation.diff} expectedColumns={validation.expectedColumns} />
+            ) : (
+              <>
+                {/* Data Tab */}
+                {activeTab === 'data' && (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                      <table className="results-table" style={{ borderSpacing: 0, width: '100%' }}>
+                        <thead>
+                          <tr>
+                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)', position: 'sticky', top: 0, zIndex: 1 }}></th>}
+                            {result.columns.map((col, i) => (
+                              <th key={i} style={{ background: 'var(--surface-2)', position: 'sticky', top: 0, zIndex: 1 }}>
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentRows.map((row, i) => (
+                            <GroupedResultRow key={i} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
+                          ))}
+                        </tbody>
+                      </table>
+                      
+                      {result.columns.length === 0 && (
+                        <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
+                          No rows matched the query conditions.
+                        </div>
+                      )}
                     </div>
 
-                    {pageSize !== 'All' && totalPages > 1 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <button 
-                          className="btn btn-ghost btn-icon" 
-                          disabled={safePage === 1}
-                          onClick={() => setPage(p => p - 1)}
-                          style={{ padding: '4px 8px' }}
-                        >
-                          ◀
-                        </button>
-                        <span>Page <strong>{safePage}</strong> of {totalPages}</span>
-                        <button 
-                          className="btn btn-ghost btn-icon" 
-                          disabled={safePage === totalPages}
-                          onClick={() => setPage(p => p + 1)}
-                          style={{ padding: '4px 8px' }}
-                        >
-                          ▶
-                        </button>
+                    {/* Pagination Controls */}
+                    {totalRows > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 16px',
+                        borderTop: '1px solid var(--border)',
+                        background: 'var(--surface-2)',
+                        flexShrink: 0,
+                        fontSize: 13
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            Showing {startIndex + 1}-{endIndex} of {totalRows}
+                          </span>
+                          <select
+                            value={pageSize}
+                            onChange={(e) => {
+                              const val = e.target.value === 'All' ? 'All' : Number(e.target.value);
+                              setPageSize(val);
+                              setPage(1);
+                            }}
+                            style={{
+                              background: 'var(--surface)',
+                              border: '1px solid var(--border)',
+                              color: 'var(--text)',
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              fontSize: 13,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value={50}>50 / page</option>
+                            <option value={100}>100 / page</option>
+                            <option value={500}>500 / page</option>
+                            <option value="All">All rows</option>
+                          </select>
+                        </div>
+
+                        {pageSize !== 'All' && totalPages > 1 && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            <button
+                              onClick={() => setPage(p => Math.max(1, p - 1))}
+                              disabled={safePage === 1}
+                              style={{
+                                background: safePage === 1 ? 'var(--surface)' : 'var(--primary)',
+                                color: safePage === 1 ? 'var(--muted)' : 'white',
+                                border: 'none',
+                                padding: '4px 12px',
+                                borderRadius: 4,
+                                cursor: safePage === 1 ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              Prev
+                            </button>
+                            <span style={{ padding: '4px 12px', color: 'var(--text)' }}>
+                              {safePage} / {totalPages}
+                            </span>
+                            <button
+                              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                              disabled={safePage === totalPages}
+                              style={{
+                                background: safePage === totalPages ? 'var(--surface)' : 'var(--primary)',
+                                color: safePage === totalPages ? 'var(--muted)' : 'white',
+                                border: 'none',
+                                padding: '4px 12px',
+                                borderRadius: 4,
+                                cursor: safePage === totalPages ? 'not-allowed' : 'pointer'
+                              }}
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+                
+                {/* Null Analysis Tab */}
+                {activeTab === 'analysis' && (
+                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                    <NullSummaryPanel results={result} />
+                  </div>
+                )}
 
-              <NullSummaryPanel results={result} />
-              
-              {/* Diagnostic Visualizers */}
-              {(!validation || validation.isCorrect) && !isError && !isDML && db && sql && (
-                <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--surface-2)' }}>
-                  <TheoryConnector sql={sql} />
-                  <ExecutionOrderExplainer sql={sql} db={db} />
-                  <IndexAdvisor sql={sql} db={db} />
-                </div>
-              )}
-            </>
-          )}
+                {/* Diagnostic Visualizers */}
+                {(!validation || validation.isCorrect) && !isError && !isDML && executeQuery && sql && (
+                  <>
+                    {activeTab === 'plan' && <div style={{ padding: 16 }}><ExecutionOrderExplainer sql={sql} executeQuery={executeQuery} /></div>}
+                    {activeTab === 'index' && <div style={{ padding: 16 }}><IndexAdvisor sql={sql} executeQuery={executeQuery} /></div>}
+                    {activeTab === 'theory' && <div style={{ padding: 16 }}><TheoryConnector sql={sql} /></div>}
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 

@@ -35,17 +35,20 @@ export function useGamification(progress, user) {
   useEffect(() => {
     localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
     if (user) {
-      supabase.from('user_progress').upsert({
-        user_id: user.id,
-        activity: gameState.activity,
-        current_streak: gameState.currentStreak,
-        max_streak: gameState.maxStreak,
-        badges: gameState.badges,
-        last_practice_date: gameState.lastPracticeDate
-        // omitted recent_submissions to prevent 400 Bad Request on legacy Supabase schemas
-      }).then(({ error }) => {
-        if (error) console.error('Error syncing gamification state:', error.message);
-      });
+      const syncTimeout = setTimeout(() => {
+        supabase.from('user_progress').upsert({
+          user_id: user.id,
+          activity: gameState.activity,
+          current_streak: gameState.currentStreak,
+          max_streak: gameState.maxStreak,
+          badges: gameState.badges,
+          last_practice_date: gameState.lastPracticeDate
+        }).then(({ error }) => {
+          if (error) console.error('Error syncing gamification state:', error.message);
+        });
+      }, 2000); // Debounce sync by 2 seconds
+
+      return () => clearTimeout(syncTimeout);
     }
   }, [gameState, user]);
 

@@ -307,7 +307,7 @@ function PracticeView({
   const [editorHeightPct, setEditorHeightPct] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const toast = useToast();
-  const { fire: fireConfetti, node: confettiNode } = useConfetti();
+  const { fireConfetti, ConfettiComponent } = useConfetti();
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -349,7 +349,8 @@ function PracticeView({
   const dbInfo = DB_INFO[db];
   const dbQuestions = useMemo(() => getQuestionsForDb(db), [db]);
 
-  const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan, dbInstance } = useSqlDatabase(db);
+  const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan, getEdgeCaseResults } = useSqlDatabase(db);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   // Switch DB inline
   const handleSwitchDb = useCallback((newDb) => {
@@ -369,17 +370,23 @@ function PracticeView({
 
   // Reset state when question changes and compute true expected result
   useEffect(() => {
+    let mounted = true;
     setSql('');
     setResult(null);
     setValidation(null);
+    setExpectedResult(null);
     if (!isLoading && !dbError) {
-      const er = getExpectedResultDynamic(currentQ.solutionSQL, currentQ.verificationSQL);
-      setExpectedResult(er);
+      getExpectedResultDynamic(currentQ.solutionSQL, currentQ.verificationSQL)
+        .then(er => {
+          if (mounted) setExpectedResult(er);
+        });
     }
+    return () => { mounted = false; };
   }, [currentQ.id, currentQ.solutionSQL, currentQ.verificationSQL, isLoading, dbError, getExpectedResultDynamic]);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (!sql.trim()) return;
+    setIsExecuting(true);
     
     // Add to history if not duplicate of last
     setQueryHistory(prev => {
@@ -387,51 +394,60 @@ function PracticeView({
       return next;
     });
 
-    let originalRes = executeQuery(sql);
-    let finalRes = { ...originalRes };
-    if (!originalRes.error && currentQ.verificationSQL) {
-      const verRes = runVerification(currentQ.verificationSQL);
-      finalRes = { ...verRes, execTimeMs: originalRes.execTimeMs };
-    }
-    setResult(finalRes);
-    if (finalRes.error) {
-      setValidation({ isCorrect: false, message: finalRes.error });
-      onProgressUpdate(currentQ.id, 'attempted');
-    } else {
-      if (!expectedResult || expectedResult.columns.length === 0) {
-        setValidation({ isCorrect: false, message: 'Loading expected results...' });
+    try {
+      let originalRes = await executeQuery(sql);
+      let finalRes = { ...originalRes };
+      if (!originalRes.error && currentQ.verificationSQL) {
+        const verRes = await runVerification(currentQ.verificationSQL);
+        finalRes = { ...verRes, execTimeMs: originalRes.execTimeMs };
+      }
+      setResult(finalRes);
+      if (finalRes.error) {
+        setValidation({ isCorrect: false, message: finalRes.error });
+        onProgressUpdate(currentQ.id, 'attempted');
       } else {
-        const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
-        setValidation(val);
-        if (val.isCorrect) {
-          onProgressUpdate(currentQ, db, 'complete');
-          // Only fire celebration if this is the FIRST time solving it
-          if (progress[currentQ.id] !== 'complete') {
-            const diff = (currentQ.difficulty || '').toLowerCase();
-            const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
-            fireConfetti();
-            toast({
-              type: 'success',
-              title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
-              message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
-            });
+        if (!expectedResult || expectedResult.columns.length === 0) {
+          setValidation({ isCorrect: false, message: 'Loading expected results...' });
+        } else {
+          const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
+          setValidation(val);
+          if (val.isCorrect) {
+            onProgressUpdate(currentQ, db, 'complete');
+            // Only fire celebration if this is the FIRST time solving it
+            if (progress[currentQ.id] !== 'complete') {
+              const diff = (currentQ.difficulty || '').toLowerCase();
+              const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
+              fireConfetti();
+              toast({
+                type: 'success',
+                title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
+                message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
+              });
+            }
+          } else if (progress[currentQ.id] !== 'complete') {
+            onProgressUpdate(currentQ, db, 'attempted');
           }
-        } else if (progress[currentQ.id] !== 'complete') {
-          onProgressUpdate(currentQ, db, 'attempted');
         }
       }
+    } finally {
+      setIsExecuting(false);
     }
-  }, [sql, executeQuery, runVerification, currentQ, validateAnswer, expectedResult, onProgressUpdate]);
+  }, [sql, executeQuery, runVerification, currentQ, validateAnswer, expectedResult, onProgressUpdate, progress, db, fireConfetti, toast]);
 
-  const handleExplain = useCallback(() => {
+  const handleExplain = useCallback(async () => {
     if (!sql.trim()) return;
-    const plan = getExplainPlan(sql);
-    if (plan.error) {
-       setResult({ error: plan.error });
-       setValidation({ isCorrect: false, message: 'Syntax Error while parsing EXPLAIN plan.' });
-    } else {
-       setResult(plan);
-       setValidation({ isCorrect: true, message: 'Query Execution Plan' });
+    setIsExecuting(true);
+    try {
+      const plan = await getExplainPlan(sql);
+      if (plan.error) {
+         setResult({ error: plan.error });
+         setValidation({ isCorrect: false, message: 'Syntax Error while parsing EXPLAIN plan.' });
+      } else {
+         setResult(plan);
+         setValidation({ isCorrect: true, message: 'Query Execution Plan' });
+      }
+    } finally {
+      setIsExecuting(false);
     }
   }, [sql, getExplainPlan]);
 
@@ -582,12 +598,7 @@ function PracticeView({
             <div style={{ padding: '6px 14px 8px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 1, textTransform: 'uppercase' }}>
               Switch Database
             </div>
-            {isSandbox && (
-              <button className="db-picker-item active">
-                <span className="db-picker-icon">📁</span>
-                <span className="db-picker-name">{db.name} (Custom)</span>
-              </button>
-            )}
+            {/* Removed undefined isSandbox condition */}
             {Object.keys(DB_INFO).map(d => {
               const info = DB_INFO[d];
               const dbQs = getQuestionsForDb(d);
@@ -665,7 +676,7 @@ function PracticeView({
     }}>
       {/* 1. Left Panel: Schema Sidebar */}
       <aside className="sidebar-wrap">
-        <SchemaSidebar dbName={db} dbInstance={dbInstance} onPreviewTable={handlePreviewTable} />
+        <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} />
       </aside>
 
       {/* 2. Center Panel: Editor + Results */}
@@ -682,19 +693,21 @@ function PracticeView({
             <SqlEditor value={sql} onChange={setSql} onRun={handleRun} disabled={isLoading} dbName={db} fontSize={settings.editorFontSize} autoComplete={settings.autoCompleteSql} darkMode={settings.darkMode} />
           </div>
           <div className="editor-actions" style={{ position: 'relative' }}>
-            <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || !sql.trim()}>▶ Run Query</button>
-            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || !sql.trim()} title="View Query Execution Plan">🔍 Explain</button>
+            <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
+              {isExecuting ? <RotateCcw size={16} className="spinner" /> : '▶ Run Query'}
+            </button>
+            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()} title="View Query Execution Plan">🔍 Explain</button>
             {/\bJOIN\b/i.test(sql) && (
               <button 
                 className="btn btn-secondary" 
-                onClick={() => setJoinAnalysisData({ db: dbInstance, sql })}
+                onClick={() => setJoinAnalysisData({ db: executeQuery, sql })}
                 title="Open Advanced Join Analysis"
                 style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
               >
                 🔗 Visualize Joins
               </button>
             )}
-            <EdgeCaseTester db={dbInstance} sql={sql} />
+            <EdgeCaseTester getEdgeCaseResults={getEdgeCaseResults} sql={sql} />
             
             {hasSubquery(sql) && (
               <button 
@@ -750,8 +763,8 @@ function PracticeView({
             result={result}
             validation={validation}
             sql={sql}
-            db={dbInstance}
-            isRunning={false}
+            executeQuery={executeQuery}
+            isRunning={isExecuting || isLoading}
           />
         </div>
       </main>
@@ -787,10 +800,9 @@ function PracticeView({
     {/* Table Preview Modal */}
     {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
 
-    {/* Join Analysis Modal */}
     {joinAnalysisData && (
       <JoinAnalysisModal 
-        db={joinAnalysisData.db} 
+        executeQuery={joinAnalysisData.db} 
         sql={joinAnalysisData.sql} 
         onClose={() => setJoinAnalysisData(null)} 
       />
@@ -806,7 +818,7 @@ function PracticeView({
         setResult(null);
       }}
     />
-    {confettiNode}
+    <ConfettiComponent />
   </div>;
 }
 
@@ -878,6 +890,15 @@ export default function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user && Object.keys(progress).length > 0) {
+      const syncTimeout = setTimeout(() => {
+        supabase.from('user_progress').upsert({ user_id: user.id, completed_questions: progress }).then();
+      }, 2000);
+      return () => clearTimeout(syncTimeout);
+    }
+  }, [progress, user]);
+
   const handleProgressUpdate = useCallback((question, dbName, status) => {
     if (!question || !question.id) return;
     const id = question.id;
@@ -886,9 +907,6 @@ export default function App() {
       saveProgress(next);
       if (status === 'complete' && prev[id] !== 'complete') {
         recordActivity(question, dbName, status);
-      }
-      if (user) {
-        supabase.from('user_progress').upsert({ user_id: user.id, completed_questions: next }).then();
       }
       return next;
     });

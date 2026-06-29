@@ -1,29 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { computeDiff } from '../utils/sqlAnalysis';
+import SqlWorker from '../workers/sql.worker.js?worker';
 
-// Declare sql.js types
-
-// Lazy-load sql.js once
-let sqlJsPromise = null;
-function loadSqlJs() {
-  if (!sqlJsPromise) {
-    sqlJsPromise = new Promise((resolve, reject) => {
-      // Load sql.js from CDN (simplest approach for Vite)
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js';
-      script.onload = () => {
-        window.initSqlJs({
-          locateFile: () => 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.wasm'
-        }).then(resolve).catch(reject);
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-  return sqlJsPromise;
-}
-
-// We no longer import raw text files since they have been scaled to 50k rows binary files
 const dbPaths = {
   hospital: '/databases/hospital.sqlite',
   ecommerce: '/databases/ecommerce.sqlite',
@@ -36,173 +13,136 @@ const dbPaths = {
   sports: '/databases/sports.sqlite',
   music: '/databases/music.sqlite'
 };
+
 export function useSqlDatabase(dbInput) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const dbRef = useRef(null);
-  const sqlJsRef = useRef(null);
+  
+  const workerRef = useRef(null);
   const currentDbRef = useRef(null);
+  const msgIdRef = useRef(1);
+  const pendingRequests = useRef(new Map());
+
+  useEffect(() => {
+    workerRef.current = new SqlWorker();
+    
+    workerRef.current.onerror = (err) => {
+      console.error("Worker error:", err);
+      // Reject any pending requests
+      for (const { reject } of pendingRequests.current.values()) {
+        reject(new Error(err.message || 'Worker crashed or failed to load.'));
+      }
+      pendingRequests.current.clear();
+      setError(err.message || 'Worker crashed or failed to load.');
+      setIsLoading(false);
+    };
+    
+    workerRef.current.onmessage = (e) => {
+      const { id, success, data, error } = e.data;
+      if (pendingRequests.current.has(id)) {
+        const { resolve, reject } = pendingRequests.current.get(id);
+        pendingRequests.current.delete(id);
+        if (success) {
+          resolve(data);
+        } else {
+          reject(new Error(error));
+        }
+      }
+    };
+    
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const sendMessage = useCallback((type, payload) => {
+    return new Promise((resolve, reject) => {
+      const id = msgIdRef.current++;
+      pendingRequests.current.set(id, { resolve, reject });
+      workerRef.current.postMessage({ type, payload, id });
+    });
+  }, []);
+
   const initDb = useCallback(async input => {
+    if (!workerRef.current) return;
     setIsLoading(true);
     setError(null);
     try {
-      // Load sql.js if not already loaded
-      if (!sqlJsRef.current) {
-        sqlJsRef.current = await loadSqlJs();
-      }
-
-      // Close existing DB
-      if (dbRef.current) {
-        dbRef.current.close();
-        dbRef.current = null;
-      }
-
-      let db;
-      let dbName = '';
-      
+      let payload = {};
       if (typeof input === 'string') {
-        dbName = input;
-        const response = await fetch(dbPaths[input]);
-        if (!response.ok) throw new Error(`Failed to fetch database file for ${input}`);
-        const buffer = await response.arrayBuffer();
-        db = new sqlJsRef.current.Database(new Uint8Array(buffer));
+        currentDbRef.current = input;
+        // In Vite, absolute path from root works for fetch
+        payload = { dbPath: dbPaths[input] };
       } else if (input && input.initSql) {
-        dbName = input.id;
-        db = new sqlJsRef.current.Database();
-        db.run(input.initSql);
+        currentDbRef.current = input.id;
+        payload = { initSql: input.initSql };
       } else {
         throw new Error('Invalid database input');
       }
-      dbRef.current = db;
-      currentDbRef.current = dbName;
+      
+      await sendMessage('INIT', payload);
       setIsLoading(false);
     } catch (err) {
-      setError(`Failed to load database: ${err instanceof Error ? err.message : String(err)}`);
+      setError(`Failed to load database: ${err.message}`);
       setIsLoading(false);
     }
-  }, []);
+  }, [sendMessage]);
+
   useEffect(() => {
-    if (dbInput) initDb(dbInput);
+    if (dbInput && workerRef.current) initDb(dbInput);
   }, [dbInput, initDb]);
-  const executeQuery = useCallback(sql => {
-    if (!dbRef.current) {
-      return {
-        columns: [],
-        rows: [],
-        error: 'Database not loaded yet.'
-      };
+
+  const executeQuery = useCallback(async sql => {
+    if (!workerRef.current) {
+      return { columns: [], rows: [], error: 'Database not loaded yet.' };
     }
     if (!sql.trim()) {
-      return {
-        columns: [],
-        rows: [],
-        error: 'Please enter a SQL query.'
-      };
+      return { columns: [], rows: [], error: 'Please enter a SQL query.' };
     }
     try {
-      const start = performance.now();
-      const results = dbRef.current.exec(sql);
-      const end = performance.now();
-      const execTimeMs = end - start;
-      if (results.length === 0) {
-        // If it's a SELECT that returned 0 rows, it's not DML.
-        const isActuallyDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(sql);
-        
-        return {
-          columns: [],
-          rows: [],
-          affectedRows: isActuallyDML ? dbRef.current.getRowsModified() : 0,
-          execTimeMs,
-          isDML: isActuallyDML
-        };
-      }
-      const {
-        columns,
-        values
-      } = results[results.length - 1];
-      return {
-        columns,
-        rows: values,
-        execTimeMs
-      };
+      return await sendMessage('EXECUTE', { sql });
     } catch (err) {
-      return {
-        columns: [],
-        rows: [],
-        error: err instanceof Error ? err.message : String(err)
-      };
+      return { columns: [], rows: [], error: err.message };
     }
-  }, []);
-  const runVerification = useCallback(verificationSQL => {
+  }, [sendMessage]);
+
+  const runVerification = useCallback(async verificationSQL => {
     return executeQuery(verificationSQL);
   }, [executeQuery]);
 
-  const getExplainPlan = useCallback(sql => {
+  const getExplainPlan = useCallback(async sql => {
     if (!sql.trim()) return null;
     try {
-      // EXPLAIN QUERY PLAN returns rows with id, parent, notused, detail (in SQLite)
-      const results = dbRef.current.exec(`EXPLAIN QUERY PLAN ${sql}`);
-      if (results.length > 0) {
-        return {
-          columns: results[0].columns,
-          rows: results[0].values
-        };
-      }
-      return { columns: [], rows: [] };
+      return await sendMessage('EXPLAIN_PLAN', { sql });
     } catch (err) {
-      return { error: err instanceof Error ? err.message : String(err) };
+      return { error: err.message };
     }
-  }, []);
+  }, [sendMessage]);
+
+  const getEdgeCaseResults = useCallback(async (sql, primaryTable) => {
+    if (!sql.trim() || !primaryTable) return null;
+    try {
+      return await sendMessage('TEST_EDGE_CASES', { sql, primaryTable });
+    } catch (err) {
+      return [{ id: 'error', status: 'error', error: err.message }];
+    }
+  }, [sendMessage]);
+
   const resetDb = useCallback(async () => {
     if (currentDbRef.current) {
       await initDb(currentDbRef.current);
     }
   }, [initDb]);
-  const getExpectedResultDynamic = useCallback((solutionSQL, verificationSQL) => {
-    if (!dbRef.current || !sqlJsRef.current) {
-      return {
-        columns: [],
-        rows: [],
-        error: 'Database not loaded.'
-      };
-    }
+
+  const getExpectedResultDynamic = useCallback(async (solutionSQL, verificationSQL) => {
     try {
-      dbRef.current.run('SAVEPOINT check_solution');
-      let finalResult;
-      const solResults = dbRef.current.exec(solutionSQL);
-      
-      if (verificationSQL) {
-        const verResults = dbRef.current.exec(verificationSQL);
-        if (verResults.length === 0) {
-          finalResult = { columns: [], rows: [] };
-        } else {
-          const { columns, values } = verResults[verResults.length - 1];
-          finalResult = { columns, rows: values };
-        }
-      } else {
-        if (solResults.length === 0) {
-          finalResult = { columns: [], rows: [] };
-        } else {
-          const { columns, values } = solResults[solResults.length - 1];
-          finalResult = { columns, rows: values };
-        }
-      }
-      return finalResult;
+      return await sendMessage('GET_EXPECTED_RESULT', { solutionSQL, verificationSQL });
     } catch (err) {
-      return {
-        columns: [],
-        rows: [],
-        error: err instanceof Error ? err.message : String(err)
-      };
-    } finally {
-      try {
-        // Always rollback so the DB state remains pristine
-        dbRef.current.run('ROLLBACK TO check_solution');
-      } catch (e) {
-        console.error('Failed to rollback expected result calculation:', e);
-      }
+      return { columns: [], rows: [], error: err.message };
     }
-  }, []);
+  }, [sendMessage]);
+
   const validateAnswer = useCallback((userResult, expectedResult, requiresOrder) => {
     if (userResult.error) {
       return {
@@ -224,6 +164,49 @@ export function useSqlDatabase(dbInput) {
       if (v === null || v === undefined) return '__NULL__';
       if (typeof v === 'number') return String(Math.round(v * 10000) / 10000);
       return String(v).trim();
+    };
+
+    const computeDiff = (expected, user) => {
+      const rowToString = row => row.map(normalize).join('|||');
+      const expectedMap = new Map();
+      const userMap = new Map();
+
+      expected.forEach(row => {
+        const key = rowToString(row);
+        expectedMap.set(key, (expectedMap.get(key) || 0) + 1);
+      });
+      user.forEach(row => {
+        const key = rowToString(row);
+        userMap.set(key, (userMap.get(key) || 0) + 1);
+      });
+
+      const missingRows = [];
+      const extraRows = [];
+      const matchedRows = [];
+
+      expectedMap.forEach((count, key) => {
+        const userCount = userMap.get(key) || 0;
+        const rowData = key.split('|||').map(v => v === '__NULL__' ? null : v);
+        
+        // Add to matchedRows
+        const matchCount = Math.min(count, userCount);
+        for (let i = 0; i < matchCount; i++) matchedRows.push(rowData);
+        
+        // Add to missingRows
+        if (count > userCount) {
+          for (let i = 0; i < count - userCount; i++) missingRows.push(rowData);
+        }
+      });
+      
+      userMap.forEach((count, key) => {
+        const expectedCount = expectedMap.get(key) || 0;
+        if (count > expectedCount) {
+          const rowData = key.split('|||').map(v => v === '__NULL__' ? null : v);
+          for (let i = 0; i < count - expectedCount; i++) extraRows.push(rowData);
+        }
+      });
+
+      return { missingRows, extraRows, matchedRows, mismatchedRows: [] };
     };
 
     // Check column count
@@ -258,18 +241,30 @@ export function useSqlDatabase(dbInput) {
     } else {
       // Strict order comparison
       const rowToString = row => row.map(normalize).join('|||');
-      const mismatchedRows = [];
+      const orderMismatches = [];
+      const orderMatches = [];
+
       for (let i = 0; i < expectedRows.length; i++) {
         if (rowToString(userResult.rows[i]) !== rowToString(expectedRows[i])) {
-          mismatchedRows.push(i);
+          orderMismatches.push({
+            expected: expectedRows[i],
+            actual: userResult.rows[i]
+          });
+        } else {
+          orderMatches.push(expectedRows[i]);
         }
       }
-      if (mismatchedRows.length > 0) {
+
+      if (orderMismatches.length > 0) {
         return {
           isCorrect: false,
-          message: `${mismatchedRows.length} row(s) don't match the expected result. Order matters for this question.`,
-          mismatchedRows,
-          diff,
+          message: `${orderMismatches.length} row(s) are in the wrong order or have incorrect values. Order matters for this question.`,
+          diff: {
+            missingRows: [],
+            extraRows: [],
+            mismatchedRows: orderMismatches,
+            matchedRows: orderMatches
+          },
           expectedColumns
         };
       }
@@ -291,6 +286,7 @@ export function useSqlDatabase(dbInput) {
     runVerification,
     getExpectedResultDynamic,
     getExplainPlan,
-    dbInstance: dbRef.current
+    getEdgeCaseResults,
+    dbInstance: null
   };
 }

@@ -25,7 +25,7 @@ const detectTablesAndJoins = (sql) => {
   return { tables, joins };
 };
 
-export function JoinAnalysisModal({ db, sql, onClose }) {
+export function JoinAnalysisModal({ executeQuery, sql, onClose }) {
   const [joinNodes, setJoinNodes] = useState([]);
   const [error, setError] = useState(null);
   const [finalRows, setFinalRows] = useState(0);
@@ -35,61 +35,74 @@ export function JoinAnalysisModal({ db, sql, onClose }) {
   const [previewData, setPreviewData] = useState(null);
 
   useEffect(() => {
-    if (!db || !sql) return;
-    try {
-      const { tables, joins } = detectTablesAndJoins(sql);
-      if (joins.length === 0 || tables.length < 2) {
-        setJoinNodes([]);
-        return;
-      }
-
-      const nodes = joins.map((join, i) => {
-        const leftTable = tables[i] ? tables[i].name : 'Left';
-        const rightTable = tables[i + 1] ? tables[i + 1].name : 'Right';
-        const joinType = join.type === 'JOIN' ? 'INNER JOIN' : join.type;
-
-        let leftTotal = 0;
-        let rightTotal = 0;
-        try {
-          const lRes = db.exec(`SELECT COUNT(*) FROM ${leftTable}`);
-          if (lRes.length) leftTotal = lRes[0].values[0][0];
-        } catch(e) {}
-        try {
-          const rRes = db.exec(`SELECT COUNT(*) FROM ${rightTable}`);
-          if (rRes.length) rightTotal = rRes[0].values[0][0];
-        } catch(e) {}
-
-        return {
-          id: i,
-          joinType,
-          leftTable,
-          rightTable,
-          leftTotal,
-          rightTotal,
-        };
-      });
-
-      let fr = 0;
+    let mounted = true;
+    if (!executeQuery || !sql) return;
+    
+    const analyze = async () => {
       try {
-        const finalRes = db.exec(`SELECT COUNT(*) FROM (${sql})`);
-        if (finalRes.length) fr = finalRes[0].values[0][0];
-      } catch(e) {}
-      setFinalRows(fr);
+        const { tables, joins } = detectTablesAndJoins(sql);
+        if (joins.length === 0 || tables.length < 2) {
+          if (mounted) setJoinNodes([]);
+          return;
+        }
 
-      setJoinNodes(nodes);
-      setError(null);
-    } catch (err) {
-      console.error("Join Visualizer failed", err);
-      setJoinNodes([]);
-      setError("Could not parse joins for visualization.");
-    }
-  }, [db, sql]);
+        const nodes = [];
+        for (let i = 0; i < joins.length; i++) {
+          const join = joins[i];
+          const leftTable = tables[i] ? tables[i].name : 'Left';
+          const rightTable = tables[i + 1] ? tables[i + 1].name : 'Right';
+          const joinType = join.type === 'JOIN' ? 'INNER JOIN' : join.type;
 
-  const loadPreview = (tableName) => {
+          let leftTotal = 0;
+          let rightTotal = 0;
+          try {
+            const lRes = await executeQuery(`SELECT COUNT(*) FROM ${leftTable}`);
+            if (lRes && lRes.rows && lRes.rows.length) leftTotal = lRes.rows[0][0];
+          } catch(e) {}
+          try {
+            const rRes = await executeQuery(`SELECT COUNT(*) FROM ${rightTable}`);
+            if (rRes && rRes.rows && rRes.rows.length) rightTotal = rRes.rows[0][0];
+          } catch(e) {}
+
+          nodes.push({
+            id: i,
+            joinType,
+            leftTable,
+            rightTable,
+            leftTotal,
+            rightTotal,
+          });
+        }
+
+        let fr = 0;
+        try {
+          const finalRes = await executeQuery(`SELECT COUNT(*) FROM (${sql})`);
+          if (finalRes && finalRes.rows && finalRes.rows.length) fr = finalRes.rows[0][0];
+        } catch(e) {}
+        
+        if (mounted) {
+          setFinalRows(fr);
+          setJoinNodes(nodes);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Join Visualizer failed", err);
+        if (mounted) {
+          setJoinNodes([]);
+          setError("Could not parse joins for visualization.");
+        }
+      }
+    };
+    
+    analyze();
+    return () => { mounted = false; };
+  }, [executeQuery, sql]);
+
+  const loadPreview = async (tableName) => {
     try {
-      const res = db.exec(`SELECT * FROM ${tableName} LIMIT 5`);
-      if (res.length > 0) {
-        setPreviewData(res[0]);
+      const res = await executeQuery(`SELECT * FROM ${tableName} LIMIT 5`);
+      if (res && res.rows && res.rows.length > 0) {
+        setPreviewData({ columns: res.columns, values: res.rows });
         setPreviewTable(tableName);
       } else {
         setPreviewData({ columns: [], values: [] });
@@ -98,6 +111,7 @@ export function JoinAnalysisModal({ db, sql, onClose }) {
     } catch (e) {
       console.error(e);
     }
+
   };
 
   return (

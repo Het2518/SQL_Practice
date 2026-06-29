@@ -18,20 +18,29 @@ export function TablePreviewModal({
   const PAGE_SIZE = 50;
 
   useEffect(() => {
+    let mounted = true;
     if (!isLoading) {
-      // Get actual row count only once if possible, but safe to do here
-      const countRes = executeQuery(`SELECT COUNT(*) as c FROM ${tableName};`);
-      let total = tableInfo.rowCount;
-      if (countRes.rows && countRes.rows.length > 0) {
-        total = countRes.rows[0][0];
-        setActualRowCount(total);
-      }
-      
-      // Fetch with pagination
-      const offset = (page - 1) * PAGE_SIZE;
-      const res = executeQuery(`SELECT * FROM ${tableName} LIMIT ${PAGE_SIZE} OFFSET ${offset};`);
-      setResult(res);
+      const fetchData = async () => {
+        try {
+          // Get actual row count only once if possible, but safe to do here
+          const countRes = await executeQuery(`SELECT COUNT(*) as c FROM ${tableName};`);
+          let total = tableInfo.rowCount;
+          if (countRes.rows && countRes.rows.length > 0) {
+            total = countRes.rows[0][0];
+            if (mounted) setActualRowCount(total);
+          }
+          
+          // Fetch with pagination
+          const offset = (page - 1) * PAGE_SIZE;
+          const res = await executeQuery(`SELECT * FROM ${tableName} LIMIT ${PAGE_SIZE} OFFSET ${offset};`);
+          if (mounted) setResult(res);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      fetchData();
     }
+    return () => { mounted = false; };
   }, [isLoading, executeQuery, tableName, page]);
   
   const totalPages = Math.ceil(actualRowCount / PAGE_SIZE);

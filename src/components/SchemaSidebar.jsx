@@ -4,7 +4,7 @@ import { buildRelationshipMap, findJoinPath, generateJoinSQL, analyzeNormalForm 
 
 export function SchemaSidebar({
   dbName,
-  dbInstance,
+  executeQuery,
   onPreviewTable
 }) {
   const [expandedTables, setExpandedTables] = useState(new Set());
@@ -12,6 +12,7 @@ export function SchemaSidebar({
   
   // Relationship Navigator State
   const [relationships, setRelationships] = useState([]);
+  const [normalForms, setNormalForms] = useState({});
   const [selectedTables, setSelectedTables] = useState([]);
   const [joinPath, setJoinPath] = useState(null);
   const dbInfo = DB_INFO[dbName];
@@ -52,16 +53,32 @@ export function SchemaSidebar({
     icon: '⚠️'
   }];
 
-  // Load relationships
   useEffect(() => {
-    if (dbInstance) {
-      setRelationships(buildRelationshipMap(dbInstance));
+    let mounted = true;
+    if (executeQuery) {
+      buildRelationshipMap(executeQuery).then(rels => {
+        if (mounted) setRelationships(rels);
+      });
+      if (dbInfo?.tables) {
+        Promise.all(
+          dbInfo.tables.map(t => 
+            analyzeNormalForm(executeQuery, t.name).then(res => ({ name: t.name, nf: res.nf }))
+          )
+        ).then(results => {
+          if (!mounted) return;
+          const map = {};
+          results.forEach(r => { map[r.name] = r.nf; });
+          setNormalForms(map);
+        });
+      }
     } else {
       setRelationships([]);
+      setNormalForms({});
     }
     setSelectedTables([]);
     setJoinPath(null);
-  }, [dbInstance]);
+    return () => { mounted = false; };
+  }, [executeQuery, dbInfo]);
 
   const handleTableSelect = (e, tableName) => {
     e.stopPropagation();
@@ -182,7 +199,7 @@ export function SchemaSidebar({
                         borderRadius: '4px',
                         border: '1px solid var(--border)'
                       }}>
-                        {dbInstance ? analyzeNormalForm(dbInstance, table.name).nf : ''}
+                        {normalForms[table.name] || ''}
                       </span>
                     </span>
                     <button onClick={e => handleTableSelect(e, table.name)} title="Select for Join Path" style={{

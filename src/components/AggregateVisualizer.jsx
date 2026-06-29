@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import { TableCell } from './NullVisualizer';
 
-const getGroupConstituents = (db, sql, groupByCols, rowData, allColumns) => {
-  // A heuristic to fetch constituent rows for a group
-  // We wrap the original query (without group by) in a subquery or reconstruct it
-  // For educational purposes, a simple reconstruction:
-  
+const getGroupConstituents = async (executeQuery, sql, groupByCols, rowData, allColumns) => {
   // Find the base FROM and WHERE clauses
   const fromMatch = sql.match(/FROM\s+([\s\S]+?)(?:GROUP BY|ORDER BY|LIMIT|$)/i);
-  if (!fromMatch) return [];
+  if (!fromMatch) return null;
   
   const baseFromWhere = fromMatch[1];
   
@@ -33,9 +29,9 @@ const getGroupConstituents = (db, sql, groupByCols, rowData, allColumns) => {
   const query = `SELECT * FROM ${baseFromWhere}${conditionString} LIMIT 50`;
   
   try {
-    const res = db.exec(query);
-    if (res.length > 0) {
-      return { columns: res[0].columns, values: res[0].values };
+    const res = await executeQuery(query);
+    if (res.rows && res.rows.length > 0) {
+      return { columns: res.columns, values: res.rows };
     }
     return null;
   } catch (err) {
@@ -52,7 +48,7 @@ const extractGroupByColumns = (sql) => {
   return [];
 };
 
-export const GroupedResultRow = ({ row, sql, db, columns }) => {
+export const GroupedResultRow = ({ row, sql, executeQuery, columns }) => {
   const [expanded, setExpanded] = useState(false);
   const [constituents, setConstituents] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -60,16 +56,14 @@ export const GroupedResultRow = ({ row, sql, db, columns }) => {
   const groupByCols = extractGroupByColumns(sql);
   const hasGroupBy = groupByCols.length > 0;
 
-  const handleExpand = () => {
+  const handleExpand = async () => {
     if (!hasGroupBy) return;
     
     if (!expanded) {
       setLoading(true);
-      setTimeout(() => {
-        const data = getGroupConstituents(db, sql, groupByCols, row, columns);
-        setConstituents(data);
-        setLoading(false);
-      }, 10);
+      const data = await getGroupConstituents(executeQuery, sql, groupByCols, row, columns);
+      setConstituents(data);
+      setLoading(false);
     }
     setExpanded(!expanded);
   };

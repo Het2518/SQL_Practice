@@ -1,13 +1,35 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, User, Activity, LogOut, Code, Award, ExternalLink, Moon, Bell, ShieldAlert, LayoutDashboard, Database, ChevronRight, ToggleRight, Type, Trophy } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Settings, User, Activity, LogOut, Code, ExternalLink, MapPin, Globe, Briefcase, Link as LinkIcon, Edit2, Check, X, ShieldAlert, Database, Trophy, Zap, Target, ArrowRight, Clock, Star } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { allQuestions } from '../data/index';
 import { BADGE_DEFS } from '../hooks/useGamification';
 import { supabase } from '../lib/supabase';
 
+// Helper for count up animation
+function useCountUp(end, duration = 1500) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(Math.floor(easeProgress * end));
+      if (progress < 1) window.requestAnimationFrame(step);
+    };
+    window.requestAnimationFrame(step);
+  }, [end, duration]);
+  return count;
+}
+
 export function ProfileView({ user, gameState, progress, settings, onSaveSettings, onHome, onSignOut }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [totalPlatformUsers, setTotalPlatformUsers] = useState(null);
+  
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [isSavingName, setIsSavingName] = useState(false);
   
   const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'SQL Practitioner';
   const email = user?.email || 'guest@example.com';
@@ -21,23 +43,43 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
       });
   }, []);
 
-  // Calculate Progress Stats
-  const difficultyStats = useMemo(() => {
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName === fullName) {
+      setIsEditingName(false);
+      return;
+    }
+    setIsSavingName(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: newName.trim(), name: newName.trim() }
+      });
+      if (error) throw error;
+      window.location.reload(); 
+    } catch (err) {
+      alert("Failed to update name: " + err.message);
+    } finally {
+      setIsSavingName(false);
+      setIsEditingName(false);
+    }
+  };
+
+  // Calculate Progress Stats correctly using ONLY real data
+  const { difficultyStats, nextRecommendations } = useMemo(() => {
     let easyTotal = 0, mediumTotal = 0, hardTotal = 0;
     let easySolved = 0, mediumSolved = 0, hardSolved = 0;
     
     const completedSet = new Set();
-    Object.values(progress || {}).forEach(dbProgress => {
-      Object.entries(dbProgress).forEach(([qid, status]) => {
-        if (status === 'complete') completedSet.add(qid);
-      });
+    Object.entries(progress || {}).forEach(([qid, status]) => {
+      if (status === 'complete') completedSet.add(Number(qid));
     });
 
     const skillsProgress = {
-      Joins: { solved: 0, total: 0 },
+      'Joins': { solved: 0, total: 0 },
       'Window Functions': { solved: 0, total: 0 },
-      Aggregations: { solved: 0, total: 0 },
-      'CTEs': { solved: 0, total: 0 }
+      'Aggregations': { solved: 0, total: 0 },
+      'CTEs': { solved: 0, total: 0 },
+      'Subqueries': { solved: 0, total: 0 },
+      'Filtering': { solved: 0, total: 0 }
     };
 
     allQuestions.forEach(q => {
@@ -48,127 +90,136 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
       const isWindow = qkw.some(k => k.includes('window') || k.includes('over') || k.includes('rank'));
       const isAgg = qkw.some(k => k.includes('group by') || k.includes('sum') || k.includes('count') || k.includes('avg'));
       const isCte = qkw.some(k => k.includes('cte') || k.includes('with'));
+      const isSubq = qkw.some(k => k.includes('subquery'));
+      const isFilter = qkw.some(k => k.includes('where') || k.includes('having') || k.includes('filter'));
 
-      if (isJoin) { skillsProgress.Joins.total++; if (isSolved) skillsProgress.Joins.solved++; }
+      if (isJoin) { skillsProgress['Joins'].total++; if (isSolved) skillsProgress['Joins'].solved++; }
       if (isWindow) { skillsProgress['Window Functions'].total++; if (isSolved) skillsProgress['Window Functions'].solved++; }
-      if (isAgg) { skillsProgress.Aggregations.total++; if (isSolved) skillsProgress.Aggregations.solved++; }
-      if (isCte) { skillsProgress.CTEs.total++; if (isSolved) skillsProgress.CTEs.solved++; }
+      if (isAgg) { skillsProgress['Aggregations'].total++; if (isSolved) skillsProgress['Aggregations'].solved++; }
+      if (isCte) { skillsProgress['CTEs'].total++; if (isSolved) skillsProgress['CTEs'].solved++; }
+      if (isSubq) { skillsProgress['Subqueries'].total++; if (isSolved) skillsProgress['Subqueries'].solved++; }
+      if (isFilter) { skillsProgress['Filtering'].total++; if (isSolved) skillsProgress['Filtering'].solved++; }
       
       const diff = (q.difficulty || '').toLowerCase();
       if (diff === 'easy') {
         easyTotal++;
-        if (completedSet.has(q.id)) easySolved++;
+        if (isSolved) easySolved++;
       } else if (diff === 'medium') {
         mediumTotal++;
-        if (completedSet.has(q.id)) mediumSolved++;
+        if (isSolved) mediumSolved++;
       } else if (diff === 'hard') {
         hardTotal++;
-        if (completedSet.has(q.id)) hardSolved++;
+        if (isSolved) hardSolved++;
       }
     });
     
     const score = (easySolved * 10) + (mediumSolved * 30) + (hardSolved * 50);
-    
-    // Calculate Rank based on real user count!
-    // If we have total users loaded, use it. Otherwise fallback to 1.
-    const realTotalUsers = totalPlatformUsers || 1;
-    
-    // Perfect score is roughly 600 questions * avg 30 pts = 18000.
-    // Let's create a percentile formula: (score / 15000)
-    // The rank will be (TotalUsers) - (TotalUsers * Percentile).
+    const realTotalUsers = totalPlatformUsers || 1; 
     const maxExpectedScore = 15000; 
     let percentile = Math.min(1, score / maxExpectedScore);
-    
-    // Calculate real rank: lower percentile means lower rank number (closer to totalUsers).
-    // If score is 0, rank = totalUsers. If score is max, rank = 1.
     let rank = Math.round(realTotalUsers - (realTotalUsers * percentile));
     rank = Math.max(1, rank);
+    
+    // Find next recommended questions (Prioritize topics with lowest completion % but at least 1 solved, or just easy ones)
+    const unsolved = allQuestions.filter(q => !completedSet.has(q.id));
+    // Sort by easiest first for recommendations
+    unsolved.sort((a, b) => {
+      const wA = a.difficulty === 'easy' ? 1 : a.difficulty === 'medium' ? 2 : 3;
+      const wB = b.difficulty === 'easy' ? 1 : b.difficulty === 'medium' ? 2 : 3;
+      return wA - wB;
+    });
+    const nextRecs = unsolved.slice(0, 3);
 
     return {
-      easyTotal, mediumTotal, hardTotal,
-      easySolved, mediumSolved, hardSolved,
-      totalSolved: easySolved + mediumSolved + hardSolved,
-      totalCount: allQuestions.length,
-      score,
-      rank,
-      skillsProgress
+      difficultyStats: {
+        easyTotal, mediumTotal, hardTotal,
+        easySolved, mediumSolved, hardSolved,
+        totalSolved: easySolved + mediumSolved + hardSolved,
+        totalCount: allQuestions.length,
+        score,
+        rank,
+        skillsProgress
+      },
+      nextRecommendations: nextRecs
     };
   }, [progress, totalPlatformUsers]);
 
+  const stats = difficultyStats;
+
   return (
     <div className="page-enter" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      {/* Identity Sidebar */}
-      <aside style={{
-        width: 320,
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
-        padding: '32px 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24
-      }}>
+      
+      {/* Sidebar Navigation */}
+      <aside style={{ width: 300, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 24px rgba(0,0,0,0.05)', zIndex: 10 }}>
         {/* User Card */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: '16px', 
-            background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            fontSize: 24, fontWeight: 800, color: '#fff',
-            boxShadow: '0 8px 16px rgba(99,102,241,0.2)'
-          }}>
-            {fullName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h2 style={{ margin: '0 0 4px', fontSize: 18, color: 'var(--text)', fontWeight: 800 }}>{fullName}</h2>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>{email}</p>
-          </div>
-        </div>
-
-        {/* Global Rank & Score */}
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1, background: 'var(--surface-2)', padding: '12px 16px', borderRadius: 16, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>Global Rank</div>
-            <div style={{ fontSize: 16, color: 'var(--text)', fontWeight: 800 }}>
-              {totalPlatformUsers === null ? <span style={{ opacity: 0.5 }}>Loading...</span> : `# ${difficultyStats.rank.toLocaleString()}`}
+        <div style={{ padding: '32px 24px', background: 'linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%)', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '16px', 
+              background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', 
+              fontSize: 24, fontWeight: 800, color: '#fff',
+              boxShadow: '0 8px 16px var(--primary-muted)'
+            }}>
+              {fullName.charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              {isEditingName ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '4px 8px', borderRadius: 4, border: '1px solid var(--primary)', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
+                  <button onClick={handleSaveName} disabled={isSavingName} style={{ background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><Check size={14} /></button>
+                  <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><X size={14} /></button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h2 style={{ margin: '0', fontSize: 16, color: 'var(--text)', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fullName}</h2>
+                  <button onClick={() => { setNewName(fullName); setIsEditingName(true); }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 4 }} title="Edit Name"><Edit2 size={12} /></button>
+                </div>
+              )}
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--muted)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</p>
             </div>
           </div>
-          <div style={{ flex: 1, background: 'var(--surface-2)', padding: '12px 16px', borderRadius: 16, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 4 }}>Total Score</div>
-            <div style={{ fontSize: 16, color: 'var(--primary)', fontWeight: 800 }}>{difficultyStats.score.toLocaleString()}</div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--bg)', borderRadius: 12, border: '1px solid var(--border)' }}>
+             <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Global Rank</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank.toLocaleString()}</span>
+             </div>
+             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Score</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--primary)' }}>{stats.score.toLocaleString()}</span>
+             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-          <SidebarItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '24px' }}>
+          <SidebarItem icon={<User size={18} />} label="My Profile" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <SidebarItem icon={<Trophy size={18} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
-          <SidebarItem icon={<Settings size={18} />} label="Preferences" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
-          <SidebarItem icon={<User size={18} />} label="Account" active={activeTab === 'account'} onClick={() => setActiveTab('account')} />
+          <SidebarItem icon={<Settings size={18} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
 
-        <div style={{ marginTop: 'auto' }}>
-          <button onClick={onHome} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', padding: '10px 16px', color: 'var(--text-secondary)', marginBottom: 8 }}>
-            ← Back to Practice
+        <div style={{ marginTop: 'auto', padding: 24, borderTop: '1px solid var(--border)' }}>
+          <button onClick={onHome} className="btn" style={{ width: '100%', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', padding: '12px', borderRadius: 12, fontWeight: 700, marginBottom: 12 }}>
+            Return to Practice
+          </button>
+          <button onClick={onSignOut} className="btn" style={{ width: '100%', background: 'transparent', color: 'var(--muted)', border: 'none', padding: '12px', borderRadius: 12, fontWeight: 600, display: 'flex', justifyContent: 'center' }}>
+            <LogOut size={16} style={{ marginRight: 8 }} /> Sign Out
           </button>
         </div>
       </aside>
       
-      {/* Main Dashboard Area */}
-      <main style={{ flex: 1, padding: '48px 64px', overflowY: 'auto' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          {activeTab === 'dashboard' && <DashboardTab gameState={gameState} difficultyStats={difficultyStats} />}
-          {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={difficultyStats.score} />}
-          {activeTab === 'settings' && <SettingsTab settings={settings} onSaveSettings={onSaveSettings} />}
-          {activeTab === 'account' && <AccountTab user={user} onSignOut={onSignOut} />}
+      {/* Main Content Area */}
+      <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} />}
+          {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={stats.score} />}
+          {activeTab === 'settings' && <div style={{ background: 'var(--surface)', padding: 32, borderRadius: 16, border: '1px solid var(--border)' }}>Editor settings are managed within the Practice Workspace.</div>}
         </div>
       </main>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sidebar Navigation Item Component
-// ─────────────────────────────────────────────────────────────────────────────
 function SidebarItem({ icon, label, active, onClick }) {
   return (
     <button onClick={onClick} style={{
@@ -179,147 +230,248 @@ function SidebarItem({ icon, label, active, onClick }) {
     }}>
       {icon}
       <span>{label}</span>
-      {active && <ChevronRight size={16} style={{ marginLeft: 'auto' }} />}
     </button>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sub-Tabs
+// Dashboard Tab
 // ─────────────────────────────────────────────────────────────────────────────
-
-function DashboardTab({ gameState, difficultyStats }) {
+function DashboardTab({ stats, gameState, nextRecommendations }) {
+  const animatedSolved = useCountUp(stats.totalSolved);
   const recentSubmissions = gameState.recentSubmissions || [];
 
   return (
-    <div style={{ animation: 'fadeIn 0.3s ease-out', display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 16px' }}>Dashboard</h1>
-
-      {/* Top Row: Donut Chart & Badges */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        {/* Difficulty Chart */}
-        <div style={{ background: 'var(--surface)', padding: 24, borderRadius: 24, border: '1px solid var(--border)', display: 'flex', gap: 32, alignItems: 'center' }}>
-          <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-            <svg width="140" height="140" viewBox="0 0 140 140" style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}>
-              <circle cx="70" cy="70" r="60" fill="none" stroke="var(--surface-2)" strokeWidth="8" />
-              <circle cx="70" cy="70" r="60" fill="none" stroke="#ef4444" strokeWidth="8" strokeDasharray={`${(difficultyStats.hardSolved/Math.max(1, difficultyStats.hardTotal))*377} 377`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-              <circle cx="70" cy="70" r="60" fill="none" stroke="#f59e0b" strokeWidth="8" strokeDasharray={`${((difficultyStats.mediumSolved+difficultyStats.hardSolved)/Math.max(1, difficultyStats.mediumTotal+difficultyStats.hardTotal))*377} 377`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-              <circle cx="70" cy="70" r="60" fill="none" stroke="#10b981" strokeWidth="8" strokeDasharray={`${((difficultyStats.totalSolved)/Math.max(1, difficultyStats.totalCount))*377} 377`} style={{ transition: 'stroke-dasharray 1s ease' }} />
-            </svg>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{difficultyStats.totalSolved}</div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>Solved</div>
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <DifficultyBar label="Easy" solved={difficultyStats.easySolved} total={difficultyStats.easyTotal} color="#10b981" />
-            <DifficultyBar label="Medium" solved={difficultyStats.mediumSolved} total={difficultyStats.mediumTotal} color="#f59e0b" />
-            <DifficultyBar label="Hard" solved={difficultyStats.hardSolved} total={difficultyStats.hardTotal} color="#ef4444" />
+    <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards', display: 'flex', flexDirection: 'column', gap: 32 }}>
+      
+      {/* Top Section: Progress & Up Next */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+        
+        {/* Core Progress Card */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Activity size={18} color="var(--primary)" /> SQL Mastery Progress
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
+            {/* SVG Ring */}
+            <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', flexShrink: 0 }}>
+              <svg width="140" height="140" viewBox="0 0 140 140" style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}>
+                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--surface-2)" strokeWidth="12" />
+                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--error)" strokeWidth="12" strokeDasharray={`${(stats.hardSolved/Math.max(1, stats.hardTotal))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
+                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--warning)" strokeWidth="12" strokeDasharray={`${((stats.mediumSolved+stats.hardSolved)/Math.max(1, stats.mediumTotal+stats.hardTotal))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
+                <circle cx="70" cy="70" r="62" fill="none" stroke="var(--success)" strokeWidth="12" strokeDasharray={`${((stats.totalSolved)/Math.max(1, stats.totalCount))*389} 389`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
+              </svg>
+              <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{animatedSolved}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginTop: 4 }}>Solved</div>
+            </div>
+            
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <DiffRow label="Easy" solved={stats.easySolved} total={stats.easyTotal} color="var(--success)" />
+              <DiffRow label="Medium" solved={stats.mediumSolved} total={stats.mediumTotal} color="var(--warning)" />
+              <DiffRow label="Hard" solved={stats.hardSolved} total={stats.hardTotal} color="var(--error)" />
+            </div>
           </div>
         </div>
 
-        {/* Badges / Milestones */}
-        <div style={{ background: 'var(--surface)', padding: 24, borderRadius: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>Badges ({gameState.badges.length})</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {BADGE_DEFS.slice(0, 6).map(badge => {
-              const unlocked = gameState.badges.includes(badge.id);
-              return (
-                <div key={badge.id} title={badge.description} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                  opacity: unlocked ? 1 : 0.4, filter: unlocked ? 'none' : 'grayscale(1)'
-                }}>
-                  <div style={{
-                    width: 56, height: 56, borderRadius: '50%', background: unlocked ? 'var(--surface-2)' : 'var(--bg)',
-                    border: `1px solid ${unlocked ? 'var(--primary-muted)' : 'var(--border)'}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
-                    boxShadow: unlocked ? 'inset 0 2px 8px rgba(0,0,0,0.1)' : 'none'
-                  }}>
-                    {badge.icon}
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', textAlign: 'center' }}>{badge.title}</span>
-                </div>
-              );
-            })}
+        {/* What to do Next Card (Placement Focus) */}
+        <div style={{ background: 'linear-gradient(135deg, var(--primary-muted) 0%, transparent 100%)', borderRadius: 24, padding: 32, border: '1px solid var(--primary-light)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Target size={18} color="var(--primary)" /> Recommended Next Steps
+          </h3>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            Master these specific problems to strengthen your profile for upcoming technical interviews and placements.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {nextRecommendations.length > 0 ? nextRecommendations.map(q => (
+               <Link to={`/practice/${q.db}`} key={q.id} style={{
+                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--surface)', 
+                 borderRadius: 12, border: '1px solid var(--border)', textDecoration: 'none', transition: 'transform 0.2s, box-shadow 0.2s'
+               }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 12px rgba(0,0,0,0.05)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{q.title}</span>
+                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                     <span className={`pill pill-${q.difficulty}`}>{q.difficulty}</span>
+                     <span style={{ fontSize: 11, color: 'var(--muted)' }}>{q.keywords?.[0] || 'SQL'}</span>
+                   </div>
+                 </div>
+                 <ArrowRight size={16} color="var(--primary)" />
+               </Link>
+            )) : (
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--success)', fontWeight: 600, background: 'var(--success-muted)', borderRadius: 12 }}>
+                🎉 You have completed every available question!
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Row 2: Heatmap & Skills */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 24 }}>
+      {/* Middle Section: Topic-wise Progress (Real Data Only) */}
+      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+         <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Zap size={18} color="var(--primary)" /> Topic-Wise Mastery
+         </h3>
+         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }}>
+            {Object.entries(stats.skillsProgress).map(([topic, data]) => (
+               <div key={topic}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8, alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--text)' }}>{topic}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--text)' }}>{data.solved}</span> / {data.total}
+                    </span>
+                  </div>
+                  <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${data.total ? (data.solved/data.total)*100 : 0}%`, background: 'var(--primary)', transition: 'width 1s ease' }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6, textAlign: 'right' }}>
+                    {data.total - data.solved} left to master
+                  </div>
+               </div>
+            ))}
+         </div>
+      </div>
+
+      {/* Bottom Section: Heatmap & Badges */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 32 }}>
+        
         {/* Activity Heatmap */}
-        <div style={{ background: 'var(--surface)', padding: 24, borderRadius: 24, border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>Activity</h3>
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Clock size={18} color="var(--primary)" /> Consistency Heatmap
+          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+            <div><span style={{ fontWeight: 700, color: 'var(--text)' }}>{Object.keys(gameState.activity || {}).length}</span> days active</div>
+            <div>Current streak: <span style={{ fontWeight: 700, color: 'var(--text)' }}>{gameState.streak || 0}</span></div>
           </div>
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {Array.from({ length: 45 }).map((_, i) => {
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignContent: 'flex-start' }}>
+            {Array.from({ length: 112 }).map((_, i) => {
               const d = new Date();
-              d.setDate(d.getDate() - (44 - i));
+              d.setDate(d.getDate() - (111 - i));
               const dateStr = d.toISOString().slice(0, 10);
               const count = gameState.activity?.[dateStr] || 0;
               let bg = 'var(--surface-2)';
-              if (count === 1) bg = '#10b98140';
-              if (count === 2) bg = '#10b98180';
-              if (count > 2) bg = '#10b981';
+              if (count === 1) bg = 'var(--primary-muted)';
+              if (count === 2) bg = 'var(--primary-light)';
+              if (count > 2) bg = 'var(--primary)';
               return (
                 <div key={i} title={`${count} submissions on ${dateStr}`} style={{
-                  width: 14, height: 14, borderRadius: 3, background: bg, cursor: 'pointer', transition: 'transform 0.1s'
-                }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'} />
+                  width: 14, height: 14, borderRadius: 4, background: bg, transition: 'transform 0.1s', cursor: 'pointer'
+                }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.3)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} />
               );
             })}
           </div>
         </div>
 
-        {/* Skills Progress */}
-        <div style={{ background: 'var(--surface)', padding: 24, borderRadius: 24, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>Skills</h3>
-          </div>
-          {Object.entries(difficultyStats.skillsProgress).map(([skill, stats]) => (
-            <DifficultyBar key={skill} label={skill} solved={stats.solved} total={stats.total} color="var(--primary)" />
-          ))}
+        {/* Earned Badges */}
+        <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 32, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
+            <Star size={18} color="var(--primary)" /> Earned Badges
+          </h3>
+          {gameState.badges.length === 0 ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
+              <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.5 }}>🏆</div>
+              Complete questions and build streaks to earn badges!
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              {gameState.badges.map(badgeId => {
+                const badge = BADGE_DEFS.find(b => b.id === badgeId);
+                if (!badge) return null;
+                return (
+                  <div key={badge.id} title={badge.description} style={{
+                    width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%)',
+                    border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)', transition: 'transform 0.2s', cursor: 'default'
+                  }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                    {badge.icon}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Bottom Row: Recent Submissions */}
-      <div style={{ background: 'var(--surface)', padding: 0, borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>Recent Submissions</h3>
-        </div>
-        {recentSubmissions.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
-            No recent submissions found. Start practicing!
-          </div>
-        ) : (
+function DiffRow({ label, solved, total, color }) {
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 8 }}>
+        <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
+        <span>
+          <span style={{ fontWeight: 800, color: 'var(--text)' }}>{solved}</span>
+          <span style={{ color: 'var(--muted)' }}> / {total}</span>
+        </span>
+      </div>
+      <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${total ? (solved/total)*100 : 0}%`, background: color, transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leaderboard Tab 
+// ─────────────────────────────────────────────────────────────────────────────
+function LeaderboardTab({ currentUser, currentScore }) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    supabase
+      .from('user_progress')
+      .select('user_id, badges, activity, completed_questions')
+      .order('user_id', { ascending: true })
+      .limit(200)
+      .then(({ data }) => {
+        if (!data) return;
+        const processed = data.map(row => {
+          const completed = Object.values(row.completed_questions || {}).filter(v => v === 'complete').length;
+          const score = completed * 20;
+          const isCurrentUser = row.user_id === currentUser?.id;
+          return { userId: row.user_id, score, isCurrentUser };
+        });
+        const curr = processed.find(p => p.isCurrentUser);
+        if (curr) curr.score = currentScore;
+        processed.sort((a, b) => b.score - a.score);
+        setEntries(processed.slice(0, 50));
+        setLoading(false);
+      });
+  }, [currentUser, currentScore]);
+
+  return (
+    <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 24, padding: 40, border: '1px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+        <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Trophy color="var(--primary)" /> Global Leaderboard
+        </h2>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 32 }}>Compare your SQL mastery with other top practitioners.</p>
+        
+        {loading ? <div style={{ color: 'var(--muted)', padding: 40, textAlign: 'center' }}>Loading rankings...</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ background: 'var(--bg)' }}>
-                <th style={{ padding: '12px 24px', fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Question</th>
-                <th style={{ padding: '12px 24px', fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Time Submitted</th>
-                <th style={{ padding: '12px 24px', fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>Status</th>
-                <th style={{ padding: '12px 24px', fontSize: 12, fontWeight: 600, color: 'var(--muted)', textAlign: 'right' }}>Action</th>
+              <tr style={{ background: 'var(--surface-2)' }}>
+                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Rank</th>
+                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>User</th>
+                <th style={{ padding: '16px 24px', fontSize: 12, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', textAlign: 'right' }}>Score</th>
               </tr>
             </thead>
             <tbody>
-              {recentSubmissions.slice(0, 10).map((sub, i) => (
-                <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                  <td style={{ padding: '16px 24px', fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                    {sub.title}
+              {entries.map((e, i) => (
+                <tr key={i} style={{ borderBottom: `1px solid var(--border)`, background: e.isCurrentUser ? 'var(--primary-muted)' : 'transparent' }}>
+                  <td style={{ padding: '20px 24px', fontSize: 16, fontWeight: 800, color: i < 3 ? 'var(--warning)' : 'var(--muted)' }}>
+                    {i === 0 ? '👑 1' : i + 1}
                   </td>
-                  <td style={{ padding: '16px 24px', fontSize: 13, color: 'var(--muted)' }}>
-                    {new Date(sub.timestamp).toLocaleString()}
+                  <td style={{ padding: '20px 24px', fontWeight: e.isCurrentUser ? 800 : 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+                      {e.isCurrentUser ? '👤' : e.userId.charAt(0).toUpperCase()}
+                    </div>
+                    {e.isCurrentUser ? 'You' : `Player ${e.userId.slice(0, 8)}`}
                   </td>
-                  <td style={{ padding: '16px 24px', fontSize: 13, fontWeight: 600, color: sub.status === 'complete' ? 'var(--success)' : 'var(--warning)' }}>
-                    {sub.status === 'complete' ? 'Accepted' : 'Attempted'}
-                  </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                    <Link to={`/practice/${sub.db}`} style={{ 
-                      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: 'var(--surface-2)', 
-                      borderRadius: 6, fontSize: 12, color: 'var(--text)', textDecoration: 'none', fontWeight: 600 
-                    }}>
-                      Try Again <ExternalLink size={12} />
-                    </Link>
+                  <td style={{ padding: '20px 24px', textAlign: 'right', fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+                    {e.score.toLocaleString()}
                   </td>
                 </tr>
               ))}
@@ -327,350 +479,6 @@ function DashboardTab({ gameState, difficultyStats }) {
           </table>
         )}
       </div>
-    </div>
-  );
-}
-
-function DifficultyBar({ label, solved, total, color }) {
-  const percent = total > 0 ? (solved / total) * 100 : 0;
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
-        <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
-        <span style={{ color: 'var(--text)', fontWeight: 700 }}>{solved} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>/ {total}</span></span>
-      </div>
-      <div style={{ width: '100%', height: 6, background: 'var(--surface-2)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ width: `${percent}%`, height: '100%', background: color, borderRadius: 3 }} />
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Settings Tab Component
-// ─────────────────────────────────────────────────────────────────────────────
-function SettingsTab({ settings, onSaveSettings }) {
-  const handleToggle = (key) => {
-    onSaveSettings(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-  
-  const handleSelect = (key, val) => {
-    onSaveSettings(prev => ({ ...prev, [key]: val }));
-  };
-
-  return (
-    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-      <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px' }}>Preferences</h1>
-      <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 40 }}>Manage your environment settings and preferences.</p>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 800 }}>
-        
-        {/* Editor Settings */}
-        <div style={{ background: 'var(--surface)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: 1 }}>Editor Setup</h3>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <SettingRow 
-              icon={<Moon size={20} />} 
-              title="Dark Mode" 
-              description="Enable high-contrast dark theme across the IDE." 
-              toggled={settings.darkMode} 
-              onToggle={() => handleToggle('darkMode')} 
-            />
-            <SettingRow 
-              icon={<ToggleRight size={20} />} 
-              title="Auto-Run Queries" 
-              description="Automatically execute SQL when you pause typing." 
-              toggled={settings.autoRunAfterTyping} 
-              onToggle={() => handleToggle('autoRunAfterTyping')} 
-            />
-            <SettingRow 
-              icon={<Database size={20} />} 
-              title="Persist Editor Text" 
-              description="Remember your unsubmitted code across sessions." 
-              toggled={settings.persistEditorText} 
-              onToggle={() => handleToggle('persistEditorText')} 
-            />
-            
-            {/* Font Size Selector */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 24, borderTop: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                  <Type size={20} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Editor Font Size</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>Adjust the typography size in the Monaco editor.</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[12, 14, 16, 18, 20].map(sz => (
-                  <button 
-                    key={sz} 
-                    onClick={() => handleSelect('editorFontSize', sz)}
-                    className="btn"
-                    style={{ 
-                      padding: '6px 12px', fontSize: 13, 
-                      background: settings.editorFontSize === sz ? 'var(--primary)' : 'var(--surface-2)',
-                      color: settings.editorFontSize === sz ? '#fff' : 'var(--text)'
-                    }}
-                  >
-                    {sz}px
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-function SettingRow({ icon, title, description, toggled, onToggle }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 24, borderTop: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-          {icon}
-        </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{title}</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{description}</div>
-        </div>
-      </div>
-      <button onClick={onToggle} style={{
-        width: 44, height: 24, borderRadius: 12, background: toggled ? 'var(--primary)' : 'var(--surface-2)', border: 'none', position: 'relative', cursor: 'pointer', transition: 'background 0.2s'
-      }}>
-        <div style={{
-          width: 20, height: 20, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, left: toggled ? 22 : 2, transition: 'left 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-        }} />
-      </button>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Account Tab Component
-// ─────────────────────────────────────────────────────────────────────────────
-function AccountTab({ user, onSignOut }) {
-  return (
-    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-      <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px' }}>Account Information</h1>
-      <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 40 }}>Manage your personal details and session.</p>
-
-      <div style={{ background: 'var(--surface)', padding: 32, borderRadius: 24, border: '1px solid var(--border)', marginBottom: 24, maxWidth: 800 }}>
-        <h3 style={{ margin: '0 0 24px', fontSize: 16, fontWeight: 700 }}>Profile Identity</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 8, fontWeight: 600 }}>Display Name</label>
-            <input 
-              type="text" 
-              readOnly 
-              value={user?.user_metadata?.full_name || user?.user_metadata?.name || 'SQL Practitioner'} 
-              style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14, outline: 'none' }} 
-            />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: 12, color: 'var(--muted)', marginBottom: 8, fontWeight: 600 }}>Email Address</label>
-            <input 
-              type="email" 
-              readOnly 
-              value={user?.email || 'guest@example.com'} 
-              style={{ width: '100%', padding: '14px 16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 14, outline: 'none' }} 
-            />
-          </div>
-        </div>
-      </div>
-
-      <div style={{ background: 'var(--surface)', padding: 32, borderRadius: 24, border: '1px solid var(--error-muted)', borderColor: 'rgba(239, 68, 68, 0.2)', maxWidth: 800 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <ShieldAlert size={20} color="var(--error)" />
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--error)' }}>Danger Zone</h3>
-        </div>
-        <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24 }}>Actions here are permanent. You will need to sign in again after logging out.</p>
-        
-        <div style={{ display: 'flex', gap: 16 }}>
-          <button onClick={onSignOut} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-            <LogOut size={16} /> Sign Out Securely
-          </button>
-          <button style={{ padding: '12px 24px', borderRadius: 12, background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-            Delete Account Data
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Leaderboard Tab Component
-// ─────────────────────────────────────────────────────────────────────────────
-function LeaderboardTab({ currentUser, currentScore }) {
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    // Fetch top 50 users by score from user_progress
-    // Score = easy*10 + medium*30 + hard*50 is computed server side through completed_questions count
-    // We store score indirectly — fetch all user_progress rows and compute client-side
-    supabase
-      .from('user_progress')
-      .select('user_id, badges, activity, completed_questions')
-      .order('user_id', { ascending: true })
-      .limit(200)
-      .then(({ data, error: err }) => {
-        if (err) { setError(err.message); setLoading(false); return; }
-        if (!data || data.length === 0) { setEntries([]); setLoading(false); return; }
-
-        // Compute scores per user
-        const processed = data.map(row => {
-          const completed = Object.values(row.completed_questions || {}).filter(v => v === 'complete').length;
-          // Without difficulty info per-question per-user, use flat 20pts each for simplicity
-          const score = completed * 20;
-          const badges = (row.badges || []).length;
-          const activityDays = Object.keys(row.activity || {}).length;
-          const isCurrentUser = row.user_id === currentUser?.id;
-          return { userId: row.user_id, score, badges, activityDays, isCurrentUser };
-        });
-
-        // Sort by score descending
-        processed.sort((a, b) => b.score - a.score);
-
-        setEntries(processed.slice(0, 50));
-        setLoading(false);
-      });
-  }, [currentUser]);
-
-  const MEDAL = ['🥇', '🥈', '🥉'];
-
-  const getRankColor = (idx) => {
-    if (idx === 0) return '#FFD700';
-    if (idx === 1) return '#C0C0C0';
-    if (idx === 2) return '#CD7F32';
-    return 'var(--text-secondary)';
-  };
-
-  return (
-    <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px' }}>🏆 Global Leaderboard</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 15 }}>
-          Top {entries.length} practitioners ranked by total score. Practice more to climb!
-        </p>
-      </div>
-
-      {loading && (
-        <div style={{ textAlign: 'center', padding: 80, color: 'var(--muted)' }}>
-          <div style={{ fontSize: 40, marginBottom: 16, animation: 'spin 1s linear infinite' }}>⏳</div>
-          <div style={{ fontWeight: 600 }}>Fetching rankings from the server…</div>
-        </div>
-      )}
-
-      {error && (
-        <div style={{ padding: 24, background: 'var(--error-muted)', borderRadius: 16, color: 'var(--error)', border: '1px solid var(--error)' }}>
-          Failed to load leaderboard: {error}
-        </div>
-      )}
-
-      {!loading && !error && entries.length === 0 && (
-        <div style={{ textAlign: 'center', padding: 80, color: 'var(--muted)' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
-          <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--text)', marginBottom: 8 }}>No Rankings Yet</div>
-          <div>Be the first to solve problems and claim the #1 spot!</div>
-        </div>
-      )}
-
-      {!loading && !error && entries.length > 0 && (
-        <div style={{ background: 'var(--surface)', borderRadius: 24, border: '1px solid var(--border)', overflow: 'hidden' }}>
-          {/* Header Row */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '60px 1fr 100px 80px 80px',
-            padding: '12px 24px', background: 'var(--surface-2)',
-            borderBottom: '1px solid var(--border)',
-            fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8,
-          }}>
-            <div>Rank</div>
-            <div>User</div>
-            <div style={{ textAlign: 'right' }}>Score</div>
-            <div style={{ textAlign: 'right' }}>Badges</div>
-            <div style={{ textAlign: 'right' }}>Days</div>
-          </div>
-
-          {entries.map((entry, idx) => (
-            <div
-              key={entry.userId}
-              style={{
-                display: 'grid', gridTemplateColumns: '60px 1fr 100px 80px 80px',
-                padding: '16px 24px',
-                borderBottom: idx < entries.length - 1 ? '1px solid var(--border)' : 'none',
-                background: entry.isCurrentUser
-                  ? 'linear-gradient(90deg, var(--primary-muted) 0%, transparent 100%)'
-                  : idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)',
-                transition: 'background 0.2s',
-                cursor: 'default',
-              }}
-              onMouseEnter={e => { if (!entry.isCurrentUser) e.currentTarget.style.background = 'var(--primary-muted)'; }}
-              onMouseLeave={e => { if (!entry.isCurrentUser) e.currentTarget.style.background = idx % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)'; }}
-            >
-              {/* Rank */}
-              <div style={{ display: 'flex', alignItems: 'center', fontWeight: 800, fontSize: 18, color: getRankColor(idx) }}>
-                {idx < 3 ? MEDAL[idx] : (
-                  <span style={{ fontSize: 14, color: 'var(--muted)', fontWeight: 600 }}>#{idx + 1}</span>
-                )}
-              </div>
-
-              {/* User */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: entry.isCurrentUser
-                    ? 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)'
-                    : `hsl(${(entry.userId.charCodeAt(0) * 37) % 360}, 60%, 55%)`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0,
-                }}>
-                  {entry.isCurrentUser ? '👤' : (idx + 1)}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 14 }}>
-                    {entry.isCurrentUser ? (
-                      <span>You <span style={{ fontSize: 12, color: 'var(--primary)', background: 'var(--primary-muted)', padding: '2px 8px', borderRadius: 99, marginLeft: 6, fontWeight: 600 }}>← YOU</span></span>
-                    ) : `Player ${idx + 1}`}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {entry.userId.slice(0, 8)}…
-                  </div>
-                </div>
-              </div>
-
-              {/* Score */}
-              <div style={{ textAlign: 'right', fontWeight: 800, fontSize: 16, color: idx === 0 ? '#FFD700' : 'var(--text)' }}>
-                {entry.score.toLocaleString()}
-              </div>
-
-              {/* Badges */}
-              <div style={{ textAlign: 'right', color: 'var(--accent-1)', fontWeight: 600 }}>
-                {'🏅'.repeat(Math.min(entry.badges, 5))} {entry.badges === 0 ? '—' : ''}
-              </div>
-
-              {/* Days Active */}
-              <div style={{ textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                {entry.activityDays}d
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <p style={{ marginTop: 16, fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
-        Rankings update live. Scores based on questions solved (20 pts each).
-      </p>
     </div>
   );
 }
