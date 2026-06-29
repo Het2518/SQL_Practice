@@ -1013,7 +1013,10 @@ export default function App() {
               gameState={gameState} 
               progress={progress} 
               settings={settings}
-              onSaveSettings={setSettings}
+              onSaveSettings={(newSettings) => {
+                setSettings(newSettings);
+                localStorage.setItem('sql-platform-settings', JSON.stringify(newSettings));
+              }}
               onHome={() => navigate('/')} 
               onSignOut={async () => {
                 // Full data reset on logout
