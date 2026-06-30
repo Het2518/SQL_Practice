@@ -387,3 +387,28 @@ tr:hover td {
   transition: background var(--transition);
 }
 .schema-table-header:hover { background: var(--surface-2); }
+
+/* Output Table Styles */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+.results-table th,
+.results-table td {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.results-table th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--text);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.results-table tr:hover td {
+  background: var(--surface-2);
+}

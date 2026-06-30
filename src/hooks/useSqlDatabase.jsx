@@ -120,14 +120,7 @@ export function useSqlDatabase(dbInput) {
     }
   }, [sendMessage]);
 
-  const getEdgeCaseResults = useCallback(async (sql, primaryTable) => {
-    if (!sql.trim() || !primaryTable) return null;
-    try {
-      return await sendMessage('TEST_EDGE_CASES', { sql, primaryTable });
-    } catch (err) {
-      return [{ id: 'error', status: 'error', error: err.message }];
-    }
-  }, [sendMessage]);
+
 
   const resetDb = useCallback(async () => {
     if (currentDbRef.current) {
@@ -286,7 +279,7 @@ export function useSqlDatabase(dbInput) {
     runVerification,
     getExpectedResultDynamic,
     getExplainPlan,
-    getEdgeCaseResults,
+
     dbInstance: null
   };
 }

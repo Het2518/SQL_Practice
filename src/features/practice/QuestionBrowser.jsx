@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { DB_INFO } from '@/types';
+import { DB_INFO } from '@/data/schemas';
 import { supabase } from '@/lib/supabase';
 const ALL_KEYWORDS = ['Select', 'Where', 'Order By', 'Group By', 'Having', 'Join', 'Left Join', 'Subquery', 'CTE', 'Recursive CTE', 'Window Function', 'Rank', 'Row Number', 'Lag', 'Lead', 'Case', 'Union', 'Insert', 'Update', 'Delete', 'Date Function', 'String Function', 'Null Handling'];
 const DIFFICULTIES = ['easy', 'medium', 'hard'];

@@ -5,9 +5,8 @@ import { ExecutionOrderExplainer } from '@/features/visualizers/ExecutionOrderEx
 import { IndexAdvisor } from '@/features/visualizers/IndexAdvisor';
 import { TheoryConnector } from '@/features/gamification/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
-import { TableVirtuoso } from 'react-virtuoso';
 
-export function ResultsPanel({
+export const ResultsPanel = React.memo(function ResultsPanel({
   result,
   validation,
   sql,
@@ -179,9 +178,12 @@ export function ResultsPanel({
       </div>
 
       {/* Validation Message Box */}
-      {validation && !validation.isCorrect && (
-        <div style={{ padding: '10px 16px', background: 'rgba(239,68,68,0.1)', borderBottom: '1px solid rgba(239,68,68,0.2)', color: 'var(--error)', fontSize: 13, fontWeight: 500 }}>
-          {validation.message}
+      {validation && !validation.isCorrect && !isError && (
+        <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.2)', color: 'var(--error)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <span style={{ fontSize: '16px', lineHeight: 1 }}>⚠️</span>
+          <div style={{ flex: 1 }}>
+            {validation.message}
+          </div>
         </div>
       )}
 
@@ -233,31 +235,24 @@ export function ResultsPanel({
                 {/* Data Tab */}
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                      <TableVirtuoso
-                        data={currentRows}
-                        style={{ height: '100%' }}
-                        components={{
-                          Table: (props) => <table {...props} className="results-table" style={{ borderSpacing: 0, width: '100%', margin: 0 }} />,
-                          TableRow: (props) => {
-                            // Render a tbody for each item so GroupedResultRow can safely return multiple TRs (fragment)
-                            return <tbody {...props} />;
-                          }
-                        }}
-                        fixedHeaderContent={() => (
+                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                      <table className="results-table" style={{ borderSpacing: 0, width: '100%', margin: 0 }}>
+                        <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                           <tr>
-                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)', zIndex: 1 }}></th>}
+                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)' }}></th>}
                             {result.columns.map((col, i) => (
-                              <th key={i} style={{ background: 'var(--surface-2)', zIndex: 1 }}>
+                              <th key={i} style={{ background: 'var(--surface-2)' }}>
                                 {col}
                               </th>
                             ))}
                           </tr>
-                        )}
-                        itemContent={(index, row) => (
-                          <GroupedResultRow row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
-                        )}
-                      />
+                        </thead>
+                        <tbody>
+                          {currentRows.map((row, index) => (
+                            <GroupedResultRow key={index} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
+                          ))}
+                        </tbody>
+                      </table>
                       
                       {result.columns.length === 0 && (
                         <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
@@ -328,4 +323,4 @@ export function ResultsPanel({
       )}
     </div>
   );
-}
+});

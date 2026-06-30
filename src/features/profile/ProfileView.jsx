@@ -291,7 +291,8 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
           type: 'solve',
           title: `Solved ${sub.title}`,
           time: timeStr,
-          icon: <Check size={14} color="var(--success)" />
+          icon: <Check size={14} color="var(--success)" />,
+          link: sub.db && sub.id ? `/practice/${sub.db}?q=${sub.id}` : null
         };
       });
     }
@@ -329,80 +330,59 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
 
   const stats = difficultyStats;
 
-  // Background Glow Elements for visual richness
-  const glows = (
-    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40vw', height: '40vw', background: 'var(--primary)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%' }} />
-      <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: '50vw', height: '50vw', background: 'var(--warning)', filter: 'blur(180px)', opacity: 0.08, borderRadius: '50%' }} />
-    </div>
-  );
-
   return (
-    <div className="page-enter" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', position: 'relative' }}>
-      {glows}
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       
-      {/* Sidebar Navigation Rail (Theme Aware) */}
-      <aside style={{ width: 280, background: 'var(--surface)', color: 'var(--text)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', boxShadow: '4px 0 24px rgba(0,0,0,0.2)', zIndex: 10 }}>
-        {/* User Card */}
-        <div style={{ padding: '32px 24px', background: 'linear-gradient(180deg, var(--surface-2) 0%, transparent 100%)', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: '14px', 
-              background: 'linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              fontSize: 22, fontWeight: 800, color: '#fff',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)'
-            }}>
-              {fullName.charAt(0).toUpperCase()}
-            </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              {isEditingName ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} style={{ width: '100%', padding: '4px 8px', borderRadius: 4, border: '1px solid var(--primary)', background: 'var(--bg)', color: 'var(--text)', outline: 'none' }} />
-                  <button onClick={handleSaveName} disabled={isSavingName} style={{ background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><Check size={14} /></button>
-                  <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><X size={14} /></button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <h2 style={{ margin: '0', fontSize: 15, color: 'var(--text)', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fullName}</h2>
-                  <button onClick={() => { setNewName(fullName); setIsEditingName(true); }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 4 }} title="Edit Name"><Edit2 size={12} /></button>
-                </div>
-              )}
-              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--muted)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{email}</p>
-            </div>
+      {/* Top Header Bar */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 40px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
+        
+        {/* User Info (Left) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '10px', 
+            background: 'var(--primary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            fontSize: 16, fontWeight: 800, color: '#fff'
+          }}>
+            {fullName.charAt(0).toUpperCase()}
           </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 12, border: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
-             <div style={{ position: 'absolute', top: 0, left: 0, width: '3px', height: '100%', background: 'var(--primary)' }} />
-             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Global Rank</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text)' }}>#{stats.rank !== null ? stats.rank.toLocaleString() : '...'}</span>
-             </div>
-             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Percentile</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--warning)' }}>Top {stats.percentile !== null ? stats.percentile : '...'}%</span>
-             </div>
+          <div>
+            {isEditingName ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', fontSize: 14 }} />
+                <button onClick={handleSaveName} disabled={isSavingName} style={{ background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><Check size={14} /></button>
+                <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><X size={14} /></button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h2 style={{ margin: '0', fontSize: 16, color: 'var(--text)', fontWeight: 700 }}>{fullName}</h2>
+                <button onClick={() => { setNewName(fullName); setIsEditingName(true); }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 4 }} title="Edit Name"><Edit2 size={12} /></button>
+              </div>
+            )}
+            <p style={{ margin: '0', fontSize: 12, color: 'var(--muted)' }}>{email}</p>
           </div>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '24px' }}>
-          <SidebarItem icon={<User size={18} />} label="My Profile" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={<Trophy size={18} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
-          <SidebarItem icon={<SettingsIcon size={18} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+        {/* Navigation Tabs (Center) */}
+        <nav style={{ display: 'flex', gap: 8, background: 'var(--surface-2)', padding: 4, borderRadius: 8, border: '1px solid var(--border)' }}>
+          <TopNavItem icon={<User size={14} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <TopNavItem icon={<Trophy size={14} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
+          <TopNavItem icon={<SettingsIcon size={14} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
 
-        <div style={{ marginTop: 'auto', padding: 24, borderTop: '1px solid var(--border)' }}>
-          <button onClick={onHome} className="btn" style={{ width: '100%', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', padding: '12px', borderRadius: 12, fontWeight: 700, marginBottom: 12 }}>
+        {/* Actions (Right) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={onHome} className="btn" style={{ background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
             Return to Practice
           </button>
-          <button onClick={onSignOut} className="btn" style={{ width: '100%', background: 'transparent', color: 'var(--error)', border: 'none', padding: '12px', borderRadius: 12, fontWeight: 600, display: 'flex', justifyContent: 'center' }}>
-            <LogOut size={16} style={{ marginRight: 8 }} /> Sign Out
+          <button onClick={onSignOut} className="btn" style={{ background: 'transparent', color: 'var(--error)', border: '1px solid var(--error-muted)' }}>
+            <LogOut size={14} /> Sign Out
           </button>
         </div>
-      </aside>
+      </header>
       
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '40px', overflowY: 'auto', zIndex: 1, background: 'var(--bg)' }}>
+      <main style={{ flex: 1, padding: '40px', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} quests={quests} timelineEvents={timelineEvents} />}
           {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={stats.score} />}
@@ -413,13 +393,14 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   );
 }
 
-function SidebarItem({ icon, label, active, onClick }) {
+function TopNavItem({ icon, label, active, onClick }) {
   return (
     <button onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 12, border: 'none',
-      background: active ? 'var(--primary-muted)' : 'transparent',
-      color: active ? 'var(--primary)' : 'var(--text-secondary)',
-      fontWeight: active ? 700 : 500, fontSize: 14, cursor: 'pointer', transition: 'all 0.2s', width: '100%', textAlign: 'left'
+      display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: 'none',
+      background: active ? 'var(--surface)' : 'transparent',
+      color: active ? 'var(--text)' : 'var(--text-secondary)',
+      fontWeight: active ? 600 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+      boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
     }} onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text)'; }} onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}>
       {icon}
       <span>{label}</span>
@@ -442,53 +423,51 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
   const xpPct = Math.min((totalScore / nextMilestone) * 100, 100);
 
   return (
-    <div style={{ animation: 'smoothFadeIn 0.4s ease-out forwards', display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div style={{ animation: 'smoothFadeIn 0.3s ease-out forwards', display: 'flex', flexDirection: 'column', gap: 32 }}>
       
       {/* 1. HERO BAND (XP BAR) */}
-      <div className="glass-panel" style={{ padding: '32px 40px', background: 'var(--surface)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+      <div style={{ padding: '32px', background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 8px', color: 'var(--text)' }}>
-              Welcome back, Commander
+            <h1 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 12px', color: 'var(--text)' }}>
+              Overview
             </h1>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--text-secondary)' }}>
-              <span><strong style={{ color: 'var(--text)' }}>#{stats.rank?.toLocaleString() || '...'}</strong> GLOBAL</span>
-              <span><strong style={{ color: 'var(--warning)' }}>TOP {stats.percentile || '...'}%</strong></span>
-              <span><strong style={{ color: 'var(--text)' }}>{stats.totalSolved}</strong> SOLVED</span>
-              <span><strong style={{ color: 'var(--text)' }}>{gameState?.badges?.length || 0}</strong> BADGES</span>
+            <div style={{ display: 'flex', gap: 32, fontSize: 14, color: 'var(--text-secondary)' }}>
+              <span><span style={{ color: 'var(--muted)', fontSize: 12, textTransform: 'uppercase', marginRight: 6 }}>Global Rank</span><strong style={{ color: 'var(--text)' }}>#{stats.rank?.toLocaleString() || '...'}</strong></span>
+              <span><span style={{ color: 'var(--muted)', fontSize: 12, textTransform: 'uppercase', marginRight: 6 }}>Percentile</span><strong style={{ color: 'var(--primary)' }}>Top {stats.percentile || '...'}%</strong></span>
+              <span><span style={{ color: 'var(--muted)', fontSize: 12, textTransform: 'uppercase', marginRight: 6 }}>Total Solved</span><strong style={{ color: 'var(--text)' }}>{stats.totalSolved}</strong></span>
+              <span><span style={{ color: 'var(--muted)', fontSize: 12, textTransform: 'uppercase', marginRight: 6 }}>Badges</span><strong style={{ color: 'var(--text)' }}>{gameState?.badges?.length || 0}</strong></span>
             </div>
           </div>
-          <div style={{ textAlign: 'right', fontFamily: 'var(--mono)' }}>
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 4, letterSpacing: '0.05em' }}>XP PROGRESS</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary)' }}>{totalScore} <span style={{ color: 'var(--muted)' }}>/ {nextMilestone}</span></div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6, textTransform: 'uppercase', fontWeight: 600 }}>XP Progress</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>{totalScore} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>/ {nextMilestone}</span></div>
           </div>
         </div>
         
         {/* Full-width XP Bar */}
-        <div style={{ height: 12, background: 'var(--surface-2)', borderRadius: 6, overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)' }}>
-           <div style={{ height: '100%', width: `${xpPct}%`, background: 'linear-gradient(90deg, var(--primary) 0%, #4f46e5 100%)', borderRadius: 6, transition: 'width 1.5s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+        <div style={{ height: 12, background: 'var(--surface-2)', borderRadius: 6, overflow: 'hidden' }}>
+           <div style={{ height: '100%', width: `${xpPct}%`, background: 'var(--primary)', borderRadius: 6, transition: 'width 1s ease-out' }} />
         </div>
       </div>
 
-      {/* 2. 3-COLUMN ASYMMETRIC GRID (Topic Mastery 40%, Quests 30%, Placement 30%) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '4fr 3fr 3fr', gap: 32 }}>
+      {/* 2. 3-COLUMN GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
         
         {/* Topic Mastery */}
-        <div className="glass-panel" style={{ padding: 28, display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Target size={16} color="var(--primary)" /> Topic Mastery
-          </h3>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ padding: 24, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Topic Mastery</h3>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
             {Object.entries(stats.skillsProgress).map(([topic, data]) => {
               const pct = data.total > 0 ? (data.solved / data.total) * 100 : 0;
               return (
                 <div key={topic}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{topic}</span>
-                    <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>{data.solved} / {data.total}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)' }}>{topic}</span>
+                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>{data.solved} / {data.total}</span>
                   </div>
-                  <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: 'var(--primary)', borderRadius: 2 }} />
+                  <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3 }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: 'var(--primary)', borderRadius: 3 }} />
                   </div>
                 </div>
               );
@@ -497,22 +476,20 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </div>
 
         {/* Quests */}
-        <div className="glass-panel" style={{ padding: 28, display: 'flex', flexDirection: 'column' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Swords size={16} color="var(--warning)" /> Active Quests
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ padding: 24, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Active Quests</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {quests.map(quest => {
               const pct = (quest.current / quest.target) * 100;
               const isDone = quest.current >= quest.target;
               return (
                 <div key={quest.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: isDone ? 'var(--success)' : 'var(--text)' }}>{quest.title} {isDone && '✓'}</div>
-                    <div style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>{quest.current}/{quest.target}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: isDone ? 'var(--success)' : 'var(--text)' }}>{quest.title} {isDone && '✓'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>{quest.current}/{quest.target}</div>
                   </div>
-                  <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2 }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: isDone ? 'var(--success)' : 'var(--warning)', borderRadius: 2 }} />
+                  <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 3 }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: isDone ? 'var(--success)' : 'var(--warning)', borderRadius: 3 }} />
                   </div>
                 </div>
               );
@@ -520,29 +497,27 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
           </div>
           
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: 8 }}>Next Badge</div>
-            <div style={{ padding: 12, background: 'var(--surface-2)', borderRadius: 8, fontSize: 12, color: 'var(--text)', border: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Next Badge</div>
+            <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--text)', border: '1px solid var(--border)' }}>
               <strong>🥷 SQL Ninja:</strong> Solve 36 more questions.
             </div>
           </div>
         </div>
 
         {/* Placement Prep */}
-        <div className="glass-panel" style={{ padding: 28, display: 'flex', flexDirection: 'column', background: 'var(--surface)', border: '1px solid var(--primary-muted)' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Activity size={16} color="var(--primary)" /> Placement Prep
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ padding: 24, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Placement Prep</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {nextRecommendations.map(q => (
                <Link to={`/practice/${q.db}?q=${q.id}`} key={q.id} style={{
-                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', 
+                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--surface-2)', 
                  borderRadius: 8, border: '1px solid var(--border)', textDecoration: 'none', transition: 'border-color 0.2s'
                }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                     <span className={`pill pill-${q.difficulty}`} style={{ padding: '2px 6px', fontSize: 9 }}>{q.difficulty}</span>
+                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                     <span className={`pill pill-${q.difficulty}`} style={{ padding: '2px 6px', fontSize: 10 }}>{q.difficulty}</span>
                    </div>
-                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{q.title}</span>
+                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 180 }}>{q.title}</span>
                  </div>
                  <ArrowRight size={14} color="var(--primary)" />
                </Link>
@@ -553,19 +528,19 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
       </div>
 
       {/* 3. CONSISTENCY HEATMAP */}
-      <div className="glass-panel" style={{ padding: 32 }}>
-        <h3 style={{ margin: '0 0 24px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-          <Flame size={16} color="var(--error)" /> Consistency Heatmap
+      <div style={{ padding: 32, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)' }}>
+        <h3 style={{ margin: '0 0 24px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+          Consistency Heatmap
         </h3>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--mono)', marginBottom: 20 }}>
-          <div><strong style={{ color: 'var(--text)' }}>{Object.keys(gameState.activity || {}).length}</strong> DAYS ACTIVE</div>
-          <div>CURRENT STREAK: <strong style={{ color: 'var(--text)' }}>{gameState.streak || 0}</strong></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
+          <div><strong style={{ color: 'var(--text)' }}>{Object.keys(gameState.activity || {}).length}</strong> days active</div>
+          <div>Current Streak: <strong style={{ color: 'var(--text)' }}>{gameState.streak || 0}</strong></div>
         </div>
         
         {/* Generate a dense 52-week grid (approx 364 days). We render columns of 7. */}
-        <div style={{ display: 'flex', gap: 3, overflowX: 'auto', paddingBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 12 }}>
           {Array.from({ length: 52 }).map((_, colIdx) => (
-            <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {Array.from({ length: 7 }).map((_, rowIdx) => {
                 const dayOffset = (51 - colIdx) * 7 + (6 - rowIdx);
                 const d = new Date();
@@ -574,14 +549,14 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
                 const count = gameState.activity?.[dateStr] || 0;
                 
                 let bg = 'var(--surface-2)';
-                if (count === 1) bg = '#C7D2FE'; // light primary
-                if (count === 2) bg = '#818CF8';
-                if (count > 2) bg = '#4F46E5'; // var(--primary)
+                if (count === 1) bg = '#a5b4fc';
+                if (count === 2) bg = '#818cf8';
+                if (count > 2) bg = '#4f46e5';
                 
                 return (
                   <div key={rowIdx} title={`${count} submissions on ${dateStr}`} style={{
-                    width: 12, height: 12, borderRadius: 2, background: bg, transition: 'transform 0.1s', cursor: 'pointer'
-                  }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.4)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'} />
+                    width: 14, height: 14, borderRadius: 3, background: bg, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.02)'
+                  }} />
                 );
               })}
             </div>
@@ -590,28 +565,27 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
       </div>
 
       {/* 4. BADGES & ACTIVITY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
         
         {/* Badges */}
-        <div className="glass-panel" style={{ padding: 32 }}>
-          <h3 style={{ margin: '0 0 24px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-            <Star size={16} color="var(--warning)" /> Badge Collection
+        <div style={{ padding: 32, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)' }}>
+          <h3 style={{ margin: '0 0 24px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+            Badge Collection
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 16 }}>
             {BADGE_DEFS.map(badge => {
               const isEarned = gameState?.badges?.includes(badge.id);
               return (
                 <div key={badge.id} style={{
-                  padding: 16, borderRadius: 12, background: isEarned ? 'var(--bg)' : 'transparent',
+                  padding: 20, borderRadius: 12, background: isEarned ? 'var(--surface-2)' : 'var(--bg)',
                   border: `1px solid ${isEarned ? 'var(--border)' : 'var(--surface-2)'}`,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                  opacity: isEarned ? 1 : 0.4, transition: 'transform 0.2s', cursor: 'default',
-                  position: 'relative'
-                }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                  {!isEarned && <Lock size={12} color="var(--muted)" style={{ position: 'absolute', top: 10, right: 10 }} />}
-                  <div style={{ fontSize: 32, filter: isEarned ? 'none' : 'grayscale(100%)', marginBottom: 8 }}>{badge.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', marginBottom: 2 }}>{badge.title}</div>
-                  <div style={{ fontSize: 10, color: 'var(--muted)' }}>{badge.description}</div>
+                  opacity: isEarned ? 1 : 0.5, position: 'relative'
+                }}>
+                  {!isEarned && <Lock size={12} color="var(--muted)" style={{ position: 'absolute', top: 12, right: 12 }} />}
+                  <div style={{ fontSize: 32, filter: isEarned ? 'none' : 'grayscale(100%)', marginBottom: 12 }}>{badge.icon}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{badge.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{badge.description}</div>
                 </div>
               );
             })}
@@ -619,30 +593,50 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </div>
 
         {/* Activity & Distribution */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           
-          <div className="glass-panel" style={{ padding: 32, flex: 1 }}>
-            <h3 style={{ margin: '0 0 24px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text)' }}>
-              <Clock size={16} color="var(--primary)" /> Recent Activity
+          <div style={{ padding: 24, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)', flex: 1 }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+              Recent Activity
             </h3>
-            <div style={{ position: 'relative', paddingLeft: 24 }}>
-              <div style={{ position: 'absolute', top: 10, bottom: 10, left: 9, width: 2, background: 'var(--surface-2)' }} />
+            <div style={{ position: 'relative', paddingLeft: 20 }}>
+              <div style={{ position: 'absolute', top: 10, bottom: 10, left: 7, width: 2, background: 'var(--surface-2)' }} />
               {timelineEvents.length === 0 ? (
-                 <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'center', padding: '20px 0' }}>No recent activity.</div>
-              ) : timelineEvents.map((event) => (
-                <div key={event.id} style={{ position: 'relative', marginBottom: 20 }}>
-                  <div style={{ position: 'absolute', left: -24, top: 0, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                    <div style={{ transform: 'scale(0.6)' }}>{event.icon}</div>
+                 <div style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '20px 0' }}>No recent activity. Start solving!</div>
+              ) : timelineEvents.map((event) => {
+                const isLink = !!event.link;
+                const InnerContent = (
+                  <>
+                    <div style={{ position: 'absolute', left: -20, top: 2, width: 14, height: 14, borderRadius: '50%', background: 'var(--surface)', border: '2px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                      <div style={{ transform: 'scale(0.5)' }}>{event.icon}</div>
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: isLink ? 'var(--text)' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {event.title}
+                      {isLink && <ExternalLink size={12} color="var(--primary)" />}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{event.time}</div>
+                  </>
+                );
+
+                if (isLink) {
+                  return (
+                    <Link to={event.link} key={event.id} style={{ display: 'block', position: 'relative', marginBottom: 20, textDecoration: 'none', padding: '8px 12px', marginLeft: '-12px', borderRadius: 8, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      {InnerContent}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={event.id} style={{ position: 'relative', marginBottom: 20, padding: '8px 0' }}>
+                    {InnerContent}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{event.title}</div>
-                  <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{event.time}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          <div className="glass-panel" style={{ padding: 32 }}>
-            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text)' }}>
+          <div style={{ padding: 24, background: 'var(--surface)', borderRadius: 16, border: '1px solid var(--border)' }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
               Distribution
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

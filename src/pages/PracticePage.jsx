@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RotateCcw, Play, BookOpen, Settings as SettingsIcon, List, Home, ChevronDown, Database, Sun, Moon } from 'lucide-react';
-import { DB_INFO } from '@/types';
+import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SchemaSidebar } from '@/features/practice/SchemaSidebar';
@@ -13,7 +13,6 @@ import { ERDiagramModal } from '@/features/visualizers/ERDiagramModal';
 import { TablePreviewModal } from '@/features/visualizers/TablePreviewModal';
 import { JoinAnalysisModal } from '@/features/visualizers/JoinAnalysisModal';
 import { CteConverterModal } from '@/features/visualizers/CteConverterModal';
-import { EdgeCaseTester } from '@/features/visualizers/EdgeCaseTester';
 import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { loadShortcuts, isShortcutMatch } from '@/utils/shortcutManager';
@@ -54,12 +53,12 @@ export function PracticeView({
       if (qParam) {
         targetQ = dbQs.find(q => String(q.id) === qParam);
       }
-      if (!targetQ && !currentQ) {
-        // Only auto-select first incomplete question if we don't already have a currentQ
+      // If we found a targetQ (either from qParam, or initial load, or db change), and it's different
+      if (!targetQ && (!currentQ || currentQ.db !== routeDb)) {
+        // Auto-select first incomplete question if currentQ belongs to another DB
         targetQ = dbQs.find(q => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
       }
-      
-      // If we found a targetQ (either from qParam, or initial load), and it's different
+
       if (targetQ && targetQ.id !== currentQ?.id) {
         setCurrentQ(targetQ);
         setResult(null);
@@ -75,6 +74,7 @@ export function PracticeView({
   }, [routeDb, qParam]);
 
   const [sql, setSql] = useState('');
+  const [executedSql, setExecutedSql] = useState('');
   const [result, setResult] = useState(null);
   const [expectedResult, setExpectedResult] = useState(null);
   const [validation, setValidation] = useState(null);
@@ -143,7 +143,7 @@ export function PracticeView({
   const dbInfo = DB_INFO[db];
   const dbQuestions = useMemo(() => getQuestionsForDb(db), [db]);
 
-  const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan, getEdgeCaseResults } = useSqlDatabase(db);
+  const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan } = useSqlDatabase(db);
   const [isExecuting, setIsExecuting] = useState(false);
 
   // Switch DB inline
@@ -181,6 +181,7 @@ export function PracticeView({
   const handleRun = useCallback(async () => {
     if (!sql.trim()) return;
     setIsExecuting(true);
+    setExecutedSql(sql);
     
     // Add full context entry to history if not a duplicate of last
     setQueryHistory(prev => {
@@ -232,6 +233,7 @@ export function PracticeView({
   const handleExplain = useCallback(async () => {
     if (!sql.trim()) return;
     setIsExecuting(true);
+    setExecutedSql(sql);
     try {
       const plan = await getExplainPlan(sql);
       if (plan.error) {
@@ -505,7 +507,7 @@ export function PracticeView({
                 🔗 Visualize Joins
               </button>
             )}
-            <EdgeCaseTester getEdgeCaseResults={getEdgeCaseResults} sql={sql} />
+
             
             {hasSubquery(sql) && (
               <button 
@@ -571,12 +573,12 @@ export function PracticeView({
 
         {/* Results */}
         <div className="results-col">
-          <ResultsPanel
-            result={result}
+          <ResultsPanel 
+            result={result} 
             validation={validation}
-            sql={sql}
+            sql={executedSql}
             executeQuery={executeQuery}
-            isRunning={isExecuting || isLoading}
+            isRunning={isExecuting}
           />
         </div>
       </main>

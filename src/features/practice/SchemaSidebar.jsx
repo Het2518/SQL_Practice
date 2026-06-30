@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DB_INFO } from '@/types';
+import { DB_INFO } from '@/data/schemas';
 import { analyzeNormalForm } from '@/utils/sqlAnalysis';
 
 // ─── Icons (inline SVG to avoid extra deps) ──────────────────────────────────

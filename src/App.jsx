@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/features/auth/AuthModal';
 import { UserGuide } from '@/pages/UserGuide';
 import { InterviewDashboard } from '@/features/interview/InterviewDashboard';
-import '@/styles.css';
+import '@/styles/styles.css';
 
 // Lazy load large views for performance
 const DbSelector = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.DbSelector })));

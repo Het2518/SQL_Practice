@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Sun, Moon, BookOpen, Settings as SettingsIcon, User, Database, Play, ArrowRight, Trophy, Award, CheckCircle2, Timer, BarChart3, Briefcase } from 'lucide-react';
-import { DB_INFO } from '@/types';
+import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 
 const DB_NAMES = Object.keys(DB_INFO);

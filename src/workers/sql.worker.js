@@ -1,6 +1,28 @@
 let db = null;
 let SQL = null;
 
+// Beast Optimization: LRU Cache for query results
+const queryCache = new Map();
+const MAX_CACHE_SIZE = 50;
+
+function getCachedResult(sql) {
+  if (queryCache.has(sql)) {
+    const result = queryCache.get(sql);
+    queryCache.delete(sql);
+    queryCache.set(sql, result);
+    return result;
+  }
+  return null;
+}
+
+function setCachedResult(sql, result) {
+  if (queryCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = queryCache.keys().next().value;
+    queryCache.delete(firstKey);
+  }
+  queryCache.set(sql, result);
+}
+
 async function loadSqlJs() {
   if (SQL) return SQL;
   
@@ -30,6 +52,7 @@ self.onmessage = async (e) => {
         db.close();
         db = null;
       }
+      queryCache.clear();
       
       if (payload.dbPath) {
         // Fetch from origin
@@ -46,38 +69,50 @@ self.onmessage = async (e) => {
     
     else if (type === 'EXECUTE') {
       if (!db) throw new Error("Database not initialized");
+      
+      const isDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(payload.sql);
+      
+      if (!isDML) {
+        const cached = getCachedResult(payload.sql);
+        if (cached) {
+          self.postMessage({ id, success: true, data: { ...cached, execTimeMs: 0, cached: true } });
+          return;
+        }
+      }
+
       const start = performance.now();
       const results = db.exec(payload.sql);
       const end = performance.now();
       const execTimeMs = end - start;
       
+      if (isDML) {
+        queryCache.clear();
+      }
+      
       if (results.length === 0) {
          const isDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(payload.sql);
-         self.postMessage({ 
-           id, 
-           success: true, 
-           data: { 
-             columns: [], 
-             rows: [], 
-             affectedRows: isDML ? db.getRowsModified() : 0, 
-             execTimeMs, 
-             isDML 
-           } 
-         });
+         const data = { 
+           columns: [], 
+           rows: [], 
+           affectedRows: isDML ? db.getRowsModified() : 0, 
+           execTimeMs, 
+           isDML 
+         };
+         self.postMessage({ id, success: true, data });
       } else {
          const { columns, values } = results[results.length - 1];
          // Limit returned rows for safety
          const limitedValues = values.slice(0, 1000);
-         self.postMessage({ 
-           id, 
-           success: true, 
-           data: { 
-             columns, 
-             rows: limitedValues, 
-             execTimeMs, 
-             totalRows: values.length 
-           } 
-         });
+         const data = { 
+           columns, 
+           rows: limitedValues, 
+           execTimeMs, 
+           totalRows: values.length 
+         };
+         
+         if (!isDML) setCachedResult(payload.sql, data);
+         
+         self.postMessage({ id, success: true, data });
       }
     }
     
@@ -118,76 +153,7 @@ self.onmessage = async (e) => {
         self.postMessage({ id, success: true, data: { columns: [], rows: [] }});
       }
     }
-    else if (type === 'TEST_EDGE_CASES') {
-      if (!db) throw new Error("Database not initialized");
-      const { sql, primaryTable } = payload;
-      
-      const getNullableColumns = (tableName) => {
-        const colInfo = db.exec(`PRAGMA table_info(${tableName})`);
-        if (!colInfo.length) return [];
-        return colInfo[0].values.filter(col => col[3] === 0 && col[5] === 0).map(col => col[1]);
-      };
-      const getNumericColumns = (tableName) => {
-        const colInfo = db.exec(`PRAGMA table_info(${tableName})`);
-        if (!colInfo.length) return [];
-        return colInfo[0].values
-          .filter(col => col[5] === 0 && (col[2].toUpperCase().includes('INT') || col[2].toUpperCase().includes('NUM')))
-          .map(col => col[1]);
-      };
 
-      const variants = [
-        { id: 'empty_table', label: 'Empty Table', description: 'All rows deleted from the primary table' },
-        { id: 'single_row', label: 'Single Row', description: 'Only one row remains in the primary table' },
-        { id: 'all_nulls', label: 'NULL-heavy Data', description: 'Non-PK/FK columns set to NULL' },
-        { id: 'duplicates', label: 'Duplicate Rows', description: '50% of rows duplicated' },
-        { id: 'extreme_values', label: 'Extreme Values', description: 'Numeric columns set to 0, and max integer' }
-      ];
-
-      const testResults = [];
-
-      for (const variant of variants) {
-        db.run(`SAVEPOINT edge_${variant.id}`);
-        try {
-          if (variant.id === 'empty_table') {
-            db.exec(`DELETE FROM ${primaryTable}`);
-          } else if (variant.id === 'single_row') {
-            const firstIdRes = db.exec(`SELECT rowid FROM ${primaryTable} LIMIT 1`);
-            if (firstIdRes.length && firstIdRes[0].values.length) {
-              const firstId = firstIdRes[0].values[0][0];
-              db.exec(`DELETE FROM ${primaryTable} WHERE rowid != ${firstId}`);
-            }
-          } else if (variant.id === 'all_nulls') {
-            const nullableCols = getNullableColumns(primaryTable);
-            nullableCols.forEach(col => { try { db.exec(`UPDATE ${primaryTable} SET ${col} = NULL`); } catch(e){} });
-          } else if (variant.id === 'duplicates') {
-            try { db.exec(`INSERT INTO ${primaryTable} SELECT * FROM ${primaryTable} LIMIT (SELECT COUNT(*)/2 FROM ${primaryTable})`); } catch(e){}
-          } else if (variant.id === 'extreme_values') {
-            const numericCols = getNumericColumns(primaryTable);
-            if (numericCols.length > 0) {
-              try { db.exec(`UPDATE ${primaryTable} SET ${numericCols[0]} = 0 WHERE rowid = (SELECT rowid FROM ${primaryTable} LIMIT 1)`); } catch(e){}
-              try { db.exec(`UPDATE ${primaryTable} SET ${numericCols[0]} = 9999999 WHERE rowid = (SELECT rowid FROM ${primaryTable} LIMIT 1 OFFSET 1)`); } catch(e){}
-            }
-          }
-
-          const res = db.exec(sql);
-          testResults.push({
-            ...variant,
-            status: 'passed',
-            rowCount: res.length > 0 ? res[0].values.length : 0
-          });
-        } catch (err) {
-          testResults.push({
-            ...variant,
-            status: 'failed',
-            error: err.message
-          });
-        } finally {
-          db.run(`ROLLBACK TO edge_${variant.id}`);
-        }
-      }
-      
-      self.postMessage({ id, success: true, data: testResults });
-    }
     
   } catch (err) {
     self.postMessage({ id, success: false, error: err.message });
