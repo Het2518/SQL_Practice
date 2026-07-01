@@ -63,6 +63,13 @@ ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_company_mapping ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_topic_mapping ENABLE ROW LEVEL SECURITY;
 
+-- Performance Indexes for RLS and Joins
+CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_qcm_question_id ON public.question_company_mapping(question_id);
+CREATE INDEX IF NOT EXISTS idx_qcm_company_id ON public.question_company_mapping(company_id);
+CREATE INDEX IF NOT EXISTS idx_qtm_question_id ON public.question_topic_mapping(question_id);
+CREATE INDEX IF NOT EXISTS idx_qtm_topic_id ON public.question_topic_mapping(topic_id);
+
 -- Policies for user_progress
 DROP POLICY IF EXISTS "Anyone can view progress" ON public.user_progress;
 CREATE POLICY "Anyone can view progress" ON public.user_progress FOR SELECT USING (true);

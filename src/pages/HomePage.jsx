@@ -45,21 +45,6 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
 
       <div className="home-header-sep" />
 
-      <div className="home-stats">
-        <div className="stat-pill solved">
-          <span className="stat-num">{totalComplete}</span>
-          <span className="stat-label">Solved</span>
-        </div>
-        <div className="stat-pill tried">
-          <span className="stat-num">{totalAttempted}</span>
-          <span className="stat-label">Tried</span>
-        </div>
-        <div className="stat-pill done">
-          <span className="stat-num">{totalPct}%</span>
-          <span className="stat-label">Done</span>
-        </div>
-      </div>
-
       <nav className="home-nav">
         <button className="nav-btn" onClick={() => navigate('/guide')}>
           <BookOpen size={14} />

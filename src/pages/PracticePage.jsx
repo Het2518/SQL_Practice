@@ -188,41 +188,43 @@ export function PracticeView({
       const entry = { sql, questionId: currentQ.id, dbName: db, prompt: currentQ.prompt?.substring(0, 50) };
       const filtered = prev.filter(h => h.sql !== sql);
       return [entry, ...filtered].slice(0, 50);
-    });
-
-    try {
-      let originalRes = await executeQuery(sql);
-      let finalRes = { ...originalRes };
-      if (!originalRes.error && currentQ.verificationSQL) {
-        const verRes = await runVerification(currentQ.verificationSQL);
-        finalRes = { ...verRes, execTimeMs: originalRes.execTimeMs };
-      }
-      setResult(finalRes);
-      if (finalRes.error) {
-        setValidation({ isCorrect: false, message: finalRes.error });
-        onProgressUpdate(currentQ, db, 'attempted');
-      } else {
-        if (!expectedResult) {
-          setValidation({ isCorrect: false, message: 'Loading expected results...' });
+    });    try {
+      // Execute the user query and (if verification is configured) hidden solutions + diff in ONE pass
+      if (currentQ && currentQ.solutionSQL) {
+        const val = await validateAnswer(sql, currentQ.solutionSQL, currentQ.verificationSQL, currentQ.requiresOrder);
+        // The worker payload returns userResult alongside the validation status
+        if (val.userResult) {
+           setResult(val.userResult);
+        } else if (val.message.startsWith('SQL Error:') || val.message.startsWith('System Error:')) {
+           setResult({ error: val.message });
+        }
+        
+        setValidation(val);
+        if (val.isCorrect) {
+          onProgressUpdate(currentQ, db, 'complete');
+          if (progress[currentQ.id] !== 'complete') {
+            const diff = (currentQ.difficulty || '').toLowerCase();
+            const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
+            fireConfetti();
+            toast({
+              type: 'success',
+              title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
+              message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
+            });
+          }
         } else {
-          const val = validateAnswer(finalRes, expectedResult, currentQ.requiresOrder);
-          setValidation(val);
-          if (val.isCorrect) {
-            onProgressUpdate(currentQ, db, 'complete');
-            // Only fire celebration if this is the FIRST time solving it
-            if (progress[currentQ.id] !== 'complete') {
-              const diff = (currentQ.difficulty || '').toLowerCase();
-              const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
-              fireConfetti();
-              toast({
-                type: 'success',
-                title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
-                message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
-              });
-            }
-          } else if (progress[currentQ.id] !== 'complete') {
+          if (progress[currentQ.id] !== 'complete') {
             onProgressUpdate(currentQ, db, 'attempted');
           }
+        }
+      } else {
+        // Sandbox mode or free-play mode (no active question checking)
+        const originalRes = await executeQuery(sql);
+        setResult(originalRes);
+        if (originalRes.error) {
+           setValidation({ isCorrect: false, message: originalRes.error });
+        } else {
+           setValidation(null);
         }
       }
     } finally {

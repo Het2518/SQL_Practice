@@ -5,6 +5,7 @@ import { ExecutionOrderExplainer } from '@/features/visualizers/ExecutionOrderEx
 import { IndexAdvisor } from '@/features/visualizers/IndexAdvisor';
 import { TheoryConnector } from '@/features/gamification/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
+import { TableVirtuoso } from 'react-virtuoso';
 
 export const ResultsPanel = React.memo(function ResultsPanel({
   result,
@@ -236,8 +237,10 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                     <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                      <table className="results-table" style={{ borderSpacing: 0, width: '100%', margin: 0 }}>
-                        <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                      <TableVirtuoso
+                        style={{ height: '100%', width: '100%' }}
+                        data={currentRows}
+                        fixedHeaderContent={() => (
                           <tr>
                             {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)' }}></th>}
                             {result.columns.map((col, i) => (
@@ -246,13 +249,16 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                               </th>
                             ))}
                           </tr>
-                        </thead>
-                        <tbody>
-                          {currentRows.map((row, index) => (
-                            <GroupedResultRow key={index} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
-                          ))}
-                        </tbody>
-                      </table>
+                        )}
+                        components={{
+                          Table: ({ style, ...props }) => (
+                            <table {...props} className="results-table" style={{ ...style, borderSpacing: 0, width: '100%', margin: 0 }} />
+                          ),
+                          TableRow: ({ item: row, ...props }) => (
+                            <GroupedResultRow row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
+                          )
+                        }}
+                      />
                       
                       {result.columns.length === 0 && (
                         <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>

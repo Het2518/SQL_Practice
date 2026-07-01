@@ -1,18 +1,19 @@
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { loadSettings, SettingsModal, defaultSettings } from '@/features/profile/SettingsModal';
-import { ProfileView } from '@/features/profile/ProfileView';
+import { loadSettings, defaultSettings } from '@/features/profile/settingsConfig';
 import { useGamification } from '@/hooks/useGamification';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { AuthModal } from '@/features/auth/AuthModal';
-import { UserGuide } from '@/pages/UserGuide';
-import { InterviewDashboard } from '@/features/interview/InterviewDashboard';
 import '@/styles/styles.css';
 
 // Lazy load large views for performance
 const DbSelector = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.DbSelector })));
 const PracticeView = lazy(() => import('@/pages/PracticePage').then(module => ({ default: module.PracticeView })));
+const ProfileView = lazy(() => import('@/features/profile/ProfileView').then(module => ({ default: module.ProfileView })));
+const UserGuide = lazy(() => import('@/pages/UserGuide').then(module => ({ default: module.UserGuide })));
+const InterviewDashboard = lazy(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewDashboard })));
+const AuthModal = lazy(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal })));
+const SettingsModal = lazy(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal })));
 
 // ─── Progress persistence ────────────────────────────────────────────────────
 const PROGRESS_KEY = 'sql-practice-progress';

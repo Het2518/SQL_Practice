@@ -17,3 +17,13 @@ createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </StrictMode>
 );
+
+// Unregister any old service workers from previous PWA setups
+// This clears out console errors for missing manifests or old cached HTML files.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (const registration of registrations) {
+      registration.unregister();
+    }
+  }).catch((err) => console.log('Service Worker unregistration failed: ', err));
+}
