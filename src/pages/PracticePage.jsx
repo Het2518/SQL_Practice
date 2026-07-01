@@ -11,7 +11,7 @@ import { QuestionCard } from '@/features/practice/QuestionCard';
 import { QuestionBrowser } from '@/features/practice/QuestionBrowser';
 import { ERDiagramModal } from '@/features/visualizers/ERDiagramModal';
 import { TablePreviewModal } from '@/features/visualizers/TablePreviewModal';
-import { JoinAnalysisModal } from '@/features/visualizers/JoinAnalysisModal';
+import { AnimatedJoinVisualizer } from '@/features/visualizers/AnimatedJoinVisualizer';
 import { CteConverterModal } from '@/features/visualizers/CteConverterModal';
 import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useToast } from '@/shared/ui/ToastSystem';
@@ -581,6 +581,7 @@ export function PracticeView({
             sql={executedSql}
             executeQuery={executeQuery}
             isRunning={isExecuting}
+            question={currentQ}
           />
         </div>
       </main>
@@ -622,7 +623,7 @@ export function PracticeView({
     {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
 
     {joinAnalysisData && (
-      <JoinAnalysisModal 
+      <AnimatedJoinVisualizer 
         executeQuery={joinAnalysisData.db} 
         sql={joinAnalysisData.sql} 
         onClose={() => setJoinAnalysisData(null)} 

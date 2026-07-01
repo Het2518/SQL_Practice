@@ -48,7 +48,7 @@ const extractGroupByColumns = (sql) => {
   return [];
 };
 
-export const GroupedResultRow = ({ row, sql, executeQuery, columns }) => {
+export const GroupedResultRow = React.memo(React.forwardRef(function GroupedResultRow({ row, sql, executeQuery, columns, ...props }, ref) {
   const [expanded, setExpanded] = useState(false);
   const [constituents, setConstituents] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -70,19 +70,19 @@ export const GroupedResultRow = ({ row, sql, executeQuery, columns }) => {
 
   if (!hasGroupBy) {
     return (
-      <tr>
-        {row.map((cell, ci) => <TableCell key={ci} value={cell} />)}
+      <tr ref={ref} {...props}>
+        {row.map((cell, ci) => <td key={ci}><TableCell value={cell} /></td>)}
       </tr>
     );
   }
 
   return (
     <>
-      <tr onClick={handleExpand} style={{ cursor: 'pointer', background: expanded ? 'var(--surface-2)' : 'transparent' }} title="Click to see rows in this group">
+      <tr ref={ref} {...props} onClick={handleExpand} style={{ cursor: 'pointer', background: expanded ? 'var(--surface-2)' : 'transparent', ...props.style }} title="Click to see rows in this group">
         <td style={{ width: '30px', textAlign: 'center', color: 'var(--primary)', fontWeight: 'bold' }}>
           {expanded ? '▼' : '▶'}
         </td>
-        {row.map((cell, ci) => <TableCell key={ci} value={cell} />)}
+        {row.map((cell, ci) => <td key={ci}><TableCell value={cell} /></td>)}
       </tr>
       
       {expanded && (
@@ -106,7 +106,7 @@ export const GroupedResultRow = ({ row, sql, executeQuery, columns }) => {
                     <tbody>
                       {constituents.values.map((cRow, ri) => (
                         <tr key={ri}>
-                          {cRow.map((cell, ci) => <TableCell key={ci} value={cell} />)}
+                          {cRow.map((cell, ci) => <td key={ci}><TableCell value={cell} /></td>)}
                         </tr>
                       ))}
                     </tbody>
@@ -121,4 +121,4 @@ export const GroupedResultRow = ({ row, sql, executeQuery, columns }) => {
       )}
     </>
   );
-};
+}));

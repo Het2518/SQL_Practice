@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DiffTable } from './DiffTable';
 import { TableCell, NullSummaryPanel } from '@/features/visualizers/NullVisualizer';
-import { ExecutionOrderExplainer } from '@/features/visualizers/ExecutionOrderExplainer';
-import { IndexAdvisor } from '@/features/visualizers/IndexAdvisor';
-import { TheoryConnector } from '@/features/gamification/TheoryConnector';
+import { ExecutionPlanTree } from '@/features/visualizers/ExecutionPlanTree';
+import { TheoryConnector } from '@/features/visualizers/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
 import { TableVirtuoso } from 'react-virtuoso';
 
@@ -12,7 +11,8 @@ export const ResultsPanel = React.memo(function ResultsPanel({
   validation,
   sql,
   executeQuery,
-  isRunning
+  isRunning,
+  question
 }) {
   const [activeTab, setActiveTab] = useState('data');
 
@@ -197,14 +197,12 @@ export const ResultsPanel = React.memo(function ResultsPanel({
               display: 'flex', 
               borderBottom: '1px solid var(--border)', 
               background: 'var(--surface-2)',
-              gap: 24,
-              padding: '0 16px'
+              gap: 24
             }}>
               {[
                 { id: 'data', label: '📊 Data' },
                 { id: 'analysis', label: '🔍 Null Analysis' },
                 { id: 'plan', label: '⏱️ Execution Plan' },
-                { id: 'index', label: '⚡ Index Advisor' },
                 { id: 'theory', label: '📚 Theory' }
               ].map(tab => (
                 <button
@@ -236,7 +234,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 {/* Data Tab */}
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                    <div style={{ flex: 1, minHeight: 0 }}>
                       <TableVirtuoso
                         style={{ height: '100%', width: '100%' }}
                         data={currentRows}
@@ -254,9 +252,9 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                           Table: ({ style, ...props }) => (
                             <table {...props} className="results-table" style={{ ...style, borderSpacing: 0, width: '100%', margin: 0 }} />
                           ),
-                          TableRow: ({ item: row, ...props }) => (
-                            <GroupedResultRow row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} />
-                          )
+                          TableRow: React.forwardRef(({ item: row, ...props }, ref) => (
+                            <GroupedResultRow ref={ref} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} {...props} />
+                          ))
                         }}
                       />
                       
@@ -279,9 +277,8 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 {/* Diagnostic Visualizers */}
                 {(!validation || validation.isCorrect) && !isError && !isDML && executeQuery && sql && (
                   <>
-                    {activeTab === 'plan' && <div style={{ padding: 16 }}><ExecutionOrderExplainer sql={sql} executeQuery={executeQuery} /></div>}
-                    {activeTab === 'index' && <div style={{ padding: 16 }}><IndexAdvisor sql={sql} executeQuery={executeQuery} /></div>}
-                    {activeTab === 'theory' && <div style={{ padding: 16 }}><TheoryConnector sql={sql} /></div>}
+                    {activeTab === 'plan' && <div style={{ padding: 16 }}><ExecutionPlanTree sql={sql} executeQuery={executeQuery} refreshTrigger={result?.execTimeMs} /></div>}
+                    {activeTab === 'theory' && <div style={{ padding: 16 }}><TheoryConnector sql={sql} question={question} /></div>}
                   </>
                 )}
               </>

@@ -7,13 +7,13 @@ export const DiffTable = ({ diff, expectedColumns }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
 
-  const expectedItems = [
+  const expectedItems = React.useMemo(() => [
     ...diff.matchedRows.map(row => ({ type: 'match', row })),
     ...diff.mismatchedRows.map(m => ({ type: 'mismatch', row: m.expected, original: m })),
     ...diff.missingRows.map(row => ({ type: 'missing', row }))
-  ];
+  ], [diff]);
   
-  const actualItems = showFullActual ? 
+  const actualItems = React.useMemo(() => showFullActual ? 
     [
        ...diff.matchedRows.map(row => ({ type: 'match', row })),
        ...diff.mismatchedRows.map(m => ({ type: 'full', row: m.actual })),
@@ -22,7 +22,7 @@ export const DiffTable = ({ diff, expectedColumns }) => {
       ...diff.matchedRows.map(row => ({ type: 'match', row })),
       ...diff.mismatchedRows.map(m => ({ type: 'mismatch', row: m.actual, original: m })),
       ...diff.extraRows.map(row => ({ type: 'extra', row }))
-    ];
+    ], [diff, showFullActual]);
 
   const totalRows = Math.max(expectedItems.length, actualItems.length);
   const totalPages = pageSize === 'All' ? 1 : Math.ceil(totalRows / pageSize);
@@ -60,9 +60,9 @@ export const DiffTable = ({ diff, expectedColumns }) => {
               </thead>
               <tbody>
                 {currentExpected.map((item, i) => {
-                  if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
-                  if (item.type === 'mismatch') return <tr key={i} className="diff-mismatch-row">{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
-                  if (item.type === 'missing') return <tr key={i} className="diff-missing" style={{background: 'rgba(239,68,68,0.1)'}}>{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
+                  if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'mismatch') return <tr key={i} className="diff-mismatch-row">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'missing') return <tr key={i} className="diff-missing" style={{background: 'rgba(239,68,68,0.1)'}}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   return null;
                 })}
               </tbody>
@@ -82,9 +82,9 @@ export const DiffTable = ({ diff, expectedColumns }) => {
               </thead>
               <tbody>
                 {currentActual.map((item, i) => {
-                  if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
-                  if (item.type === 'full') return <tr key={i}>{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
-                  if (item.type === 'extra') return <tr key={i} className="diff-extra" style={{background: 'rgba(239,68,68,0.1)', textDecoration: 'line-through', opacity: 0.7}}>{item.row.map((c, j) => <TableCell key={j} value={c} />)}</tr>;
+                  if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'full') return <tr key={i}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'extra') return <tr key={i} className="diff-extra" style={{background: 'rgba(239,68,68,0.1)', textDecoration: 'line-through', opacity: 0.7}}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   if (item.type === 'mismatch') return <tr key={i}>{item.row.map((c, j) => {
                     const isWrongValue = String(c).trim() !== String(item.original.expected[j]).trim();
                     return <td key={j} style={isWrongValue ? { background: 'rgba(230,126,34,0.15)', color: '#e67e22', fontWeight: 600 } : {}}><TableCell value={c} /></td>;
