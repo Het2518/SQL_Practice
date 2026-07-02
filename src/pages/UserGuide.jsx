@@ -99,7 +99,7 @@ export function UserGuide() {
           <section id="getting-started">
             <h2 style={{ fontSize: 28, marginBottom: 16, color: 'var(--text)', fontWeight: 800 }}>Getting Started</h2>
             <p style={{ lineHeight: 1.7, color: 'var(--text-secondary)', fontSize: 16 }}>
-              Welcome to the ultimate SQL Practice Platform! Whether you're preparing for technical interviews, learning SQL from scratch, or refining advanced performance-tuning skills, this platform provides a 100% local, ultra-fast environment.
+              Welcome to DataDesk! Whether you're preparing for technical interviews, learning SQL from scratch, or refining advanced performance-tuning skills, this platform provides a 100% local, ultra-fast environment.
             </p>
             <div style={{ background: 'var(--surface-2)', padding: 20, borderRadius: 8, border: '1px solid var(--border)', marginTop: 20 }}>
               <h4 style={{ margin: '0 0 8px', color: 'var(--text)' }}>Core Architecture</h4>

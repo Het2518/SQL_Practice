@@ -35,10 +35,10 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
     <header className="home-header">
       <div className="home-logo" onClick={() => {}} style={{ cursor: 'default' }}>
         <div className="home-logo-badge">
-          <Zap size={17} color="#fff" strokeWidth={2.5} />
+          <Database size={17} color="#fff" strokeWidth={2.5} />
         </div>
         <div>
-          <div className="home-title">SQL Practice Platform</div>
+          <div className="home-title">DataDesk</div>
           <div className="home-subtitle">10 databases · 600 questions</div>
         </div>
       </div>
@@ -88,7 +88,7 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
       <div className="home-hero-content">
         <div className="home-hero-badge">
           <Database size={11} />
-          Real-World SQL Practice Platform
+          Real-World DataDesk Practice
         </div>
         <h2>Master SQL with <span>Real Data</span></h2>
         <p>10 hand-crafted databases. 600 progressive questions. From beginner JOINs to advanced Window Functions — practice the SQL that matters in real jobs.</p>

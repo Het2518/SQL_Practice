@@ -1,5 +1,5 @@
 // ============================================================
-// SQL Practice Platform — Shared Types
+// DataDesk — Shared Types
 // ============================================================
 
 export const DB_INFO = {

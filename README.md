@@ -1,4 +1,4 @@
-# Engineer Hub: Intelligence Platform (SQL Practice Environment)
+# DataDesk (SQL Practice Environment)
 
 A professional, production-grade SQL practice platform built specifically for software engineering candidates preparing for placement drives. 
 
@@ -45,7 +45,7 @@ This platform allows users to solve complex, real-world database queries directl
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Het2518/Engineer-Hub-Intelligence-Platform.git
+   git clone https://github.com/Het2518/DataDesk.git
    ```
 
 2. **Install dependencies:**

@@ -1,12 +1,12 @@
 # Technical Guide & Architecture Overview
 
-Welcome to the **Engineer Hub Intelligence Platform** technical guide. This document provides a deep dive into the technology stack, application architecture, data flow, and core features of the platform. It is designed to help developers, contributors, and technical reviewers understand exactly how the application functions under the hood.
+Welcome to the **DataDesk** technical guide. This document provides a deep dive into the technology stack, application architecture, data flow, and core features of the platform. It is designed to help developers, contributors, and technical reviewers understand exactly how the application functions under the hood.
 
 ---
 
 ## 1. What is the Project?
 
-The **Engineer Hub Intelligence Platform** is a highly interactive, production-grade SQL practice environment. It is built specifically for software engineering candidates preparing for technical interviews and placement drives. 
+The **DataDesk** platform is a highly interactive, production-grade SQL practice environment. It is built specifically for software engineering candidates preparing for technical interviews and placement drives.
 
 Unlike traditional SQL platforms that rely on heavy backend servers to execute user queries, this platform brings the entire database engine **directly into the browser**. This allows for zero-latency query execution, offline capabilities, and a completely private practice environment.
 
