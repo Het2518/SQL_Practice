@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/sports.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const sportsQuestions = [
     "WITH MatchWinners AS (SELECT match_id, CASE WHEN home_score > away_score THEN home_team_id WHEN away_score > home_score THEN away_team_id ELSE NULL END as winner_id FROM matches), OwnGoals AS (SELECT g.match_id, p.team_id as conceding_team FROM goals g JOIN players p ON g.player_id = p.player_id WHERE g.is_own_goal = 1) SELECT DISTINCT o.match_id, t.name as winning_team FROM OwnGoals o JOIN MatchWinners m ON o.match_id = m.match_id JOIN teams t ON m.winner_id = t.team_id WHERE o.conceding_team = m.winner_id;", 
     "WITH MatchWinners AS (SELECT match_id, CASE WHEN home_score > away_score THEN home_team_id WHEN away_score > home_score THEN away_team_id ELSE NULL END as winner_id FROM matches), OwnGoals AS (SELECT g.match_id, p.team_id as conceding_team FROM goals g JOIN players p ON g.player_id = p.player_id WHERE g.is_own_goal = 1) SELECT DISTINCT o.match_id, t.name as winning_team FROM OwnGoals o JOIN MatchWinners m ON o.match_id = m.match_id JOIN teams t ON m.winner_id = t.team_id WHERE o.conceding_team = m.winner_id;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT sports questions!');
