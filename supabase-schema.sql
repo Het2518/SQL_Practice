@@ -15,6 +15,10 @@ CREATE TABLE IF NOT EXISTS public.companies (
   logo_url TEXT,
   category TEXT NOT NULL, -- e.g., 'MNC', 'Startup', 'FinTech'
   description TEXT,
+  interview_style TEXT,
+  top_sql_topics JSONB DEFAULT '[]',
+  difficulty_distribution JSONB DEFAULT '{}',
+  avg_rounds INTEGER DEFAULT 3,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -55,6 +59,30 @@ CREATE TABLE IF NOT EXISTS public.question_topic_mapping (
   PRIMARY KEY (question_id, topic_id)
 );
 
+-- ── AI Analytics Table (tracks per-user, per-question learning data) ─────────
+CREATE TABLE IF NOT EXISTS public.ai_analytics (
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  question_id TEXT NOT NULL,
+  attempts INTEGER DEFAULT 0,
+  hints_used INTEGER DEFAULT 0,
+  ai_hints_used INTEGER DEFAULT 0,
+  time_seconds INTEGER DEFAULT 0,
+  mistake_patterns JSONB DEFAULT '[]',
+  last_attempt_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  PRIMARY KEY (user_id, question_id)
+);
+
+-- ── Mock Interview Sessions Table ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.interview_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  round_scores JSONB DEFAULT '[]',    -- [80, 65, 70, 55, 90]
+  overall_score INTEGER,
+  verdict TEXT,                        -- 'Strong Hire', 'Hire', 'Borderline', 'No Hire'
+  completed_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
 -- Set up Row Level Security (RLS)
 ALTER TABLE public.user_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
@@ -62,13 +90,17 @@ ALTER TABLE public.topics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_company_mapping ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.question_topic_mapping ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.interview_sessions ENABLE ROW LEVEL SECURITY;
 
--- Performance Indexes for RLS and Joins
+-- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_qcm_question_id ON public.question_company_mapping(question_id);
 CREATE INDEX IF NOT EXISTS idx_qcm_company_id ON public.question_company_mapping(company_id);
 CREATE INDEX IF NOT EXISTS idx_qtm_question_id ON public.question_topic_mapping(question_id);
 CREATE INDEX IF NOT EXISTS idx_qtm_topic_id ON public.question_topic_mapping(topic_id);
+CREATE INDEX IF NOT EXISTS idx_ai_analytics_user_id ON public.ai_analytics(user_id);
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);
 
 -- Policies for user_progress
 DROP POLICY IF EXISTS "Anyone can view progress" ON public.user_progress;
@@ -92,3 +124,11 @@ CREATE POLICY "Public read access for question_company" ON public.question_compa
 
 DROP POLICY IF EXISTS "Public read access for question_topic" ON public.question_topic_mapping;
 CREATE POLICY "Public read access for question_topic" ON public.question_topic_mapping FOR SELECT USING (true);
+
+-- AI Analytics: authenticated users only (Q5: non-auth users can't access)
+DROP POLICY IF EXISTS "Users manage their own analytics" ON public.ai_analytics;
+CREATE POLICY "Users manage their own analytics" ON public.ai_analytics FOR ALL USING (auth.uid() = user_id);
+
+-- Interview sessions: authenticated users only
+DROP POLICY IF EXISTS "Users manage their own sessions" ON public.interview_sessions;
+CREATE POLICY "Users manage their own sessions" ON public.interview_sessions FOR ALL USING (auth.uid() = user_id);

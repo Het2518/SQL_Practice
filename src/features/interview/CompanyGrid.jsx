@@ -1,6 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export function CompanyGrid({ companies, onSelect }) {
+export function CompanyGrid({ companies, onSelect, onClose }) {
+  const navigate = useNavigate();
+
+  const handleCompanyClick = (company) => {
+    const slug = company.name.toLowerCase().replace(/\s+/g, '-');
+    // Close the modal immediately for a seamless transition
+    if (onClose) onClose();
+    // Then navigate to the full prep page
+    navigate(`/company/${slug}`);
+  };
+
   if (companies.length === 0) {
     return (
       <div className="empty-state">
@@ -12,10 +23,10 @@ export function CompanyGrid({ companies, onSelect }) {
   return (
     <div className="company-grid">
       {companies.map(company => (
-        <div 
-          key={company.id} 
+        <div
+          key={company.id}
           className="company-card"
-          onClick={() => onSelect(company)}
+          onClick={() => handleCompanyClick(company)}
         >
           {company.logo_url ? (
             <img src={company.logo_url} alt={`${company.name} logo`} className="company-logo" />
@@ -24,7 +35,7 @@ export function CompanyGrid({ companies, onSelect }) {
               {company.name.charAt(0)}
             </div>
           )}
-          
+
           <div className="company-card-content">
             <div className="company-card-header">
               <h3 className="company-name">{company.name}</h3>
@@ -32,7 +43,7 @@ export function CompanyGrid({ companies, onSelect }) {
             </div>
             <p className="company-desc">{company.description}</p>
             <div className="company-card-footer">
-              <span className="view-btn">View Questions &rarr;</span>
+              <span className="view-btn">Full Prep Guide →</span>
             </div>
           </div>
         </div>

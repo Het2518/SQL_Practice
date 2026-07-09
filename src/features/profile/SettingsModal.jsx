@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { loadShortcuts, saveShortcuts, DEFAULT_SHORTCUTS, eventToComboString } from '@/utils/shortcutManager';
 import { defaultSettings } from './settingsConfig';
+import { getGroqKey, saveGroqKey, hasGroqKey } from '@/lib/groq';
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (
@@ -131,6 +132,9 @@ export function SettingsModal({ settings, onSave, onClose }) {
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
   const [activeTab, setActiveTab] = useState('general');
   const [searchQuery, setSearchQuery] = useState('');
+  // AI key state
+  const [groqKeyInput, setGroqKeyInput] = useState(() => getGroqKey() || '');
+  const [keySaved, setKeySaved] = useState(false);
   
   const importRef = useRef();
 
@@ -140,6 +144,9 @@ export function SettingsModal({ settings, onSave, onClose }) {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(local));
       saveShortcuts(shortcuts);
+      // Save Groq key
+      if (groqKeyInput.trim()) saveGroqKey(groqKeyInput.trim());
+      else saveGroqKey('');
       // Dispatch an event so SqlEditor and App can pickup the shortcut changes without reload
       window.dispatchEvent(new Event('storage'));
     } catch {}
@@ -271,6 +278,14 @@ export function SettingsModal({ settings, onSave, onClose }) {
             >
               Keyboard Shortcuts
             </button>
+            <button 
+              onClick={() => setActiveTab('ai')}
+              style={{ padding: '12px 16px', border: 'none', background: 'transparent', cursor: 'pointer',
+                       borderBottom: activeTab === 'ai' ? '2px solid #8b5cf6' : '2px solid transparent',
+                       color: activeTab === 'ai' ? '#8b5cf6' : 'var(--muted)', fontWeight: 600 }}
+            >
+              ✨ AI Config
+            </button>
           </div>
         </div>
 
@@ -309,6 +324,62 @@ export function SettingsModal({ settings, onSave, onClose }) {
               <button onClick={handleResetGeneral} className="btn btn-ghost" style={{ marginTop: '12px', width: '100%', color: 'var(--error)' }}>
                 🔄 Reset General Settings
               </button>
+            </>
+          ) : activeTab === 'ai' ? (
+            <>
+              <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '1px', marginBottom: '12px', fontWeight: 600 }}>AI Configuration</h3>
+              
+              <div className="ai-settings-section">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <span style={{ fontSize: 20 }}>🤖</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Groq API Key</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>Powers AI hints, solution review, safety guard, and question generation</div>
+                  </div>
+                </div>
+
+                <input
+                  className="ai-key-input"
+                  type="password"
+                  placeholder="gsk_..."
+                  value={groqKeyInput}
+                  onChange={e => { setGroqKeyInput(e.target.value); setKeySaved(false); }}
+                />
+
+                <div className="ai-key-status">
+                  {groqKeyInput.startsWith('gsk_') ? (
+                    <><span style={{ color: 'var(--success)' }}>✓</span><span style={{ color: 'var(--success)' }}>Valid key format</span></>
+                  ) : groqKeyInput.length > 0 ? (
+                    <><span style={{ color: 'var(--error)' }}>✗</span><span style={{ color: 'var(--error)' }}>Key should start with gsk_</span></>
+                  ) : (
+                    <><span style={{ color: 'var(--muted)' }}>○</span><span style={{ color: 'var(--muted)' }}>No key entered — using .env fallback</span></>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, marginBottom: 8 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Model: llama-3.1-8b-instant</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 12 }}>
+                  <div style={{ textAlign: 'center', padding: '8px', background: 'var(--surface-2)', borderRadius: 6 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--primary)' }}>30</div>
+                    <div style={{ color: 'var(--muted)' }}>Req/min</div>
+                  </div>
+                  <div style={{ textAlign: 'center', padding: '8px', background: 'var(--surface-2)', borderRadius: 6 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--success)' }}>14.4K</div>
+                    <div style={{ color: 'var(--muted)' }}>Req/day</div>
+                  </div>
+                  <div style={{ textAlign: 'center', padding: '8px', background: 'var(--surface-2)', borderRadius: 6 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--warning)' }}>Free</div>
+                    <div style={{ color: 'var(--muted)' }}>Tier</div>
+                  </div>
+                </div>
+              </div>
+
+              <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6, marginTop: 8 }}>
+                Get your free API key at{' '}
+                <a href="https://console.groq.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)' }}>console.groq.com</a>.
+                Your key is stored only in your browser's localStorage and is never sent anywhere except directly to Groq.
+              </p>
             </>
           ) : (
             <>

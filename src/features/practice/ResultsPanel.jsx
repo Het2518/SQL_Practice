@@ -234,36 +234,38 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 {/* Data Tab */}
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                      <TableVirtuoso
-                        style={{ height: '100%', width: '100%' }}
-                        data={currentRows}
-                        fixedHeaderContent={() => (
-                          <tr>
-                            {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)' }}></th>}
-                            {result.columns.map((col, i) => (
-                              <th key={i} style={{ background: 'var(--surface-2)' }}>
-                                {col}
-                              </th>
-                            ))}
-                          </tr>
-                        )}
-                        components={{
-                          Table: ({ style, ...props }) => (
-                            <table {...props} className="results-table" style={{ ...style, borderSpacing: 0, width: '100%', margin: 0 }} />
-                          ),
-                          TableRow: React.forwardRef(({ item: row, ...props }, ref) => (
-                            <GroupedResultRow ref={ref} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} {...props} />
-                          ))
-                        }}
-                      />
-                      
-                      {result.columns.length === 0 && (
-                        <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px 0' }}>
-                          No rows matched the query conditions.
-                        </div>
-                      )}
-                    </div>
+                    {result.columns.length === 0 ? (
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 13, gap: 12 }}>
+                        <div style={{ fontSize: 24 }}>✅</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>Query Successful</div>
+                        <div>Your query returned 0 rows.</div>
+                      </div>
+                    ) : (
+                      <div style={{ flex: 1, minHeight: 0 }}>
+                        <TableVirtuoso
+                          style={{ height: '100%', width: '100%' }}
+                          data={currentRows}
+                          fixedHeaderContent={() => (
+                            <tr>
+                              {/\bGROUP\s+BY\b/i.test(sql) && <th style={{ width: '30px', background: 'var(--surface-2)' }}></th>}
+                              {result.columns.map((col, i) => (
+                                <th key={i} style={{ background: 'var(--surface-2)' }}>
+                                  {col}
+                                </th>
+                              ))}
+                            </tr>
+                          )}
+                          components={{
+                            Table: ({ style, ...props }) => (
+                              <table {...props} className="results-table" style={{ ...style, borderSpacing: 0, width: '100%', margin: 0 }} />
+                            ),
+                            TableRow: React.forwardRef(({ item: row, ...props }, ref) => (
+                              <GroupedResultRow ref={ref} row={row} sql={sql} executeQuery={executeQuery} columns={result.columns} {...props} />
+                            ))
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
                 

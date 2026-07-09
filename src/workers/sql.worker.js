@@ -42,6 +42,17 @@ async function loadSqlJs() {
   return SQL;
 }
 
+function getColumnsFromEmptyQuery(db, sql) {
+  try {
+    const stmt = db.prepare(sql);
+    const cols = stmt.getColumnNames();
+    stmt.free();
+    return cols;
+  } catch (e) {
+    return [];
+  }
+}
+
 self.onmessage = async (e) => {
   const { type, payload, id } = e.data;
   
@@ -91,8 +102,9 @@ self.onmessage = async (e) => {
       
       if (results.length === 0) {
          const isDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(payload.sql);
+         const cols = !isDML ? getColumnsFromEmptyQuery(db, payload.sql) : [];
          const data = { 
-           columns: [], 
+           columns: cols, 
            rows: [], 
            affectedRows: isDML ? db.getRowsModified() : 0, 
            execTimeMs, 
@@ -124,13 +136,13 @@ self.onmessage = async (e) => {
          const solResults = db.exec(payload.solutionSQL);
          if (payload.verificationSQL) {
            const verResults = db.exec(payload.verificationSQL);
-           if (verResults.length === 0) finalResult = { columns: [], rows: [] };
+           if (verResults.length === 0) finalResult = { columns: getColumnsFromEmptyQuery(db, payload.verificationSQL), rows: [] };
            else {
              const { columns, values } = verResults[verResults.length - 1];
              finalResult = { columns, rows: values.slice(0, 1000) };
            }
          } else {
-           if (solResults.length === 0) finalResult = { columns: [], rows: [] };
+           if (solResults.length === 0) finalResult = { columns: getColumnsFromEmptyQuery(db, payload.solutionSQL), rows: [] };
            else {
              const { columns, values } = solResults[solResults.length - 1];
              finalResult = { columns, rows: values.slice(0, 1000) };
@@ -156,14 +168,16 @@ self.onmessage = async (e) => {
         const solResults = db.exec(payload.solutionSQL);
         if (payload.verificationSQL) {
           const verResults = db.exec(payload.verificationSQL);
-          if (verResults.length === 0) expectedResult = { columns: [], rows: [] };
-          else {
+          if (verResults.length === 0) {
+             expectedResult = { columns: getColumnsFromEmptyQuery(db, payload.verificationSQL), rows: [] };
+          } else {
             const { columns, values } = verResults[verResults.length - 1];
             expectedResult = { columns, rows: values.slice(0, 5000) };
           }
         } else {
-          if (solResults.length === 0) expectedResult = { columns: [], rows: [] };
-          else {
+          if (solResults.length === 0) {
+             expectedResult = { columns: getColumnsFromEmptyQuery(db, payload.solutionSQL), rows: [] };
+          } else {
             const { columns, values } = solResults[solResults.length - 1];
             expectedResult = { columns, rows: values.slice(0, 5000) };
           }
@@ -181,14 +195,16 @@ self.onmessage = async (e) => {
         const usrResults = db.exec(payload.userSQL);
         if (payload.verificationSQL) {
           const verResults = db.exec(payload.verificationSQL);
-          if (verResults.length === 0) userResult = { columns: [], rows: [] };
-          else {
+          if (verResults.length === 0) {
+             userResult = { columns: getColumnsFromEmptyQuery(db, payload.verificationSQL), rows: [] };
+          } else {
              const { columns, values } = verResults[verResults.length - 1];
              userResult = { columns, rows: values.slice(0, 5000) };
           }
         } else {
-          if (usrResults.length === 0) userResult = { columns: [], rows: [] };
-          else {
+          if (usrResults.length === 0) {
+             userResult = { columns: getColumnsFromEmptyQuery(db, payload.userSQL), rows: [] };
+          } else {
              const { columns, values } = usrResults[usrResults.length - 1];
              userResult = { columns, rows: values.slice(0, 5000) };
           }

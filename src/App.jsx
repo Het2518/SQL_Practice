@@ -14,6 +14,7 @@ const UserGuide = lazy(() => import('@/pages/UserGuide').then(module => ({ defau
 const InterviewDashboard = lazy(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewDashboard })));
 const AuthModal = lazy(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal })));
 const SettingsModal = lazy(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const CompanyPrepPage = lazy(() => import('@/pages/CompanyPrepPage'));
 
 // ─── Progress persistence ────────────────────────────────────────────────────
 const PROGRESS_KEY = 'sql-practice-progress';
@@ -124,6 +125,9 @@ export default function App() {
 
         <Route path="/guide" element={<UserGuide />} />
         
+        <Route path="/company/:slug" element={<CompanyPrepPage />} />
+        
+
         <Route path="/practice/:db" element={
           <ProtectedRoute user={user}>
             <PracticeView

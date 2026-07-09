@@ -17,6 +17,7 @@ import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { loadShortcuts, isShortcutMatch } from '@/utils/shortcutManager';
 import { hasSubquery, convertSubqueryToCTE } from '@/utils/sqlAnalysis';
+import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
 
 export function PracticeView({
   progress,
@@ -35,7 +36,7 @@ export function PracticeView({
   
   const [searchParams] = useSearchParams();
   const qParam = searchParams.get('q');
-  
+
   const [currentQ, setCurrentQ] = useState(() => {
     const dbQs = getQuestionsForDb(initialDb);
     if (qParam) {
@@ -102,6 +103,16 @@ export function PracticeView({
   const [isDragging, setIsDragging] = useState(false);
   const toast = useToast();
   const { fireConfetti, ConfettiComponent } = useConfetti();
+  const { checkSafety, SafetyModal } = useQuerySafetyGuard();
+
+  // Build schema context string for AI features
+  const dbSchemaContext = useMemo(() => {
+    const dbInfo = DB_INFO[db];
+    if (!dbInfo || !dbInfo.tables) return '';
+    return dbInfo.tables.map(t =>
+      `${t.name}(${(t.columns || []).map(c => c.name).join(', ')})`
+    ).join('; ');
+  }, [db]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -141,7 +152,9 @@ export function PracticeView({
   }, [sql, EDITOR_KEY]);
 
   const dbInfo = DB_INFO[db];
-  const dbQuestions = useMemo(() => getQuestionsForDb(db), [db]);
+  const dbQuestions = useMemo(() => {
+    return getQuestionsForDb(db);
+  }, [db]);
 
   const { isLoading, error: dbError, executeQuery, resetDb, validateAnswer, runVerification, getExpectedResultDynamic, getExplainPlan } = useSqlDatabase(db);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -180,6 +193,11 @@ export function PracticeView({
 
   const handleRun = useCallback(async () => {
     if (!sql.trim()) return;
+
+    // Run safety check first (client-side is instant, LLM check is async but non-blocking for fast queries)
+    const isSafe = await checkSafety(sql, currentQ);
+    if (!isSafe) return; // user chose to edit query
+
     setIsExecuting(true);
     setExecutedSql(sql);
     
@@ -190,7 +208,7 @@ export function PracticeView({
       return [entry, ...filtered].slice(0, 50);
     });    try {
       // Execute the user query and (if verification is configured) hidden solutions + diff in ONE pass
-      if (currentQ && currentQ.solutionSQL) {
+      if (currentQ && currentQ.solutionSQL && !currentQ.isAiGenerated) {
         const val = await validateAnswer(sql, currentQ.solutionSQL, currentQ.verificationSQL, currentQ.requiresOrder);
         // The worker payload returns userResult alongside the validation status
         if (val.userResult) {
@@ -603,6 +621,10 @@ export function PracticeView({
             // Auto-run when timer expires so user sees their result
             if (sql.trim()) handleRun();
           }}
+          currentSql={sql}
+          lastValidation={validation}
+          dbSchemaContext={dbSchemaContext}
+          executeQuery={executeQuery}
         />
       </aside>
     </div>
@@ -641,5 +663,6 @@ export function PracticeView({
       }}
     />
     <ConfettiComponent />
+    <SafetyModal />
   </div>;
 }

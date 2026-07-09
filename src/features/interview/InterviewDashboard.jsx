@@ -128,7 +128,8 @@ export function InterviewDashboard({ onClose }) {
                     <>
                       <CompanyGrid 
                         companies={paginatedCompanies} 
-                        onSelect={setSelectedCompany} 
+                        onSelect={setSelectedCompany}
+                        onClose={onClose}
                       />
                       
                       {/* Pagination Controls */}
