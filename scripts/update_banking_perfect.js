@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/banking.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const bankingQuestions = [
     "SELECT a.account_id, ROUND(a.balance * (i.annual_rate / 12.0 / 100.0), 2) as expected_monthly_interest FROM accounts a JOIN interest_rates i ON a.rate_id = i.rate_id WHERE a.account_id = 1;", 
     "SELECT a.account_id, ROUND(a.balance * (i.annual_rate / 12.0 / 100.0), 2) as expected_monthly_interest FROM accounts a JOIN interest_rates i ON a.rate_id = i.rate_id WHERE a.account_id = 1;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT banking questions!');

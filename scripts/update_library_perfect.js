@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/library.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const libraryQuestions = [
     "SELECT l.loan_id, m.email, f.amount FROM loans l JOIN fines f ON l.loan_id = f.loan_id JOIN members m ON l.member_id = m.member_id WHERE l.return_date IS NULL AND f.paid_date IS NULL;", 
     "SELECT l.loan_id, m.email, f.amount FROM loans l JOIN fines f ON l.loan_id = f.loan_id JOIN members m ON l.member_id = m.member_id WHERE l.return_date IS NULL AND f.paid_date IS NULL;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT library questions!');

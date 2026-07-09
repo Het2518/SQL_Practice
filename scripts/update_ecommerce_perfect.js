@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/ecommerce.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const ecommerceQuestions = [
     "SELECT c.customer_id, SUM(p.amount) as total_spend, ROUND(AVG(p.amount), 2) as aov, ROUND(julianday('2024-08-01') - julianday(MAX(o.order_date))) as days_since_last_order FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id WHERE p.status = 'Completed' GROUP BY c.customer_id ORDER BY total_spend DESC LIMIT 3;", 
     "SELECT c.customer_id, SUM(p.amount) as total_spend, ROUND(AVG(p.amount), 2) as aov, ROUND(julianday('2024-08-01') - julianday(MAX(o.order_date))) as days_since_last_order FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN payments p ON o.order_id = p.order_id WHERE p.status = 'Completed' GROUP BY c.customer_id ORDER BY total_spend DESC LIMIT 3;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT ecommerce questions!');

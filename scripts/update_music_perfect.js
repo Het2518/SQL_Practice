@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/music.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const musicQuestions = [
     "SELECT t.track_id, t.title FROM tracks t JOIN playlist_tracks pt ON t.track_id = pt.track_id JOIN playlists p ON pt.playlist_id = p.playlist_id WHERE p.is_public = 1 INTERSECT SELECT t.track_id, t.title FROM tracks t JOIN playlist_tracks pt ON t.track_id = pt.track_id JOIN playlists p ON pt.playlist_id = p.playlist_id WHERE p.is_public = 0;", 
     "SELECT t.track_id, t.title FROM tracks t JOIN playlist_tracks pt ON t.track_id = pt.track_id JOIN playlists p ON pt.playlist_id = p.playlist_id WHERE p.is_public = 1 INTERSECT SELECT t.track_id, t.title FROM tracks t JOIN playlist_tracks pt ON t.track_id = pt.track_id JOIN playlists p ON pt.playlist_id = p.playlist_id WHERE p.is_public = 0;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT music questions!');

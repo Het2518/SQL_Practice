@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/hospital.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const hospitalQuestions = [
     "WITH DiagCount AS (SELECT admission_id, COUNT(*) as d_count FROM diagnoses GROUP BY admission_id), MedCount AS (SELECT admission_id, COUNT(*) as m_count FROM medications GROUP BY admission_id) SELECT d.admission_id FROM DiagCount d JOIN MedCount m ON d.admission_id = m.admission_id WHERE d.d_count > 1 AND m.m_count > 2;", 
     "WITH DiagCount AS (SELECT admission_id, COUNT(*) as d_count FROM diagnoses GROUP BY admission_id), MedCount AS (SELECT admission_id, COUNT(*) as m_count FROM medications GROUP BY admission_id) SELECT d.admission_id FROM DiagCount d JOIN MedCount m ON d.admission_id = m.admission_id WHERE d.d_count > 1 AND m.m_count > 2;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT hospital questions!');

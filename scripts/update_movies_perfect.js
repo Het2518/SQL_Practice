@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/movies.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const moviesQuestions = [
     "SELECT a.actor_id, a.first_name, a.last_name FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id JOIN movie_genres mg ON ma.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Science Fiction' INTERSECT SELECT a.actor_id, a.first_name, a.last_name FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id JOIN movie_genres mg ON ma.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Romance';", 
     "SELECT a.actor_id, a.first_name, a.last_name FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id JOIN movie_genres mg ON ma.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Science Fiction' INTERSECT SELECT a.actor_id, a.first_name, a.last_name FROM actors a JOIN movie_actors ma ON a.actor_id = ma.actor_id JOIN movie_genres mg ON ma.movie_id = mg.movie_id JOIN genres g ON mg.genre_id = g.genre_id WHERE g.name = 'Romance';")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT movies questions!');

@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/hr.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const hrQuestions = [
     "SELECT job_title FROM job_history WHERE end_date IS NOT NULL GROUP BY job_title HAVING COUNT(DISTINCT employee_id) > 2;", 
     "SELECT job_title FROM job_history WHERE end_date IS NOT NULL GROUP BY job_title HAVING COUNT(DISTINCT employee_id) > 2;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT hr questions!');

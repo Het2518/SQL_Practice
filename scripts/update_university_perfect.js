@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/university.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const universityQuestions = [
     "SELECT e.student_id, e.course_id FROM enrollments e JOIN grades g ON e.enrollment_id = g.enrollment_id WHERE g.letter_grade IN ('A','B','C') GROUP BY e.student_id, e.course_id HAVING COUNT(DISTINCT e.semester_id) > 1;", 
     "SELECT e.student_id, e.course_id FROM enrollments e JOIN grades g ON e.enrollment_id = g.enrollment_id WHERE g.letter_grade IN ('A','B','C') GROUP BY e.student_id, e.course_id HAVING COUNT(DISTINCT e.semester_id) > 1;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT university questions!');
