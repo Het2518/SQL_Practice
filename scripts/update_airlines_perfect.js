@@ -1,4 +1,12 @@
-const noRows = {
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const targetFile = path.join(__dirname, '../src/data/questions/airlines.jsx');
+
+const code = `const noRows = {
   columns: [],
   rows: []
 };
@@ -393,3 +401,7 @@ export const airlinesQuestions = [
     "WITH Scorecard AS (SELECT f.flight_no, COALESCE(ROUND((julianday(f.actual_arr) - julianday(f.scheduled_arr))*1440), 0) as delay, COALESCE(SUM(b.price), 0) as rev, (COUNT(b.booking_id) * 100.0 / a.seating_capacity) as load_factor FROM flights f JOIN aircraft a ON f.aircraft_id = a.aircraft_id LEFT JOIN bookings b ON f.flight_id = b.flight_id WHERE f.status = 'Arrived' GROUP BY f.flight_id) SELECT flight_no, delay, rev, ROUND(load_factor, 1) as load_factor, ROUND(load_factor - (delay/10.0), 2) as perf_score FROM Scorecard ORDER BY perf_score DESC LIMIT 3;", 
     "WITH Scorecard AS (SELECT f.flight_no, COALESCE(ROUND((julianday(f.actual_arr) - julianday(f.scheduled_arr))*1440), 0) as delay, COALESCE(SUM(b.price), 0) as rev, (COUNT(b.booking_id) * 100.0 / MAX(a.seating_capacity)) as load_factor FROM flights f JOIN aircraft a ON f.aircraft_id = a.aircraft_id LEFT JOIN bookings b ON f.flight_id = b.flight_id WHERE f.status = 'Arrived' GROUP BY f.flight_id) SELECT flight_no, delay, rev, ROUND(load_factor, 1) as load_factor, ROUND(load_factor - (delay/10.0), 2) as perf_score FROM Scorecard ORDER BY perf_score DESC LIMIT 3;")
 ];
+`;
+
+fs.writeFileSync(targetFile, code);
+console.log('Successfully generated the PERFECT airlines questions!');
