@@ -337,3 +337,53 @@
   display: flex; align-items: center; gap: 4px;
 }
 .solve-link:hover { text-decoration: underline; }
+
+/* QuestionBrowser Mobile Overrides */
+@media (max-width: 768px) {
+  .qb-layout {
+    flex-direction: column;
+  }
+  .qb-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+  .qb-search {
+    width: 100%;
+  }
+  .qb-body {
+    flex-direction: column;
+  }
+  .qb-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 200px;
+    padding: 12px 16px;
+  }
+  .qb-content {
+    padding: 16px;
+  }
+  .question-browser-card {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+  .qb-card-prompt {
+    width: 100%;
+    flex: none;
+    white-space: normal;
+    font-size: 13px;
+  }
+  .qb-card-id {
+    width: auto;
+    flex: 1;
+  }
+  .qb-card-db {
+    width: auto;
+  }
+  .qb-card-diff {
+    width: auto;
+  }
+}
+

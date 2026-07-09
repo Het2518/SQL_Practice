@@ -128,15 +128,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
       }}>
         
         {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          background: 'var(--surface-2)',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          flexShrink: 0
-        }}>
+        <div className="qb-header">
           <div style={{
             background: 'linear-gradient(135deg, var(--primary), #8b5cf6)',
             padding: 10,
@@ -159,7 +151,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
           
           <div style={{ flex: 1 }} />
           
-          <div style={{ position: 'relative', width: 300 }}>
+          <div className="qb-search">
             <Search size={16} color="var(--muted)" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
             <input 
               id="question-search" 
@@ -195,16 +187,9 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
           </button>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', background: 'var(--bg)' }}>
+        <div className="qb-body">
           {/* Sidebar Filters */}
-          <div style={{
-            width: 260,
-            borderRight: '1px solid var(--border)',
-            overflowY: 'auto',
-            padding: '20px 16px',
-            flexShrink: 0,
-            background: 'var(--surface)'
-          }}>
+          <div className="qb-sidebar">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Filter size={14} /> Filters
@@ -264,7 +249,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
           </div>
 
           {/* Question List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px', position: 'relative' }}>
+          <div className="qb-content">
             <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16, fontWeight: 500 }}>
               Showing {filtered.length} of {questions.length} questions
             </div>
@@ -282,55 +267,33 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                   const isCurrent = q.id === currentQuestionId;
                   
                   return (
-                    <div 
-                      key={q.id} 
-                      id={`q-item-${q.id}`} 
-                      onClick={() => { onSelectQuestion(q); onClose(); }} 
-                      className="question-browser-card"
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px',
-                        borderRadius: 12, cursor: 'pointer',
-                        background: isCurrent ? 'var(--primary-muted)' : 'var(--surface)',
-                        border: `1px solid ${isCurrent ? 'var(--primary)' : 'var(--border)'}`,
-                        transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: isCurrent ? '0 4px 12px rgba(59,130,246,0.1)' : '0 2px 4px rgba(0,0,0,0.02)'
-                      }} 
-                      onMouseEnter={e => {
-                        if (!isCurrent) {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.06)';
-                          e.currentTarget.style.borderColor = 'var(--border-hover)';
-                        }
-                      }} 
-                      onMouseLeave={e => {
-                        if (!isCurrent) {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.02)';
-                          e.currentTarget.style.borderColor = 'var(--border)';
-                        }
-                      }}
-                    >
+                      <div 
+                        key={q.id} 
+                        id={`q-item-${q.id}`} 
+                        onClick={() => { onSelectQuestion(q); onClose(); }} 
+                        className={`question-browser-card ${isCurrent ? 'current' : ''}`}
+                      >
                       <div style={{ width: 12, display: 'flex', justifyContent: 'center' }}>
                         {status === 'complete' ? <CheckCircle2 size={14} color="var(--success)" /> : 
                          status === 'attempted' ? <CircleDashed size={14} color="var(--warning)" /> : 
                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--border)' }} />}
                       </div>
                       
-                      <div style={{ width: 40, fontSize: 12, color: 'var(--muted)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+                      <div className="qb-card-id">
                         #{q.id}
                       </div>
                       
-                      <div style={{ width: 130, fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div className="qb-card-db">
                         {DB_INFO[q.db].icon} {DB_INFO[q.db].label}
                       </div>
                       
-                      <div style={{ width: 70 }}>
+                      <div className="qb-card-diff">
                         <span className={`pill pill-${q.difficulty}`} style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px' }}>
                           {q.difficulty.toUpperCase()}
                         </span>
                       </div>
                       
-                      <div style={{ flex: 1, fontSize: 14, color: isCurrent ? 'var(--primary)' : 'var(--text)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div className="qb-card-prompt" style={{ color: isCurrent ? 'var(--primary)' : 'var(--text)' }}>
                         {q.prompt}
                       </div>
                     </div>
