@@ -10,7 +10,7 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
   const navigate = useNavigate();
   const totalComplete = Object.values(progress).filter(s => s === 'complete').length;
   const totalAttempted = Object.values(progress).filter(s => s === 'attempted').length;
-  const totalPct = Math.round((totalComplete + totalAttempted * 0.5) / 600 * 100);
+  const totalPct = Math.round((totalComplete + totalAttempted * 0.5) / allQuestions.length * 100);
 
   const score = useMemo(() => {
     let s = 0;
@@ -160,7 +160,7 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
         </span>
       </div>
       <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
-        {600 - totalComplete} questions remaining
+        {allQuestions.length - totalComplete} questions remaining
       </span>
     </div>
 

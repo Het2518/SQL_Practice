@@ -206,7 +206,8 @@ export function PracticeView({
       const entry = { sql, questionId: currentQ.id, dbName: db, prompt: currentQ.prompt?.substring(0, 50) };
       const filtered = prev.filter(h => h.sql !== sql);
       return [entry, ...filtered].slice(0, 50);
-    });    try {
+    });
+    try {
       // Execute the user query and (if verification is configured) hidden solutions + diff in ONE pass
       if (currentQ && currentQ.solutionSQL && !currentQ.isAiGenerated) {
         const val = await validateAnswer(sql, currentQ.solutionSQL, currentQ.verificationSQL, currentQ.requiresOrder);
@@ -366,9 +367,9 @@ export function PracticeView({
     return <div className="practice-root page-enter" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
     {/* Top Nav */}
     <nav className="practice-nav" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)', gap: 12 }}>
-      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 6, width: 85, justifyContent: 'center' }}>
-        {isLoading ? <RotateCcw size={14} className="spin" /> : <Play size={14} strokeWidth={2.5} fill="currentColor" />}
-        {isLoading ? 'Running' : 'Run'}
+      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 6, width: 85, justifyContent: 'center' }}>
+        {isExecuting ? <RotateCcw size={14} className="spin" /> : <Play size={14} strokeWidth={2.5} fill="currentColor" />}
+        {isExecuting ? 'Running' : 'Run'}
       </button>
       <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)', gap: 6 }}>
         <BookOpen size={14} />

@@ -29,8 +29,9 @@ export function useGamification(progress, user) {
 
   // Save on state change (only if user is logged in)
   useEffect(() => {
-    localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
     if (user) {
+      // Only persist to localStorage when logged in (prevents cross-user data leakage)
+      localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
       const syncTimeout = setTimeout(() => {
         supabase.from('user_progress').upsert({
           user_id: user.id,

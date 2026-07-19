@@ -270,7 +270,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
     }
 
     // Generate Quests
-    const streak = gameState?.streak || 0;
+    const streak = gameState?.currentStreak || 0;
     const quests = [
       { id: 1, title: "Keep the Fire Burning", desc: "Reach a 7-day streak.", current: Math.min(streak, 7), target: 7, type: 'streak' },
       { id: 2, title: "Medium Master", desc: "Solve 10 Medium difficulty questions.", current: Math.min(mediumSolved, 10), target: 10, type: 'medium' },
@@ -326,7 +326,7 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
       quests,
       timelineEvents: events.slice(0, 8) 
     };
-  }, [progress, totalPlatformUsers, gameState]);
+  }, [progress, totalPlatformUsers, gameState, realRank, realPercentile]);
 
   const stats = difficultyStats;
 
@@ -498,9 +498,27 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
           
           <div style={{ marginTop: 'auto', paddingTop: 20 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Next Badge</div>
-            <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--text)', border: '1px solid var(--border)' }}>
-              <strong>🥷 SQL Ninja:</strong> Solve 36 more questions.
-            </div>
+            {(() => {
+              const totalSolved = stats.totalSolved;
+              const earned = new Set(gameState?.badges || []);
+              const nextBadge = BADGE_DEFS.find(b => !earned.has(b.id));
+              if (!nextBadge) {
+                return <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--success)', border: '1px solid var(--border)', fontWeight: 600 }}>🎉 All badges earned!</div>;
+              }
+              // compute progress toward next badge
+              let current = 0, target = 1, label = '';
+              if (nextBadge.id === 'first_query') { current = Math.min(totalSolved, 1); target = 1; label = 'Solve 1 question'; }
+              else if (nextBadge.id === 'streak_3') { current = Math.min(streak, 3); target = 3; label = `${3 - Math.min(streak, 3)} more streak days`; }
+              else if (nextBadge.id === 'streak_7') { current = Math.min(streak, 7); target = 7; label = `${7 - Math.min(streak, 7)} more streak days`; }
+              else if (nextBadge.id === 'solved_10') { current = Math.min(totalSolved, 10); target = 10; label = `Solve ${10 - Math.min(totalSolved, 10)} more questions`; }
+              else if (nextBadge.id === 'solved_50') { current = Math.min(totalSolved, 50); target = 50; label = `Solve ${50 - Math.min(totalSolved, 50)} more questions`; }
+              else if (nextBadge.id === 'perfect_db') { label = 'Complete 100% of any database'; }
+              return (
+                <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--text)', border: '1px solid var(--border)' }}>
+                  <strong>{nextBadge.icon} {nextBadge.title}:</strong> {label}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -534,7 +552,7 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
         </h3>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>
           <div><strong style={{ color: 'var(--text)' }}>{Object.keys(gameState.activity || {}).length}</strong> days active</div>
-          <div>Current Streak: <strong style={{ color: 'var(--text)' }}>{gameState.streak || 0}</strong></div>
+          <div>Current Streak: <strong style={{ color: 'var(--text)' }}>{gameState.currentStreak || 0}</strong></div>
         </div>
         
         {/* Generate a dense 52-week grid (approx 364 days). We render columns of 7. */}
@@ -751,8 +769,7 @@ function LeaderboardTab({ currentUser, currentScore }) {
     supabase
       .from('user_progress')
       .select('user_id, badges, activity, completed_questions, display_name')
-      .order('user_id', { ascending: true })
-      .limit(200)
+      .limit(500)
       .then(({ data }) => {
         if (!data) return;
         const processed = data.map(row => {
