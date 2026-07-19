@@ -35,7 +35,7 @@ function ProtectedRoute({ children, user }) {
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [progress, setProgress] = useState(loadProgress);
+  const [progress, setProgress] = useState({});
   const { user, loading, logout } = useAuth();
   const { gameState, recordActivity } = useGamification(progress, user);
   const [showAuth, setShowAuth] = useState(false);
@@ -78,11 +78,9 @@ export default function App() {
       supabase.from('user_progress').select('completed_questions').eq('user_id', user.id).single()
       .then(({ data }) => {
         if (data && data.completed_questions) {
-          setProgress(prev => {
-            const merged = { ...prev, ...data.completed_questions };
-            saveProgress(merged);
-            return merged;
-          });
+          // Replace, don't merge — prev is always {} at login time now
+          saveProgress(data.completed_questions);
+          setProgress(data.completed_questions);
         }
       });
     }

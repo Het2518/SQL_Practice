@@ -22,14 +22,10 @@ export const BADGE_DEFS = [
 ];
 
 export function useGamification(progress, user) {
-  const [gameState, setGameState] = useState(() => {
-    try {
-      const saved = localStorage.getItem(GAMIFICATION_KEY);
-      return saved ? { ...DEFAULT_STATE, ...JSON.parse(saved) } : DEFAULT_STATE;
-    } catch {
-      return DEFAULT_STATE;
-    }
-  });
+  // Always start with DEFAULT_STATE — never pre-load localStorage on init.
+  // A previous user's cached data could still be sitting in localStorage, so
+  // we wait for the Supabase fetch (below) to populate state for the real user.
+  const [gameState, setGameState] = useState(DEFAULT_STATE);
 
   // Save on state change (only if user is logged in)
   useEffect(() => {
@@ -62,21 +58,26 @@ export function useGamification(progress, user) {
     }
   }, [user]);
 
-  // Sync from Supabase on user login
+  // Sync from Supabase on user login — REPLACE state, never merge.
+  // Merging could blend in stale data from a previous user's localStorage.
   useEffect(() => {
     if (user) {
       supabase.from('user_progress').select('*').eq('user_id', user.id).single()
       .then(({ data, error }) => {
         if (data) {
-          setGameState(prev => ({
-            ...prev,
-            activity: { ...prev.activity, ...data.activity },
-            currentStreak: Math.max(prev.currentStreak, data.current_streak || 0),
-            maxStreak: Math.max(prev.maxStreak, data.max_streak || 0),
-            badges: Array.from(new Set([...prev.badges, ...(data.badges || [])])),
-            lastPracticeDate: data.last_practice_date || prev.lastPracticeDate,
-            recentSubmissions: Array.isArray(data.activity_history) ? data.activity_history : (prev.recentSubmissions || [])
-          }));
+          // Fully replace with the logged-in user's server data
+          setGameState({
+            ...DEFAULT_STATE,
+            activity: data.activity || {},
+            currentStreak: data.current_streak || 0,
+            maxStreak: data.max_streak || 0,
+            badges: data.badges || [],
+            lastPracticeDate: data.last_practice_date || null,
+            recentSubmissions: Array.isArray(data.activity_history) ? data.activity_history : [],
+          });
+        } else {
+          // New user — no server record yet, start fresh
+          setGameState(DEFAULT_STATE);
         }
       });
     }
