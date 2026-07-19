@@ -149,14 +149,60 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
       </div>
     </section>
 
+    {/* ── Custom Dataset Banner ── */}
+    <div style={{
+      margin: '0 28px 20px',
+      padding: '20px 28px',
+      background: 'linear-gradient(135deg, var(--primary-muted) 0%, var(--surface) 100%)',
+      border: '1.5px dashed var(--primary)',
+      borderRadius: 16,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 16,
+      cursor: 'pointer',
+      transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    }}
+      onClick={() => navigate('/sandbox')}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.005)'; e.currentTarget.style.boxShadow = '0 4px 24px var(--primary-muted)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: 12,
+          background: 'var(--primary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, flexShrink: 0,
+          boxShadow: '0 4px 12px var(--primary-muted)',
+        }}>📂</div>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>Custom Dataset Practice</span>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', background: 'var(--primary)', color: '#fff', borderRadius: 99 }}>NEW ✨</span>
+          </div>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            Upload your own CSV or SQLite file — practice SQL on <strong>your data</strong> with schema-aware autocomplete.
+          </span>
+        </div>
+      </div>
+      <div style={{
+        padding: '10px 20px', background: 'var(--primary)', color: '#fff',
+        borderRadius: 10, fontWeight: 700, fontSize: 13,
+        display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+        boxShadow: '0 4px 12px var(--primary-muted)',
+      }}>
+        Upload &amp; Practice →
+      </div>
+    </div>
+
     {/* ── Grid Header ── */}
     <div className="db-grid-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          Choose a Database
+          Built-in Databases
         </h3>
         <span style={{ background: 'var(--primary-muted)', color: 'var(--primary)', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>
-          10
+          {DB_NAMES.length}
         </span>
       </div>
       <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>

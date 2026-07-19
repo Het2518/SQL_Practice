@@ -15,6 +15,7 @@ export function SqlEditor({
   autoComplete = true,
   darkMode = false,
   readOnly = false,
+  customSchema = null, // [{name, columns:[{name,type,pk}]}] — overrides dbName-based autocomplete
 }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
@@ -67,9 +68,18 @@ export function SqlEditor({
 
   // Register SQL autocomplete for tables and columns (only if enabled)
   useEffect(() => {
-    if (!monacoInstance || !dbName || !autoComplete) return;
-    const dbInfo = DB_INFO[dbName];
-    if (!dbInfo) return;
+    if (!monacoInstance || !autoComplete) return;
+
+    // Resolve which schema to use: custom upload takes priority over built-in dbName
+    let schemaTables = [];
+    if (customSchema && customSchema.length > 0) {
+      schemaTables = customSchema;
+    } else if (dbName) {
+      const dbInfo = DB_INFO[dbName];
+      if (dbInfo) schemaTables = dbInfo.tables || [];
+    }
+    if (schemaTables.length === 0 && !dbName) return;
+
     const disposable = monacoInstance.languages.registerCompletionItemProvider('sql', {
       provideCompletionItems: (model, position) => {
         const word = model.getWordUntilPosition(position);
@@ -82,21 +92,22 @@ export function SqlEditor({
         const suggestions = [];
 
         // Tables
-        dbInfo.tables.forEach(table => {
+        schemaTables.forEach(table => {
           suggestions.push({
             label: table.name,
             kind: monacoInstance.languages.CompletionItemKind.Struct,
             insertText: table.name,
-            detail: 'Table',
+            detail: `Table${table.rowCount != null ? ` (${table.rowCount.toLocaleString()} rows)` : ''}`,
+            documentation: `Columns: ${(table.columns || []).map(c => c.name).join(', ')}`,
             range
           });
           // Columns
-          table.columns.forEach(col => {
+          (table.columns || []).forEach(col => {
             suggestions.push({
               label: col.name,
               kind: monacoInstance.languages.CompletionItemKind.Field,
               insertText: col.name,
-              detail: `Column (${table.name})`,
+              detail: `${col.type || 'TEXT'} — ${table.name}${col.pk ? ' 🔑' : ''}`,
               range
             });
           });
@@ -112,13 +123,11 @@ export function SqlEditor({
             range
           });
         });
-        return {
-          suggestions
-        };
+        return { suggestions };
       }
     });
     return () => disposable.dispose();
-  }, [monacoInstance, dbName, autoComplete]);
+  }, [monacoInstance, dbName, autoComplete, customSchema]);
   const handleEditorWillMount = monaco => {
     monaco.editor.defineTheme('earthy-light', {
       base: 'vs',

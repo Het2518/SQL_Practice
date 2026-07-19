@@ -74,6 +74,9 @@ self.onmessage = async (e) => {
       } else if (payload.initSql) {
         db = new sqlJS.Database();
         db.run(payload.initSql);
+      } else if (payload.binaryData) {
+        // Direct binary upload (e.g. user-uploaded .sqlite file)
+        db = new sqlJS.Database(new Uint8Array(payload.binaryData));
       }
       self.postMessage({ id, success: true });
     }
@@ -312,7 +315,32 @@ self.onmessage = async (e) => {
       }
     }
 
-    
+    else if (type === 'GET_SCHEMA') {
+      if (!db) throw new Error("Database not initialized");
+      // Get all user-created tables (exclude sqlite internal ones)
+      const tablesResult = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
+      const tableNames = tablesResult.length > 0 ? tablesResult[0].values.map(r => r[0]) : [];
+      const schema = [];
+      for (const tableName of tableNames) {
+        const colResult = db.exec(`PRAGMA table_info("${tableName}")`);
+        const columns = colResult.length > 0
+          ? colResult[0].values.map(row => ({
+              name: row[1],
+              type: row[2] || 'TEXT',
+              pk: row[5] === 1,
+              notNull: row[3] === 1,
+            }))
+          : [];
+        // Get row count for display
+        let rowCount = 0;
+        try {
+          const countResult = db.exec(`SELECT COUNT(*) FROM "${tableName}"`);
+          rowCount = countResult.length > 0 ? countResult[0].values[0][0] : 0;
+        } catch {}
+        schema.push({ name: tableName, columns, rowCount });
+      }
+      self.postMessage({ id, success: true, data: { tables: schema } });
+    }
   } catch (err) {
     self.postMessage({ id, success: false, error: err.message });
   }

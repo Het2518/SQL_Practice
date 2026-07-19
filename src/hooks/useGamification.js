@@ -21,35 +21,33 @@ export const BADGE_DEFS = [
   { id: 'perfect_db', title: 'Completionist', description: 'Complete 100% of any database.', icon: '🏆' },
 ];
 
-export function useGamification(progress, user) {
+export function useGamification(progress, user, progressLoaded = false) {
   // Always start with DEFAULT_STATE — never pre-load localStorage on init.
-  // A previous user's cached data could still be sitting in localStorage, so
-  // we wait for the Supabase fetch (below) to populate state for the real user.
   const [gameState, setGameState] = useState(DEFAULT_STATE);
 
-  // Save on state change (only if user is logged in)
+  // ── Write state to localStorage + Supabase ─────────────────────────────────
+  // Guard: only sync AFTER progressLoaded=true so we never overwrite the user's
+  // real data with DEFAULT_STATE during the login→fetch window.
   useEffect(() => {
-    if (user) {
-      // Only persist to localStorage when logged in (prevents cross-user data leakage)
-      localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
-      const syncTimeout = setTimeout(() => {
-        supabase.from('user_progress').upsert({
-          user_id: user.id,
-          activity: gameState.activity,
-          current_streak: gameState.currentStreak,
-          max_streak: gameState.maxStreak,
-          badges: gameState.badges,
-          last_practice_date: gameState.lastPracticeDate,
-          activity_history: gameState.recentSubmissions,
-          display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
-        }).then(({ error }) => {
-          if (error) console.error('Error syncing gamification state:', error.message);
-        });
-      }, 2000);
-
-      return () => clearTimeout(syncTimeout);
-    }
-  }, [gameState, user]);
+    if (!user || !progressLoaded) return;
+    // Persist to localStorage (only when logged in)
+    localStorage.setItem(GAMIFICATION_KEY, JSON.stringify(gameState));
+    const syncTimeout = setTimeout(() => {
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        activity: gameState.activity,
+        current_streak: gameState.currentStreak,
+        max_streak: gameState.maxStreak,
+        badges: gameState.badges,
+        last_practice_date: gameState.lastPracticeDate,
+        activity_history: gameState.recentSubmissions,
+        display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
+      }).then(({ error }) => {
+        if (error) console.error('Error syncing gamification state:', error.message);
+      });
+    }, 2000);
+    return () => clearTimeout(syncTimeout);
+  }, [gameState, user, progressLoaded]);
 
   // Reset gamification to zero when user logs out
   useEffect(() => {

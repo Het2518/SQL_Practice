@@ -15,6 +15,7 @@ const InterviewDashboard = lazy(() => import('@/features/interview/InterviewDash
 const AuthModal = lazy(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal })));
 const SettingsModal = lazy(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal })));
 const CompanyPrepPage = lazy(() => import('@/pages/CompanyPrepPage'));
+const CustomDatasetPage = lazy(() => import('@/pages/CustomDatasetPage').then(m => ({ default: m.CustomDatasetPage })));
 
 // ─── Progress persistence ────────────────────────────────────────────────────
 const PROGRESS_KEY = 'sql-practice-progress';
@@ -36,8 +37,9 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [progress, setProgress] = useState({});
+  const [progressLoaded, setProgressLoaded] = useState(false);
   const { user, loading, logout } = useAuth();
-  const { gameState, recordActivity } = useGamification(progress, user);
+  const { gameState, recordActivity } = useGamification(progress, user, progressLoaded);
   const [showAuth, setShowAuth] = useState(false);
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
@@ -73,31 +75,43 @@ export default function App() {
     }
   }, [location, navigate]);
 
+  // ── Load progress from Supabase when user logs in ──────────────────────────
   useEffect(() => {
     if (user) {
-      supabase.from('user_progress').select('completed_questions').eq('user_id', user.id).single()
-      .then(({ data }) => {
-        if (data && data.completed_questions) {
-          // Replace, don't merge — prev is always {} at login time now
-          saveProgress(data.completed_questions);
-          setProgress(data.completed_questions);
-        }
-      });
+      setProgressLoaded(false); // reset on user change
+      setProgress({});           // always start clean
+      supabase
+        .from('user_progress')
+        .select('completed_questions')
+        .eq('user_id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data && data.completed_questions) {
+            // Only set in-memory state — do NOT write to localStorage here.
+            // localStorage is shared across all users on this machine.
+            setProgress(data.completed_questions);
+          }
+          setProgressLoaded(true); // safe to start syncing back
+        });
+    } else {
+      // User logged out — wipe progress immediately
+      setProgress({});
+      setProgressLoaded(false);
     }
   }, [user]);
 
+  // ── Sync progress → Supabase (only AFTER initial load, never overwrite with empty) ──
   useEffect(() => {
-    if (user && Object.keys(progress).length > 0) {
-      const syncTimeout = setTimeout(() => {
-        supabase.from('user_progress').upsert({ 
-          user_id: user.id, 
-          completed_questions: progress,
-          display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
-        }).then();
-      }, 2000);
-      return () => clearTimeout(syncTimeout);
-    }
-  }, [progress, user]);
+    if (!user || !progressLoaded) return; // don't sync until we've loaded first
+    const syncTimeout = setTimeout(() => {
+      supabase.from('user_progress').upsert({
+        user_id: user.id,
+        completed_questions: progress,
+        display_name: user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Player'
+      }).then();
+    }, 2000);
+    return () => clearTimeout(syncTimeout);
+  }, [progress, user, progressLoaded]);
 
   const handleProgressUpdate = useCallback((question, dbName, status) => {
     if (!question || !question.id) return;
@@ -125,6 +139,12 @@ export default function App() {
         
         <Route path="/company/:slug" element={<CompanyPrepPage />} />
         
+        <Route path="/sandbox" element={
+          <CustomDatasetPage
+            settings={settings}
+            onToggleDark={toggleDark}
+          />
+        } />
 
         <Route path="/practice/:db" element={
           <ProtectedRoute user={user}>

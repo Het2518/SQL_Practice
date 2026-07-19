@@ -121,6 +121,40 @@ export function useSqlDatabase(dbInput) {
     }
   }, [initDb]);
 
+  const initWithBinary = useCallback(async (uint8Array) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await sendMessage('INIT', { binaryData: uint8Array.buffer });
+      currentDbRef.current = '__custom__';
+      setIsLoading(false);
+    } catch (err) {
+      setError(`Failed to load database: ${err.message}`);
+      setIsLoading(false);
+    }
+  }, [sendMessage]);
+
+  const initWithSql = useCallback(async (initSql) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await sendMessage('INIT', { initSql });
+      currentDbRef.current = '__custom_csv__';
+      setIsLoading(false);
+    } catch (err) {
+      setError(`Failed to build database from SQL: ${err.message}`);
+      setIsLoading(false);
+    }
+  }, [sendMessage]);
+
+  const getSchema = useCallback(async () => {
+    try {
+      return await sendMessage('GET_SCHEMA', {});
+    } catch (err) {
+      return { tables: [] };
+    }
+  }, [sendMessage]);
+
   const getExpectedResultDynamic = useCallback(async (solutionSQL, verificationSQL) => {
     try {
       return await sendMessage('GET_EXPECTED_RESULT', { solutionSQL, verificationSQL });
@@ -144,11 +178,13 @@ export function useSqlDatabase(dbInput) {
     error,
     executeQuery,
     resetDb,
+    initWithBinary,
+    initWithSql,
+    getSchema,
     validateAnswer,
     runVerification,
     getExpectedResultDynamic,
     getExplainPlan,
-
     dbInstance: null
   };
 }

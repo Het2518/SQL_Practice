@@ -127,10 +127,12 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   const [realPercentile, setRealPercentile] = useState(null);
 
   useEffect(() => {
+    if (!user) return;
     supabase.from('user_progress').select('user_id, completed_questions')
       .then(({ data, error }) => {
         if (!error && data) {
-          const processed = data.map(row => {
+          // Compute score per DB row
+          const rawScores = data.map(row => {
             let s = 0;
             if (row.completed_questions) {
               Object.entries(row.completed_questions).forEach(([qId, status]) => {
@@ -146,9 +148,16 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
             }
             return { userId: row.user_id, score: s };
           });
-          
-          // Re-evaluate my own current score using my live progress state 
-          // because the DB might not be fully synced yet
+
+          // ── Deduplicate by user_id (keep highest score per user) ──────────
+          const byUser = new Map();
+          rawScores.forEach(r => {
+            const ex = byUser.get(r.userId);
+            if (!ex || r.score > ex.score) byUser.set(r.userId, r);
+          });
+          const processed = Array.from(byUser.values());
+
+          // Always use live in-memory progress for current user's score
           let myScore = 0;
           Object.entries(progress || {}).forEach(([qId, status]) => {
             if (status === 'complete') {
@@ -161,21 +170,20 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
             }
           });
 
-          const curr = processed.find(p => p.userId === user?.id);
+          const curr = processed.find(p => p.userId === user.id);
           if (curr) curr.score = myScore;
-          else processed.push({ userId: user?.id, score: myScore });
+          else processed.push({ userId: user.id, score: myScore });
 
           processed.sort((a, b) => b.score - a.score);
           const totalUsers = processed.length;
           setTotalPlatformUsers(totalUsers);
-          
-          const myIndex = processed.findIndex(p => p.userId === user?.id);
+
+          const myIndex = processed.findIndex(p => p.userId === user.id);
           const rank = myIndex !== -1 ? myIndex + 1 : totalUsers;
           setRealRank(rank);
-          
-          // Calculate percentile (e.g. top X%)
+
           const percent = totalUsers > 1 ? Math.round(((totalUsers - rank) / (totalUsers - 1)) * 100) : 100;
-          setRealPercentile(Math.max(1, 100 - percent)); // 'Top 1%' instead of 'Top 99%'
+          setRealPercentile(Math.max(1, 100 - percent));
         }
       });
   }, [user, progress]);
@@ -500,18 +508,19 @@ function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineE
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Next Badge</div>
             {(() => {
               const totalSolved = stats.totalSolved;
+              const currentStreak = gameState?.currentStreak || 0;
               const earned = new Set(gameState?.badges || []);
               const nextBadge = BADGE_DEFS.find(b => !earned.has(b.id));
               if (!nextBadge) {
                 return <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--success)', border: '1px solid var(--border)', fontWeight: 600 }}>🎉 All badges earned!</div>;
               }
               // compute progress toward next badge
-              let current = 0, target = 1, label = '';
-              if (nextBadge.id === 'first_query') { current = Math.min(totalSolved, 1); target = 1; label = 'Solve 1 question'; }
-              else if (nextBadge.id === 'streak_3') { current = Math.min(streak, 3); target = 3; label = `${3 - Math.min(streak, 3)} more streak days`; }
-              else if (nextBadge.id === 'streak_7') { current = Math.min(streak, 7); target = 7; label = `${7 - Math.min(streak, 7)} more streak days`; }
-              else if (nextBadge.id === 'solved_10') { current = Math.min(totalSolved, 10); target = 10; label = `Solve ${10 - Math.min(totalSolved, 10)} more questions`; }
-              else if (nextBadge.id === 'solved_50') { current = Math.min(totalSolved, 50); target = 50; label = `Solve ${50 - Math.min(totalSolved, 50)} more questions`; }
+              let label = '';
+              if (nextBadge.id === 'first_query') { label = 'Solve 1 question'; }
+              else if (nextBadge.id === 'streak_3') { label = `${3 - Math.min(currentStreak, 3)} more streak days`; }
+              else if (nextBadge.id === 'streak_7') { label = `${7 - Math.min(currentStreak, 7)} more streak days`; }
+              else if (nextBadge.id === 'solved_10') { label = `Solve ${10 - Math.min(totalSolved, 10)} more questions`; }
+              else if (nextBadge.id === 'solved_50') { label = `Solve ${50 - Math.min(totalSolved, 50)} more questions`; }
               else if (nextBadge.id === 'perfect_db') { label = 'Complete 100% of any database'; }
               return (
                 <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13, color: 'var(--text)', border: '1px solid var(--border)' }}>
@@ -771,8 +780,10 @@ function LeaderboardTab({ currentUser, currentScore }) {
       .select('user_id, badges, activity, completed_questions, display_name')
       .limit(500)
       .then(({ data }) => {
-        if (!data) return;
-        const processed = data.map(row => {
+        if (!data) { setLoading(false); return; }
+
+        // Compute score for each DB row
+        const rawEntries = data.map(row => {
           let score = 0;
           if (row.completed_questions) {
             Object.entries(row.completed_questions).forEach(([qId, status]) => {
@@ -786,11 +797,38 @@ function LeaderboardTab({ currentUser, currentScore }) {
               }
             });
           }
-          const isCurrentUser = row.user_id === currentUser?.id;
-          return { userId: row.user_id, score, isCurrentUser, displayName: row.display_name };
+          return {
+            userId: row.user_id,
+            score,
+            isCurrentUser: row.user_id === currentUser?.id,
+            displayName: row.display_name || null,
+          };
         });
+
+        // ── Deduplicate by user_id (keep highest score row per user) ──────────
+        const byUser = new Map();
+        rawEntries.forEach(entry => {
+          const existing = byUser.get(entry.userId);
+          if (!existing || entry.score > existing.score) {
+            byUser.set(entry.userId, entry);
+          }
+        });
+        const processed = Array.from(byUser.values());
+
+        // ── Override current user's score with live in-memory value ───────────
         const curr = processed.find(p => p.isCurrentUser);
-        if (curr) curr.score = currentScore;
+        if (curr) {
+          curr.score = currentScore;
+        } else if (currentUser?.id) {
+          // Current user has no DB row yet — add them
+          processed.push({
+            userId: currentUser.id,
+            score: currentScore,
+            isCurrentUser: true,
+            displayName: currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.name || null,
+          });
+        }
+
         processed.sort((a, b) => b.score - a.score);
         setEntries(processed.slice(0, 50));
         setLoading(false);

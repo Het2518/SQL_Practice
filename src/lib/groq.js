@@ -296,3 +296,62 @@ Optimizer JSON:`
     }
   ];
 }
+
+/**
+ * Generates 5 MAANG-style SQL interview questions tailored to a user's uploaded dataset.
+ * @param {Array}  schema      - [{name, columns:[{name,type,pk}], rowCount}]
+ * @param {Object} sampleData  - { tableName: [[row], [row], [row]] }  (first 3 rows per table)
+ * @param {number} batch       - batch index (0 = first 5, 1 = next 5…) — used to vary questions
+ * Returns JSON array: [{title, difficulty, topic, prompt}]
+ */
+export function buildSandboxQuestionsPrompt({ schema, sampleData = {}, batch = 0 }) {
+  // Build compact schema description
+  const schemaStr = schema.map(t => {
+    const cols = t.columns.map(c => `${c.name} ${c.type}${c.pk ? ' PK' : ''}`).join(', ');
+    const sample = sampleData[t.name];
+    const sampleStr = sample && sample.length
+      ? `\n    Sample rows: ${JSON.stringify(sample.slice(0, 3))}`
+      : '';
+    return `Table "${t.name}" (${t.rowCount || '?'} rows): ${cols}${sampleStr}`;
+  }).join('\n');
+
+  // Rotate topics so each batch is different
+  const topicSets = [
+    ['Aggregation + GROUP BY', 'Multi-table JOIN', 'Window Functions (RANK/ROW_NUMBER)', 'CTE with recursion or chaining', 'Subquery with EXISTS or IN'],
+    ['Running totals with SUM OVER', 'DENSE_RANK for top-N per group', 'Self-join for comparison', 'Date/time bucketing', 'HAVING with complex conditions'],
+    ['Pivot / conditional aggregation', 'Lead/Lag for period-over-period', 'Correlated subquery', 'Set operations (UNION/INTERSECT)', 'NULL handling + COALESCE'],
+  ];
+  const topics = topicSets[batch % topicSets.length];
+
+  return [
+    {
+      role: 'system',
+      content: `You are a senior SQL interviewer at a FAANG/MAANG company (Google, Meta, Amazon, Apple, Netflix).
+Generate exactly 5 SQL interview questions that could realistically be asked in a data engineering or analytics interview round.
+
+STRICT RULES:
+1. Use ONLY the tables and columns defined in the schema below — no invented columns.
+2. Do NOT use specific string literals in WHERE clauses (e.g. country = 'USA') — the sample data may differ. Focus on structural logic.
+3. Each question must exercise a different SQL concept from the provided topic list.
+4. Make questions specific, realistic, and answerable using SQL and the given schema.
+5. Vary difficulty: include 2 Easy, 2 Medium, 1 Hard.
+6. Return ONLY a valid JSON array — no markdown, no explanation outside JSON.
+
+Output format:
+[
+  {"title":"...", "difficulty":"Easy|Medium|Hard", "topic":"...", "prompt":"Full interview question text..."},
+  ...
+]`
+    },
+    {
+      role: 'user',
+      content: `Database Schema:
+${schemaStr}
+
+Topic areas to cover (one per question):
+${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+Generate 5 interview questions JSON array:`
+    }
+  ];
+}
