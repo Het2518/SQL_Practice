@@ -123,12 +123,11 @@ export const ResultsPanel = React.memo(function ResultsPanel({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
-        padding: '10px 16px',
+        gap: 14,
+        padding: '8px 16px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--surface-2)',
         flexShrink: 0,
-        overflowX: 'auto',
         fontSize: 12
       }}>
         {/* Status Badge */}
@@ -138,40 +137,34 @@ export const ResultsPanel = React.memo(function ResultsPanel({
           </div>
         )}
         {isError && !validation && (
-          <div className="badge badge-danger">⚠️ SQL Error</div>
+          <div className="badge badge-danger">SQL Error</div>
         )}
         {isDML && !isError && (
-          <div className="badge badge-success">✅ Executed</div>
+          <div className="badge badge-success">Executed</div>
         )}
         {!isError && !validation && !isDML && (
-          <div className="badge badge-info">✔ Query Successful</div>
+          <div className="badge badge-info">Query OK</div>
         )}
 
-        {/* Execution Stats */}
+        {/* Execution Stats — no emoji, clean text */}
         {!isError && (
-          <div style={{ display: 'flex', gap: 16, color: 'var(--text-secondary)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span title="Execution Time">⏱️</span>
+          <div style={{ display: 'flex', gap: 14, color: 'var(--text-secondary)' }}>
+            <span>
               <strong style={{ color: 'var(--text)' }}>
                 {result.execTimeMs !== undefined ? `${result.execTimeMs.toFixed(1)} ms` : '< 1 ms'}
               </strong>
             </span>
             {!isDML && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span title="Rows Returned">📊</span>
+              <span>
                 <strong style={{ color: 'var(--text)' }}>{totalRows}</strong> rows
               </span>
             )}
             {!isDML && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span title="Columns">📏</span>
+              <span>
                 <strong style={{ color: 'var(--text)' }}>{result.columns.length}</strong> cols
               </span>
             )}
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span title="Executed At">🕒</span>
-              <span>{new Date().toLocaleTimeString()}</span>
-            </span>
+            <span style={{ color: 'var(--muted)' }}>{new Date().toLocaleTimeString()}</span>
           </div>
         )}
 
@@ -180,45 +173,49 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
       {/* Validation Message Box */}
       {validation && !validation.isCorrect && !isError && (
-        <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', borderBottom: '1px solid rgba(239,68,68,0.2)', color: 'var(--error)', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-          <span style={{ fontSize: '16px', lineHeight: 1 }}>⚠️</span>
-          <div style={{ flex: 1 }}>
-            {validation.message}
-          </div>
+        <div style={{ padding: '10px 16px', background: 'rgba(239,68,68,0.07)', borderBottom: '1px solid rgba(239,68,68,0.18)', color: 'var(--error)', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+          <div style={{ flex: 1 }}>{validation.message}</div>
         </div>
       )}
 
       {/* Content Area */}
       {!isError && !isDML && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          {/* Tabs Navigation */}
+          {/* Tabs Navigation — clean pill style, no icons */}
           {(!validation || validation.isCorrect) && executeQuery && sql && (
-            <div style={{ 
-              display: 'flex', 
-              borderBottom: '1px solid var(--border)', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '6px 12px',
+              gap: 4,
+              borderBottom: '1px solid var(--border)',
               background: 'var(--surface-2)',
-              gap: 24
+              flexShrink: 0,
             }}>
               {[
-                { id: 'data', label: '📊 Data' },
-                { id: 'analysis', label: '🔍 Null Analysis' },
-                { id: 'plan', label: '⏱️ Execution Plan' },
-                { id: 'theory', label: '📚 Theory' }
+                { id: 'data',     label: 'Data'           },
+                { id: 'analysis', label: 'Null Analysis'  },
+                { id: 'plan',     label: 'Execution Plan' },
+                { id: 'theory',   label: 'Theory'         },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: '12px 0',
-                    color: activeTab === tab.id ? 'var(--accent)' : 'var(--muted)',
+                    background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
+                    border: activeTab === tab.id ? 'none' : '1px solid var(--border)',
+                    padding: '4px 12px',
+                    borderRadius: 20,
+                    color: activeTab === tab.id ? '#fff' : 'var(--text-secondary)',
                     fontWeight: activeTab === tab.id ? 600 : 500,
-                    borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`,
                     cursor: 'pointer',
-                    fontSize: 13,
-                    transition: 'all 0.2s ease'
+                    fontSize: 12,
+                    transition: 'all 0.18s ease',
+                    letterSpacing: '0.01em',
+                    lineHeight: 1.6,
                   }}
+                  onMouseEnter={e => { if (activeTab !== tab.id) { e.currentTarget.style.background = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--text)'; } }}
+                  onMouseLeave={e => { if (activeTab !== tab.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
                 >
                   {tab.label}
                 </button>

@@ -1,299 +1,129 @@
-import React, {
-  useState, useRef, useCallback, useEffect
-} from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Home, Upload, Play, RotateCcw, Database, Sun, Moon,
-  ChevronRight, Trash2, Sparkles, ChevronDown, ArrowRight,
-  RefreshCw, AlertCircle
+  ChevronRight, Trash2, Sparkles, RefreshCw, AlertCircle,
+  PanelRightClose, PanelRightOpen, ArrowLeft, ListOrdered, CheckCircle2
 } from 'lucide-react';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
-import {
-  groqChat, buildSandboxQuestionsPrompt, hasGroqKey, MODEL_SMART
-} from '@/lib/groq';
+import { groqChat, buildSandboxQuestionsPrompt, hasGroqKey, MODEL_SMART } from '@/lib/groq';
 import '@/styles/sandbox.css';
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
-function sanitizeColName(name) {
-  return name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/^(\d)/, '_$1') || 'col';
+function sanitizeColName(n) {
+  return n.replace(/[^a-zA-Z0-9_]/g, '_').replace(/^(\d)/, '_$1') || 'col';
 }
-function detectType(values) {
-  const nonEmpty = values.filter(v => v !== '' && v !== null && v !== undefined);
-  if (nonEmpty.length === 0) return 'TEXT';
-  if (nonEmpty.every(v => !isNaN(Number(v)) && v.trim() !== '')) return 'REAL';
-  return 'TEXT';
+function detectType(vals) {
+  const ne = vals.filter(v => v !== '' && v != null);
+  if (!ne.length) return 'TEXT';
+  return ne.every(v => !isNaN(Number(v)) && String(v).trim() !== '') ? 'REAL' : 'TEXT';
 }
 function csvToSql(csvText, tableName) {
-  const lines = csvText.split(/\r?\n/);
-  const nonEmpty = lines.filter(l => l.trim().length > 0);
-  if (nonEmpty.length < 2) throw new Error('CSV must have a header row and at least one data row.');
-  const parseRow = (line) => {
-    const result = []; let cur = ''; let inQuotes = false;
+  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) throw new Error('CSV needs a header row + at least one data row.');
+  const parseRow = line => {
+    const res = []; let cur = ''; let q = false;
     for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { if (inQuotes && line[i+1] === '"') { cur += '"'; i++; } else inQuotes = !inQuotes; }
-      else if (ch === ',' && !inQuotes) { result.push(cur.trim()); cur = ''; }
-      else cur += ch;
+      const c = line[i];
+      if (c === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
+      else if (c === ',' && !q) { res.push(cur.trim()); cur = ''; }
+      else cur += c;
     }
-    result.push(cur.trim()); return result;
+    res.push(cur.trim()); return res;
   };
-  const headers = parseRow(nonEmpty[0]).map(sanitizeColName);
-  const dataRows = nonEmpty.slice(1).map(parseRow);
+  const headers = parseRow(lines[0]).map(sanitizeColName);
+  const dataRows = lines.slice(1).map(parseRow);
   const types = headers.map((_, ci) => detectType(dataRows.map(r => r[ci] ?? '')));
-  const safeName = sanitizeColName(tableName);
-  const colDefs = headers.map((h, i) => `"${h}" ${types[i]}`).join(', ');
-  let sql = `CREATE TABLE IF NOT EXISTS "${safeName}" (${colDefs});\n`;
-  const BATCH = 500;
-  for (let i = 0; i < dataRows.length; i += BATCH) {
-    const batch = dataRows.slice(i, i + BATCH);
-    const vals = batch.map(row => {
-      const cells = headers.map((_, ci) => {
-        const raw = (row[ci] ?? '').trim();
-        if (raw === '') return 'NULL';
-        if (types[ci] === 'REAL' && !isNaN(Number(raw))) return raw;
-        return `'${raw.replace(/'/g, "''")}'`;
-      });
-      return `(${cells.join(', ')})`;
-    });
-    sql += `INSERT INTO "${safeName}" (${headers.map(h => `"${h}"`).join(', ')}) VALUES ${vals.join(', ')};\n`;
+  const safe = sanitizeColName(tableName);
+  let sql = `CREATE TABLE IF NOT EXISTS "${safe}" (${headers.map((h, i) => `"${h}" ${types[i]}`).join(', ')});\n`;
+  for (let i = 0; i < dataRows.length; i += 500) {
+    const batch = dataRows.slice(i, i + 500);
+    const vals = batch.map(row => `(${headers.map((_, ci) => {
+      const raw = (row[ci] ?? '').trim();
+      if (!raw) return 'NULL';
+      if (types[ci] === 'REAL' && !isNaN(Number(raw))) return raw;
+      return `'${raw.replace(/'/g, "''")}'`;
+    }).join(', ')})`);
+    sql += `INSERT INTO "${safe}" (${headers.map(h => `"${h}"`).join(', ')}) VALUES ${vals.join(', ')};\n`;
   }
   return sql;
 }
 
-// ─── AI Questions Panel ───────────────────────────────────────────────────────
-function AiQuestionsPanel({ schema, sampleData, onSelectQuestion }) {
-  const [questions, setQuestions]   = useState([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState(null);
-  const [batch, setBatch]           = useState(0);
-  const [collapsed, setCollapsed]   = useState(false);
-  const hasKey = hasGroqKey();
-
-  const generate = useCallback(async (batchIndex) => {
-    if (!schema || schema.length === 0) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const messages = buildSandboxQuestionsPrompt({ schema, sampleData, batch: batchIndex });
-      // use MODEL_SMART for better question quality; useCache=false for variety
-      const raw = await groqChat(messages, MODEL_SMART, 1200, false);
-      // Strip markdown fences if present
-      const cleaned = raw.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
-      if (!Array.isArray(parsed)) throw new Error('Unexpected response format.');
-      setQuestions(parsed.slice(0, 5));
-      setBatch(batchIndex + 1);
-    } catch (err) {
-      if (err.message === 'NO_KEY') {
-        setError('no_key');
-      } else if (err.message === 'RATE_LIMIT') {
-        setError('rate_limit');
-      } else {
-        setError(err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [schema, sampleData]);
-
-  // Auto-generate on first mount when schema is ready and key exists
-  useEffect(() => {
-    if (schema && schema.length > 0 && hasKey && questions.length === 0 && !loading) {
-      generate(0);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema]);
-
-  const diffColor = (d) => {
-    if (d === 'Easy') return 'Easy';
-    if (d === 'Hard') return 'Hard';
-    return 'Medium';
-  };
-
-  return (
-    <div className={`ai-questions-panel${collapsed ? ' collapsed' : ''}`}>
-
-      {/* Header — acts as collapse toggle */}
-      <div className="ai-questions-header" onClick={() => setCollapsed(c => !c)}>
-        <Sparkles size={13} color="#7c3aed" />
-        <div className="ai-questions-header-title">
-          AI Interview Questions
-          <span className="ai-questions-header-badge">MAANG</span>
-          {loading && <RotateCcw size={11} style={{ animation: 'spin 0.8s linear infinite', color: 'var(--muted)' }} />}
-        </div>
-        {!loading && !collapsed && questions.length > 0 && (
-          <button
-            className="btn btn-ghost"
-            style={{ fontSize: 11, padding: '3px 8px', gap: 4, flexShrink: 0 }}
-            onClick={e => { e.stopPropagation(); generate(batch); }}
-          >
-            <RefreshCw size={10} /> 5 More
-          </button>
-        )}
-        <ChevronDown
-          size={13}
-          color="var(--muted)"
-          style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}
-        />
-      </div>
-
-      {/* Body */}
-      {!collapsed && (
-        <>
-          <div className="ai-questions-body">
-
-            {/* No Groq key */}
-            {!hasKey && (
-              <div className="ai-no-key-notice">
-                <AlertCircle size={16} style={{ margin: '0 auto 8px', display: 'block', color: 'var(--warning)' }} />
-                <strong>Groq API key not found.</strong><br />
-                Add your key in <strong>Settings → Groq API Key</strong> to enable AI-generated questions.
-              </div>
-            )}
-
-            {/* Loading skeletons */}
-            {hasKey && loading && [1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="ai-skeleton-row" style={{ animationDelay: `${i * 0.06}s` }}>
-                <div className="ai-skeleton-line" style={{ width: '30%' }} />
-                <div className="ai-skeleton-line" style={{ width: '80%' }} />
-              </div>
-            ))}
-
-            {/* Error states */}
-            {hasKey && !loading && error && (
-              <div className="ai-no-key-notice">
-                {error === 'rate_limit' && (
-                  <>⏳ <strong>Rate limit hit.</strong> Wait a few seconds then try again.</>
-                )}
-                {error === 'no_key' && (
-                  <>🔑 Add your <strong>Groq API key</strong> in Settings to use AI questions.</>
-                )}
-                {error !== 'rate_limit' && error !== 'no_key' && (
-                  <>❌ {error}</>
-                )}
-                <br />
-                <button
-                  className="btn btn-ghost"
-                  style={{ margin: '8px auto 0', display: 'flex', fontSize: 11 }}
-                  onClick={() => generate(batch)}
-                >
-                  Try again
-                </button>
-              </div>
-            )}
-
-            {/* Questions list */}
-            {hasKey && !loading && !error && questions.length > 0 && questions.map((q, i) => (
-              <div
-                key={`${batch}-${i}`}
-                className="ai-question-row"
-                style={{ animationDelay: `${i * 0.05}s` }}
-                onClick={() => onSelectQuestion(q)}
-                title="Click to load into editor"
-              >
-                <span className="ai-question-num">{i + 1}</span>
-                <div className="ai-question-meta">
-                  <div className="ai-question-tags">
-                    <span className={`ai-diff-badge ${diffColor(q.difficulty)}`}>
-                      {q.difficulty}
-                    </span>
-                    <span className="ai-topic-tag">{q.topic}</span>
-                  </div>
-                  <div className="ai-question-title">{q.title}</div>
-                </div>
-                <ArrowRight size={13} className="ai-question-arrow" />
-              </div>
-            ))}
-
-            {/* Empty state when key exists but nothing generated yet */}
-            {hasKey && !loading && !error && questions.length === 0 && (
-              <div className="ai-no-key-notice">
-                <Sparkles size={16} style={{ margin: '0 auto 8px', display: 'block', color: '#7c3aed' }} />
-                Click <strong>Generate</strong> to get 5 MAANG-style questions based on your dataset.
-                <br />
-                <button
-                  className="btn btn-primary"
-                  style={{ margin: '10px auto 0', display: 'flex', fontSize: 12, gap: 6 }}
-                  onClick={() => generate(0)}
-                >
-                  <Sparkles size={12} /> Generate 5 Questions
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          {hasKey && questions.length > 0 && !loading && (
-            <div className="ai-questions-footer">
-              <span className="ai-questions-footer-note">
-                <Sparkles size={10} color="#7c3aed" />
-                Powered by Groq · Click any question to load into editor
-              </span>
-              <button
-                className="btn btn-ghost"
-                style={{ fontSize: 11, padding: '3px 10px', gap: 4 }}
-                onClick={() => generate(batch)}
-              >
-                <RefreshCw size={10} /> Generate 5 More
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
+// ─── Difficulty badge ─────────────────────────────────────────────────────────
+const DIFF = {
+  Easy:   { bg: 'rgba(0,184,163,0.12)',  color: '#00b8a3' },
+  Medium: { bg: 'rgba(255,192,30,0.12)', color: '#ffc01e' },
+  Hard:   { bg: 'rgba(255,55,95,0.12)',  color: '#ff375f' },
+};
+function DiffBadge({ d }) {
+  const s = DIFF[d] || DIFF.Medium;
+  return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 4, background: s.bg, color: s.color }}>{d}</span>;
 }
 
-// ─── Schema Sidebar (with AI panel at bottom) ─────────────────────────────────
-function SandboxSchemaSidebar({ schema, sampleData, onInsert, onSelectQuestion }) {
+// ─── LEFT — Schema Sidebar ─────────────────────────────────────────────────────
+function SchemaSidebar({ schema, onInsert }) {
   const [expanded, setExpanded] = useState(new Set());
-
-  const toggle = (name) =>
-    setExpanded(prev => {
-      const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
-      return next;
-    });
+  const toggle = name => setExpanded(prev => {
+    const s = new Set(prev); s.has(name) ? s.delete(name) : s.add(name); return s;
+  });
 
   return (
-    <aside className="sandbox-sidebar">
-      <div className="sandbox-sidebar-header">
-        <div className="sandbox-sidebar-title">Schema Explorer</div>
-        <div className="sandbox-sidebar-sub">
-          {schema ? `${schema.length} table${schema.length !== 1 ? 's' : ''} • click to insert` : 'No dataset loaded'}
+    <aside className="sb-schema-root">
+      {/* Header */}
+      <div className="sb-schema-header">
+        <div className="sb-schema-name">
+          <Database size={14} color="var(--primary)" />
+          <span>Dataset</span>
         </div>
+        {schema && (
+          <span className="sb-schema-count">{schema.length} table{schema.length !== 1 ? 's' : ''}</span>
+        )}
       </div>
 
-      <div className="sandbox-sidebar-body">
-        {(!schema || schema.length === 0) && (
-          <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
-            Upload a file to see the schema here.
+      {/* Tab row (matches your platform) */}
+      <div className="sb-schema-tabs">
+        <button className="sb-schema-tab sb-schema-tab-active">Schema</button>
+      </div>
+
+      {/* Tables */}
+      <div className="sb-schema-body">
+        {!schema?.length && (
+          <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--muted)', fontSize: 12, lineHeight: 1.6 }}>
+            Upload a CSV or SQLite file to explore schema here.
           </div>
         )}
-        {schema && schema.map(table => {
+
+        {schema?.length > 0 && (
+          <div style={{ padding: '8px 12px 4px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Tables
+          </div>
+        )}
+
+        {schema?.map(table => {
           const isOpen = expanded.has(table.name);
           return (
-            <div key={table.name} className="sandbox-table-item">
-              <div className="sandbox-table-header" onClick={() => toggle(table.name)}>
-                <span className="sandbox-table-icon">🗂️</span>
-                <span className="sandbox-table-name">{table.name}</span>
-                <span className="sandbox-table-count">{(table.rowCount || 0).toLocaleString()} rows</span>
-                <ChevronRight size={12} className={`sandbox-table-chevron${isOpen ? ' open' : ''}`} />
+            <div key={table.name} className="sb-table-group">
+              <div className="sb-table-row" onClick={() => toggle(table.name)}>
+                <ChevronRight size={12} className={`sb-table-chevron${isOpen ? ' open' : ''}`} />
+                <span className="sb-table-name">{table.name}</span>
+                <span className="sb-table-badge">{(table.rowCount || 0).toLocaleString()} rows</span>
               </div>
               {isOpen && (
-                <div className="sandbox-columns-list">
+                <div className="sb-columns">
                   {table.columns.map(col => (
                     <div
                       key={col.name}
-                      className="sandbox-column-item"
+                      className="sb-col-row"
                       onClick={() => onInsert(col.name)}
-                      title={`Click to insert "${col.name}" into editor`}
+                      title={`Insert "${col.name}"`}
                     >
-                      {col.pk && <span className="sandbox-column-pk">🔑</span>}
-                      <span>{col.name}</span>
-                      <span className="sandbox-column-type">{col.type}</span>
+                      {col.pk
+                        ? <span className="sb-col-icon sb-col-pk">PK</span>
+                        : <span className="sb-col-icon sb-col-field">○</span>}
+                      <span className="sb-col-name">{col.name}</span>
+                      <span className="sb-col-type">{col.type}</span>
                     </div>
                   ))}
                 </div>
@@ -302,16 +132,223 @@ function SandboxSchemaSidebar({ schema, sampleData, onInsert, onSelectQuestion }
           );
         })}
       </div>
-
-      {/* AI Questions Panel — pinned at sidebar bottom */}
-      {schema && schema.length > 0 && (
-        <AiQuestionsPanel
-          schema={schema}
-          sampleData={sampleData}
-          onSelectQuestion={onSelectQuestion}
-        />
-      )}
     </aside>
+  );
+}
+
+// ─── RIGHT — AI Questions Panel ───────────────────────────────────────────────
+function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle }) {
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState(null);
+  const [batch, setBatch]         = useState(0);
+  const [selected, setSelected]   = useState(null);   // null = list; object = detail
+  const [qIndex, setQIndex]       = useState(0);      // current question index when in detail
+  const hasKey = hasGroqKey();
+
+  const generate = useCallback(async (batchIndex) => {
+    if (!schema?.length) return;
+    setLoading(true); setError(null);
+    try {
+      const messages = buildSandboxQuestionsPrompt({ schema, sampleData, batch: batchIndex });
+      const raw = await groqChat(messages, MODEL_SMART, 1200, false);
+      const cleaned = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      if (!Array.isArray(parsed)) throw new Error('Bad response.');
+      setQuestions(parsed.slice(0, 5));
+      setBatch(batchIndex + 1);
+      setSelected(null);
+    } catch (err) {
+      setError(err.message === 'NO_KEY' ? 'no_key' : err.message === 'RATE_LIMIT' ? 'rate_limit' : err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [schema, sampleData]);
+
+  useEffect(() => {
+    if (schema?.length && hasKey && questions.length === 0 && !loading) generate(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schema]);
+
+  const openQuestion = (q, idx) => {
+    setSelected(q);
+    setQIndex(idx);
+    onLoadQuestion(q);
+  };
+
+  const goTo = (delta) => {
+    const next = qIndex + delta;
+    if (next >= 0 && next < questions.length) openQuestion(questions[next], next);
+  };
+
+  // ── Collapsed ──────────────────────────────────────────────────────────
+  if (!visible) {
+    return (
+      <div className="qp-root qp-collapsed">
+        <button className="qp-toggle" onClick={onToggle} title="Show Questions">
+          <PanelRightOpen size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  // ── Detail view ────────────────────────────────────────────────────────
+  if (selected) {
+    return (
+      <div className="qp-root">
+        {/* Header row: All Questions nav */}
+        <div className="qp-header">
+          <button className="qp-all-btn" onClick={() => setSelected(null)}>
+            <ListOrdered size={12} /> All Questions
+          </button>
+          <div className="qp-nav">
+            <button className="qp-nav-btn" onClick={() => goTo(-1)} disabled={qIndex <= 0}>←</button>
+            <span className="qp-nav-pos">{qIndex + 1} / {questions.length}</span>
+            <button className="qp-nav-btn" onClick={() => goTo(1)} disabled={qIndex >= questions.length - 1}>→</button>
+          </div>
+          <button className="qp-toggle" onClick={onToggle} title="Hide panel">
+            <PanelRightClose size={13} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="qp-detail-body">
+          {/* Badges */}
+          <div className="qp-detail-badges">
+            <DiffBadge d={selected.difficulty} />
+            <span className="qp-detail-status">○ Unsolved</span>
+          </div>
+
+          {/* Prompt */}
+          <div className="qp-detail-text">
+            {(selected.prompt || '').split('\n').map((line, i) => (
+              <p key={i} style={{ margin: '0 0 10px' }}>{line}</p>
+            ))}
+          </div>
+
+          {/* Topic tags */}
+          <div className="qp-detail-tags">
+            <span className="qp-tag">{selected.topic}</span>
+            <span className="qp-tag qp-tag-maang">MAANG</span>
+          </div>
+
+          {/* Hint box */}
+          <div className="qp-hint-box">
+            <div className="qp-hint-label">
+              <Sparkles size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> Hint
+            </div>
+            <div className="qp-hint-text">
+              Write SQL in the editor. Press <kbd>Ctrl+Enter</kbd> to run.
+            </div>
+          </div>
+        </div>
+
+        {/* Powered by */}
+        <div className="qp-footer">
+          <span><Sparkles size={9} color="#7c3aed" /> Powered by Groq AI</span>
+          <button className="qp-more-btn" onClick={() => { setSelected(null); generate(batch); }}>
+            <RefreshCw size={10} /> Next 5
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── List view ──────────────────────────────────────────────────────────
+  return (
+    <div className="qp-root">
+      {/* Header */}
+      <div className="qp-header">
+        <span className="qp-header-title">
+          <Sparkles size={12} color="#7c3aed" /> AI Questions
+          <span className="qp-header-badge">MAANG</span>
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {!loading && questions.length > 0 && (
+            <button className="qp-more-btn" onClick={() => generate(batch)}>
+              <RefreshCw size={10} /> Next 5
+            </button>
+          )}
+          {loading && <RotateCcw size={12} style={{ animation: 'spin 0.8s linear infinite', color: 'var(--muted)' }} />}
+          <button className="qp-toggle" onClick={onToggle} title="Hide panel">
+            <PanelRightClose size={13} />
+          </button>
+        </div>
+      </div>
+
+      {/* List body */}
+      <div className="qp-list-body">
+
+        {/* No key */}
+        {!hasKey && (
+          <div className="qp-notice">
+            <AlertCircle size={15} color="var(--warning)" />
+            <div>Add your <strong>Groq API key</strong> in Settings to enable AI questions.</div>
+          </div>
+        )}
+
+        {/* Skeletons */}
+        {hasKey && loading && Array.from({ length: 5 }, (_, i) => (
+          <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ height: 9, borderRadius: 4, width: '30%', marginBottom: 8, background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)', backgroundSize: '200%', animation: `shimmer 1.4s infinite ${i * 0.07}s` }} />
+            <div style={{ height: 13, borderRadius: 4, width: '80%', background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)', backgroundSize: '200%', animation: `shimmer 1.4s infinite ${i * 0.1}s` }} />
+          </div>
+        ))}
+
+        {/* Error */}
+        {hasKey && !loading && error && (
+          <div className="qp-notice qp-notice-error">
+            <AlertCircle size={14} />
+            <div>
+              {error === 'rate_limit' ? 'Rate limit — wait a moment.' : error === 'no_key' ? 'Add Groq API key.' : error}
+              <br /><button className="qp-retry-btn" onClick={() => generate(batch)}>↺ Retry</button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty */}
+        {hasKey && !loading && !error && questions.length === 0 && (
+          <div className="qp-empty">
+            <Sparkles size={20} color="#7c3aed" />
+            <div style={{ fontWeight: 600 }}>No questions yet</div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Generate 5 MAANG-style SQL questions for your dataset.</div>
+            <button className="qp-gen-btn" onClick={() => generate(0)}>
+              <Sparkles size={12} /> Generate Questions
+            </button>
+          </div>
+        )}
+
+        {/* Question rows */}
+        {hasKey && !loading && !error && questions.map((q, i) => (
+          <div
+            key={`${batch}-${i}`}
+            className="qp-row"
+            style={{ animationDelay: `${i * 0.05}s` }}
+            onClick={() => openQuestion(q, i)}
+          >
+            <div className="qp-row-num">{i + 1}.</div>
+            <div className="qp-row-body">
+              <div className="qp-row-title">{q.title}</div>
+              <div className="qp-row-meta">
+                <DiffBadge d={q.difficulty} />
+                <span className="qp-row-topic">{q.topic}</span>
+              </div>
+            </div>
+            <ChevronRight size={14} className="qp-row-arrow" />
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      {hasKey && questions.length > 0 && !loading && (
+        <div className="qp-footer">
+          <span><Sparkles size={9} color="#7c3aed" /> Groq AI · Click a question to load</span>
+          <button className="qp-more-btn" onClick={() => generate(batch)}>
+            <RefreshCw size={10} /> 5 More
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -319,43 +356,34 @@ function SandboxSchemaSidebar({ schema, sampleData, onInsert, onSelectQuestion }
 function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
+  const onDrop = useCallback(e => { e.preventDefault(); setDragOver(false); const f = Array.from(e.dataTransfer.files); if (f.length) onFiles(f); }, [onFiles]);
+  const onDragOver = useCallback(e => { e.preventDefault(); setDragOver(true); }, []);
+  const onChange = useCallback(e => { const f = Array.from(e.target.files); if (f.length) onFiles(f); e.target.value = ''; }, [onFiles]);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault(); setDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length) onFiles(files);
-  }, [onFiles]);
-
-  const handleDragOver  = useCallback((e) => { e.preventDefault(); setDragOver(true); }, []);
-  const handleDragLeave = useCallback(() => setDragOver(false), []);
-  const handleInputChange = useCallback((e) => {
-    const files = Array.from(e.target.files);
-    if (files.length) onFiles(files);
-    e.target.value = '';
-  }, [onFiles]);
-
-  // Compact bar (after dataset loaded)
-  if (schema && schema.length > 0) {
+  // Compact bar after load
+  if (schema?.length) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
+      <div className="sb-topbar">
+        <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
           {schema.map(t => (
             <span key={t.name} className="schema-table-chip">
-              🗂️ {t.name}
+              <Database size={12} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'text-bottom' }} /> {t.name}
               <span className="schema-table-chip-count">{(t.rowCount || 0).toLocaleString()} rows</span>
             </span>
           ))}
+          {uploadStatus?.type === 'success' && (
+            <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <CheckCircle2 size={12} /> Loaded
+            </span>
+          )}
         </div>
-        {uploadStatus && uploadStatus.type === 'success' && (
-          <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>✅ {uploadStatus.message}</span>
-        )}
-        <button className="btn btn-ghost" onClick={() => inputRef.current?.click()} style={{ gap: 5, flexShrink: 0, fontSize: 12 }}>
-          <Upload size={12} /> Add more
+        <button className="btn btn-ghost" onClick={() => inputRef.current?.click()} style={{ gap: 5, fontSize: 11 }}>
+          <Upload size={11} /> Add
         </button>
-        <button className="btn btn-ghost" onClick={onReset} style={{ gap: 5, color: 'var(--error)', flexShrink: 0, fontSize: 12 }}>
-          <Trash2 size={12} /> Clear
+        <button className="btn btn-ghost" onClick={onReset} style={{ gap: 5, color: 'var(--error)', fontSize: 11 }}>
+          <Trash2 size={11} /> Clear
         </button>
-        <input ref={inputRef} type="file" accept=".csv,.sqlite,.db" multiple style={{ display: 'none' }} onChange={handleInputChange} />
+        <input ref={inputRef} type="file" accept=".csv,.sqlite,.db" multiple style={{ display: 'none' }} onChange={onChange} />
       </div>
     );
   }
@@ -364,59 +392,33 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
   return (
     <div className="sandbox-upload-overlay">
       <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text)', marginBottom: 8, letterSpacing: '-0.02em' }}>
-          Custom Dataset Practice
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.7, maxWidth: 480, margin: '0 auto' }}>
-          Upload your own CSV or SQLite files. Practice SQL on your data with schema-aware autocomplete
-          and <span style={{ color: '#7c3aed', fontWeight: 700 }}>AI-generated MAANG interview questions</span>.
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Custom Dataset Practice</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, maxWidth: 460, margin: '0 auto' }}>
+          Upload CSV or SQLite files. Practice SQL with <span style={{ color: '#7c3aed', fontWeight: 700 }}>AI-generated MAANG interview questions</span>.
         </p>
       </div>
-
       <div
         className={`upload-zone${dragOver ? ' drag-over' : ''}`}
-        onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}
+        onDrop={onDrop} onDragOver={onDragOver} onDragLeave={() => setDragOver(false)}
         onClick={() => !uploading && inputRef.current?.click()}
       >
-        <input ref={inputRef} type="file" accept=".csv,.sqlite,.db" multiple style={{ display: 'none' }} onChange={handleInputChange} />
+        <input ref={inputRef} type="file" accept=".csv,.sqlite,.db" multiple style={{ display: 'none' }} onChange={onChange} />
         <div className="upload-icon">
-          {uploading ? <RotateCcw size={28} color="var(--primary)" style={{ animation: 'spin 0.8s linear infinite' }} /> : '📁'}
+          {uploading ? <RotateCcw size={26} color="var(--primary)" style={{ animation: 'spin 0.8s linear infinite' }} /> : <Upload size={26} color="var(--primary)" />}
         </div>
-        <div className="upload-title">
-          {dragOver ? 'Drop it!' : uploading ? 'Processing...' : 'Drop your dataset here'}
-        </div>
-        <div className="upload-subtitle">
-          {uploading ? 'Parsing your file and building the database...' : 'or click to browse your computer'}
-        </div>
-        <div className="upload-formats">
-          {['.csv', '.sqlite', '.db'].map(fmt => (
-            <span key={fmt} className="upload-format-tag">{fmt}</span>
-          ))}
-        </div>
-        {!uploading && <div className="upload-cta">↑ Upload multiple CSVs — each becomes a table you can JOIN</div>}
-        {uploading && (
-          <div className="upload-progress-bar" style={{ width: '80%' }}>
-            <div className="upload-progress-fill" style={{ width: '100%' }} />
-          </div>
-        )}
+        <div className="upload-title">{dragOver ? 'Drop it!' : uploading ? 'Processing...' : 'Drop your dataset here'}</div>
+        <div className="upload-subtitle">{uploading ? 'Parsing files...' : 'or click to browse · .csv .sqlite .db'}</div>
+        {!uploading && <div className="upload-cta">Multiple CSVs = multiple tables you can JOIN</div>}
+        {uploading && <div className="upload-progress-bar" style={{ width: '80%' }}><div className="upload-progress-fill" style={{ width: '100%' }} /></div>}
       </div>
-
       {uploadStatus && (
-        <div className={`upload-status ${uploadStatus.type}`}>
-          {uploadStatus.type === 'error' ? '❌' : uploadStatus.type === 'success' ? '✅' : '⏳'}
-          {uploadStatus.message}
+        <div className={`upload-status ${uploadStatus.type}`} style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+          {uploadStatus.type === 'error' ? <AlertCircle size={14} /> : <RotateCcw size={14} className="spin" />} {uploadStatus.message}
         </div>
       )}
-
-      {/* AI teaser */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px',
-        background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(79,70,229,0.05))',
-        border: '1px solid rgba(124,58,237,0.2)', borderRadius: 12, maxWidth: 420,
-        fontSize: 13, color: 'var(--text-secondary)',
-      }}>
-        <Sparkles size={16} color="#7c3aed" style={{ flexShrink: 0 }} />
-        <span>After upload, <strong style={{ color: 'var(--text)' }}>AI will auto-generate 5 MAANG-style questions</strong> based on your schema.</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 10, maxWidth: 400, fontSize: 12, color: 'var(--text-secondary)' }}>
+        <Sparkles size={14} color="#7c3aed" style={{ flexShrink: 0 }} />
+        <span>After upload, AI generates <strong style={{ color: 'var(--text)' }}>5 MAANG-style questions</strong> for your schema.</span>
       </div>
     </div>
   );
@@ -425,115 +427,80 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function CustomDatasetPage({ settings, onToggleDark }) {
   const navigate = useNavigate();
-  const [schema, setSchema]           = useState(null);
-  const [sampleData, setSampleData]   = useState({});  // {tableName: [[row]…]}
-  const [sql, setSql]                 = useState('-- Write your SQL here\nSELECT * FROM your_table LIMIT 10;');
-  const [result, setResult]           = useState(null);
-  const [validation, setValidation]   = useState(null);
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [uploading, setUploading]     = useState(false);
-  const [uploadStatus, setUploadStatus] = useState(null);
-  const [editorHeightPct, setEditorHeightPct] = useState(50);
-  const [isDragging, setIsDragging]   = useState(false);
+  const [schema, setSchema]               = useState(null);
+  const [sampleData, setSampleData]       = useState({});
+  const [sql, setSql]                     = useState('-- Write your SQL here\nSELECT * FROM your_table LIMIT 10;');
+  const [result, setResult]               = useState(null);
+  const [validation, setValidation]       = useState(null);
+  const [isExecuting, setIsExecuting]     = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [uploadStatus, setUploadStatus]   = useState(null);
+  const [editorHeightPct, setEditorHeightPct] = useState(55);
+  const [isDragging, setIsDragging]       = useState(false);
+  const [qPanelVisible, setQPanelVisible] = useState(true);
   const workspaceRef = useRef(null);
 
   const { executeQuery, initWithBinary, initWithSql, getSchema } = useSqlDatabase(null);
 
-  // ── Resizable panes ──────────────────────────────────────────────────────
+  // Resizable editor/results
   useEffect(() => {
-    const onMove = (e) => {
+    const onMove = e => {
       if (!isDragging || !workspaceRef.current) return;
-      const rect = workspaceRef.current.getBoundingClientRect();
-      const pct = ((e.clientY - rect.top) / rect.height) * 100;
-      setEditorHeightPct(Math.max(20, Math.min(80, pct)));
+      const r = workspaceRef.current.getBoundingClientRect();
+      setEditorHeightPct(Math.max(20, Math.min(80, ((e.clientY - r.top) / r.height) * 100)));
     };
     const onUp = () => setIsDragging(false);
-    if (isDragging) {
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-      document.body.style.userSelect = 'none';
-    } else {
-      document.body.style.userSelect = '';
-    }
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
+    if (isDragging) { document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); document.body.style.userSelect = 'none'; }
+    else document.body.style.userSelect = '';
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, [isDragging]);
 
-  // ── Fetch sample rows after schema loads (for AI prompt quality) ─────────
-  const fetchSampleData = useCallback(async (tables) => {
-    const samples = {};
+  // Sample data for AI
+  const fetchSampleData = useCallback(async tables => {
+    const s = {};
     for (const t of tables) {
       try {
-        const res = await executeQuery(`SELECT * FROM "${t.name}" LIMIT 3`);
-        if (res && res.columns && res.rows) {
-          samples[t.name] = res.rows.map(row =>
-            Object.fromEntries(res.columns.map((col, i) => [col, row[i]]))
-          );
-        }
-      } catch { /* skip */ }
+        const r = await executeQuery(`SELECT * FROM "${t.name}" LIMIT 3`);
+        if (r?.columns && r?.rows) s[t.name] = r.rows.map(row => Object.fromEntries(r.columns.map((c, i) => [c, row[i]])));
+      } catch { /**/ }
     }
-    setSampleData(samples);
+    setSampleData(s);
   }, [executeQuery]);
 
-  // ── File processing ──────────────────────────────────────────────────────
-  const processFiles = useCallback(async (files) => {
+  // File processing
+  const processFiles = useCallback(async files => {
     setUploading(true);
     setUploadStatus({ type: 'loading', message: 'Parsing files...' });
     setSampleData({});
     try {
-      const csvFiles    = files.filter(f => f.name.endsWith('.csv'));
-      const sqliteFiles = files.filter(f => f.name.endsWith('.sqlite') || f.name.endsWith('.db'));
-
-      if (sqliteFiles.length > 1)
-        throw new Error('Only one SQLite file at a time. Use multiple CSVs for JOINs.');
-      if (sqliteFiles.length === 1 && csvFiles.length > 0)
-        throw new Error('Cannot mix .sqlite and .csv files.');
-
-      if (sqliteFiles.length === 1) {
-        const buf = await sqliteFiles[0].arrayBuffer();
-        await initWithBinary(new Uint8Array(buf));
-      } else if (csvFiles.length > 0) {
-        let combinedSql = '';
-        for (const f of csvFiles) {
-          const text = await f.text();
-          const tableName = f.name.replace(/\.csv$/i, '');
+      const csvs    = files.filter(f => f.name.endsWith('.csv'));
+      const sqlites = files.filter(f => f.name.endsWith('.sqlite') || f.name.endsWith('.db'));
+      if (sqlites.length > 1) throw new Error('Only one SQLite file at a time.');
+      if (sqlites.length === 1 && csvs.length > 0) throw new Error('Cannot mix .sqlite and .csv.');
+      if (sqlites.length === 1) {
+        await initWithBinary(new Uint8Array(await sqlites[0].arrayBuffer()));
+      } else if (csvs.length > 0) {
+        let combined = '';
+        for (const f of csvs) {
           setUploadStatus({ type: 'loading', message: `Parsing ${f.name}...` });
-          combinedSql += csvToSql(text, tableName) + '\n';
+          combined += csvToSql(await f.text(), f.name.replace(/\.csv$/i, '')) + '\n';
         }
-        await initWithSql(combinedSql);
-      } else {
-        throw new Error('Please upload at least one .csv or .sqlite file.');
-      }
+        await initWithSql(combined);
+      } else throw new Error('Upload at least one .csv or .sqlite file.');
 
-      const schemaData = await getSchema();
-      const tables = schemaData?.tables || [];
-      if (tables.length === 0)
-        throw new Error('No tables found. Check your file has data.');
-
+      const tables = (await getSchema())?.tables || [];
+      if (!tables.length) throw new Error('No tables found. Check your file.');
       setSchema(tables);
-      const firstTable = tables[0];
-      setSql(`-- ✅ Dataset loaded! ${tables.length} table${tables.length > 1 ? 's' : ''} detected.\n-- 💡 Autocomplete ready (Ctrl+Space) · AI questions generating below ↙\n\nSELECT *\nFROM "${firstTable.name}"\nLIMIT 10;`);
-
-      const totalRows = tables.reduce((a, t) => a + (t.rowCount || 0), 0);
-      setUploadStatus({
-        type: 'success',
-        message: `${tables.length} table${tables.length > 1 ? 's' : ''} · ${totalRows.toLocaleString()} rows`
-      });
-
-      // Fetch sample data for AI prompt (non-blocking)
+      setSql(`-- ✅ ${tables.length} table${tables.length > 1 ? 's' : ''} loaded.\n-- AI questions are generating in the right panel →\n\nSELECT *\nFROM "${tables[0].name}"\nLIMIT 10;`);
+      const total = tables.reduce((a, t) => a + (t.rowCount || 0), 0);
+      setUploadStatus({ type: 'success', message: `${tables.length} table${tables.length > 1 ? 's' : ''} · ${total.toLocaleString()} rows` });
       fetchSampleData(tables);
-
     } catch (err) {
       setUploadStatus({ type: 'error', message: err.message });
-      console.error('Upload error:', err);
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   }, [initWithBinary, initWithSql, getSchema, fetchSampleData]);
 
-  // ── Run query ────────────────────────────────────────────────────────────
+  // Run query
   const handleRun = useCallback(async () => {
     if (!sql.trim() || !schema) return;
     setIsExecuting(true);
@@ -541,119 +508,100 @@ export function CustomDatasetPage({ settings, onToggleDark }) {
       const res = await executeQuery(sql);
       setResult(res);
       setValidation(res.error ? { isCorrect: false, message: res.error } : null);
-    } finally {
-      setIsExecuting(false);
-    }
+    } finally { setIsExecuting(false); }
   }, [sql, executeQuery, schema]);
 
-  // Ctrl+Enter shortcut
   useEffect(() => {
-    const handle = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleRun(); }
-    };
-    window.addEventListener('keydown', handle);
-    return () => window.removeEventListener('keydown', handle);
+    const h = e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleRun(); } };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
   }, [handleRun]);
 
-  // ── Load AI question into editor ─────────────────────────────────────────
-  const handleSelectAiQuestion = useCallback((q) => {
+  // Load AI question
+  const handleLoadQuestion = useCallback(q => {
     setSql(
-      `-- 🤖 MAANG Interview Question: ${q.title}\n` +
-      `-- Difficulty: ${q.difficulty} | Topic: ${q.topic}\n` +
+      `-- ────────────────────────────────────────────────\n` +
+      `--  ${q.title}\n` +
+      `--  ${q.difficulty}  ·  ${q.topic}\n` +
+      `-- ────────────────────────────────────────────────\n` +
       `--\n` +
-      `-- ${q.prompt.replace(/\n/g, '\n-- ')}\n\n` +
-      `-- Write your SQL solution below:\n\n`
+      `-- ${(q.prompt || '').replace(/\n/g, '\n-- ')}\n\n`
     );
-    setResult(null);
-    setValidation(null);
-  }, []);
-
-  const handleInsertColumn = useCallback((colName) => {
-    setSql(prev => prev + colName);
+    setResult(null); setValidation(null);
   }, []);
 
   const handleReset = useCallback(() => {
-    setSchema(null); setSampleData({});
-    setResult(null); setValidation(null); setUploadStatus(null);
+    setSchema(null); setSampleData({}); setResult(null);
+    setValidation(null); setUploadStatus(null);
     setSql('-- Write your SQL here\nSELECT * FROM your_table LIMIT 10;');
   }, []);
 
-  const darkMode    = settings?.darkMode ?? false;
-  const hasDataset  = schema && schema.length > 0;
+  const darkMode = settings?.darkMode ?? false;
+  const hasData  = schema?.length > 0;
 
   return (
     <div className="sandbox-root" data-theme={darkMode ? 'dark' : 'light'}>
 
       {/* ── Nav ── */}
       <nav className="sandbox-nav">
-        <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5 }}>
-          <Home size={14} /> Home
+        <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5, fontSize: 12 }}>
+          <Home size={13} /> Home
         </button>
 
-        <div className="sandbox-nav-title">
-          <Database size={15} color="var(--primary)" />
-          Custom Dataset Practice
-          <span className="sandbox-nav-badge">✨ Sandbox</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Database size={14} color="var(--primary)" />
+          <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Custom Dataset</span>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'var(--primary-muted)', color: 'var(--primary)' }}>Sandbox</span>
         </div>
 
-        <div style={{ flex: 1 }} />
+        {/* Centered Run button */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {hasData && (
+            <button
+              id="sandbox-run-btn"
+              className="btn btn-primary"
+              onClick={handleRun}
+              disabled={isExecuting || !sql.trim()}
+              style={{ gap: 8, minWidth: 150, justifyContent: 'center', fontWeight: 700, fontSize: 13 }}
+            >
+              {isExecuting
+                ? <><RotateCcw size={13} className="spin" /> Running...</>
+                : <><Play size={13} strokeWidth={2.5} fill="currentColor" /> Run&nbsp;&nbsp;Ctrl+↵</>}
+            </button>
+          )}
+        </div>
 
-        {hasDataset && (
-          <button
-            id="sandbox-run-btn"
-            className="btn btn-primary"
-            onClick={handleRun}
-            disabled={isExecuting || !sql.trim()}
-            style={{ gap: 6 }}
-          >
-            {isExecuting
-              ? <RotateCcw size={14} className="spin" />
-              : <Play size={14} strokeWidth={2.5} fill="currentColor" />}
-            {isExecuting ? 'Running...' : 'Run Query'}
+        {!qPanelVisible && hasData && (
+          <button className="btn btn-ghost" onClick={() => setQPanelVisible(true)} style={{ gap: 5, fontSize: 11 }}>
+            <Sparkles size={12} color="#7c3aed" /> AI Questions
           </button>
         )}
 
-        <button
-          className="btn btn-ghost"
-          onClick={onToggleDark}
-          title={darkMode ? 'Light Mode' : 'Dark Mode'}
-          style={{ padding: '6px 9px' }}
-        >
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+        <button className="btn btn-ghost" onClick={onToggleDark} style={{ padding: '6px 8px' }}>
+          {darkMode ? <Sun size={15} /> : <Moon size={15} />}
         </button>
       </nav>
 
-      {/* ── Upload zone / compact bar ── */}
-      {!hasDataset ? (
-        <UploadZone
-          onFiles={processFiles} uploading={uploading}
-          schema={schema} uploadStatus={uploadStatus} onReset={handleReset}
-        />
+      {/* ── Main ── */}
+      {!hasData ? (
+        <UploadZone onFiles={processFiles} uploading={uploading} schema={schema} uploadStatus={uploadStatus} onReset={handleReset} />
       ) : (
         <>
-          <UploadZone
-            onFiles={processFiles} uploading={uploading}
-            schema={schema} uploadStatus={uploadStatus} onReset={handleReset}
-          />
+          {/* Dataset bar */}
+          <UploadZone onFiles={processFiles} uploading={uploading} schema={schema} uploadStatus={uploadStatus} onReset={handleReset} />
 
-          {/* ── Main workspace ── */}
-          <div className="sandbox-layout" style={{ flex: 1, minHeight: 0 }}>
+          {/* ── Layout: Schema | Editor+Results | Questions ── */}
+          <div className="cds-layout">
 
-            {/* Left: Schema + AI questions */}
-            <SandboxSchemaSidebar
-              schema={schema}
-              sampleData={sampleData}
-              onInsert={handleInsertColumn}
-              onSelectQuestion={handleSelectAiQuestion}
-            />
+            {/* LEFT — Schema */}
+            <SchemaSidebar schema={schema} onInsert={col => setSql(p => p + col)} />
 
-            {/* Right: Editor + Results */}
+            {/* CENTER — Editor + Results */}
             <div
-              className="sandbox-workspace"
+              className="cds-center"
               ref={workspaceRef}
-              style={{ gridTemplateRows: `${editorHeightPct}% 6px 1fr` }}
+              style={{ gridTemplateRows: `${editorHeightPct}% 5px 1fr` }}
             >
-              {/* Editor */}
               <div className="sandbox-editor-pane">
                 <div className="sandbox-editor-header">
                   <span className="sandbox-pane-label">SQL Editor</span>
@@ -661,37 +609,28 @@ export function CustomDatasetPage({ settings, onToggleDark }) {
                 </div>
                 <div className="sandbox-editor-body">
                   <SqlEditor
-                    value={sql}
-                    onChange={setSql}
-                    onRun={handleRun}
-                    disabled={isExecuting}
-                    dbName={null}
-                    customSchema={schema}
+                    value={sql} onChange={setSql} onRun={handleRun}
+                    disabled={isExecuting} dbName={null} customSchema={schema}
                     fontSize={settings?.editorFontSize || 14}
                     autoComplete={settings?.autoCompleteSql !== false}
                     darkMode={darkMode}
                   />
                 </div>
               </div>
-
-              {/* Resizer */}
-              <div
-                className={`sandbox-resizer${isDragging ? ' dragging' : ''}`}
-                onMouseDown={() => setIsDragging(true)}
-              />
-
-              {/* Results */}
+              <div className={`sandbox-resizer${isDragging ? ' dragging' : ''}`} onMouseDown={() => setIsDragging(true)} />
               <div className="sandbox-results-pane">
-                <ResultsPanel
-                  result={result}
-                  validation={validation}
-                  sql={sql}
-                  executeQuery={executeQuery}
-                  isRunning={isExecuting}
-                  question={null}
-                />
+                <ResultsPanel result={result} validation={validation} sql={sql} executeQuery={executeQuery} isRunning={isExecuting} question={null} />
               </div>
             </div>
+
+            {/* RIGHT — AI Questions */}
+            <QuestionsPanel
+              schema={schema}
+              sampleData={sampleData}
+              onLoadQuestion={handleLoadQuestion}
+              visible={qPanelVisible}
+              onToggle={() => setQPanelVisible(v => !v)}
+            />
           </div>
         </>
       )}

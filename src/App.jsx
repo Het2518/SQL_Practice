@@ -11,7 +11,7 @@ const DbSelector = lazy(() => import('@/pages/HomePage').then(module => ({ defau
 const PracticeView = lazy(() => import('@/pages/PracticePage').then(module => ({ default: module.PracticeView })));
 const ProfileView = lazy(() => import('@/features/profile/ProfileView').then(module => ({ default: module.ProfileView })));
 const UserGuide = lazy(() => import('@/pages/UserGuide').then(module => ({ default: module.UserGuide })));
-const InterviewDashboard = lazy(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewDashboard })));
+const InterviewPage = lazy(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewPage })));
 const AuthModal = lazy(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal })));
 const SettingsModal = lazy(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal })));
 const CompanyPrepPage = lazy(() => import('@/pages/CompanyPrepPage'));
@@ -45,6 +45,8 @@ export default function App() {
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
   const [showInterview, setShowInterview] = useState(false);
+  const showInterviewPage = useCallback(() => navigate('/interview'), [navigate]);
+
 
   const toggleDark = useCallback(() => {
     setSettings(prev => {
@@ -133,9 +135,11 @@ export default function App() {
   return (
     <Suspense fallback={<div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)'}}><div className="spinner" /></div>}>
       <Routes>
-        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={() => setShowInterview(true)} settings={settings} onToggleDark={toggleDark} />} />
+        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={showInterviewPage} settings={settings} onToggleDark={toggleDark} />} />
 
         <Route path="/guide" element={<UserGuide />} />
+        
+        <Route path="/interview" element={<InterviewPage />} />
         
         <Route path="/company/:slug" element={<CompanyPrepPage />} />
         
@@ -191,7 +195,7 @@ export default function App() {
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showSettings && <SettingsModal settings={settings} onSave={setSettings} onClose={() => setShowSettings(false)} />}
-      {showInterview && <InterviewDashboard onClose={() => setShowInterview(false)} />}
+
     </Suspense>
   );
 }

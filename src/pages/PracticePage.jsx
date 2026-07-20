@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { RotateCcw, Play, BookOpen, Settings as SettingsIcon, List, Home, ChevronDown, Database, Sun, Moon } from 'lucide-react';
+import { RotateCcw, Play, Settings as SettingsIcon, List, Home, ChevronDown, Database, Sun, Moon } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
@@ -95,6 +95,35 @@ export function PracticeView({
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [showOverflow, setShowOverflow] = useState(false);
+
+  // Column widths (px) — draggable
+  const [questionW, setQuestionW] = useState(360);
+  const [schemaW, setSchemaW]     = useState(280);
+  const [isDraggingLeft, setIsDraggingLeft]   = useState(false);
+  const [isDraggingRight, setIsDraggingRight] = useState(false);
+  const layoutRef = useRef(null);
+
+  // Horizontal column resize
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!layoutRef.current) return;
+      const rect = layoutRef.current.getBoundingClientRect();
+      if (isDraggingLeft)  setQuestionW(Math.max(220, Math.min(600, e.clientX - rect.left)));
+      if (isDraggingRight) setSchemaW(Math.max(180, Math.min(500, rect.right - e.clientX)));
+    };
+    const onUp = () => { setIsDraggingLeft(false); setIsDraggingRight(false); };
+    if (isDraggingLeft || isDraggingRight) {
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, [isDraggingLeft, isDraggingRight]);
 
   // Global Keyboard Shortcuts (Moved downwards to unify)
   // Resizable Panes State
@@ -365,304 +394,274 @@ export function PracticeView({
 
     const fontSizeClass = settings.editorFontSize >= 18 ? 'large' : settings.editorFontSize <= 12 ? 'small' : 'medium';
     return <div className="practice-root page-enter" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
-    {/* Top Nav */}
-    <nav className="practice-nav" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: 50, background: 'var(--surface)', borderBottom: '1px solid var(--border)', gap: 12 }}>
-      <button id="run-btn" className="btn btn-ghost" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()} style={{ color: 'var(--success)', fontWeight: 600, gap: 6, width: 85, justifyContent: 'center' }}>
-        {isExecuting ? <RotateCcw size={14} className="spin" /> : <Play size={14} strokeWidth={2.5} fill="currentColor" />}
-        {isExecuting ? 'Running' : 'Run'}
-      </button>
-      <button className="btn btn-ghost" onClick={() => navigate('/guide')} style={{ color: 'var(--text-secondary)', gap: 6 }}>
-        <BookOpen size={14} />
-        Docs
-      </button>
-      <button className="btn btn-ghost" title="Settings" onClick={onShowSettings} style={{ gap: 6 }}>
-        <SettingsIcon size={14} />
-        Settings
-      </button>
-      <button id="browse-btn" className="btn btn-ghost" onClick={() => setShowBrowser(true)} style={{ gap: 6 }}>
-        <List size={14} />
-        Questions
-      </button>
 
-      <div style={{ flex: 1 }} />
+    {/* ══ NAV ══ */}
+    <nav style={{ display: 'flex', alignItems: 'center', height: 48, background: 'var(--surface)', borderBottom: '1px solid var(--border)', flexShrink: 0, position: 'relative', zIndex: 20, overflow: 'visible' }}>
 
-      {!user ? (
-        <button className="btn btn-ghost" onClick={onShowAuth} style={{ color: 'var(--primary)' }}>Login</button>
-      ) : (
-        <span style={{ fontSize: 12, color: 'var(--muted)', marginRight: 8 }}>{user.email}</span>
-      )}
-
-      <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5 }}>
-        <Home size={14} />
-        Home
-      </button>
-
-      {/* Choose DB button + dropdown */}
-      <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
-        <button
-          className="btn btn-ghost"
-          onClick={() => setShowDbPicker(v => !v)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <span>{dbInfo.icon}</span>
-          <span>{dbInfo.label}</span>
-          <ChevronDown size={13} strokeWidth={2} style={{ opacity: 0.6 }} />
+      {/* ── LEFT cluster ── */}
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, height: '100%', flex: 1 }}>
+        {/* Home */}
+        <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5, fontSize: 12, padding: '0 12px', borderRadius: 0 }}>
+          <Home size={13} /> Home
         </button>
-        {showDbPicker && (
-          <div style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 9999,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 10,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-            minWidth: 220,
-            padding: '8px 0',
-            marginTop: 4,
-          }}>
-            <div style={{ padding: '6px 14px 8px', fontSize: 11, fontWeight: 700, color: 'var(--muted)', letterSpacing: 1, textTransform: 'uppercase' }}>
-              Switch Database
+
+        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
+
+        {/* Problem toggle — underline style like LeetCode */}
+        <button
+          onClick={() => setRightPanelOpen(v => !v)}
+          style={{ fontSize: 12, fontWeight: 600, padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer', color: rightPanelOpen ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: rightPanelOpen ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, height: '100%', transition: 'color 0.15s, border-color 0.15s' }}
+          title={rightPanelOpen ? 'Hide problem panel' : 'Show problem panel'}
+        >
+          Problem
+        </button>
+
+        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
+
+        {/* DB picker */}
+        <div style={{ position: 'relative', height: '100%', display: 'flex' }} onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setShowDbPicker(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500, padding: '0 12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 0, height: '100%' }}
+          >
+            {dbInfo.label} <ChevronDown size={11} style={{ opacity: 0.5 }} />
+          </button>
+          {showDbPicker && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 999, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', minWidth: 230, padding: '6px 0', marginTop: 2 }}>
+              <div style={{ padding: '5px 14px 6px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Switch Database</div>
+              {Object.keys(DB_INFO).map(d => {
+                const info = DB_INFO[d]; const dbQs = getQuestionsForDb(d);
+                const comp = dbQs.filter(q => progress[q.id] === 'complete').length;
+                const isActive = d === db;
+                return (
+                  <button key={d} onClick={() => handleSwitchDb(d)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px', background: isActive ? 'var(--primary-muted)' : 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', transition: 'background 0.12s' }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none'; }}
+                  >
+                    <span style={{ flex: 1, fontWeight: isActive ? 700 : 400 }}>{info.label}</span>
+                    <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{comp}/{info.questionCount}</span>
+                    {isActive && <span style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 700 }}>✓</span>}
+                  </button>
+                );
+              })}
             </div>
-            {Object.keys(DB_INFO).map(d => {
-              const info = DB_INFO[d];
-              const dbQs = getQuestionsForDb(d);
-              const comp = dbQs.filter(q => progress[q.id] === 'complete').length;
-              const isActive = d === db;
-              return (
-                <button
-                  key={d}
-                  onClick={() => handleSwitchDb(d)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    width: '100%',
-                    padding: '9px 14px',
-                    background: isActive ? 'var(--primary-light, rgba(171,136,109,0.12))' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    color: 'var(--text)',
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: 14,
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <span style={{ fontSize: 18 }}>{info.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: isActive ? 700 : 500 }}>{info.label}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{comp}/{info.questionCount} done</div>
-                  </div>
-                  {isActive && <span style={{ color: 'var(--primary)', fontWeight: 700 }}>✓</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+          )}
+        </div>
+
+
       </div>
 
-      <button className="btn btn-ghost" onClick={() => setShowERDiagram(true)} title="View ER Diagram" style={{ gap: 5 }}>
-        <Database size={14} />
-        {dbInfo.label} Schema
-      </button>
+      {/* ── CENTER: Run button ── */}
+      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="nav-run-wrap">
+          <button id="run-btn" className="btn btn-primary" onClick={handleRun}
+            disabled={isLoading || isExecuting || !sql.trim()}
+            style={{ gap: 7, padding: '0 22px', height: 34, fontWeight: 700, fontSize: 13, borderRadius: 8, minWidth: 100 }}
+          >
+            {isExecuting ? <><RotateCcw size={13} className="spin" /> Running</> : <><Play size={13} strokeWidth={2.5} fill="currentColor" /> Run</>}
+          </button>
+          <span className="nav-run-shortcut">Ctrl + Enter</span>
+        </div>
+      </div>
 
-      <button
-        className="btn btn-ghost"
-        onClick={onToggleDark}
-        title={settings.darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        style={{ padding: '6px 9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        {settings.darkMode
-          ? <Sun size={16} strokeWidth={2} />
-          : <Moon size={16} strokeWidth={2} />}
-      </button>
+      {/* ── RIGHT cluster ── */}
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, height: '100%', flex: 1, justifyContent: 'flex-end' }}>
+        {/* Schema toggle */}
+        <button
+          onClick={() => setSidebarOpen(v => !v)}
+          style={{ fontSize: 12, fontWeight: 600, padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer', color: sidebarOpen ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: sidebarOpen ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, height: '100%', transition: 'color 0.15s, border-color 0.15s' }}
+          title={sidebarOpen ? 'Hide schema panel' : 'Show schema panel'}
+        >
+          Schema
+        </button>
+
+        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
+
+        {/* ⋯ Overflow menu */}
+        <div style={{ position: 'relative', height: '100%', display: 'flex' }}>
+          <button
+            onClick={() => setShowOverflow(v => !v)}
+            style={{ width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: showOverflow ? 'var(--surface-2)' : 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, fontWeight: 700, letterSpacing: 1, borderRadius: 0, height: '100%', transition: 'background 0.15s, color 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = showOverflow ? 'var(--text)' : 'var(--muted)'; }}
+            title="More options"
+          >
+            ⋯
+          </button>
+          {showOverflow && (
+            <>
+              {/* Backdrop to close */}
+              <div style={{ position: 'fixed', inset: 0, zIndex: 98 }} onClick={() => setShowOverflow(false)} />
+              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 99, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', minWidth: 220, padding: '6px 0', marginTop: 2 }}>
+                {/* User info */}
+                {user && (
+                  <div style={{ padding: '8px 14px 6px', fontSize: 11, color: 'var(--muted)', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                    Logged in as <strong style={{ color: 'var(--text)' }}>{user.email}</strong>
+                  </div>
+                )}
+                {!user && (
+                  <button className="overflow-menu-item" onClick={() => { onShowAuth(); setShowOverflow(false); }}>
+                    👤 Login
+                  </button>
+                )}
+
+                <button className="overflow-menu-item" onClick={() => { setShowBrowser(true); setShowOverflow(false); }}>
+                  <List size={14} /> All Questions
+                </button>
+
+                <button className="overflow-menu-item" onClick={() => { handleExplain(); setShowOverflow(false); }}
+                  disabled={isLoading || isExecuting || !sql.trim()}>
+                  🔍 Explain Query <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 'auto' }}>Ctrl+E</span>
+                </button>
+
+                {/\bJOIN\b/i.test(sql) && (
+                  <button className="overflow-menu-item" onClick={() => { setJoinAnalysisData({ db: executeQuery, sql }); setShowOverflow(false); }}>
+                    🔗 Visualize Joins
+                  </button>
+                )}
+
+                {hasSubquery(sql) && (
+                  <button className="overflow-menu-item" onClick={() => { setShowCteModal(true); setShowOverflow(false); }}>
+                    🪄 Convert to CTE
+                  </button>
+                )}
+
+                {queryHistory.length > 0 && (
+                  <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
+                    <div style={{ padding: '4px 14px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Query History</div>
+                    {queryHistory.slice(0, 5).map((entry, i) => (
+                      <button key={i} className="overflow-menu-item" style={{ fontSize: 11 }}
+                        onClick={() => {
+                          if (entry.dbName && entry.dbName !== db) navigate('/practice/' + entry.dbName);
+                          if (entry.questionId) { const q = allQuestions.find(q => q.id === entry.questionId); if (q) setCurrentQ(q); }
+                          setSql(entry.sql); setShowOverflow(false);
+                        }}>
+                        📜 {entry.prompt ? entry.prompt.substring(0, 28) + '…' : entry.sql?.substring(0, 32)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
+                  <button className="overflow-menu-item" onClick={() => { setShowERDiagram(true); setShowOverflow(false); }}>
+                    <Database size={13} /> ER Diagram
+                  </button>
+                  <button className="overflow-menu-item" onClick={() => { onShowSettings(); setShowOverflow(false); }}>
+                    <SettingsIcon size={13} /> Settings
+                  </button>
+                  <button className="overflow-menu-item" onClick={() => { onToggleDark(); setShowOverflow(false); }}>
+                    {settings.darkMode ? <Sun size={13} /> : <Moon size={13} />} {settings.darkMode ? 'Light Mode' : 'Dark Mode'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </nav>
 
     {/* Loading overlay */}
-    {isLoading && <div className="loading-overlay">
-      <div className="spinner" />
-      <div style={{ marginTop: 12, color: 'var(--muted)' }}>Loading {dbInfo.label} database…</div>
-    </div>}
+    {isLoading && <div className="loading-overlay"><div className="spinner" /><div style={{ marginTop: 12, color: 'var(--muted)' }}>Loading {dbInfo.label}…</div></div>}
 
-    {/* Main layout */}
-    <div className="practice-layout" style={{ 
-      '--sidebar-width': sidebarOpen ? '280px' : '0px',
-      '--right-panel-width': rightPanelOpen ? '350px' : '0px'
-    }}>
-      {/* 1. Left Panel: Schema Sidebar */}
-      <aside className="sidebar-wrap">
-        <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} />
-      </aside>
+    {/* ══ MAIN: 3-column flex layout ══ */}
+    <div ref={layoutRef} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
-      {/* 2. Center Panel: Editor + Results */}
-      <main className="center-workspace" ref={workspaceRef} style={{ gridTemplateRows: `${editorHeightPct}% 6px 1fr` }}>
-        {/* Editor */}
+      {/* LEFT: Question panel */}
+      <div style={{ width: rightPanelOpen ? questionW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', background: 'var(--surface)', borderRight: rightPanelOpen ? '1px solid var(--border)' : 'none' }}>
+        <div style={{ width: questionW, height: '100%', overflow: 'hidden' }}>
+          <QuestionCard
+            question={currentQ} expectedResult={expectedResult}
+            status={progress[currentQ.id] ?? 'incomplete'}
+            onOpenBrowser={() => setShowBrowser(true)}
+            onNavigate={navigateTo}
+            hasPrev={currentIdx > 0} hasNext={currentIdx < dbQuestions.length - 1}
+            questionNumber={currentIdx + 1} totalQuestions={dbQuestions.length}
+            timedChallenges={settings.timedChallenges}
+            onTimerExpire={() => { if (sql.trim()) handleRun(); }}
+            currentSql={sql} lastValidation={validation}
+            dbSchemaContext={dbSchemaContext} executeQuery={executeQuery}
+          />
+        </div>
+      </div>
+
+      {/* Drag handle: left column */}
+      {rightPanelOpen && (
+        <div
+          onMouseDown={() => setIsDraggingLeft(true)}
+          style={{ width: 4, flexShrink: 0, cursor: 'col-resize', background: isDraggingLeft ? 'var(--primary)' : 'transparent', transition: 'background 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.opacity = '0.4'; }}
+          onMouseLeave={e => { if (!isDraggingLeft) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '1'; } }}
+        />
+      )}
+
+      {/* CENTER: Editor + Results */}
+      <main ref={workspaceRef} style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateRows: `${editorHeightPct}% 4px 1fr`, overflow: 'hidden' }}>
+
         <div className="editor-col">
           <div className="editor-col-header">
             <span className="editor-label">SQL Editor</span>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              {!sidebarOpen && <button className="btn btn-ghost btn-sm" onClick={() => setSidebarOpen(true)}>📊 Schema</button>}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {hasSubquery(sql) && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowCteModal(true)} style={{ fontSize: 11 }}>🪄 CTE</button>
+              )}
+              {/\bJOIN\b/i.test(sql) && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setJoinAnalysisData({ db: executeQuery, sql })} style={{ fontSize: 11 }}>🔗 Joins</button>
+              )}
+              <span style={{ fontSize: 10, color: 'var(--muted)' }}>Ctrl+Enter to run</span>
             </div>
           </div>
           <div className="monaco-wrap">
             <SqlEditor value={sql} onChange={setSql} onRun={handleRun} disabled={isLoading} dbName={db} fontSize={settings.editorFontSize} autoComplete={settings.autoCompleteSql} darkMode={settings.darkMode} />
           </div>
-          <div className="editor-actions" style={{ position: 'relative' }}>
+          <div className="editor-actions">
             <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
-              {isExecuting ? <RotateCcw size={16} className="spinner" /> : !sql.trim() ? 'Type a query...' : '▶ Run Query'}
+              {isExecuting ? <><RotateCcw size={14} className="spin" /> Running…</> : !sql.trim() ? 'Type a query…' : '▶ Run Query'}
             </button>
-            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()} title="View Query Execution Plan">
-              {isExecuting ? '...' : !sql.trim() ? 'Explain (Empty)' : '🔍 Explain'}
+            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()}>
+              🔍 Explain
             </button>
-            {/\bJOIN\b/i.test(sql) && (
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setJoinAnalysisData({ db: executeQuery, sql })}
-                title="Open Advanced Join Analysis"
-                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
-              >
-                🔗 Visualize Joins
-              </button>
-            )}
-
-            
-            {hasSubquery(sql) && (
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setShowCteModal(true)} 
-                title="Convert subquery to a Common Table Expression (CTE)"
-                style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
-              >
-                🪄 Convert to CTE
-              </button>
-            )}
-
-            {queryHistory.length > 0 && (
-              <div style={{ position: 'relative', marginLeft: 'auto' }}>
-                <select 
-                  className="btn btn-ghost btn-sm"
-                  style={{ appearance: 'none', paddingRight: '24px', maxWidth: '220px', cursor: 'pointer' }}
-                  onChange={(e) => {
-                    const idx = parseInt(e.target.value, 10);
-                    if (!isNaN(idx) && queryHistory[idx]) {
-                      const entry = queryHistory[idx];
-                      // Restore full context: switch DB + question + SQL
-                      if (entry.dbName && entry.dbName !== db) {
-                        navigate('/practice/' + entry.dbName);
-                      }
-                      if (entry.questionId) {
-                        const q = allQuestions.find(q => q.id === entry.questionId);
-                        if (q) setCurrentQ(q);
-                      }
-                      setSql(entry.sql);
-                    }
-                    e.target.value = "";
-                  }}
-                  value=""
-                >
-                  <option value="" disabled>📜 History</option>
-                  {queryHistory.map((entry, i) => (
-                    <option key={i} value={i}>
-                      {entry.prompt ? `${entry.prompt.substring(0,25)}… | ${entry.sql.substring(0,20)}` : entry.sql?.substring(0, 40)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Resizer */}
-        <div 
+        {/* Vertical drag handle */}
+        <div
           onMouseDown={() => setIsDragging(true)}
-          style={{
-            height: '6px',
-            cursor: 'row-resize',
-            background: isDragging ? 'var(--primary)' : 'var(--surface-2)',
-            borderTop: '1px solid var(--border)',
-            borderBottom: '1px solid var(--border)',
-            zIndex: 10,
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'var(--primary-light)'; }}
-          onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'var(--surface-2)'; }}
+          style={{ height: 4, cursor: 'row-resize', background: isDragging ? 'var(--primary)' : 'var(--border)', transition: 'background 0.2s' }}
+          onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'var(--primary-muted)'; }}
+          onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'var(--border)'; }}
         />
 
-        {/* Results */}
         <div className="results-col">
-          <ResultsPanel 
-            result={result} 
-            validation={validation}
-            sql={executedSql}
-            executeQuery={executeQuery}
-            isRunning={isExecuting}
-            question={currentQ}
-          />
+          <ResultsPanel result={result} validation={validation} sql={executedSql} executeQuery={executeQuery} isRunning={isExecuting} question={currentQ} />
         </div>
       </main>
 
-      {/* 3. Right Panel: Question & Hints */}
-      <aside className="question-pane-wrap">
-        <QuestionCard
-          question={currentQ}
-          expectedResult={expectedResult}
-          status={progress[currentQ.id] ?? 'incomplete'}
-          onOpenBrowser={() => setShowBrowser(true)}
-          onNavigate={navigateTo}
-          hasPrev={currentIdx > 0}
-          hasNext={currentIdx < dbQuestions.length - 1}
-          questionNumber={currentIdx + 1}
-          totalQuestions={dbQuestions.length}
-          timedChallenges={settings.timedChallenges}
-          onTimerExpire={() => {
-            // Auto-run when timer expires so user sees their result
-            if (sql.trim()) handleRun();
-          }}
-          currentSql={sql}
-          lastValidation={validation}
-          dbSchemaContext={dbSchemaContext}
-          executeQuery={executeQuery}
+      {/* Drag handle: right column */}
+      {sidebarOpen && (
+        <div
+          onMouseDown={() => setIsDraggingRight(true)}
+          style={{ width: 4, flexShrink: 0, cursor: 'col-resize', background: isDraggingRight ? 'var(--primary)' : 'transparent', transition: 'background 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.opacity = '0.4'; }}
+          onMouseLeave={e => { if (!isDraggingRight) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '1'; } }}
         />
-      </aside>
+      )}
+
+      {/* RIGHT: Schema sidebar */}
+      <div style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', background: 'var(--surface)', borderLeft: sidebarOpen ? '1px solid var(--border)' : 'none' }}>
+        <div style={{ width: schemaW, height: '100%', overflow: 'hidden' }}>
+          <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} />
+        </div>
+      </div>
+
     </div>
 
-    {/* Question Browser */}
-    {showBrowser && <QuestionBrowser
-      questions={allQuestions}
-      progress={progress}
-      currentQuestionId={currentQ.id}
-      onSelectQuestion={handleSelectQuestion}
-      onClose={() => setShowBrowser(false)}
-    />}
-
-    {/* ER Diagram Modal */}
+    {/* Modals */}
+    {showBrowser && <QuestionBrowser questions={allQuestions} progress={progress} currentQuestionId={currentQ.id} onSelectQuestion={handleSelectQuestion} onClose={() => setShowBrowser(false)} />}
     {showERDiagram && <ERDiagramModal dbName={db} onClose={() => setShowERDiagram(false)} />}
-
-    {/* Table Preview Modal */}
     {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
-
-    {joinAnalysisData && (
-      <AnimatedJoinVisualizer 
-        executeQuery={joinAnalysisData.db} 
-        sql={joinAnalysisData.sql} 
-        onClose={() => setJoinAnalysisData(null)} 
-      />
-    )}
-
-    <CteConverterModal 
-      isOpen={showCteModal}
-      onClose={() => setShowCteModal(false)}
-      originalSql={sql}
-      convertedSql={convertSubqueryToCTE(sql) || sql}
-      onUseConverted={(newSql) => {
-        setSql(newSql);
-        setResult(null);
-      }}
-    />
+    {joinAnalysisData && <AnimatedJoinVisualizer executeQuery={joinAnalysisData.db} sql={joinAnalysisData.sql} onClose={() => setJoinAnalysisData(null)} />}
+    <CteConverterModal isOpen={showCteModal} onClose={() => setShowCteModal(false)} originalSql={sql} convertedSql={convertSubqueryToCTE(sql) || sql} onUseConverted={s => { setSql(s); setResult(null); }} />
     <ConfettiComponent />
     <SafetyModal />
   </div>;
