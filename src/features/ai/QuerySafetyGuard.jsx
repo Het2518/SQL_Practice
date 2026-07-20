@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { groqChat, buildSafetyPrompt, hasGroqKey } from '@/lib/groq';
+import { groqChat, buildSafetyPrompt, useGroqKey } from '@/lib/groq';
 
 /**
  * useQuerySafetyGuard — Hook that pre-checks SQL before execution.
@@ -19,6 +19,7 @@ import { groqChat, buildSafetyPrompt, hasGroqKey } from '@/lib/groq';
  */
 export function useQuerySafetyGuard() {
   const [modal, setModal] = useState(null); // null | { warning, score, resolve }
+  const hasKey = useGroqKey();
 
   // Client-side pre-check to avoid API call for obviously safe queries
   function clientPreCheck(sql) {
@@ -50,7 +51,7 @@ export function useQuerySafetyGuard() {
     }
 
     // Only call LLM for complex queries that passed client check
-    if (!hasGroqKey() || sql.length < 80) return true;
+    if (!hasKey || sql.length < 80) return true;
 
     try {
       const messages = buildSafetyPrompt({ sql, question });

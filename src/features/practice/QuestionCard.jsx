@@ -62,6 +62,8 @@ export const QuestionCard = React.memo(function QuestionCard({
   
   // Real companies from Supabase mapping
   const [realCompanies, setRealCompanies] = useState([]);
+  
+  const hasKey = useGroqKey();
 
   // Reset all state when question changes
   useEffect(() => {

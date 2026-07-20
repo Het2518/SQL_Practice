@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { groqChat, buildSolutionReviewPrompt, hasGroqKey } from '@/lib/groq';
+import { groqChat, buildSolutionReviewPrompt, useGroqKey } from '@/lib/groq';
 
 const APPROACH_LABELS = {
   optimized: { label: 'Optimized Query', icon: '⚡', color: 'var(--success)' },
@@ -17,9 +17,11 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('feedback');
 
+  const hasKey = useGroqKey();
+
   const generateReview = useCallback(async () => {
-    if (!hasGroqKey()) {
-      setError('Add your Groq API key in Settings → AI Configuration.');
+    if (!hasKey) {
+      setError('Add your Groq API key in Settings → AI Configuration to unlock AI Solution Reviews.');
       return;
     }
     if (!studentSQL?.trim()) {

@@ -30,6 +30,15 @@ export function saveGroqKey(key) {
   } else {
     localStorage.removeItem(GROQ_KEY_STORAGE);
   }
+  // Clear any cached AI responses from the previous key or error state
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const k = sessionStorage.key(i);
+      if (k && (k.startsWith('groq-cache-') || k.startsWith('ai-hint-') || k.startsWith('ai-sol-') || k.startsWith('ai-val-'))) {
+        sessionStorage.removeItem(k);
+      }
+    }
+  } catch {}
 }
 
 /** Returns true if any API key is available */
