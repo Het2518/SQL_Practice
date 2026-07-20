@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { groqChat, buildHintPrompt, hasGroqKey } from '@/lib/groq';
+import { groqChat, buildHintPrompt, useGroqKey } from '@/lib/groq';
 
 /**
  * AiHintPanel — On-demand AI-powered personalized hint.
@@ -11,9 +11,10 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
+  const hasKey = useGroqKey();
 
   const generateHint = useCallback(async () => {
-    if (!hasGroqKey()) {
+    if (!hasKey) {
       setError('Add your Groq API key in Settings → AI Configuration to unlock AI hints.');
       return;
     }

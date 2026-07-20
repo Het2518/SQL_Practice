@@ -37,6 +37,20 @@ export function hasGroqKey() {
   return !!getGroqKey();
 }
 
+/** Hook to reactively track if a Groq key is available */
+import { useState, useEffect } from 'react';
+export function useGroqKey() {
+  const [hasKey, setHasKey] = useState(hasGroqKey());
+  
+  useEffect(() => {
+    const checkKey = () => setHasKey(hasGroqKey());
+    window.addEventListener('storage', checkKey);
+    return () => window.removeEventListener('storage', checkKey);
+  }, []);
+  
+  return hasKey;
+}
+
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
   const sig = JSON.stringify({ messages, model });

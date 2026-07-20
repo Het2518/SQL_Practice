@@ -8,7 +8,7 @@ import {
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
-import { groqChat, buildSandboxQuestionsPrompt, hasGroqKey, MODEL_SMART } from '@/lib/groq';
+import { groqChat, buildSandboxQuestionsPrompt, useGroqKey, MODEL_SMART } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import '@/styles/sandbox.css';
@@ -135,7 +135,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
   const [batch, setBatch]         = useState(0);
   const [selected, setSelected]   = useState(null);   // null = list; object = detail
   const [qIndex, setQIndex]       = useState(0);      // current question index when in detail
-  const hasKey = hasGroqKey();
+  const hasKey = useGroqKey();
 
   const generate = useCallback(async (batchIndex) => {
     if (!schema?.length) return;

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
-import { hasGroqKey, groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
+import { useGroqKey, groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
 
 const difficultyLabel = {
   easy: 'EASY',
@@ -128,7 +128,7 @@ export const QuestionCard = React.memo(function QuestionCard({
   // Auto-generate AI Solution and Expected Output on mount for AI questions
   useEffect(() => {
     let isMounted = true;
-    if (!question.isAiGenerated || !hasGroqKey()) return;
+    if (!question.isAiGenerated || !hasKey) return;
 
     const generateExpectedOutput = async (sqlToRun) => {
       if (executeQuery) {
@@ -185,7 +185,7 @@ export const QuestionCard = React.memo(function QuestionCard({
     fetchAiSolution();
 
     return () => { isMounted = false; };
-  }, [question.id, question.prompt, question.isAiGenerated, question.db, dbSchemaContext, executeQuery]);
+  }, [question.id, question.prompt, question.isAiGenerated, question.db, dbSchemaContext, executeQuery, hasKey]);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
@@ -214,6 +214,24 @@ export const QuestionCard = React.memo(function QuestionCard({
 
   const handleNextHint = () => {
     setHintsUsed(n => Math.min(n + 1, 3));
+  };
+
+  const handleAiValidation = async () => {
+    if (!hasKey) return;
+    setAiValidationLoading(true);
+    try {
+      const msgs = buildAiValidationPrompt({
+        questionPrompt: question.prompt,
+        userSQL: currentSql,
+        sampleRows: lastValidation?.result?.rows?.slice(0, 5) || [],
+        schemaContext: dbSchemaContext,
+      });
+      const raw = await groqChat(msgs, undefined, 300, false);
+      const m = raw.match(/\{[\s\S]*\}/);
+      const parsed = m ? JSON.parse(m[0]) : { correct: false, score: 60, feedback: raw, suggestion: null };
+      setAiValidation(parsed);
+    } catch { setAiValidation({ correct: false, score: 0, feedback: 'Validation failed. Try again.', suggestion: null }); }
+    finally { setAiValidationLoading(false); }
   };
 
   return (
@@ -463,7 +481,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'}
                       >
                         ✨ Get AI Personalized Hint
-                        {hasGroqKey() ? null : <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 4 }}>(needs key)</span>}
+                        {hasKey ? null : <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 4 }}>(needs key)</span>}
                       </button>
                     ) : (
                       <AiHintPanel
@@ -539,7 +557,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                         <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.6 }}>
                           This is an AI-generated challenge. Click below to have the AI write the reference solution.
                         </p>
-                        {!hasGroqKey() ? (
+                        {!hasKey ? (
                           <div style={{ fontSize: 12, color: 'var(--warning)', background: 'var(--warning-muted)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--warning)' }}>
                             🔑 Add your Groq API key in <strong>Settings → AI Configuration</strong> to generate solutions.
                           </div>
@@ -640,29 +658,13 @@ export const QuestionCard = React.memo(function QuestionCard({
                 <div>
                   {!aiValidation && !aiValidationLoading && (
                     <button
-                      onClick={async () => {
-                        if (!hasGroqKey()) return;
-                        setAiValidationLoading(true);
-                        try {
-                          const msgs = buildAiValidationPrompt({
-                            questionPrompt: question.prompt,
-                            userSQL: currentSql,
-                            sampleRows: lastValidation?.result?.rows?.slice(0, 5) || [],
-                            schemaContext: dbSchemaContext,
-                          });
-                          const raw = await groqChat(msgs, undefined, 300, false);
-                          const m = raw.match(/\{[\s\S]*\}/);
-                          const parsed = m ? JSON.parse(m[0]) : { correct: false, score: 60, feedback: raw, suggestion: null };
-                          setAiValidation(parsed);
-                        } catch { setAiValidation({ correct: false, score: 0, feedback: 'Validation failed. Try again.', suggestion: null }); }
-                        finally { setAiValidationLoading(false); }
-                      }}
-                      disabled={!currentSql?.trim() || !hasGroqKey()}
+                      onClick={handleAiValidation}
+                      disabled={!currentSql?.trim() || !hasKey}
                       style={{
                         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
                         background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
-                        cursor: currentSql?.trim() && hasGroqKey() ? 'pointer' : 'not-allowed',
+                        cursor: currentSql?.trim() && hasKey ? 'pointer' : 'not-allowed',
                         fontSize: 14, fontWeight: 600, color: '#8b5cf6', transition: 'all 0.2s',
                         opacity: currentSql?.trim() ? 1 : 0.5,
                       }}
