@@ -212,7 +212,7 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
     return (
       <div className="modal-overlay">
         <div className="modal-content" style={{ width: 500, padding: 30, textAlign: 'center' }}>
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', display: 'inline-flex', padding: 16, borderRadius: '50%', marginBottom: 16 }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, flexShrink: 0, borderRadius: '50%', marginBottom: 16 }}>
             <AlertTriangle size={32} color="var(--error)" />
           </div>
           <h3 style={{ marginBottom: 12 }}>Cannot Animate Join</h3>

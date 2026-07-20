@@ -54,8 +54,8 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
 
   return (
     <div className="ai-panel" style={{ marginTop: 8 }}>
-      <div className="ai-panel-header" onClick={!generated && !loading ? generateHint : undefined}>
-        <div className="ai-panel-title">
+      <div className="ai-panel-header" onClick={!generated && !loading ? generateHint : undefined} style={{ flexWrap: 'wrap', gap: 12 }}>
+        <div className="ai-panel-title" style={{ flexWrap: 'wrap' }}>
           <span>✨</span>
           <span>AI Personalized Hint</span>
           <span className="ai-badge">llama-3.1-8b</span>
