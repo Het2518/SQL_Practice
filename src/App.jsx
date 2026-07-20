@@ -17,6 +17,13 @@ const lazyRetry = (componentImport) => {
         const hasRetried = window.sessionStorage.getItem('datadesk_chunk_retry');
         if (!hasRetried) {
           window.sessionStorage.setItem('datadesk_chunk_retry', 'true');
+          
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then((regs) => {
+              for (let reg of regs) { reg.unregister(); }
+            }).catch(() => {});
+          }
+
           // cache bust and reload
           window.location.assign(window.location.pathname + '?reload=' + Date.now());
         } else {

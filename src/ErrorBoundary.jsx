@@ -19,6 +19,14 @@ export class ErrorBoundary extends React.Component {
     const hasRecovered = sessionStorage.getItem('datadesk_recovered_error');
     if (!hasRecovered) {
       sessionStorage.setItem('datadesk_recovered_error', 'true');
+      
+      // Attempt to clear SW and Caches aggressively
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          for (let reg of regs) { reg.unregister(); }
+        }).catch(() => {});
+      }
+      
       // Add a cache buster query param to force fresh files
       const url = new URL(window.location.href);
       url.searchParams.set('reload', Date.now());
@@ -26,10 +34,36 @@ export class ErrorBoundary extends React.Component {
     }
   }
 
-  handleHardReset = () => {
+  handleHardReset = async () => {
     localStorage.clear();
     sessionStorage.clear();
-    window.location.href = '/';
+    
+    // Nuke service workers so they don't serve a cached broken index.html
+    if ('serviceWorker' in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      } catch (e) {
+        console.error("SW clear failed", e);
+      }
+    }
+    
+    // Clear all browser caches (where vite-plugin-pwa usually stores index.html)
+    if ('caches' in window) {
+      try {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          await caches.delete(key);
+        }
+      } catch (e) {
+        console.error("Cache clear failed", e);
+      }
+    }
+
+    // Force hard reload from server
+    window.location.href = '/?hardreset=' + Date.now();
   };
 
   render() {
