@@ -517,7 +517,10 @@ export const QuestionCard = React.memo(function QuestionCard({
             overflow: 'hidden'
           }}>
             <button
-              onClick={() => setShowSolution(!showSolution)}
+              onClick={() => {
+                const hasAttempted = Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete');
+                if (hasAttempted) setShowSolution(!showSolution);
+              }}
               style={{
                 width: '100%',
                 display: 'flex',
@@ -526,18 +529,24 @@ export const QuestionCard = React.memo(function QuestionCard({
                 padding: '14px 16px',
                 background: showSolution ? (question.isAiGenerated ? 'rgba(139,92,246,0.08)' : 'var(--success-muted)') : 'transparent',
                 border: 'none',
-                cursor: 'pointer',
-                color: showSolution ? (question.isAiGenerated ? '#8b5cf6' : 'var(--success)') : 'var(--text-secondary)',
+                cursor: Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete') ? 'pointer' : 'not-allowed',
+                color: showSolution ? (question.isAiGenerated ? '#8b5cf6' : 'var(--success)') : (Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete') ? 'var(--text-secondary)' : 'var(--muted)'),
                 fontWeight: 600,
                 fontSize: 14,
                 transition: 'all 0.2s ease',
+                opacity: Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete') ? 1 : 0.6
               }}
-              onMouseEnter={e => { if (!showSolution) e.currentTarget.style.background = 'var(--surface)'; }}
+              onMouseEnter={e => { if (!showSolution && Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete')) e.currentTarget.style.background = 'var(--surface)'; }}
               onMouseLeave={e => { if (!showSolution) e.currentTarget.style.background = 'transparent'; }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Code size={18} strokeWidth={2.5} />
-                <span>Solution SQL</span>
+                <span>Solution & AI Review</span>
+                {!Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete') && (
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border)' }}>
+                    Attempt required
+                  </span>
+                )}
                 {question.isAiGenerated && (
                   <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 8, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.25)' }}>
                     ✨ AI Generated
@@ -547,216 +556,196 @@ export const QuestionCard = React.memo(function QuestionCard({
               <ChevronDown size={18} style={{ transform: showSolution ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s' }} />
             </button>
             <div style={{
-              maxHeight: showSolution ? '600px' : '0px',
+              maxHeight: showSolution ? '1000px' : '0px',
               transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               overflow: 'hidden',
             }}>
               <div style={{ padding: '0 16px 16px 16px' }}>
-                {question.isAiGenerated ? (
-                  /* AI Question — generate solution on demand */
-                  <div style={{ marginTop: 16 }}>
-                    {!aiSolution && !aiSolutionLoading && (
-                      <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                        <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.6 }}>
-                          This is an AI-generated challenge. Click below to have the AI write the reference solution.
-                        </p>
-                        {!hasKey ? (
-                          <div style={{ fontSize: 12, color: 'var(--warning)', background: 'var(--warning-muted)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--warning)' }}>
-                            🔑 Add your Groq API key in <strong>Settings → AI Configuration</strong> to generate solutions.
+                <div style={{ marginTop: 16 }}>
+                  {question.isAiGenerated ? (
+                    /* AI Question: Validate user's SQL with AI grader */
+                    <div>
+                      {!aiValidation && !aiValidationLoading && (
+                        <button
+                          onClick={handleAiValidation}
+                          disabled={!currentSql?.trim() || !hasKey}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
+                            background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
+                            cursor: currentSql?.trim() && hasKey ? 'pointer' : 'not-allowed',
+                            fontSize: 14, fontWeight: 600, color: '#8b5cf6', transition: 'all 0.2s',
+                            opacity: currentSql?.trim() ? 1 : 0.5,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Sparkles size={18} strokeWidth={2.5} />
+                            <span>🤖 Validate Query with AI</span>
+                            <span className="ai-badge">Groq</span>
                           </div>
-                        ) : (
-                          <button
-                            onClick={async () => {
-                              const cacheKey = `ai-sol-${question.id}`;
-                              setAiSolutionLoading(true);
-                              setAiSolutionError('');
-                              try {
-                                const msgs = buildAiSolutionPrompt({
-                                  questionPrompt: question.prompt,
-                                  schemaContext: dbSchemaContext,
-                                  db: question.db || 'ecommerce',
-                                });
-                                const sql = await groqChat(msgs, undefined, 400, false);
-                                const clean = sql.replace(/```sql\n?/gi, '').replace(/```/g, '').trim();
-                                setAiSolution(clean);
-                                sessionStorage.setItem(cacheKey, clean);
-                                if (executeQuery) {
-                                  const res = await executeQuery(clean);
-                                  if (res) {
-                                    if (res.error) setAiExpectedResult({ error: res.error });
-                                    else if (res.columns) setAiExpectedResult({ columns: res.columns, rows: res.rows ? res.rows.slice(0, 100) : [] });
+                          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
+                            {!currentSql?.trim() ? 'Write SQL first' : 'Get AI grade →'}
+                          </span>
+                        </button>
+                      )}
+                      {aiValidationLoading && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', color: 'var(--muted)', fontSize: 13, border: '1px solid var(--border)', borderRadius: 8 }}>
+                          <div style={{ width: 14, height: 14, border: '2px solid #8b5cf6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                          AI is evaluating your query...
+                        </div>
+                      )}
+                      {aiValidation && (
+                        <div style={{ borderRadius: 8, border: `1px solid ${aiValidation.correct ? 'var(--success)' : 'var(--warning)'}`, overflow: 'hidden', marginBottom: 16 }}>
+                          {/* Score header */}
+                          <div style={{
+                            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+                            background: aiValidation.correct ? 'var(--success-muted)' : 'var(--warning-muted)',
+                          }}>
+                            <span style={{ fontSize: 22 }}>{aiValidation.correct ? '✅' : '⚠️'}</span>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontWeight: 700, fontSize: 13, color: aiValidation.correct ? 'var(--success)' : 'var(--warning)' }}>
+                                {aiValidation.correct ? 'Correct Approach!' : 'Needs Improvement'}
+                              </div>
+                              <div style={{ fontSize: 11, color: 'var(--muted)' }}>AI-graded evaluation</div>
+                            </div>
+                            <div style={{ fontWeight: 800, fontSize: 22, color: aiValidation.correct ? 'var(--success)' : 'var(--warning)', minWidth: 50, textAlign: 'right' }}>
+                              {aiValidation.score}<span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>/100</span>
+                            </div>
+                          </div>
+                          {/* Feedback */}
+                          <div style={{ padding: '12px 16px', background: 'var(--surface)' }}>
+                            <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{aiValidation.feedback}</p>
+                            {aiValidation.suggestion && (
+                              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 3 }}>💡 Suggestion</strong>
+                                {aiValidation.suggestion}
+                              </div>
+                            )}
+                            <button
+                              onClick={() => setAiValidation(null)}
+                              style={{ marginTop: 10, fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                              Re-validate →
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Generate Reference Solution */}
+                      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 16 }}>
+                        {!aiSolution && !aiSolutionLoading && (
+                          <div style={{ textAlign: 'center' }}>
+                            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.6 }}>
+                              Stuck? Have the AI generate a reference solution.
+                            </p>
+                            {!hasKey ? (
+                              <div style={{ fontSize: 12, color: 'var(--warning)', background: 'var(--warning-muted)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--warning)' }}>
+                                🔑 Add your Groq API key in <strong>Settings → AI Configuration</strong> to generate solutions.
+                              </div>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  const cacheKey = `ai-sol-${question.id}`;
+                                  setAiSolutionLoading(true);
+                                  setAiSolutionError('');
+                                  try {
+                                    const msgs = buildAiSolutionPrompt({
+                                      questionPrompt: question.prompt,
+                                      schemaContext: dbSchemaContext,
+                                      db: question.db || 'ecommerce',
+                                    });
+                                    const sql = await groqChat(msgs, undefined, 400, false);
+                                    const clean = sql.replace(/```sql\n?/gi, '').replace(/```/g, '').trim();
+                                    setAiSolution(clean);
+                                    sessionStorage.setItem(cacheKey, clean);
+                                    if (executeQuery) {
+                                      const res = await executeQuery(clean);
+                                      if (res) {
+                                        if (res.error) setAiExpectedResult({ error: res.error });
+                                        else if (res.columns) setAiExpectedResult({ columns: res.columns, rows: res.rows ? res.rows.slice(0, 100) : [] });
+                                      }
+                                    }
+                                  } catch (e) {
+                                    setAiSolutionError(e.message === 'RATE_LIMIT' ? 'Rate limit. Wait 15 sec.' : 'Generation failed. Try again.');
+                                  } finally {
+                                    setAiSolutionLoading(false);
                                   }
-                                }
-                              } catch (e) {
-                                setAiSolutionError(e.message === 'RATE_LIMIT' ? 'Rate limit. Wait 15 sec.' : 'Generation failed. Try again.');
-                              } finally {
-                                setAiSolutionLoading(false);
-                              }
-                            }}
-                            style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 20px',
-                              borderRadius: 8, border: 'none', cursor: 'pointer',
-                              background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
-                              color: 'white', fontWeight: 700, fontSize: 13,
-                              boxShadow: '0 2px 8px rgba(139,92,246,0.35)',
-                            }}
-                          >
-                            ✨ Generate AI Solution
-                          </button>
+                                }}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 20px',
+                                  borderRadius: 8, border: 'none', cursor: 'pointer',
+                                  background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+                                  color: 'white', fontWeight: 700, fontSize: 13,
+                                  boxShadow: '0 2px 8px rgba(139,92,246,0.35)',
+                                }}
+                              >
+                                ✨ Generate AI Solution
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {aiSolutionLoading && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: 'var(--muted)', fontSize: 13 }}>
+                            <div style={{ width: 16, height: 16, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                            Generating SQL solution...
+                          </div>
+                        )}
+                        {aiSolutionError && (
+                          <div style={{ fontSize: 12, color: 'var(--warning)', padding: '10px 0' }}>⚠️ {aiSolutionError}</div>
+                        )}
+                        {aiSolution && (
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.25)' }}>✨ AI-Generated Solution</span>
+                              <button
+                                onClick={() => { setAiSolution(null); setAiExpectedResult(null); sessionStorage.removeItem(`ai-sol-${question.id}`); }}
+                                style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                              >Regenerate</button>
+                            </div>
+                            <pre style={{
+                              background: 'var(--bg)', padding: 14, borderRadius: 8,
+                              fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text)',
+                              border: '1px solid var(--border)', margin: 0,
+                              overflowX: 'auto', whiteSpace: 'pre-wrap', lineHeight: 1.6,
+                            }}>{aiSolution}</pre>
+                          </div>
                         )}
                       </div>
-                    )}
-                    {aiSolutionLoading && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: 'var(--muted)', fontSize: 13 }}>
-                        <div style={{ width: 16, height: 16, border: '2px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                        Generating SQL solution...
-                      </div>
-                    )}
-                    {aiSolutionError && (
-                      <div style={{ fontSize: 12, color: 'var(--warning)', padding: '10px 0' }}>⚠️ {aiSolutionError}</div>
-                    )}
-                    {aiSolution && (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.25)' }}>✨ AI-Generated Solution</span>
-                          <button
-                            onClick={() => { setAiSolution(null); setAiExpectedResult(null); sessionStorage.removeItem(`ai-sol-${question.id}`); }}
-                            style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-                          >Regenerate</button>
+                    </div>
+                  ) : (
+                    /* Static question: standard AI Solution Review */
+                    !showAiReview ? (
+                      <button
+                        onClick={() => setShowAiReview(true)}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
+                          background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
+                          cursor: 'pointer', fontSize: 14, fontWeight: 600,
+                          color: '#8b5cf6', transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))'; }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Sparkles size={18} strokeWidth={2.5} />
+                          <span>AI Solution Review</span>
+                          <span className="ai-badge">Groq</span>
                         </div>
-                        <pre style={{
-                          background: 'var(--bg)', padding: 14, borderRadius: 8,
-                          fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text)',
-                          border: '1px solid var(--border)', margin: 0,
-                          overflowX: 'auto', whiteSpace: 'pre-wrap', lineHeight: 1.6,
-                        }}>{aiSolution}</pre>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Static question — show pre-computed solution */
-                  <div style={{
-                    background: 'var(--bg)',
-                    padding: 12,
-                    borderRadius: 6,
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 13,
-                    color: 'var(--text)',
-                    border: '1px solid var(--border)',
-                    marginTop: 16
-                  }}>
-                    {question.solutionSQL}
-                  </div>
-                )}
+                        <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>Get full code review →</span>
+                      </button>
+                    ) : (
+                      <AiSolutionReview
+                        question={question}
+                        studentSQL={currentSql}
+                        solutionSQL={question.solutionSQL}
+                      />
+                    )
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-
-          {/* AI Solution Review — on demand, shown after any submission */}
-          {currentSql?.trim() && (
-            <div>
-              {question.isAiGenerated ? (
-                /* AI Question: Validate user's SQL with AI grader */
-                <div>
-                  {!aiValidation && !aiValidationLoading && (
-                    <button
-                      onClick={handleAiValidation}
-                      disabled={!currentSql?.trim() || !hasKey}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
-                        background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
-                        cursor: currentSql?.trim() && hasKey ? 'pointer' : 'not-allowed',
-                        fontSize: 14, fontWeight: 600, color: '#8b5cf6', transition: 'all 0.2s',
-                        opacity: currentSql?.trim() ? 1 : 0.5,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Sparkles size={18} strokeWidth={2.5} />
-                        <span>🤖 Validate Query with AI</span>
-                        <span className="ai-badge">Groq</span>
-                      </div>
-                      <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
-                        {!currentSql?.trim() ? 'Write SQL first' : 'Get AI grade →'}
-                      </span>
-                    </button>
-                  )}
-                  {aiValidationLoading && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', color: 'var(--muted)', fontSize: 13, border: '1px solid var(--border)', borderRadius: 8 }}>
-                      <div style={{ width: 14, height: 14, border: '2px solid #8b5cf6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                      AI is evaluating your query...
-                    </div>
-                  )}
-                  {aiValidation && (
-                    <div style={{ borderRadius: 8, border: `1px solid ${aiValidation.correct ? 'var(--success)' : 'var(--warning)'}`, overflow: 'hidden' }}>
-                      {/* Score header */}
-                      <div style={{
-                        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-                        background: aiValidation.correct ? 'var(--success-muted)' : 'var(--warning-muted)',
-                      }}>
-                        <span style={{ fontSize: 22 }}>{aiValidation.correct ? '✅' : '⚠️'}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, color: aiValidation.correct ? 'var(--success)' : 'var(--warning)' }}>
-                            {aiValidation.correct ? 'Correct Approach!' : 'Needs Improvement'}
-                          </div>
-                          <div style={{ fontSize: 11, color: 'var(--muted)' }}>AI-graded evaluation</div>
-                        </div>
-                        <div style={{ fontWeight: 800, fontSize: 22, color: aiValidation.correct ? 'var(--success)' : 'var(--warning)', minWidth: 50, textAlign: 'right' }}>
-                          {aiValidation.score}<span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>/100</span>
-                        </div>
-                      </div>
-                      {/* Feedback */}
-                      <div style={{ padding: '12px 16px', background: 'var(--surface)' }}>
-                        <p style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{aiValidation.feedback}</p>
-                        {aiValidation.suggestion && (
-                          <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: 'var(--surface-2)', border: '1px solid var(--border)', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                            <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 3 }}>💡 Suggestion</strong>
-                            {aiValidation.suggestion}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => setAiValidation(null)}
-                          style={{ marginTop: 10, fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-                        >
-                          Re-validate →
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                /* Static question: standard AI Solution Review */
-                !showAiReview ? (
-                  <button
-                    onClick={() => setShowAiReview(true)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '14px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)',
-                      background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
-                      cursor: 'pointer', fontSize: 14, fontWeight: 600,
-                      color: '#8b5cf6', transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))'; }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Sparkles size={18} strokeWidth={2.5} />
-                      <span>AI Solution Review</span>
-                      <span className="ai-badge">Groq</span>
-                    </div>
-                    <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>Get full code review →</span>
-                  </button>
-                ) : (
-                  <AiSolutionReview
-                    question={question}
-                    studentSQL={currentSql}
-                    solutionSQL={question.solutionSQL}
-                  />
-                )
-              )}
-            </div>
-          )}
         </div>
 
         {/* Expected Output */}

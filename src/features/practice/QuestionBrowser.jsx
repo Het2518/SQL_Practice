@@ -22,6 +22,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
   questions, progress, currentQuestionId, onSelectQuestion, onClose,
 }) {
   const [search, setSearch]                     = useState('');
+  const [debouncedSearch, setDebouncedSearch]   = useState('');
   const [selectedDbs, setSelectedDbs]           = useState(new Set());
   const [selectedDiffs, setSelectedDiffs]       = useState(new Set());
   const [selectedStatuses, setSelectedStatuses] = useState(new Set());
@@ -38,6 +39,11 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     }));
     return Array.from(topics).sort();
   }, [questions]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     supabase.from('question_company_mapping')
@@ -73,7 +79,9 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     if (selectedStatuses.size > 0 && !selectedStatuses.has(status)) return false;
     if (selectedKeywords.size > 0) {
       const kws = q.keywords?.filter(k => !k.startsWith('company:') && !k.startsWith('topic:')) || [];
-      if (!kws.some(k => selectedKeywords.has(k))) return false;
+      if (!Array.from(selectedKeywords).some(sk => 
+        kws.some(k => k.toLowerCase().includes(sk.toLowerCase()))
+      )) return false;
     }
     if (selectedTopics.size > 0) {
       const tops = q.keywords?.filter(k => k.startsWith('topic:')).map(k => k.replace('topic:', '')) || [];
@@ -83,9 +91,9 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
       const qComps = qCompanyMap[q.prompt] ? Array.from(qCompanyMap[q.prompt]) : [];
       if (!qComps.some(c => selectedCompanies.has(c))) return false;
     }
-    if (search && !q.prompt.toLowerCase().includes(search.toLowerCase())) return false;
+    if (debouncedSearch && !q.prompt.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
     return true;
-  }), [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, search, qCompanyMap]);
+  }), [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, debouncedSearch, qCompanyMap]);
 
   const stats = useMemo(() => {
     const complete  = questions.filter(q => progress[q.id] === 'complete').length;
@@ -242,7 +250,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
             {/* Count row */}
             <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)', fontWeight: 500, background: 'var(--surface-2)' }}>
               {filtered.length} of {questions.length} questions
-              {search && <span style={{ marginLeft: 8, color: 'var(--primary)' }}>matching "{search}"</span>}
+              {debouncedSearch && <span style={{ marginLeft: 8, color: 'var(--primary)' }}>matching "{debouncedSearch}"</span>}
             </div>
 
             {filtered.length === 0 ? (
