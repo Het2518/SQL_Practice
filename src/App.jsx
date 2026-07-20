@@ -6,16 +6,35 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import '@/styles/styles.css';
 
-// Lazy load large views for performance
-const DbSelector = lazy(() => import('@/pages/HomePage').then(module => ({ default: module.DbSelector })));
-const PracticeView = lazy(() => import('@/pages/PracticePage').then(module => ({ default: module.PracticeView })));
-const ProfileView = lazy(() => import('@/features/profile/ProfileView').then(module => ({ default: module.ProfileView })));
-const UserGuide = lazy(() => import('@/pages/UserGuide').then(module => ({ default: module.UserGuide })));
-const InterviewPage = lazy(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewPage })));
-const AuthModal = lazy(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal })));
-const SettingsModal = lazy(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal })));
-const CompanyPrepPage = lazy(() => import('@/pages/CompanyPrepPage'));
-const CustomDatasetPage = lazy(() => import('@/pages/CustomDatasetPage').then(m => ({ default: m.CustomDatasetPage })));
+// Lazy load large views for performance with automatic retry for chunk errors
+const lazyRetry = (componentImport) => {
+  return new Promise((resolve, reject) => {
+    // try to import the component
+    componentImport()
+      .then(resolve)
+      .catch((error) => {
+        // if it fails, check if we've already retried
+        const hasRetried = window.sessionStorage.getItem('datadesk_chunk_retry');
+        if (!hasRetried) {
+          window.sessionStorage.setItem('datadesk_chunk_retry', 'true');
+          // cache bust and reload
+          window.location.assign(window.location.pathname + '?reload=' + Date.now());
+        } else {
+          reject(error);
+        }
+      });
+  });
+};
+
+const DbSelector = lazy(() => lazyRetry(() => import('@/pages/HomePage').then(module => ({ default: module.DbSelector }))));
+const PracticeView = lazy(() => lazyRetry(() => import('@/pages/PracticePage').then(module => ({ default: module.PracticeView }))));
+const ProfileView = lazy(() => lazyRetry(() => import('@/features/profile/ProfileView').then(module => ({ default: module.ProfileView }))));
+const UserGuide = lazy(() => lazyRetry(() => import('@/pages/UserGuide').then(module => ({ default: module.UserGuide }))));
+const InterviewPage = lazy(() => lazyRetry(() => import('@/features/interview/InterviewDashboard').then(module => ({ default: module.InterviewPage }))));
+const AuthModal = lazy(() => lazyRetry(() => import('@/features/auth/AuthModal').then(module => ({ default: module.AuthModal }))));
+const SettingsModal = lazy(() => lazyRetry(() => import('@/features/profile/SettingsModal').then(module => ({ default: module.SettingsModal }))));
+const CompanyPrepPage = lazy(() => lazyRetry(() => import('@/pages/CompanyPrepPage')));
+const CustomDatasetPage = lazy(() => lazyRetry(() => import('@/pages/CustomDatasetPage').then(m => ({ default: m.CustomDatasetPage }))));
 
 // ─── Progress persistence ────────────────────────────────────────────────────
 const PROGRESS_KEY = 'sql-practice-progress';
