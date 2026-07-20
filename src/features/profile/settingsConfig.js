@@ -1,4 +1,4 @@
-const SETTINGS_KEY = 'sql-platform-settings';
+export const SETTINGS_KEY = 'sql-platform-settings';
 
 export function loadSettings() {
   try {

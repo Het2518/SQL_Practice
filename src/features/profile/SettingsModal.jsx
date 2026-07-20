@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { loadShortcuts, saveShortcuts, DEFAULT_SHORTCUTS, eventToComboString } from '@/utils/shortcutManager';
-import { defaultSettings } from './settingsConfig';
+import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { getGroqKey, saveGroqKey, hasGroqKey } from '@/lib/groq';
 
 function ToggleRow({ label, description, checked, onChange }) {
