@@ -61,8 +61,8 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
     Object.values(levelGroups).forEach(group => group.sort());
 
     const initialNodes = {};
-    const GAP_X = 140; 
-    const GAP_Y = 40;
+    const GAP_X = 220; 
+    const GAP_Y = 80;
     
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
@@ -153,8 +153,9 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
       const startX = isSourceLeft ? sourceNode.x + NODE_WIDTH : sourceNode.x;
       const endX = isSourceLeft ? targetNode.x : targetNode.x + NODE_WIDTH;
 
-      const dx = Math.abs(endX - startX);
-      const midX = startX + (isSourceLeft ? dx / 2 : -dx / 2);
+      const controlPointOffset = Math.max(Math.abs(endX - startX) / 2, 60);
+      const cp1X = isSourceLeft ? startX + controlPointOffset : startX - controlPointOffset;
+      const cp2X = isSourceLeft ? endX - controlPointOffset : endX + controlPointOffset;
 
       const isHighlighted = !activeFocus || (edge.sourceTable === activeFocus || edge.targetTable === activeFocus);
       const color = isHighlighted ? 'var(--primary)' : 'var(--border)';
@@ -165,7 +166,7 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
       return (
         <path
           key={idx}
-          d={`M ${startX} ${sourceY} L ${midX} ${sourceY} L ${midX} ${targetY} L ${endX} ${targetY}`}
+          d={`M ${startX} ${sourceY} C ${cp1X} ${sourceY}, ${cp2X} ${targetY}, ${endX} ${targetY}`}
           fill="none"
           stroke={color}
           strokeWidth={strokeWidth}
@@ -220,7 +221,7 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
         </div>
 
         {/* Table List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
            {tables.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase())).map(t => {
              const isSelected = selectedTable === t.name;
              return (
@@ -230,9 +231,10 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
                      onMouseEnter={() => setHighlightedTable(t.name)}
                      onMouseLeave={() => setHighlightedTable(null)}
                      style={{ 
-                       padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
-                       background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface-2)',
-                       border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                       padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+                       background: isSelected ? 'var(--primary-muted)' : 'var(--surface)',
+                       border: `1px solid ${isSelected ? 'var(--primary-light)' : 'var(--border)'}`,
+                       boxShadow: isSelected ? '0 4px 12px rgba(139, 92, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                        transition: 'all 0.2s'
                      }}
@@ -241,7 +243,7 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
                         <Database size={16} color={isSelected ? "var(--primary)" : "var(--muted)"} />
                         <span style={{ fontWeight: 600, color: isSelected ? 'var(--primary)' : 'var(--text)', fontSize: 14 }}>{t.name}</span>
                      </div>
-                     <span style={{ fontSize: 12, color: 'var(--muted)', background: 'var(--bg)', padding: '4px 10px', borderRadius: 12, fontWeight: 600 }}>{t.columns.length}</span>
+                     <span style={{ fontSize: 11, color: isSelected ? 'var(--primary)' : 'var(--muted)', background: isSelected ? 'var(--surface)' : 'var(--surface-2)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>{t.columns.length}</span>
                   </div>
                   
                   {isSelected && (
@@ -250,12 +252,12 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
                         {t.columns.map(c => (
                            <div key={c.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '6px 0', borderBottom: '1px dashed var(--border)' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                 {c.isPrimaryKey && <Key size={12} color="#e67e22" title="Primary Key" />}
+                                 {c.isPrimaryKey && <Key size={12} color="#f59e0b" title="Primary Key" />}
                                  {c.isForeignKey && <LinkIcon size={12} color="var(--primary)" title={`Foreign Key to ${c.references}`} />}
                                  {!c.isPrimaryKey && !c.isForeignKey && <span style={{ width: 12 }} />}
-                                 <span style={{ color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)', fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 500 : 400 }}>{c.name}</span>
+                                 <span style={{ color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)', fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 600 : 400 }}>{c.name}</span>
                               </div>
-                              <span style={{ color: 'var(--muted)', fontSize: 12 }}>{c.type}</span>
+                              <span style={{ color: 'var(--muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{c.type}</span>
                            </div>
                         ))}
                      </div>
@@ -267,7 +269,7 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
       </div>
 
       {/* Right Canvas */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg)' }} onClick={() => setSelectedTable(null)}>
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg)', backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '24px 24px' }} onClick={() => setSelectedTable(null)}>
         <TransformWrapper
           ref={transformRef}
           initialScale={1}
@@ -328,31 +330,32 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
                           top: node.y,
                           width: NODE_WIDTH,
                           background: 'var(--surface)',
-                          border: `2px solid ${isFocus ? 'var(--primary)' : 'var(--border)'}`,
-                          borderRadius: 14,
-                          boxShadow: isFocus ? '0 0 0 4px rgba(59, 130, 246, 0.15), 0 12px 32px rgba(0,0,0,0.1)' : '0 12px 32px rgba(0,0,0,0.08)',
-                          opacity: isFaded ? 0.25 : 1,
+                          border: `1px solid ${isFocus ? 'var(--primary)' : 'var(--border)'}`,
+                          borderRadius: 12,
+                          boxShadow: isFocus ? '0 0 0 3px rgba(139, 92, 246, 0.15), 0 12px 32px rgba(0,0,0,0.1)' : '0 8px 24px rgba(0,0,0,0.04)',
+                          opacity: isFaded ? 0.2 : 1,
                           transition: 'opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
                           zIndex: isFocus ? 10 : 1,
                           userSelect: 'none',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          overflow: 'hidden'
                         }}
                       >
-                        <div style={{ height: HEADER_HEIGHT, background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', borderTopLeftRadius: 12, borderTopRightRadius: 12, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between' }}>
-                          <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{t.name}</span>
-                          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, background: 'var(--bg)', padding: '4px 8px', borderRadius: 6 }}>{t.columns.length} COLS</span>
+                        <div style={{ height: HEADER_HEIGHT, background: 'var(--surface-2)', borderBottom: `1px solid ${isFocus ? 'var(--primary-light)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: isFocus ? 'var(--primary)' : 'var(--text)' }}>{t.name}</span>
+                          <span style={{ fontSize: 10, color: isFocus ? 'var(--primary)' : 'var(--muted)', fontWeight: 700, background: isFocus ? 'var(--primary-muted)' : 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>{t.columns.length} COLS</span>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', padding: '4px 0' }}>
                           {t.columns.map((c, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: ROW_HEIGHT, padding: '0 16px', fontSize: 13, background: (c.isPrimaryKey || c.isForeignKey) ? 'var(--surface-2)' : 'transparent' }}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: ROW_HEIGHT, padding: '0 16px', fontSize: 13, background: (c.isPrimaryKey || c.isForeignKey) ? 'var(--surface)' : 'transparent' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {c.isPrimaryKey && <Key size={14} color="#e67e22" title="Primary Key" />}
+                                {c.isPrimaryKey && <Key size={14} color="#f59e0b" title="Primary Key" />}
                                 {c.isForeignKey && <LinkIcon size={14} color="var(--primary)" title={`Foreign Key to ${c.references}`} />}
                                 {!c.isPrimaryKey && !c.isForeignKey && <span style={{ width: 14 }} />}
                                 <span style={{ fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 600 : 500, color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)' }}>{c.name}</span>
                               </div>
-                              <span style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 500 }}>{c.type}</span>
+                              <span style={{ color: 'var(--muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{c.type}</span>
                             </div>
                           ))}
                         </div>
