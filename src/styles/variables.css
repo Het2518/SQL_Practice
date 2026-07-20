@@ -81,6 +81,10 @@ html[data-theme="dark"],
   --error:           #f48771;
   --error-muted:     rgba(244, 135, 113, 0.15);
 
+  --accent-1:        #c4b5fd;
+  --accent-2:        #f472b6;
+  --accent-3:        #60a5fa;
+
   --gradient-card:   #252526;
   --gradient-primary: linear-gradient(135deg, #007acc 0%, #005f9e 100%);
 }

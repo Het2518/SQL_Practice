@@ -29,7 +29,7 @@ export const NullSummaryPanel = ({ results }) => {
   if (totalNulls === 0) {
     return (
       <div style={{ padding: '32px', textAlign: 'center', color: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--success-muted)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Search size={24} />
         </div>
         <div style={{ fontWeight: 600, color: 'var(--text)' }}>Perfect Data Quality</div>
@@ -46,7 +46,7 @@ export const NullSummaryPanel = ({ results }) => {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: 'linear-gradient(135deg, #f97316, #eab308)', padding: 10, borderRadius: 10 }}>
+        <div style={{ background: 'var(--warning)', padding: 10, borderRadius: 10 }}>
           <Search size={20} color="#fff" />
         </div>
         <div>
@@ -59,10 +59,10 @@ export const NullSummaryPanel = ({ results }) => {
         {sortedCols.map(([col, count]) => {
           const percentage = (count / totalRows) * 100;
           // Color scale: yellow -> orange -> red based on severity
-          let color = '#facc15'; // yellow
-          let bg = 'rgba(250, 204, 21, 0.1)';
-          if (percentage > 25) { color = '#f97316'; bg = 'rgba(249, 115, 22, 0.1)'; }
-          if (percentage > 60) { color = '#ef4444'; bg = 'rgba(239, 68, 68, 0.1)'; }
+          let color = 'var(--warning)';
+          let bg = 'var(--warning-muted)';
+          if (percentage > 25) { color = 'var(--warning)'; bg = 'var(--warning-muted)'; }
+          if (percentage > 60) { color = 'var(--error)'; bg = 'var(--error-muted)'; }
 
           return (
             <div key={col} style={{ 

@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, BookOpen, Settings as SettingsIcon, User, Database,
   Play, ArrowRight, Trophy, CheckCircle, Clock, BarChart2,
-  Briefcase, Upload, ChevronRight, Layers, Target, Zap
+  Briefcase, Upload, ChevronRight, Layers, Target, Zap, TrendingUp, Building2
 } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 
@@ -40,7 +41,7 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
       <header className="home-header">
         <div className="home-logo">
           <div className="home-logo-badge">
-            <Database size={16} color="#fff" strokeWidth={2.5} />
+            <Database size={16} color="var(--primary)" strokeWidth={2.5} />
           </div>
           <div>
             <div className="home-title">DataDesk</div>
@@ -64,9 +65,9 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
             {settings?.darkMode ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
           </button>
           {user ? (
-            <button className="nav-btn-primary" onClick={() => navigate('/profile')}>
+            <Button variant="primary" size="sm" onClick={() => navigate('/profile')}>
               <User size={14} strokeWidth={2.5} /> My Profile
-            </button>
+            </Button>
           ) : (
             <button className="nav-btn-primary" onClick={onShowAuth}>Sign In</button>
           )}
@@ -106,14 +107,14 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
             </ul>
 
             <div className="hero-cta-row">
-              <button className="hero-btn-start" onClick={() => navigate('/practice/airlines')}>
+              <Button size="lg" onClick={() => navigate('/practice/airlines')}>
                 <Play size={14} strokeWidth={2.5} fill="currentColor" />
                 Start Practicing
                 <ArrowRight size={14} strokeWidth={2} />
-              </button>
-              <button className="hero-btn-secondary" onClick={() => onShowInterview()}>
+              </Button>
+              <Button variant="secondary" size="lg" onClick={() => onShowInterview()}>
                 <Briefcase size={14} /> Interview Mode
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -121,8 +122,8 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
           <div className="home-hero-right">
             <div className="hero-stats-grid">
               <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--success-muted)', border: '1px solid rgba(5,150,105,0.2)' }}>
-                  <CheckCircle size={18} color="var(--success)" strokeWidth={2} />
+                <div className="hero-stat-icon-wrap" style={{ background: 'var(--success-muted)', border: '1px solid var(--success-light, rgba(5,150,105,0.2))', color: 'var(--success)' }}>
+                  <TrendingUp size={20} />
                 </div>
                 <div>
                   <div className="hero-stat-value" style={{ color: 'var(--success)' }}>{totalComplete}</div>
@@ -131,8 +132,8 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
               </div>
 
               <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--warning-muted)', border: '1px solid rgba(217,119,6,0.2)' }}>
-                  <Clock size={18} color="var(--warning)" strokeWidth={2} />
+                <div className="hero-stat-icon-wrap" style={{ background: 'var(--warning-muted)', border: '1px solid var(--warning-light, rgba(217,119,6,0.2))', color: 'var(--warning)' }}>
+                  <BookOpen size={20} />
                 </div>
                 <div>
                   <div className="hero-stat-value" style={{ color: 'var(--warning)' }}>{totalAttempted}</div>
@@ -141,8 +142,8 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
               </div>
 
               <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid rgba(37,99,235,0.2)' }}>
-                  <Trophy size={18} color="var(--primary)" strokeWidth={2} />
+                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}>
+                  <Target size={20} />
                 </div>
                 <div>
                   <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{score.toLocaleString()}</div>
@@ -151,8 +152,8 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
               </div>
 
               <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid rgba(37,99,235,0.2)' }}>
-                  <BarChart2 size={18} color="var(--primary)" strokeWidth={2} />
+                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}>
+                  <Building2 size={20} />
                 </div>
                 <div>
                   <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{totalPct}%</div>
@@ -163,15 +164,15 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
 
             {/* Quick links */}
             <div className="hero-quick-links">
-              <button className="hero-quick-btn" onClick={() => navigate('/sandbox')}>
-                <Upload size={13} /> Custom Dataset
-              </button>
-              <button className="hero-quick-btn" onClick={() => navigate('/guide')}>
-                <BookOpen size={13} /> Documentation
-              </button>
-              <button className="hero-quick-btn" onClick={() => navigate('/practice/airlines')}>
-                <Zap size={13} /> Quick Start
-              </button>
+              <Button variant="outline" size="sm" icon={Upload} onClick={() => navigate('/sandbox')}>
+                Custom Dataset
+              </Button>
+              <Button variant="outline" size="sm" icon={BookOpen} onClick={() => navigate('/guide')}>
+                Documentation
+              </Button>
+              <Button variant="outline" size="sm" icon={Zap} onClick={() => navigate('/practice/airlines')}>
+                Quick Start
+              </Button>
             </div>
           </div>
         </div>

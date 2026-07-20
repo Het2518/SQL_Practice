@@ -9,6 +9,8 @@ import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 import { groqChat, buildSandboxQuestionsPrompt, hasGroqKey, MODEL_SMART } from '@/lib/groq';
+import { Button } from '@/shared/ui/Button';
+import { Badge } from '@/shared/ui/Badge';
 import '@/styles/sandbox.css';
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
@@ -49,17 +51,6 @@ function csvToSql(csvText, tableName) {
     sql += `INSERT INTO "${safe}" (${headers.map(h => `"${h}"`).join(', ')}) VALUES ${vals.join(', ')};\n`;
   }
   return sql;
-}
-
-// ─── Difficulty badge ─────────────────────────────────────────────────────────
-const DIFF = {
-  Easy:   { bg: 'rgba(0,184,163,0.12)',  color: '#00b8a3' },
-  Medium: { bg: 'rgba(255,192,30,0.12)', color: '#ffc01e' },
-  Hard:   { bg: 'rgba(255,55,95,0.12)',  color: '#ff375f' },
-};
-function DiffBadge({ d }) {
-  const s = DIFF[d] || DIFF.Medium;
-  return <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 4, background: s.bg, color: s.color }}>{d}</span>;
 }
 
 // ─── LEFT — Schema Sidebar ─────────────────────────────────────────────────────
@@ -245,10 +236,10 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
 
         {/* Powered by */}
         <div className="qp-footer">
-          <span><Sparkles size={9} color="#7c3aed" /> Powered by Groq AI</span>
-          <button className="qp-more-btn" onClick={() => { setSelected(null); generate(batch); }}>
-            <RefreshCw size={10} /> Next 5
-          </button>
+          <span><Sparkles size={9} color="var(--accent-1)" /> Powered by Groq AI</span>
+          <Button variant="ghost" size="sm" icon={RefreshCw} onClick={() => { setSelected(null); generate(batch); }}>
+            Next 5
+          </Button>
         </div>
       </div>
     );
@@ -260,7 +251,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
       {/* Header */}
       <div className="qp-header">
         <span className="qp-header-title">
-          <Sparkles size={12} color="#7c3aed" /> AI Questions
+          <Sparkles size={12} color="var(--accent-1)" /> AI Questions
           <span className="qp-header-badge">MAANG</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -309,12 +300,12 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
         {/* Empty */}
         {hasKey && !loading && !error && questions.length === 0 && (
           <div className="qp-empty">
-            <Sparkles size={20} color="#7c3aed" />
+            <Sparkles size={20} color="var(--accent-1)" />
             <div style={{ fontWeight: 600 }}>No questions yet</div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Generate 5 MAANG-style SQL questions for your dataset.</div>
-            <button className="qp-gen-btn" onClick={() => generate(0)}>
-              <Sparkles size={12} /> Generate Questions
-            </button>
+            <Button variant="primary" size="md" onClick={() => generate(0)} style={{ marginTop: '16px' }}>
+              Generate Questions
+            </Button>
           </div>
         )}
 
@@ -330,7 +321,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
             <div className="qp-row-body">
               <div className="qp-row-title">{q.title}</div>
               <div className="qp-row-meta">
-                <DiffBadge d={q.difficulty} />
+                <Badge variant={q.difficulty}>{q.difficulty}</Badge>
                 <span className="qp-row-topic">{q.topic}</span>
               </div>
             </div>
@@ -342,10 +333,10 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
       {/* Footer */}
       {hasKey && questions.length > 0 && !loading && (
         <div className="qp-footer">
-          <span><Sparkles size={9} color="#7c3aed" /> Groq AI · Click a question to load</span>
-          <button className="qp-more-btn" onClick={() => generate(batch)}>
-            <RefreshCw size={10} /> 5 More
-          </button>
+          <span><Sparkles size={9} color="var(--accent-1)" /> Groq AI · Click a question to load</span>
+          <Button variant="ghost" size="sm" icon={RefreshCw} onClick={() => generate(batch)}>
+            5 More
+          </Button>
         </div>
       )}
     </div>
@@ -394,7 +385,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
       <div style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>Custom Dataset Practice</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, maxWidth: 460, margin: '0 auto' }}>
-          Upload CSV or SQLite files. Practice SQL with <span style={{ color: '#7c3aed', fontWeight: 700 }}>AI-generated MAANG interview questions</span>.
+          Upload CSV or SQLite files. Practice SQL with <span style={{ color: 'var(--accent-1)', fontWeight: 700 }}>AI-generated MAANG interview questions</span>.
         </p>
       </div>
       <div
@@ -416,8 +407,8 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
           {uploadStatus.type === 'error' ? <AlertCircle size={14} /> : <RotateCcw size={14} className="spin" />} {uploadStatus.message}
         </div>
       )}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 10, maxWidth: 400, fontSize: 12, color: 'var(--text-secondary)' }}>
-        <Sparkles size={14} color="#7c3aed" style={{ flexShrink: 0 }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', borderRadius: 10, maxWidth: 400, fontSize: 12, color: 'var(--text-secondary)' }}>
+        <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
         <span>After upload, AI generates <strong style={{ color: 'var(--text)' }}>5 MAANG-style questions</strong> for your schema.</span>
       </div>
     </div>
@@ -573,7 +564,7 @@ export function CustomDatasetPage({ settings, onToggleDark }) {
 
         {!qPanelVisible && hasData && (
           <button className="btn btn-ghost" onClick={() => setQPanelVisible(true)} style={{ gap: 5, fontSize: 11 }}>
-            <Sparkles size={12} color="#7c3aed" /> AI Questions
+            <Sparkles size={12} color="var(--accent-1)" /> AI Questions
           </button>
         )}
 

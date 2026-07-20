@@ -182,7 +182,7 @@ export function TablePreviewModal({
                   Loading records...
                 </div>
               ) : result?.error ? (
-                <div style={{ padding: '24px', margin: '24px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 8, color: '#ef4444' }}>
+                <div style={{ padding: '24px', margin: '24px', background: 'var(--error-muted)', border: '1px solid var(--error)', borderRadius: 8, color: 'var(--error)' }}>
                   {result.error}
                 </div>
               ) : result && result.columns.length > 0 ? (

@@ -208,7 +208,7 @@ export const TheoryConnector = ({ sql, question }) => {
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>
-        <div style={{ background: 'var(--primary)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)' }}>
+        <div style={{ background: 'var(--primary)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px var(--primary-muted)' }}>
           <GraduationCap size={24} color="#fff" />
         </div>
         <div>
@@ -244,7 +244,7 @@ export const TheoryConnector = ({ sql, question }) => {
 
       {/* Interview Prep */}
       {activeConcept.interviewQuestion && (
-        <div style={{ marginTop: 24, background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div style={{ marginTop: 24, background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
           <div style={{ background: 'var(--primary)', borderRadius: '50%', padding: 8, display: 'flex' }}>
             <Lightbulb size={18} color="#fff" />
           </div>

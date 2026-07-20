@@ -18,6 +18,7 @@ import { useToast } from '@/shared/ui/ToastSystem';
 import { loadShortcuts, isShortcutMatch } from '@/utils/shortcutManager';
 import { hasSubquery, convertSubqueryToCTE } from '@/utils/sqlAnalysis';
 import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
+import { Button } from '@/shared/ui/Button';
 
 export function PracticeView({
   progress,
@@ -388,7 +389,7 @@ export function PracticeView({
       <div style={{ fontSize: 48 }}>💥</div>
       <div style={{ fontWeight: 700 }}>Database Error</div>
       <div style={{ color: 'var(--muted)', maxWidth: 400, textAlign: 'center' }}>{dbError}</div>
-      <button className="btn btn-primary" onClick={() => navigate('/')}>← Back to Home</button>
+      <Button variant="ghost" size="sm" icon={Home} onClick={() => navigate('/')}>Back to Home</Button>
     </div>;
   }
 
@@ -401,9 +402,7 @@ export function PracticeView({
       {/* ── LEFT cluster ── */}
       <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, height: '100%', flex: 1 }}>
         {/* Home */}
-        <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ gap: 5, fontSize: 12, padding: '0 12px', borderRadius: 0 }}>
-          <Home size={13} /> Home
-        </button>
+        <Button variant="ghost" size="sm" icon={Home} onClick={() => navigate('/')} style={{ borderRadius: 0 }}>Home</Button>
 
         <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
 
@@ -455,12 +454,12 @@ export function PracticeView({
       {/* ── CENTER: Run button ── */}
       <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div className="nav-run-wrap">
-          <button id="run-btn" className="btn btn-primary" onClick={handleRun}
+          <Button variant="primary" size="md" icon={isExecuting ? RotateCcw : Play} onClick={handleRun}
             disabled={isLoading || isExecuting || !sql.trim()}
-            style={{ gap: 7, padding: '0 22px', height: 34, fontWeight: 700, fontSize: 13, borderRadius: 8, minWidth: 100 }}
+            style={{ minWidth: 100 }}
           >
-            {isExecuting ? <><RotateCcw size={13} className="spin" /> Running</> : <><Play size={13} strokeWidth={2.5} fill="currentColor" /> Run</>}
-          </button>
+            {isExecuting ? 'Running' : 'Run'}
+          </Button>
           <span className="nav-run-shortcut">Ctrl + Enter</span>
         </div>
       </div>
@@ -602,12 +601,8 @@ export function PracticeView({
           <div className="editor-col-header">
             <span className="editor-label">SQL Editor</span>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              {hasSubquery(sql) && (
-                <button className="btn btn-ghost btn-sm" onClick={() => setShowCteModal(true)} style={{ fontSize: 11 }}>🪄 CTE</button>
-              )}
-              {/\bJOIN\b/i.test(sql) && (
-                <button className="btn btn-ghost btn-sm" onClick={() => setJoinAnalysisData({ db: executeQuery, sql })} style={{ fontSize: 11 }}>🔗 Joins</button>
-              )}
+                <Button variant="ghost" size="sm" onClick={() => setShowCteModal(true)} style={{ fontSize: 11 }}>🪄 CTE</Button>
+                <Button variant="ghost" size="sm" onClick={() => setJoinAnalysisData({ db: executeQuery, sql })} style={{ fontSize: 11 }}>🔗 Joins</Button>
               <span style={{ fontSize: 10, color: 'var(--muted)' }}>Ctrl+Enter to run</span>
             </div>
           </div>
@@ -615,12 +610,12 @@ export function PracticeView({
             <SqlEditor value={sql} onChange={setSql} onRun={handleRun} disabled={isLoading} dbName={db} fontSize={settings.editorFontSize} autoComplete={settings.autoCompleteSql} darkMode={settings.darkMode} />
           </div>
           <div className="editor-actions">
-            <button id="run-query-btn" className="btn btn-primary" onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
-              {isExecuting ? <><RotateCcw size={14} className="spin" /> Running…</> : !sql.trim() ? 'Type a query…' : '▶ Run Query'}
-            </button>
-            <button id="explain-query-btn" className="btn btn-secondary" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()}>
-              🔍 Explain
-            </button>
+            <Button id="run-query-btn" variant="primary" size="md" icon={Play} onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
+              {isExecuting ? 'Running…' : !sql.trim() ? 'Type a query…' : 'Run Query'}
+            </Button>
+            <Button id="explain-query-btn" variant="secondary" size="md" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()}>
+              Explain
+            </Button>
           </div>
         </div>
 

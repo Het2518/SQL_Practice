@@ -17,12 +17,12 @@ const TOAST_ICONS = {
 };
 
 const TOAST_COLORS = {
-  success: { bg: '#10b981', glow: 'rgba(16,185,129,0.2)', text: '#10b981' },
-  error: { bg: '#ef4444', glow: 'rgba(239,68,68,0.2)', text: '#ef4444' },
-  warning: { bg: '#f59e0b', glow: 'rgba(245,158,11,0.2)', text: '#f59e0b' },
-  info: { bg: '#3b82f6', glow: 'rgba(59,130,246,0.2)', text: '#3b82f6' },
-  badge: { bg: '#8b5cf6', glow: 'rgba(139,92,246,0.2)', text: '#8b5cf6' },
-  points: { bg: '#2563eb', glow: 'rgba(37,99,235,0.2)', text: '#2563eb' },
+  success: { bg: 'var(--success)', glow: 'var(--success-muted)', text: 'var(--success)' },
+  error: { bg: 'var(--error)', glow: 'var(--error-muted)', text: 'var(--error)' },
+  warning: { bg: 'var(--warning)', glow: 'var(--warning-muted)', text: 'var(--warning)' },
+  info: { bg: 'var(--primary)', glow: 'var(--primary-muted)', text: 'var(--primary)' },
+  badge: { bg: 'var(--accent-1)', glow: 'rgba(139,92,246,0.2)', text: 'var(--accent-1)' },
+  points: { bg: 'var(--primary)', glow: 'var(--primary-muted)', text: 'var(--primary)' },
 };
 
 function Toast({ id, type, title, message, onRemove }) {

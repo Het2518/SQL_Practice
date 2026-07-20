@@ -3,6 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeBase';
+import { Button } from '@/shared/ui/Button';
+import { Badge } from '@/shared/ui/Badge';
+import { Card } from '@/shared/ui/Card';
 
 const TABS = [
   { id: 'overview',     label: 'Overview' },
@@ -27,12 +30,7 @@ function extractTopics(sql) {
   return topics;
 }
 
-function difficultyStyle(d) {
-  const l = (d || '').toLowerCase();
-  if (l === 'hard' || l === 'expert') return { color: 'var(--error)', bg: 'var(--error-muted)' };
-  if (l === 'medium') return { color: 'var(--warning)', bg: 'var(--warning-muted)' };
-  return { color: 'var(--success)', bg: 'var(--success-muted)' };
-}
+
 
 function StatCard({ value, label, color }) {
   return (
@@ -60,19 +58,7 @@ function DiffBar({ easy, medium, hard }) {
   );
 }
 
-function SectionCard({ title, children, span }) {
-  return (
-    <div style={{
-      background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-      padding: 24, gridColumn: span ? '1 / -1' : undefined,
-    }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 18, letterSpacing: '-0.1px' }}>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function CompanyPrepPage() {
@@ -159,9 +145,9 @@ export default function CompanyPrepPage() {
                   </span>
                 )}
                 {kb?.avgDifficulty && (
-                  <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, ...difficultyStyle(kb.avgDifficulty) }}>
+                  <Badge variant={kb.avgDifficulty}>
                     Avg: {kb.avgDifficulty}
-                  </span>
+                  </Badge>
                 )}
               </div>
               <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 600 }}>
@@ -169,19 +155,13 @@ export default function CompanyPrepPage() {
               </p>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => navigate('/practice/ecommerce')}
-              style={{
-                flexShrink: 0, padding: '10px 20px', borderRadius: 8, border: 'none',
-                background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: 13,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                fontFamily: 'var(--font-sans)', transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
             >
               Practice SQL
-            </button>
+            </Button>
           </div>
 
           {/* Stats strip */}
@@ -221,7 +201,7 @@ export default function CompanyPrepPage() {
         {/* ━━ OVERVIEW ━━ */}
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <SectionCard title="Difficulty Distribution">
+            <Card title="Difficulty Distribution">
               <DiffBar easy={diffDist.easy} medium={diffDist.medium} hard={diffDist.hard} />
               <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
                 {[
@@ -235,9 +215,9 @@ export default function CompanyPrepPage() {
                   </span>
                 ))}
               </div>
-            </SectionCard>
+            </Card>
 
-            <SectionCard title="Frequently Asked Topics">
+            <Card title="Frequently Asked Topics">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {(kb?.topics || ['Joins', 'Window Functions', 'Aggregations', 'Subqueries', 'CTEs']).map(t => (
                   <span
@@ -252,71 +232,53 @@ export default function CompanyPrepPage() {
                   </span>
                 ))}
               </div>
-            </SectionCard>
+            </Card>
 
             {kb?.patterns && kb.patterns.length > 0 && (
-              <SectionCard title={`Common Question Patterns at ${companyName}`} span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {kb.patterns.map((p, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        padding: '12px 16px', borderRadius: 8, background: 'var(--surface-2)',
-                        border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)',
-                        lineHeight: 1.55, display: 'flex', gap: 10, alignItems: 'flex-start',
-                      }}
-                    >
+              <Card title={`Common Question Patterns at ${companyName}`} style={{ gridColumn: '1 / -1' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+                  {kb.patterns.slice(0, 3).map((p, i) => (
+                    <div key={i} style={{
+                      padding: '12px 16px', borderRadius: 8, background: 'var(--surface-2)',
+                      border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)',
+                      lineHeight: 1.55, display: 'flex', gap: 10, alignItems: 'flex-start',
+                    }}>
                       <span style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
                       {p}
                     </div>
                   ))}
                 </div>
-              </SectionCard>
+              </Card>
             )}
 
-            <SectionCard title="Quick Actions" span>
+            <Card title="Quick Actions" style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => navigate('/practice/ecommerce')}
-                  style={{
-                    padding: '9px 18px', border: '1px solid var(--border)', borderRadius: 8,
-                    background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'var(--font-sans)',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-muted)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setActiveTab('questions')}
+                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
                 >
-                  Practice SQL Now
-                </button>
-                <button
+                  Browse {questions.length} Questions
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => navigate('/practice/ecommerce')}
+                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
+                >
+                  Start Mock Interview
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={() => setActiveTab('roadmap')}
-                  style={{
-                    padding: '9px 18px', border: '1px solid var(--border)', borderRadius: 8,
-                    background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'var(--font-sans)',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-muted)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
                 >
                   View Learning Path
-                </button>
-                <button
-                  onClick={() => setActiveTab('experiences')}
-                  style={{
-                    padding: '9px 18px', border: '1px solid var(--border)', borderRadius: 8,
-                    background: 'var(--surface-2)', color: 'var(--text)', fontFamily: 'var(--font-sans)',
-                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-muted)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
-                >
-                  Read Experiences
-                </button>
+                </Button>
               </div>
-            </SectionCard>
+            </Card>
           </div>
         )}
 
@@ -353,7 +315,6 @@ export default function CompanyPrepPage() {
                   <tbody>
                     {questions.map(q => {
                       const topics = extractTopics(q.solution_sql);
-                      const { color, bg } = difficultyStyle(q.difficulty);
                       return (
                         <tr
                           key={q.id}
@@ -370,7 +331,9 @@ export default function CompanyPrepPage() {
                             </div>
                           </td>
                           <td style={{ padding: '13px 16px' }}>
-                            <span style={{ padding: '3px 9px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: bg, color }}>{q.difficulty}</span>
+                            <Badge variant={q.difficulty}>
+                              {q.difficulty}
+                            </Badge>
                           </td>
                           <td style={{ padding: '13px 16px', color: 'var(--muted)', fontSize: 12 }}>
                             {q.estimated_time_minutes || 15}m
