@@ -141,15 +141,14 @@ export function SettingsModal({ settings, onSave, onClose }) {
   const set = (key, value) => setLocal(prev => ({ ...prev, [key]: value }));
 
   const handleSave = () => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(local));
-      saveShortcuts(shortcuts);
-      // Save Groq key
-      if (groqKeyInput.trim()) saveGroqKey(groqKeyInput.trim());
-      else saveGroqKey('');
-      // Dispatch an event so SqlEditor and App can pickup the shortcut changes without reload
-      window.dispatchEvent(new Event('storage'));
-    } catch {}
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(local));
+    saveShortcuts(shortcuts);
+    // Save Groq key
+    if (groqKeyInput.trim()) saveGroqKey(groqKeyInput.trim());
+    else saveGroqKey('');
+    // Dispatch an event so SqlEditor and App can pickup the shortcut changes without reload
+    window.dispatchEvent(new Event('storage'));
+    
     onSave(local);
     onClose();
   };
