@@ -19,6 +19,7 @@ import { loadShortcuts, isShortcutMatch } from '@/utils/shortcutManager';
 import { hasSubquery, convertSubqueryToCTE } from '@/utils/sqlAnalysis';
 import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
 import { Button } from '@/shared/ui/Button';
+import { Header } from '@/shared/ui/Header';
 
 export function PracticeView({
   progress,
@@ -397,168 +398,105 @@ export function PracticeView({
     return <div className="practice-root page-enter" data-theme={settings.darkMode ? 'dark' : 'light'} data-font-size={fontSizeClass}>
 
     {/* ══ NAV ══ */}
-    <nav style={{ display: 'flex', alignItems: 'center', height: 48, background: 'var(--surface)', borderBottom: '1px solid var(--border)', flexShrink: 0, position: 'relative', zIndex: 20, overflow: 'visible' }}>
-
-      {/* ── LEFT cluster ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, height: '100%', flex: 1 }}>
-        {/* Home */}
-        <Button variant="ghost" size="sm" icon={Home} onClick={() => navigate('/')} style={{ borderRadius: 0 }}>Home</Button>
-
-        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
-
-        {/* Problem toggle — underline style like LeetCode */}
-        <button
-          onClick={() => setRightPanelOpen(v => !v)}
-          style={{ fontSize: 12, fontWeight: 600, padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer', color: rightPanelOpen ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: rightPanelOpen ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, height: '100%', transition: 'color 0.15s, border-color 0.15s' }}
-          title={rightPanelOpen ? 'Hide problem panel' : 'Show problem panel'}
-        >
-          Problem
-        </button>
-
-        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
-
-        {/* DB picker */}
-        <div style={{ position: 'relative', height: '100%', display: 'flex' }} onClick={e => e.stopPropagation()}>
+    <Header 
+      user={user}
+      settings={settings}
+      onShowAuth={onShowAuth}
+      onShowSettings={onShowSettings}
+      onToggleDark={onToggleDark}
+      leftContent={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
-            onClick={() => setShowDbPicker(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500, padding: '0 12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 0, height: '100%' }}
+            onClick={() => setRightPanelOpen(v => !v)}
+            style={{ 
+              fontSize: 13, 
+              fontWeight: 600, 
+              padding: '6px 12px', 
+              background: rightPanelOpen ? 'var(--primary-muted)' : 'transparent', 
+              border: 'none', 
+              cursor: 'pointer', 
+              color: rightPanelOpen ? 'var(--primary)' : 'var(--text-secondary)', 
+              borderRadius: 6, 
+              transition: 'all 0.15s' 
+            }}
+            title={rightPanelOpen ? 'Hide problem panel' : 'Show problem panel'}
           >
-            {dbInfo.label} <ChevronDown size={11} style={{ opacity: 0.5 }} />
+            <List size={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+            Problem
           </button>
-          {showDbPicker && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 999, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', minWidth: 230, padding: '6px 0', marginTop: 2 }}>
-              <div style={{ padding: '5px 14px 6px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Switch Database</div>
-              {Object.keys(DB_INFO).map(d => {
-                const info = DB_INFO[d]; const dbQs = getQuestionsForDb(d);
-                const comp = dbQs.filter(q => progress[q.id] === 'complete').length;
-                const isActive = d === db;
-                return (
-                  <button key={d} onClick={() => handleSwitchDb(d)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px', background: isActive ? 'var(--primary-muted)' : 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', transition: 'background 0.12s' }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none'; }}
-                  >
-                    <span style={{ flex: 1, fontWeight: isActive ? 700 : 400 }}>{info.label}</span>
-                    <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{comp}/{info.questionCount}</span>
-                    {isActive && <span style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 700 }}>✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div style={{ position: 'relative', height: '100%', display: 'flex', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setShowDbPicker(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, padding: '6px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 6 }}
+            >
+              {dbInfo.label} <ChevronDown size={12} style={{ opacity: 0.5 }} />
+            </button>
+            {showDbPicker && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 999, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', minWidth: 230, padding: '6px 0' }}>
+                <div style={{ padding: '5px 14px 6px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Switch Database</div>
+                {Object.keys(DB_INFO).map(d => {
+                  const info = DB_INFO[d]; const dbQs = getQuestionsForDb(d);
+                  const comp = dbQs.filter(q => progress[q.id] === 'complete').length;
+                  const isActive = d === db;
+                  return (
+                    <button key={d} onClick={() => handleSwitchDb(d)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 14px', background: isActive ? 'var(--primary-muted)' : 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', fontSize: 13, fontFamily: 'var(--font-sans)', transition: 'background 0.12s' }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--surface-2)'; }}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'none'; }}
+                    >
+                      <span style={{ flex: 1, fontWeight: isActive ? 700 : 400, textAlign: 'left' }}>{info.label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{comp}/{info.questionCount}</span>
+                      {isActive && <span style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 700 }}>✓</span>}
+                    </button>
+                  );
+                })}
+                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                <button onClick={() => { if(window.confirm('Reset all progress for ' + dbInfo.label + '?')) resetDb(db); setShowDbPicker(false); }}
+                  style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '8px 14px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)', fontSize: 12, fontWeight: 600, transition: 'background 0.12s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                >
+                  ↺ Reset Progress
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-
-
-      </div>
-
-      {/* ── CENTER: Run button ── */}
-      <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div className="nav-run-wrap">
-          <Button variant="primary" size="md" icon={isExecuting ? RotateCcw : Play} onClick={handleRun}
-            disabled={isLoading || isExecuting || !sql.trim()}
-            style={{ minWidth: 100 }}
-          >
-            {isExecuting ? 'Running' : 'Run'}
+      }
+      navLinks={[
+        { label: 'All Questions', onClick: () => setShowBrowser(true) },
+        { label: 'ER Diagram', onClick: () => setShowERDiagram(true) },
+        { label: 'Schema', primary: sidebarOpen, onClick: () => setSidebarOpen(v => !v) }
+      ]}
+      rightContent={
+        <div style={{ position: 'relative' }}>
+          <Button variant="ghost" size="sm" onClick={() => setShowOverflow(v => !v)} style={{ color: 'var(--text-secondary)' }}>
+            History
           </Button>
-          <span className="nav-run-shortcut">Ctrl + Enter</span>
-        </div>
-      </div>
-
-      {/* ── RIGHT cluster ── */}
-      <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, height: '100%', flex: 1, justifyContent: 'flex-end' }}>
-        {/* Schema toggle */}
-        <button
-          onClick={() => setSidebarOpen(v => !v)}
-          style={{ fontSize: 12, fontWeight: 600, padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer', color: sidebarOpen ? 'var(--primary)' : 'var(--text-secondary)', borderBottom: sidebarOpen ? '2px solid var(--primary)' : '2px solid transparent', borderRadius: 0, height: '100%', transition: 'color 0.15s, border-color 0.15s' }}
-          title={sidebarOpen ? 'Hide schema panel' : 'Show schema panel'}
-        >
-          Schema
-        </button>
-
-        <div style={{ width: 1, background: 'var(--border)', margin: '8px 0' }} />
-
-        {/* ⋯ Overflow menu */}
-        <div style={{ position: 'relative', height: '100%', display: 'flex' }}>
-          <button
-            onClick={() => setShowOverflow(v => !v)}
-            style={{ width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: showOverflow ? 'var(--surface-2)' : 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, fontWeight: 700, letterSpacing: 1, borderRadius: 0, height: '100%', transition: 'background 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = showOverflow ? 'var(--text)' : 'var(--muted)'; }}
-            title="More options"
-          >
-            ⋯
-          </button>
           {showOverflow && (
             <>
-              {/* Backdrop to close */}
               <div style={{ position: 'fixed', inset: 0, zIndex: 98 }} onClick={() => setShowOverflow(false)} />
-              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 99, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', minWidth: 220, padding: '6px 0', marginTop: 2 }}>
-                {/* User info */}
-                {user && (
-                  <div style={{ padding: '8px 14px 6px', fontSize: 11, color: 'var(--muted)', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
-                    Logged in as <strong style={{ color: 'var(--text)' }}>{user.email}</strong>
-                  </div>
-                )}
-                {!user && (
-                  <button className="overflow-menu-item" onClick={() => { onShowAuth(); setShowOverflow(false); }}>
-                    👤 Login
+              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 99, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.22)', minWidth: 220, padding: '6px 0' }}>
+                <div style={{ padding: '4px 14px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Query History</div>
+                {queryHistory.length === 0 && <div style={{ padding: '8px 14px', fontSize: 12, color: 'var(--muted)' }}>No recent queries</div>}
+                {queryHistory.slice(0, 10).map((entry, i) => (
+                  <button key={i} className="overflow-menu-item" style={{ fontSize: 12, width: '100%', textAlign: 'left', padding: '8px 14px', background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                    onClick={() => {
+                      if (entry.dbName && entry.dbName !== db) navigate('/practice/' + entry.dbName);
+                      if (entry.questionId) { const q = allQuestions.find(q => q.id === entry.questionId); if (q) setCurrentQ(q); }
+                      setSql(entry.sql); setShowOverflow(false);
+                    }}>
+                    📜 {entry.prompt ? entry.prompt.substring(0, 28) + '…' : entry.sql?.substring(0, 32)}
                   </button>
-                )}
-
-                <button className="overflow-menu-item" onClick={() => { setShowBrowser(true); setShowOverflow(false); }}>
-                  <List size={14} /> All Questions
-                </button>
-
-                <button className="overflow-menu-item" onClick={() => { handleExplain(); setShowOverflow(false); }}
-                  disabled={isLoading || isExecuting || !sql.trim()}>
-                  🔍 Explain Query <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 'auto' }}>Ctrl+E</span>
-                </button>
-
-                {/\bJOIN\b/i.test(sql) && (
-                  <button className="overflow-menu-item" onClick={() => { setJoinAnalysisData({ db: executeQuery, sql }); setShowOverflow(false); }}>
-                    🔗 Visualize Joins
-                  </button>
-                )}
-
-                {hasSubquery(sql) && (
-                  <button className="overflow-menu-item" onClick={() => { setShowCteModal(true); setShowOverflow(false); }}>
-                    🪄 Convert to CTE
-                  </button>
-                )}
-
-                {queryHistory.length > 0 && (
-                  <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
-                    <div style={{ padding: '4px 14px', fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Query History</div>
-                    {queryHistory.slice(0, 5).map((entry, i) => (
-                      <button key={i} className="overflow-menu-item" style={{ fontSize: 11 }}
-                        onClick={() => {
-                          if (entry.dbName && entry.dbName !== db) navigate('/practice/' + entry.dbName);
-                          if (entry.questionId) { const q = allQuestions.find(q => q.id === entry.questionId); if (q) setCurrentQ(q); }
-                          setSql(entry.sql); setShowOverflow(false);
-                        }}>
-                        📜 {entry.prompt ? entry.prompt.substring(0, 28) + '…' : entry.sql?.substring(0, 32)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <div style={{ borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 4 }}>
-                  <button className="overflow-menu-item" onClick={() => { setShowERDiagram(true); setShowOverflow(false); }}>
-                    <Database size={13} /> ER Diagram
-                  </button>
-                  <button className="overflow-menu-item" onClick={() => { onShowSettings(); setShowOverflow(false); }}>
-                    <SettingsIcon size={13} /> Settings
-                  </button>
-                  <button className="overflow-menu-item" onClick={() => { onToggleDark(); setShowOverflow(false); }}>
-                    {settings.darkMode ? <Sun size={13} /> : <Moon size={13} />} {settings.darkMode ? 'Light Mode' : 'Dark Mode'}
-                  </button>
-                </div>
+                ))}
               </div>
             </>
           )}
         </div>
-      </div>
-    </nav>
+      }
+    />
 
     {/* Loading overlay */}
     {isLoading && <div className="loading-overlay"><div className="spinner" /><div style={{ marginTop: 12, color: 'var(--muted)' }}>Loading {dbInfo.label}…</div></div>}

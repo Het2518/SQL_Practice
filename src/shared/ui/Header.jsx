@@ -10,7 +10,8 @@ export function Header({
   settings, 
   onShowAuth, 
   onShowSettings, 
-  onToggleDark 
+  onToggleDark,
+  rightContent
 }) {
   const navigate = useNavigate();
 
@@ -85,6 +86,8 @@ export function Header({
 
       {/* ── RIGHT: Actions ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {rightContent}
+        
         {onToggleDark && settings && (
           <Button 
             variant="ghost" 

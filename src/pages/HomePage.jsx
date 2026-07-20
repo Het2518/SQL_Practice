@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sun, Moon, BookOpen, Settings as SettingsIcon, User, Database,
   Play, ArrowRight, Trophy, CheckCircle, Clock, BarChart2,
-  Briefcase, Upload, ChevronRight, Layers, Target, Zap, TrendingUp, Building2
+  Briefcase, Upload, ChevronRight, Layers, Target, Zap, TrendingUp, Building2,
+  Terminal, LineChart, Code, Code2
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { Header } from '@/shared/ui/Header';
@@ -58,98 +59,80 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
 
       {/* ── Hero ── */}
       <section className="home-hero">
-        <div className="home-hero-inner">
-          {/* Left: headline */}
-          <div className="home-hero-left">
-            <div className="home-hero-badge">
-              <Target size={11} /> SQL Interview Practice
-            </div>
+        <div className="hero-glow-bg" />
+        
+        {/* Floating Background Icons */}
+        <div className="floating-icon icon-1"><Database size={32} /></div>
+        <div className="floating-icon icon-2"><Terminal size={32} /></div>
+        <div className="floating-icon icon-3"><LineChart size={32} /></div>
+        <div className="floating-icon icon-4"><Code2 size={32} /></div>
+        <div className="floating-icon icon-5"><CheckCircle size={32} /></div>
+        <div className="floating-icon icon-6"><Trophy size={32} /></div>
 
-            <h1 className="home-hero-h1">
-              Master SQL with<br />
-              <span className="home-hero-accent">Real-World Data</span>
-            </h1>
-
-            <p className="home-hero-desc">
-              10 hand-crafted databases. {allQuestions.length}+ progressive questions.
-              Practice JOINs, Window Functions, CTEs and more — exactly the SQL
-              that gets asked at FAANG and top tech companies.
-            </p>
-
-            <ul className="home-hero-features">
-              <li><CheckCircle size={14} /> Real schemas: Airlines, Hospital, E-commerce &amp; more</li>
-              <li><CheckCircle size={14} /> Instant query execution — no setup required</li>
-              <li><CheckCircle size={14} /> AI-generated placement-style questions</li>
-              <li><CheckCircle size={14} /> Upload your own CSV or SQLite database</li>
-            </ul>
-
-            <div className="hero-cta-row">
-              <Button size="lg" onClick={() => navigate('/practice/airlines')}>
-                <Play size={14} strokeWidth={2.5} fill="currentColor" />
-                Start Practicing
-                <ArrowRight size={14} strokeWidth={2} />
-              </Button>
-              <Button variant="secondary" size="lg" onClick={() => onShowInterview()}>
-                <Briefcase size={14} /> Interview Mode
-              </Button>
-            </div>
+        <div className="home-hero-content">
+          <div className="home-hero-badge">
+            <Target size={12} /> SQL Interview Practice
           </div>
 
-          {/* Right: stats */}
-          <div className="home-hero-right">
-            <div className="hero-stats-grid">
-              <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--success-muted)', border: '1px solid var(--success-light, rgba(5,150,105,0.2))', color: 'var(--success)' }}>
-                  <TrendingUp size={20} />
-                </div>
-                <div>
-                  <div className="hero-stat-value" style={{ color: 'var(--success)' }}>{totalComplete}</div>
-                  <div className="hero-stat-label">Solved</div>
-                </div>
-              </div>
+          <h1 className="home-hero-h1">
+            Master SQL with<br />
+            <span className="home-hero-accent">Real-World Data</span>
+          </h1>
 
-              <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--warning-muted)', border: '1px solid var(--warning-light, rgba(217,119,6,0.2))', color: 'var(--warning)' }}>
-                  <BookOpen size={20} />
-                </div>
-                <div>
-                  <div className="hero-stat-value" style={{ color: 'var(--warning)' }}>{totalAttempted}</div>
-                  <div className="hero-stat-label">In Progress</div>
-                </div>
-              </div>
+          <p className="home-hero-desc">
+            10 hand-crafted databases. {allQuestions.length}+ progressive questions.
+            Practice JOINs, Window Functions, CTEs and more — exactly the SQL
+            that gets asked at FAANG and top tech companies.
+          </p>
 
-              <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}>
-                  <Target size={20} />
-                </div>
-                <div>
-                  <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{score.toLocaleString()}</div>
-                  <div className="hero-stat-label">Score</div>
-                </div>
-              </div>
+          <div className="hero-cta-row">
+            <Button className="hero-btn-primary" size="lg" onClick={() => navigate('/practice/airlines')}>
+              <Play size={15} strokeWidth={2.5} fill="currentColor" />
+              Start Practicing
+              <ArrowRight size={15} strokeWidth={2} />
+            </Button>
+            <Button className="hero-btn-secondary" size="lg" onClick={() => onShowInterview()}>
+              <Briefcase size={15} /> Interview Mode
+            </Button>
+          </div>
+        </div>
 
-              <div className="hero-stat-card">
-                <div className="hero-stat-icon-wrap" style={{ background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}>
-                  <Building2 size={20} />
-                </div>
-                <div>
-                  <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{totalPct}%</div>
-                  <div className="hero-stat-label">Complete</div>
-                </div>
-              </div>
+        {/* ── Stats Row ── */}
+        <div className="hero-stats-row">
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon-wrap" style={{ color: 'var(--success)', background: 'var(--success-muted)', borderColor: 'var(--success-light)' }}>
+              <TrendingUp size={22} />
             </div>
-
-            {/* Quick links */}
-            <div className="hero-quick-links">
-              <Button variant="outline" size="sm" icon={Upload} onClick={() => navigate('/sandbox')}>
-                Custom Dataset
-              </Button>
-              <Button variant="outline" size="sm" icon={BookOpen} onClick={() => navigate('/guide')}>
-                Documentation
-              </Button>
-              <Button variant="outline" size="sm" icon={Zap} onClick={() => navigate('/practice/airlines')}>
-                Quick Start
-              </Button>
+            <div>
+              <div className="hero-stat-value" style={{ color: 'var(--success)' }}>{totalComplete}</div>
+              <div className="hero-stat-label">Solved</div>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon-wrap" style={{ color: 'var(--warning)', background: 'var(--warning-muted)', borderColor: 'var(--warning-light)' }}>
+              <BookOpen size={22} />
+            </div>
+            <div>
+              <div className="hero-stat-value" style={{ color: 'var(--warning)' }}>{totalAttempted}</div>
+              <div className="hero-stat-label">In Progress</div>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon-wrap" style={{ color: 'var(--primary)', background: 'var(--primary-muted)', borderColor: 'var(--primary-light)' }}>
+              <Target size={22} />
+            </div>
+            <div>
+              <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{score.toLocaleString()}</div>
+              <div className="hero-stat-label">Score</div>
+            </div>
+          </div>
+          <div className="hero-stat-card">
+            <div className="hero-stat-icon-wrap" style={{ color: 'var(--primary)', background: 'var(--primary-muted)', borderColor: 'var(--primary-light)' }}>
+              <Building2 size={22} />
+            </div>
+            <div>
+              <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>{totalPct}%</div>
+              <div className="hero-stat-label">Complete</div>
             </div>
           </div>
         </div>
