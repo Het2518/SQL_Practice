@@ -6,6 +6,7 @@ import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeB
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import { Card } from '@/shared/ui/Card';
+import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 
 const TABS = [
   { id: 'overview',     label: 'Overview' },
@@ -98,94 +99,97 @@ export default function CompanyPrepPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
-      {/* ── Header ── */}
-      <header style={{
-        height: 56, padding: '0 32px', display: 'flex', alignItems: 'center',
-        background: 'var(--surface)', borderBottom: '1px solid var(--border)',
-        position: 'sticky', top: 0, zIndex: 50,
+      {/* ── Global Header ── */}
+      <Header
+        user={props.user}
+        settings={props.settings}
+        onShowAuth={props.onShowAuth}
+        onShowSettings={props.onShowSettings}
+        onToggleDark={props.onToggleDark}
+        leftContent={
+          <HeaderBreadcrumbs 
+            items={[
+              { label: 'Interview Prep', onClick: () => navigate('/interview') }, 
+              { label: companyName }
+            ]} 
+          />
+        }
+      />
+
+      {/* ── Premium Company Hero ── */}
+      <div style={{ 
+        background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)', 
+        borderBottom: '1px solid var(--border)' 
       }}>
-        <button
-          onClick={() => navigate('/interview')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6, background: 'none',
-            border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 13,
-            fontWeight: 600, fontFamily: 'var(--font-sans)', padding: 0,
-          }}
-        >
-          <ArrowLeft size={14} /> Companies
-        </button>
-        <span style={{ margin: '0 12px', color: 'var(--border)' }}>/</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{companyName}</span>
-      </header>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 0' }}>
 
-      {/* ── Company Hero ── */}
-      <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 32px 0' }}>
-
-          {/* Company title row */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, marginBottom: 24 }}>
-            {/* Logo mark */}
-            <div style={{
-              width: 56, height: 56, borderRadius: 14, flexShrink: 0,
-              background: 'var(--primary-muted)', border: '1px solid var(--primary-light)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, fontWeight: 900, color: 'var(--primary)', fontFamily: 'var(--font-mono)',
-            }}>
-              {companyName.charAt(0).toUpperCase()}
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-                <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
-                  {companyName}
-                </h1>
-                {company?.category && (
-                  <span style={{ padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'var(--primary-muted)', color: 'var(--primary)', border: '1px solid var(--primary-light)' }}>
-                    {company.category}
-                  </span>
-                )}
-                {kb?.avgDifficulty && (
-                  <Badge variant={kb.avgDifficulty}>
-                    Avg: {kb.avgDifficulty}
-                  </Badge>
-                )}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 32, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+              {/* Logo mark */}
+              <div style={{
+                width: 72, height: 72, borderRadius: 18, flexShrink: 0,
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 32, fontWeight: 900, color: '#fff', fontFamily: 'var(--font-mono)',
+              }}>
+                {companyName.charAt(0).toUpperCase()}
               </div>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.65, margin: 0, maxWidth: 600 }}>
-                {kb?.style?.slice(0, 180) || `SQL interview preparation guide for ${companyName}`}
-              </p>
+
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
+                    {companyName}
+                  </h1>
+                  {company?.category && (
+                    <Badge variant="primary">{company.category}</Badge>
+                  )}
+                  {kb?.avgDifficulty && (
+                    <Badge variant={kb.avgDifficulty}>
+                      Avg: {kb.avgDifficulty}
+                    </Badge>
+                  )}
+                </div>
+                <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, maxWidth: 600 }}>
+                  {kb?.style?.slice(0, 180) || `Comprehensive SQL interview preparation guide for ${companyName}`}
+                </p>
+              </div>
             </div>
 
             <Button
               variant="primary"
-              size="md"
+              size="lg"
               onClick={() => navigate('/practice/ecommerce')}
+              style={{ padding: '0 32px' }}
             >
-              Practice SQL
+              Start Mock Interview
             </Button>
           </div>
 
           {/* Stats strip */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
             <StatCard value={questions.length || '—'} label="Questions" />
             <StatCard value={kb?.interviewRounds || '3–5'} label="Rounds" />
             <StatCard value={kb?.topics?.length || '—'} label="SQL Topics" />
             <StatCard value={`${diffDist.hard}%`} label="Hard" color="var(--error)" />
-            <StatCard value={kb?.avgDifficulty || 'Medium'} label="Avg Difficulty" />
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: 0, marginBottom: -1 }}>
+          {/* Segmented Tabs */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: -1 }}>
             {TABS.map(t => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 style={{
-                  padding: '10px 20px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                  fontWeight: activeTab === t.id ? 700 : 500, fontSize: 13,
-                  background: 'none', transition: 'all 0.15s',
-                  color: activeTab === t.id ? 'var(--primary)' : 'var(--muted)',
-                  borderBottom: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                  borderRadius: '6px 6px 0 0',
+                  padding: '12px 24px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  fontWeight: activeTab === t.id ? 700 : 500, fontSize: 14,
+                  background: activeTab === t.id ? 'var(--surface-2)' : 'transparent', 
+                  transition: 'all 0.15s ease',
+                  color: activeTab === t.id ? 'var(--text)' : 'var(--text-secondary)',
+                  borderTop: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
+                  borderLeft: activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+                  borderRight: activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+                  borderRadius: '8px 8px 0 0',
                 }}
               >
                 {t.label}

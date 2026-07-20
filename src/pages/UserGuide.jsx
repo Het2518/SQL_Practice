@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 
-export function UserGuide() {
+export function UserGuide({ user, settings, onShowAuth, onShowSettings, onToggleDark }) {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('getting-started');
 
@@ -19,30 +20,22 @@ export function UserGuide() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header style={{
-        padding: '16px 32px',
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 24,
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <button 
-          onClick={() => navigate('/')} 
-          className="btn btn-ghost"
-          style={{ fontSize: 14, fontWeight: 600 }}
-        >
-          ← Back to Home
-        </button>
-        <h1 style={{ margin: 0, fontSize: 20, color: 'var(--text)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-          Comprehensive User Guide
-        </h1>
-      </header>
+      {/* ── Global Header ── */}
+      <Header
+        user={user}
+        settings={settings}
+        onShowAuth={onShowAuth}
+        onShowSettings={onShowSettings}
+        onToggleDark={onToggleDark}
+        leftContent={
+          <HeaderBreadcrumbs 
+            items={[
+              { label: 'Home', onClick: () => navigate('/') }, 
+              { label: 'Documentation' }
+            ]} 
+          />
+        }
+      />
 
       <div style={{ display: 'flex', flex: 1, maxWidth: 1400, margin: '0 auto', width: '100%' }}>
         

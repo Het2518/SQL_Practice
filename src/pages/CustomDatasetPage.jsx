@@ -206,7 +206,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
         <div className="qp-detail-body">
           {/* Badges */}
           <div className="qp-detail-badges">
-            <DiffBadge d={selected.difficulty} />
+            <Badge variant={selected.difficulty}>{selected.difficulty}</Badge>
             <span className="qp-detail-status">○ Unsolved</span>
           </div>
 

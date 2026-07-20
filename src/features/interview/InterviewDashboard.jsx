@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { Search } from 'lucide-react';
+import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
+import { Button } from '@/shared/ui/Button';
 import { CompanyGrid } from './CompanyGrid';
 
 const CATEGORIES = ['All', 'MNC', 'Startup', 'SaaS', 'FinTech', 'Cloud', 'Data', 'E-commerce', 'Social', 'Security', 'HealthTech'];
 const ITEMS_PER_PAGE = 24;
 
-export function InterviewPage() {
+export function InterviewPage({ user, settings, onShowAuth, onShowSettings, onToggleDark }) {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,104 +41,80 @@ export function InterviewPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Header ── */}
-      <header style={{
-        height: 56, padding: '0 32px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', background: 'var(--surface)',
-        borderBottom: '1px solid var(--border)', flexShrink: 0, position: 'sticky', top: 0, zIndex: 50,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-sans)', padding: 0 }}
-          >
-            ← Home
-          </button>
-          <span style={{ width: 1, height: 16, background: 'var(--border)' }} />
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Interview Preparation</span>
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-          {companies.length} companies · Company-wise SQL tracks
-        </div>
-      </header>
+      {/* ── Global Header ── */}
+      <Header
+        user={user}
+        settings={settings}
+        onShowAuth={onShowAuth}
+        onShowSettings={onShowSettings}
+        onToggleDark={onToggleDark}
+        leftContent={<HeaderBreadcrumbs items={[{ label: 'Home', onClick: () => navigate('/') }, { label: 'Interview Prep' }]} />}
+      />
 
-      {/* ── Hero ── */}
+      {/* ── Premium Hero ── */}
       <div style={{
-        padding: '48px 32px 40px',
-        background: 'var(--surface)',
+        padding: '64px 32px',
+        background: 'linear-gradient(180deg, var(--primary-muted) 0%, var(--bg) 100%)',
         borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center'
       }}>
-        <div style={{ maxWidth: 680 }}>
-          <div style={{
-            display: 'inline-block', marginBottom: 16,
-            padding: '3px 12px', borderRadius: 99,
-            background: 'var(--primary-muted)', border: '1px solid var(--primary-light)',
-            fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.05em',
-          }}>
-            SQL INTERVIEW PREP
-          </div>
-          <h1 style={{ fontSize: 36, fontWeight: 900, color: 'var(--text)', letterSpacing: '-1px', margin: '0 0 14px', lineHeight: 1.1 }}>
-            Prepare for SQL interviews<br />
-            <span style={{ color: 'var(--primary)' }}>at top companies</span>
-          </h1>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7, margin: '0 0 28px', maxWidth: 560 }}>
-            Browse company-specific question banks, understand interview patterns,
-            read real candidate experiences and build a focused preparation roadmap.
-          </p>
-
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            {[
-              { label: 'Companies', value: companies.length || '100+' },
-              { label: 'Question Tracks', value: '50+' },
-              { label: 'Interview Rounds Covered', value: '3–6' },
-              { label: 'Topics', value: '20+' },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)', letterSpacing: '-0.5px' }}>{s.value}</div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
+        <div style={{
+          padding: '4px 16px', borderRadius: 99,
+          background: 'var(--surface)', border: '1px solid var(--primary-light)',
+          fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.05em',
+          marginBottom: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        }}>
+          SQL INTERVIEW PREP
         </div>
-      </div>
+        <h1 style={{ fontSize: 42, fontWeight: 900, color: 'var(--text)', letterSpacing: '-1px', margin: '0 0 16px', lineHeight: 1.1 }}>
+          Ace your interviews<br />
+          <span style={{ color: 'var(--primary)' }}>at top tech companies</span>
+        </h1>
+        <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 40px', maxWidth: 600 }}>
+          Master company-specific SQL questions, study real candidate experiences, and follow guided roadmaps to land your dream role.
+        </p>
 
-      {/* ── Toolbar ── */}
-      <div style={{ padding: '20px 32px 0', background: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
-        {/* Search */}
-        <div style={{ position: 'relative', maxWidth: 400, marginBottom: 16 }}>
+        {/* Floating Search Bar */}
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: 540, marginBottom: 24,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)', borderRadius: 16
+        }}>
           <input
             type="text"
-            placeholder="Search companies..."
+            placeholder="Search companies (e.g., Affirm, Meta)..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             style={{
-              width: '100%', padding: '9px 12px 9px 36px',
-              border: '1px solid var(--border)', borderRadius: 8,
+              width: '100%', padding: '16px 20px 16px 52px',
+              border: '1px solid var(--border)', borderRadius: 16,
               background: 'var(--surface)', color: 'var(--text)',
-              fontFamily: 'var(--font-sans)', fontSize: 13,
+              fontFamily: 'var(--font-sans)', fontSize: 15, fontWeight: 500,
               outline: 'none', boxSizing: 'border-box',
+              transition: 'all 0.2s ease',
             }}
+            onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
           />
-          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: 13 }}>
-            ⌕
-          </span>
+          <Search size={18} color="var(--muted)" style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)' }} />
         </div>
 
-        {/* Category pills */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 0 }}>
+        {/* Modern Category Chips */}
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}>
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               style={{
-                padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 600,
-                border: '1px solid', cursor: 'pointer', whiteSpace: 'nowrap',
+                padding: '8px 16px', borderRadius: 99, fontSize: 13, fontWeight: 600,
+                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                 fontFamily: 'var(--font-sans)',
-                background: activeCategory === cat ? 'var(--primary)' : 'var(--surface)',
-                color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
-                borderColor: activeCategory === cat ? 'var(--primary)' : 'var(--border)',
-                transition: 'all 0.12s',
+                background: activeCategory === cat ? 'var(--text)' : 'var(--surface)',
+                color: activeCategory === cat ? 'var(--bg)' : 'var(--text-secondary)',
+                boxShadow: activeCategory === cat ? '0 4px 12px rgba(0,0,0,0.1)' : 'inset 0 0 0 1px var(--border)',
+                transition: 'all 0.15s ease',
               }}
             >
               {cat}

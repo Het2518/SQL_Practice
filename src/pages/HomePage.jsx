@@ -6,6 +6,7 @@ import {
   Briefcase, Upload, ChevronRight, Layers, Target, Zap, TrendingUp, Building2
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
+import { Header } from '@/shared/ui/Header';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 
@@ -37,42 +38,18 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
   return (
     <div className="home-root page-enter">
 
-      {/* ── Sticky Navbar ── */}
-      <header className="home-header">
-        <div className="home-logo">
-          <div className="home-logo-badge">
-            <Database size={16} color="var(--primary)" strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="home-title">DataDesk</div>
-            <div className="home-subtitle">SQL Practice Platform</div>
-          </div>
-        </div>
-
-        <div className="home-header-sep" />
-
-        <nav className="home-nav">
-          <button className="nav-btn" onClick={() => navigate('/guide')}>
-            <BookOpen size={14} /> Docs
-          </button>
-          <button className="nav-btn" onClick={() => onShowInterview()} style={{ color: 'var(--primary)', fontWeight: 600 }}>
-            <Briefcase size={14} /> Interviews
-          </button>
-          <button className="nav-btn" onClick={onShowSettings}>
-            <SettingsIcon size={14} /> Settings
-          </button>
-          <button className="nav-btn nav-btn-icon" onClick={onToggleDark} title={settings?.darkMode ? 'Light Mode' : 'Dark Mode'}>
-            {settings?.darkMode ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
-          </button>
-          {user ? (
-            <Button variant="primary" size="sm" onClick={() => navigate('/profile')}>
-              <User size={14} strokeWidth={2.5} /> My Profile
-            </Button>
-          ) : (
-            <button className="nav-btn-primary" onClick={onShowAuth}>Sign In</button>
-          )}
-        </nav>
-      </header>
+      {/* ── Global Header ── */}
+      <Header
+        user={user}
+        settings={settings}
+        onShowAuth={onShowAuth}
+        onShowSettings={onShowSettings}
+        onToggleDark={onToggleDark}
+        navLinks={[
+          { label: 'Docs', onClick: () => navigate('/guide') },
+          { label: 'Interviews', onClick: () => onShowInterview(), primary: true }
+        ]}
+      />
 
       {/* ── Progress Strip ── */}
       <div className="global-progress-bar">

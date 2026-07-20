@@ -137,11 +137,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={showInterviewPage} settings={settings} onToggleDark={toggleDark} />} />
 
-        <Route path="/guide" element={<UserGuide />} />
+        <Route path="/guide" element={<UserGuide user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
         
-        <Route path="/interview" element={<InterviewPage />} />
-        
-        <Route path="/company/:slug" element={<CompanyPrepPage />} />
+        <Route path="/interview" element={<InterviewPage user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
+        <Route path="/company/:slug" element={<CompanyPrepPage user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
         
         <Route path="/sandbox" element={
           <CustomDatasetPage

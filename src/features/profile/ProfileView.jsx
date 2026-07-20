@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { allQuestions } from '@/data/index';
 import { BADGE_DEFS } from '@/hooks/useGamification';
 import { supabase } from '@/lib/supabase';
+import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 
 // Helper for count up animation
 function useCountUp(end, duration = 1500) {
@@ -341,57 +342,70 @@ export function ProfileView({ user, gameState, progress, settings, onSaveSetting
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       
-      {/* Top Header Bar */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 40px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 100 }}>
-        
-        {/* User Info (Left) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: '10px', 
-            background: 'var(--primary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            fontSize: 16, fontWeight: 800, color: '#fff'
-          }}>
-            {fullName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            {isEditingName ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', fontSize: 14 }} />
-                <button onClick={handleSaveName} disabled={isSavingName} style={{ background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><Check size={14} /></button>
-                <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><X size={14} /></button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <h2 style={{ margin: '0', fontSize: 16, color: 'var(--text)', fontWeight: 700 }}>{fullName}</h2>
-                <button onClick={() => { setNewName(fullName); setIsEditingName(true); }} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 4 }} title="Edit Name"><Edit2 size={12} /></button>
-              </div>
-            )}
-            <p style={{ margin: '0', fontSize: 12, color: 'var(--muted)' }}>{email}</p>
-          </div>
-        </div>
-
-        {/* Navigation Tabs (Center) */}
-        <nav style={{ display: 'flex', gap: 8, background: 'var(--surface-2)', padding: 4, borderRadius: 8, border: '1px solid var(--border)' }}>
-          <TopNavItem icon={<User size={14} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <TopNavItem icon={<Trophy size={14} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
-          <TopNavItem icon={<SettingsIcon size={14} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
-        </nav>
-
-        {/* Actions (Right) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={onHome} className="btn" style={{ background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)' }}>
-            Return to Practice
-          </button>
-          <button onClick={onSignOut} className="btn" style={{ background: 'transparent', color: 'var(--error)', border: '1px solid var(--error-muted)' }}>
-            <LogOut size={14} /> Sign Out
-          </button>
-        </div>
-      </header>
+      {/* ── Global Header ── */}
+      <Header
+        user={user}
+        leftContent={
+          <HeaderBreadcrumbs 
+            items={[
+              { label: 'Home', onClick: onHome }, 
+              { label: 'My Profile' }
+            ]} 
+          />
+        }
+      />
       
       {/* Main Content Area */}
       <main style={{ flex: 1, padding: '40px', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          
+          {/* ── Profile Hero ── */}
+          <div style={{ 
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+            background: 'var(--surface)', padding: '24px 32px', borderRadius: 16, 
+            border: '1px solid var(--border)', marginBottom: 24, flexWrap: 'wrap', gap: 24
+          }}>
+            {/* User Info */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 64, height: 64, borderRadius: 16, 
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                fontSize: 28, fontWeight: 900, color: '#fff'
+              }}>
+                {fullName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                {isEditingName ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', fontSize: 16, fontWeight: 700 }} />
+                    <button onClick={handleSaveName} disabled={isSavingName} style={{ background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><Check size={14} /></button>
+                    <button onClick={() => setIsEditingName(false)} style={{ background: 'var(--surface-2)', color: 'var(--text)', border: 'none', borderRadius: 4, padding: 4, cursor: 'pointer' }}><X size={14} /></button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <h2 style={{ margin: 0, fontSize: 24, color: 'var(--text)', fontWeight: 800 }}>{fullName}</h2>
+                    <button onClick={() => { setNewName(fullName); setIsEditingName(true); }} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer', padding: 6 }} title="Edit Name"><Edit2 size={12} /></button>
+                  </div>
+                )}
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{email}</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Navigation Tabs */}
+              <nav style={{ display: 'flex', gap: 4, background: 'var(--bg)', padding: 4, borderRadius: 10, border: '1px solid var(--border)' }}>
+                <TopNavItem icon={<User size={14} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+                <TopNavItem icon={<Trophy size={14} />} label="Leaderboard" active={activeTab === 'leaderboard'} onClick={() => setActiveTab('leaderboard')} />
+                <TopNavItem icon={<SettingsIcon size={14} />} label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+              </nav>
+
+              <button onClick={onSignOut} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 8, background: 'var(--surface-2)', color: 'var(--error)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
+          </div>
+
           {activeTab === 'dashboard' && <DashboardTab stats={stats} gameState={gameState} nextRecommendations={nextRecommendations} quests={quests} timelineEvents={timelineEvents} />}
           {activeTab === 'leaderboard' && <LeaderboardTab currentUser={user} currentScore={stats.score} />}
           {activeTab === 'settings' && <SettingsTab settings={settings} onSaveSettings={onSaveSettings} />}
