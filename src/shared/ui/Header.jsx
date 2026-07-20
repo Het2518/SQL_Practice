@@ -17,8 +17,8 @@ export function Header({
 
   return (
     <header style={{
-      height: 60,
-      padding: '0 32px',
+      height: 54,
+      padding: '0 24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -27,9 +27,11 @@ export function Header({
       position: 'sticky',
       top: 0,
       zIndex: 100,
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
     }}>
       {/* ── LEFT: Logo & Navigation ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div 
           onClick={() => navigate('/')}
           style={{ 
@@ -37,12 +39,19 @@ export function Header({
             alignItems: 'center', 
             gap: 8, 
             cursor: 'pointer',
-            userSelect: 'none'
+            userSelect: 'none',
+            padding: '4px 10px 4px 4px',
+            borderRadius: 8,
+            transition: 'background 0.2s',
           }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          <Database size={18} color="var(--primary)" strokeWidth={2.5} />
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Database size={16} color="var(--primary)" strokeWidth={2.5} />
+          </div>
           <span style={{ 
-            fontSize: 16, 
+            fontSize: 15, 
             fontWeight: 800, 
             color: 'var(--text)', 
             letterSpacing: '-0.3px' 
@@ -61,7 +70,7 @@ export function Header({
         {navLinks && (
           <>
             <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--surface-2)', padding: 4, borderRadius: 8 }}>
               {navLinks.map((link, i) => (
                 <span
                   key={i}
@@ -71,10 +80,18 @@ export function Header({
                     fontWeight: 600,
                     color: link.primary ? 'var(--primary)' : 'var(--text-secondary)',
                     cursor: 'pointer',
-                    transition: 'color 0.15s ease'
+                    padding: '6px 12px',
+                    borderRadius: 6,
+                    transition: 'all 0.15s ease'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = link.primary ? 'var(--primary-hover)' : 'var(--text)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = link.primary ? 'var(--primary)' : 'var(--text-secondary)'}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface)';
+                    e.currentTarget.style.color = link.primary ? 'var(--primary-hover)' : 'var(--text)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = link.primary ? 'var(--primary)' : 'var(--text-secondary)';
+                  }}
                 >
                   {link.label}
                 </span>
@@ -110,7 +127,7 @@ export function Header({
           />
         )}
 
-        <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 8px' }} />
 
         {user ? (
           <Button 
