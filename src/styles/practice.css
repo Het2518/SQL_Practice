@@ -229,32 +229,48 @@
   /* LEFT = Question panel (--right-panel-width), RIGHT = Schema (--sidebar-width) */
   grid-template-columns: var(--right-panel-width, 360px) 1fr var(--sidebar-width, 280px);
   flex: 1;
+  gap: 16px;
+  padding: 16px;
   overflow: hidden;
   min-height: 0;
   width: 100%;
+  background: var(--bg);
   transition: grid-template-columns 0.3s ease;
 }
 
 .sidebar-wrap {
   width: 100%;
   height: 100%;
-  border-left: 1px solid var(--border);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   overflow: hidden auto;
   background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="dark"] .sidebar-wrap, 
+[data-theme="dark"] .question-pane-wrap, 
+[data-theme="dark"] .center-workspace {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
 .question-pane-wrap {
   width: 100%;
   height: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
   overflow: hidden;
   background: var(--surface);
-  border-right: 1px solid var(--border);
 }
 
 /* center-workspace: CSS Grid for vertical split */
 .center-workspace {
   display: grid;
   grid-template-rows: 1fr 1fr;
+  gap: 16px;
   overflow: hidden;
   min-height: 0;
   min-width: 0; /* Important for preventing grid blowout */
@@ -265,7 +281,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden auto;
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
 /* Editor column */
@@ -276,16 +292,19 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
 .editor-col-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 14px;
+  padding: 12px 16px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-light, var(--border));
   flex-shrink: 0;
 }
 
@@ -295,16 +314,17 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+  padding: 8px 0;
 }
 
 .editor-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--surface);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-light, var(--border));
   flex-shrink: 0;
   min-width: 0;
 }
@@ -317,7 +337,10 @@
   flex-direction: column;
   overflow: hidden;
   min-width: 0;
-  background: var(--bg);
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
 /* — Responsive: stack on narrow screens */

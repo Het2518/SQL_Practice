@@ -51,24 +51,39 @@ export const ResultsPanel = React.memo(function ResultsPanel({
           alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
-          gap: 12,
-          color: 'var(--muted)',
+          padding: 32,
           background: 'var(--surface)'
         }}>
           <div style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            background: 'var(--surface-2)',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 20,
-            color: 'var(--text-secondary)'
-          }}>⌨️</div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>Write your SQL query</div>
-            <div style={{ fontSize: 13 }}>Type a query in the editor above to solve the problem</div>
+            width: '100%',
+            maxWidth: 400,
+            padding: '48px 24px',
+            border: '2px dashed var(--border)',
+            borderRadius: 16,
+            background: 'var(--surface-2)',
+            gap: 16
+          }}>
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 24,
+              color: 'var(--text-secondary)'
+            }}>⌨️</div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, marginBottom: 6, letterSpacing: '-0.3px' }}>Write your SQL query</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>Type a query in the editor above to solve the problem</div>
+            </div>
           </div>
         </div>
       );

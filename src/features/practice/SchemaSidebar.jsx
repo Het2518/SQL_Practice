@@ -191,9 +191,9 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, execute
   const generatedJoinSQL = joinSQL;
 
   const nfBadgeStyle = (nf) => {
-    const colors = { '3NF': '#059669', '2NF': '#d97706', '1NF': '#dc2626', 'Unnormalized': '#7c3aed', 'Unknown': '#6b7280' };
-    const color = colors[nf] || '#6b7280';
-    return { fontSize: 9, fontWeight: 700, background: `${color}20`, color, padding: '2px 5px', borderRadius: 4, border: `1px solid ${color}40`, flexShrink: 0 };
+    const colors = { '3NF': '#10b981', '2NF': '#f59e0b', '1NF': '#ef4444', 'Unnormalized': '#8b5cf6', 'Unknown': '#9ca3af' };
+    const color = colors[nf] || '#9ca3af';
+    return { fontSize: 9, fontWeight: 700, background: `${color}15`, color, padding: '3px 8px', borderRadius: 99, flexShrink: 0, textTransform: 'uppercase', letterSpacing: '0.04em' };
   };
 
   const tables = dbInfo?.tables || [];
@@ -214,23 +214,26 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, execute
         </div>
       </div>
 
-      {/* Tab Bar */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--surface)', flexShrink: 0 }}>
-        {[{ id: 'schema', label: 'Schema' }, { id: 'resources', label: 'Resources' }].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1, padding: '10px 0', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 13,
-              fontWeight: activeTab === tab.id ? 700 : 500,
-              color: activeTab === tab.id ? 'var(--primary)' : 'var(--muted)',
-              borderBottom: activeTab === tab.id ? '2px solid var(--primary)' : '2px solid transparent',
-              transition: 'all 0.15s'
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Segmented Control Tab Bar */}
+      <div style={{ padding: '12px 16px', background: 'var(--surface)' }}>
+        <div style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 8, padding: 4 }}>
+          {[{ id: 'schema', label: 'Schema' }, { id: 'resources', label: 'Resources' }].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1, padding: '6px 0', border: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 6,
+                fontWeight: activeTab === tab.id ? 600 : 500,
+                color: activeTab === tab.id ? 'var(--text)' : 'var(--muted)',
+                background: activeTab === tab.id ? 'var(--surface)' : 'transparent',
+                boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Body */}

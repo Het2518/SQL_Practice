@@ -502,10 +502,10 @@ export function PracticeView({
     {isLoading && <div className="loading-overlay"><div className="spinner" /><div style={{ marginTop: 12, color: 'var(--muted)' }}>Loading {dbInfo.label}…</div></div>}
 
     {/* ══ MAIN: 3-column flex layout ══ */}
-    <div ref={layoutRef} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+    <div ref={layoutRef} style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0, background: 'var(--bg)', padding: '12px', gap: '12px' }}>
 
       {/* LEFT: Question panel */}
-      <div style={{ width: rightPanelOpen ? questionW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', background: 'var(--surface)', borderRight: rightPanelOpen ? '1px solid var(--border)' : 'none' }}>
+      <div className={rightPanelOpen ? 'question-pane-wrap' : ''} style={{ width: rightPanelOpen ? questionW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', border: 'none', borderRadius: '16px', background: 'var(--surface)', boxShadow: rightPanelOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none' }}>
         <div style={{ width: questionW, height: '100%', overflow: 'hidden' }}>
           <QuestionCard
             question={currentQ} expectedResult={expectedResult}
@@ -526,14 +526,14 @@ export function PracticeView({
       {rightPanelOpen && (
         <div
           onMouseDown={() => setIsDraggingLeft(true)}
-          style={{ width: 4, flexShrink: 0, cursor: 'col-resize', background: isDraggingLeft ? 'var(--primary)' : 'transparent', transition: 'background 0.2s' }}
+          style={{ width: 8, margin: '0 -10px', zIndex: 10, flexShrink: 0, cursor: 'col-resize', background: isDraggingLeft ? 'var(--primary)' : 'transparent', transition: 'background 0.2s', borderRadius: 4 }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.opacity = '0.4'; }}
           onMouseLeave={e => { if (!isDraggingLeft) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '1'; } }}
         />
       )}
 
       {/* CENTER: Editor + Results */}
-      <main ref={workspaceRef} style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateRows: `${editorHeightPct}% 4px 1fr`, overflow: 'hidden' }}>
+      <main className="center-workspace" ref={workspaceRef} style={{ flex: 1, minWidth: 0, display: 'grid', gridTemplateRows: `${editorHeightPct}% 8px 1fr`, overflow: 'hidden', background: 'transparent' }}>
 
         <div className="editor-col">
           <div className="editor-col-header">
@@ -549,7 +549,7 @@ export function PracticeView({
           </div>
           <div className="editor-actions">
             <Button id="run-query-btn" variant="primary" size="md" icon={Play} onClick={handleRun} disabled={isLoading || isExecuting || !sql.trim()}>
-              {isExecuting ? 'Running…' : !sql.trim() ? 'Type a query…' : 'Run Query'}
+              {isExecuting ? 'Running…' : 'Run Query'}
             </Button>
             <Button id="explain-query-btn" variant="secondary" size="md" onClick={handleExplain} disabled={isLoading || isExecuting || !sql.trim()}>
               Explain
@@ -560,9 +560,9 @@ export function PracticeView({
         {/* Vertical drag handle */}
         <div
           onMouseDown={() => setIsDragging(true)}
-          style={{ height: 4, cursor: 'row-resize', background: isDragging ? 'var(--primary)' : 'var(--border)', transition: 'background 0.2s' }}
+          style={{ height: 8, margin: '-4px 0', zIndex: 10, cursor: 'row-resize', background: isDragging ? 'var(--primary)' : 'transparent', transition: 'background 0.2s', borderRadius: 4 }}
           onMouseEnter={e => { if (!isDragging) e.currentTarget.style.background = 'var(--primary-muted)'; }}
-          onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'var(--border)'; }}
+          onMouseLeave={e => { if (!isDragging) e.currentTarget.style.background = 'transparent'; }}
         />
 
         <div className="results-col">
@@ -574,14 +574,14 @@ export function PracticeView({
       {sidebarOpen && (
         <div
           onMouseDown={() => setIsDraggingRight(true)}
-          style={{ width: 4, flexShrink: 0, cursor: 'col-resize', background: isDraggingRight ? 'var(--primary)' : 'transparent', transition: 'background 0.2s' }}
+          style={{ width: 8, margin: '0 -10px', zIndex: 10, flexShrink: 0, cursor: 'col-resize', background: isDraggingRight ? 'var(--primary)' : 'transparent', transition: 'background 0.2s', borderRadius: 4 }}
           onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.opacity = '0.4'; }}
           onMouseLeave={e => { if (!isDraggingRight) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '1'; } }}
         />
       )}
 
       {/* RIGHT: Schema sidebar */}
-      <div style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', background: 'var(--surface)', borderLeft: sidebarOpen ? '1px solid var(--border)' : 'none' }}>
+      <div className={sidebarOpen ? 'sidebar-wrap' : ''} style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', border: 'none', borderRadius: '16px', background: 'var(--surface)', boxShadow: sidebarOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none' }}>
         <div style={{ width: schemaW, height: '100%', overflow: 'hidden' }}>
           <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} />
         </div>

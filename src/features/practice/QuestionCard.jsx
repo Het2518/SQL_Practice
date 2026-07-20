@@ -284,12 +284,12 @@ export const QuestionCard = React.memo(function QuestionCard({
       {/* Question Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
         {/* Difficulty + Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <span style={{
-            background: 'var(--primary-muted)',
-            color: 'var(--primary)',
-            padding: '2px 8px',
-            borderRadius: 4,
+            background: question.difficulty === 'hard' ? 'rgba(239, 68, 68, 0.1)' : question.difficulty === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+            color: question.difficulty === 'hard' ? '#ef4444' : question.difficulty === 'medium' ? '#f59e0b' : '#10b981',
+            padding: '4px 10px',
+            borderRadius: 99,
             fontSize: 11,
             fontWeight: 700,
             letterSpacing: '0.5px'
@@ -360,9 +360,9 @@ export const QuestionCard = React.memo(function QuestionCard({
                 <span key={kw} style={{
                   background: 'var(--primary-muted)',
                   color: 'var(--primary)',
-                  border: '1px solid var(--primary-light)',
-                  padding: '4px 10px',
-                  borderRadius: 6,
+                  border: 'none',
+                  padding: '4px 12px',
+                  borderRadius: 99,
                   fontSize: 12,
                   fontWeight: 600,
                   display: 'flex',
@@ -394,9 +394,10 @@ export const QuestionCard = React.memo(function QuestionCard({
           
           {/* Hints Accordion */}
           <div style={{
-            background: 'var(--surface-2)',
-            borderRadius: 8,
+            background: 'var(--surface)',
+            borderRadius: 12,
             border: '1px solid var(--border)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
             overflow: 'hidden'
           }}>
             <button 
