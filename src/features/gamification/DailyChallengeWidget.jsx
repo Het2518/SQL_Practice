@@ -32,89 +32,75 @@ export function DailyChallengeWidget({ progress }) {
       maxWidth: 900,
       background: 'var(--surface)',
       border: '1px solid var(--border)',
-      borderRadius: 12,
+      borderRadius: 8,
       display: 'flex',
       alignItems: 'center',
-      position: 'relative',
-      overflow: 'hidden'
+      justifyContent: 'space-between',
+      padding: '16px 24px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
     }}>
-      {/* Decorative vertical bar */}
-      <div style={{ 
-        position: 'absolute', top: 0, left: 0, bottom: 0, width: 4, 
-        background: isCompleted ? 'var(--success)' : 'var(--primary)'
-      }} />
-
-      <div style={{ padding: '24px 32px', flex: 1, display: 'flex', alignItems: 'center', gap: 24 }}>
-        
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         {/* Icon */}
         <div style={{
-          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-          background: isCompleted ? 'var(--success-muted)' : 'var(--primary-muted)',
-          border: `1px solid ${isCompleted ? 'var(--success-light)' : 'var(--primary-light)'}`,
+          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: isCompleted ? 'var(--success)' : 'var(--primary)',
         }}>
-          {isCompleted ? <Star size={24} /> : <Target size={24} />}
+          {isCompleted ? <Star size={20} /> : <Target size={20} />}
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-            <span style={{ 
-              fontSize: 12, fontWeight: 600, 
-              color: isCompleted ? 'var(--success)' : 'var(--primary)', 
-              textTransform: 'uppercase', letterSpacing: 1
-            }}>
-              {isCompleted ? "Challenge Completed" : "Daily Challenge"}
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Clock size={14} /> Ends at midnight
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {isCompleted ? "Completed" : "Daily Challenge"}
             </span>
           </div>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: 18, fontWeight: 600, color: 'var(--text)' }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
             {dailyQuestion.title || "Mystery SQL Problem"}
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`} style={{ padding: '2px 8px', fontSize: 12 }}>
-              {dailyQuestion.difficulty || 'Easy'}
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Database: <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{dailyQuestion.db}</strong>
-            </span>
-          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`} style={{ padding: '2px 8px', fontSize: 11 }}>
+            {dailyQuestion.difficulty || 'Easy'}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            {dailyQuestion.db}
+          </span>
         </div>
 
         {/* Action Button */}
-        <div>
-          <button
-            onClick={() => navigate(`/practice/${dailyQuestion.db}?q=${dailyQuestion.id}`)}
-            style={{
-              padding: '10px 20px',
-              borderRadius: 8,
-              background: isCompleted ? 'var(--surface-2)' : 'var(--primary)',
-              color: isCompleted ? 'var(--text)' : '#fff',
-              border: isCompleted ? '1px solid var(--border)' : '1px solid var(--primary)',
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={e => {
-              if (!isCompleted) e.currentTarget.style.background = 'var(--primary-dark)';
-              else e.currentTarget.style.background = 'var(--surface-3)';
-            }}
-            onMouseLeave={e => {
-              if (!isCompleted) e.currentTarget.style.background = 'var(--primary)';
-              else e.currentTarget.style.background = 'var(--surface-2)';
-            }}
-          >
-            {isCompleted ? 'Review Answer' : 'Solve Challenge'} <ArrowRight size={16} />
-          </button>
-        </div>
-
+        <button
+          onClick={() => navigate(`/practice/${dailyQuestion.db}?q=${dailyQuestion.id}`)}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 6,
+            background: isCompleted ? 'var(--surface-2)' : 'var(--primary)',
+            color: isCompleted ? 'var(--text)' : '#fff',
+            border: isCompleted ? '1px solid var(--border)' : '1px solid var(--primary)',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            transition: 'background 0.2s',
+          }}
+          onMouseEnter={e => {
+            if (!isCompleted) e.currentTarget.style.background = 'var(--primary-muted)';
+            else e.currentTarget.style.background = 'var(--surface-3)';
+          }}
+          onMouseLeave={e => {
+            if (!isCompleted) e.currentTarget.style.background = 'var(--primary)';
+            else e.currentTarget.style.background = 'var(--surface-2)';
+          }}
+        >
+          {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={14} />
+        </button>
       </div>
     </div>
   );

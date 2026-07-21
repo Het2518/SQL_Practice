@@ -87,7 +87,7 @@ export function LeaderboardModal({ isOpen, onClose, currentUser }) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '0', flex: 1, overflowY: 'auto', background: 'var(--bg-color)' }}>
+        <div style={{ padding: '0', flex: 1, overflowY: 'auto', background: 'var(--surface)' }}>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 16, color: 'var(--text-secondary)' }}>
               <div className="spinner" />
@@ -101,8 +101,8 @@ export function LeaderboardModal({ isOpen, onClose, currentUser }) {
                 const isMe = currentUser && currentUser.id === leader.user_id;
                 
                 let RankIcon = null;
-                if (index === 0) RankIcon = <Medal size={20} color="#fbbf24" />;
-                else if (index === 1) RankIcon = <Medal size={20} color="#94a3b8" />;
+                if (index === 0) RankIcon = <Medal size={20} color="var(--warning)" />;
+                else if (index === 1) RankIcon = <Medal size={20} color="var(--text-secondary)" />;
                 else if (index === 2) RankIcon = <Medal size={20} color="#b45309" />;
 
                 return (
@@ -136,7 +136,7 @@ export function LeaderboardModal({ isOpen, onClose, currentUser }) {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 600, color: leader.current_streak > 0 ? 'var(--text)' : 'var(--muted)' }}>
-                      <Flame size={18} color={leader.current_streak > 0 ? '#ef4444' : 'currentColor'} />
+                      <Flame size={18} color={leader.current_streak > 0 ? 'var(--error)' : 'currentColor'} />
                       {leader.current_streak}
                     </div>
                   </div>
