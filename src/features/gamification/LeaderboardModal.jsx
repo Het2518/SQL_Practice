@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import { Trophy, Flame, Star, X, Medal } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
 
 export function LeaderboardModal({ isOpen, onClose, currentUser }) {
   const [leaders, setLeaders] = useState([]);
@@ -144,6 +145,13 @@ export function LeaderboardModal({ isOpen, onClose, currentUser }) {
               })}
             </div>
           )}
+        </div>
+
+        {/* Footer actions */}
+        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
         </div>
       </div>
     </div>

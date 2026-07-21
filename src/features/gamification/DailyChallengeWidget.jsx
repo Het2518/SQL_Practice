@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, ArrowRight, Star, Clock } from 'lucide-react';
 import { allQuestions } from '@/data';
+import { Button } from '@/shared/ui/Button';
 
 export function DailyChallengeWidget({ progress }) {
   const navigate = useNavigate();
@@ -32,75 +33,64 @@ export function DailyChallengeWidget({ progress }) {
       maxWidth: 900,
       background: 'var(--surface)',
       border: '1px solid var(--border)',
-      borderRadius: 8,
+      borderRadius: 12,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '16px 24px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      padding: '20px 32px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+      transition: 'box-shadow 0.2s, transform 0.2s',
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.03)';
+      e.currentTarget.style.transform = 'translateY(0)';
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         {/* Icon */}
         <div style={{
-          width: 40, height: 40, borderRadius: 8, flexShrink: 0,
-          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+          background: isCompleted ? 'var(--success-muted)' : 'var(--primary-muted)', 
+          border: isCompleted ? '1px solid var(--success-light)' : '1px solid var(--primary-light)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: isCompleted ? 'var(--success)' : 'var(--primary)',
         }}>
-          {isCompleted ? <Star size={20} /> : <Target size={20} />}
+          {isCompleted ? <Star size={24} /> : <Target size={24} />}
         </div>
 
         {/* Content */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
               {isCompleted ? "Completed" : "Daily Challenge"}
             </span>
           </div>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>
             {dailyQuestion.title || "Mystery SQL Problem"}
           </h3>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`} style={{ padding: '2px 8px', fontSize: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`} style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600 }}>
             {dailyQuestion.difficulty || 'Easy'}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>
             {dailyQuestion.db}
           </span>
         </div>
 
-        {/* Action Button */}
-        <button
+        <Button
+          variant={isCompleted ? 'secondary' : 'primary'}
           onClick={() => navigate(`/practice/${dailyQuestion.db}?q=${dailyQuestion.id}`)}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            background: isCompleted ? 'var(--surface-2)' : 'var(--primary)',
-            color: isCompleted ? 'var(--text)' : '#fff',
-            border: isCompleted ? '1px solid var(--border)' : '1px solid var(--primary)',
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'background 0.2s',
-          }}
-          onMouseEnter={e => {
-            if (!isCompleted) e.currentTarget.style.background = 'var(--primary-muted)';
-            else e.currentTarget.style.background = 'var(--surface-3)';
-          }}
-          onMouseLeave={e => {
-            if (!isCompleted) e.currentTarget.style.background = 'var(--primary)';
-            else e.currentTarget.style.background = 'var(--surface-2)';
-          }}
+          style={{ paddingLeft: 24, paddingRight: 24 }}
         >
-          {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={14} />
-        </button>
+          {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={16} />
+        </Button>
       </div>
     </div>
   );
