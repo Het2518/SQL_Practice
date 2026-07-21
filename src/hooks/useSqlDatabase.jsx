@@ -94,7 +94,21 @@ export function useSqlDatabase(dbInput) {
       return { columns: [], rows: [], error: 'Please enter a SQL query.' };
     }
     try {
-      return await sendMessage('EXECUTE', { sql });
+      const result = await sendMessage('EXECUTE', { sql });
+      
+      if (sql.trim().toUpperCase().startsWith('SELECT')) {
+        try {
+          const planResult = await sendMessage('EXECUTE', { sql: `EXPLAIN QUERY PLAN ${sql}` });
+          if (planResult && planResult.rows) {
+            // SQLite EXPLAIN QUERY PLAN typically returns [id, parent, notused, detail]
+            result.explainPlan = planResult.rows;
+          }
+        } catch (planErr) {
+          // Ignore EXPLAIN errors
+        }
+      }
+
+      return result;
     } catch (err) {
       return { columns: [], rows: [], error: err.message };
     }

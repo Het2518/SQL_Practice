@@ -4,6 +4,7 @@ import { TableCell, NullSummaryPanel } from '@/features/visualizers/NullVisualiz
 import { ExecutionPlanTree } from '@/features/visualizers/ExecutionPlanTree';
 import { TheoryConnector } from '@/features/visualizers/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
+import { DataVisualizer } from '@/features/practice/DataVisualizer';
 import { TableVirtuoso } from 'react-virtuoso';
 
 export const ResultsPanel = React.memo(function ResultsPanel({
@@ -209,6 +210,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
             }}>
               {[
                 { id: 'data',     label: 'Data'           },
+                { id: 'chart',    label: 'Chart'          },
                 { id: 'analysis', label: 'Null Analysis'  },
                 { id: 'plan',     label: 'Execution Plan' },
                 { id: 'theory',   label: 'Theory'         },
@@ -246,6 +248,18 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 {/* Data Tab */}
                 {activeTab === 'data' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    
+                    {/* Performance Analyzer Warning (Phase 1) */}
+                    {result.explainPlan && result.explainPlan.some(row => row[3] && row[3].includes('SCAN TABLE')) && (
+                      <div style={{ 
+                        margin: '12px 16px', padding: '10px 14px', background: 'rgba(230,126,34,0.1)', 
+                        borderLeft: '4px solid #e67e22', borderRadius: '4px', fontSize: '12.5px', color: 'var(--text)'
+                      }}>
+                        <strong style={{ color: '#e67e22' }}>Performance Warning:</strong> This query performs a <strong>Full Table Scan</strong>. 
+                        While it works, it might be slow on large datasets. Consider adding an index or filtering earlier!
+                      </div>
+                    )}
+
                     {result.columns.length === 0 ? (
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontSize: 13, gap: 12 }}>
                         <div style={{ fontSize: 24 }}>✅</div>
@@ -278,6 +292,13 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                         />
                       </div>
                     )}
+                  </div>
+                )}
+                
+                {/* Chart Tab */}
+                {activeTab === 'chart' && (
+                  <div style={{ flex: 1, overflowY: 'hidden' }}>
+                    <DataVisualizer result={result} />
                   </div>
                 )}
                 
