@@ -62,7 +62,7 @@ function DiffBar({ easy, medium, hard }) {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function CompanyPrepPage() {
+export default function CompanyPrepPage(props) {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
