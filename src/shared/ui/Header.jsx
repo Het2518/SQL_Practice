@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Database, User, Sun, Moon, Settings as SettingsIcon, LogIn, ChevronRight } from 'lucide-react';
+import { Database, User, Sun, Moon, Settings as SettingsIcon, LogIn, ChevronRight, Trophy } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
+import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
 
 export function Header({ 
   leftContent,
@@ -14,6 +15,7 @@ export function Header({
   rightContent
 }) {
   const navigate = useNavigate();
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
     <header style={{
@@ -115,6 +117,15 @@ export function Header({
             title="Toggle Dark Mode"
           />
         )}
+
+        <Button 
+          variant="ghost" 
+          size="md" 
+          icon={Trophy}
+          onClick={() => setShowLeaderboard(true)}
+          style={{ padding: '8px', color: '#f59e0b' }}
+          title="Leaderboard"
+        />
         
         {onShowSettings && (
           <Button 
@@ -149,6 +160,13 @@ export function Header({
           </Button>
         )}
       </div>
+      {showLeaderboard && (
+        <LeaderboardModal 
+          isOpen={showLeaderboard} 
+          onClose={() => setShowLeaderboard(false)} 
+          currentUser={user} 
+        />
+      )}
     </header>
   );
 }

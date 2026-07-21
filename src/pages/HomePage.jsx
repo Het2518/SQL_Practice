@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { Header } from '@/shared/ui/Header';
+import { DailyChallengeWidget } from '@/features/gamification/DailyChallengeWidget';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
 
@@ -137,6 +138,10 @@ export function DbSelector({ progress, gameState, user, onShowAuth, onShowSettin
           </div>
         </div>
       </section>
+
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
+        <DailyChallengeWidget progress={progress} />
+      </div>
 
       {/* ── Custom Dataset Section ── */}
       <div className="custom-db-banner" onClick={() => navigate('/sandbox')}>
