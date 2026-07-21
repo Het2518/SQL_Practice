@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
 import { analyzeNormalForm } from '@/utils/sqlAnalysis';
 
@@ -19,7 +20,7 @@ const learningResources = [
   { label: 'NULL Handling', url: 'https://mode.com/sql-tutorial/sql-is-null/', icon: '⚠️' },
 ];
 
-export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, executeQuery, onPreviewTable }) {
+export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, executeQuery, onPreviewTable, onClose }) {
   const [expandedTables, setExpandedTables] = useState(new Set());
   const [activeTab, setActiveTab] = useState('schema');
   const [liveTables, setLiveTables] = useState({}); // { tableName: [{ name, type, pk, notNull }] }
@@ -202,7 +203,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, execute
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--surface)', borderRight: '1px solid var(--border)' }}>
       
       {/* Header */}
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+      <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--primary-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
             {dbInfo?.icon || '🗄️'}
@@ -212,6 +213,21 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, execute
             <div style={{ fontSize: 11, color: 'var(--muted)' }}>{tables.length} tables</div>
           </div>
         </div>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            style={{ 
+              background: 'transparent', border: 'none', cursor: 'pointer', padding: 4, 
+              color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: 6, transition: 'background 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--surface)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            title="Hide Sidebar"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Segmented Control Tab Bar */}

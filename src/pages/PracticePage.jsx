@@ -583,7 +583,7 @@ export function PracticeView({
       {/* RIGHT: Schema sidebar */}
       <div className={sidebarOpen ? 'sidebar-wrap' : ''} style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', border: 'none', borderRadius: '16px', background: 'var(--surface)', boxShadow: sidebarOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none' }}>
         <div style={{ width: schemaW, height: '100%', overflow: 'hidden' }}>
-          <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} />
+          <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} onClose={() => setSidebarOpen(false)} />
         </div>
       </div>
 
