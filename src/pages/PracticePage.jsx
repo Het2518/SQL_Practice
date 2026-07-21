@@ -581,11 +581,29 @@ export function PracticeView({
       )}
 
       {/* RIGHT: Schema sidebar */}
-      <div className={sidebarOpen ? 'sidebar-wrap' : ''} style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', border: 'none', borderRadius: '16px', background: 'var(--surface)', boxShadow: sidebarOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none' }}>
+      <div className={sidebarOpen ? 'sidebar-wrap' : ''} style={{ width: sidebarOpen ? schemaW : 0, minWidth: 0, overflow: 'hidden', flexShrink: 0, transition: 'width 0.22s ease', border: 'none', borderRadius: '16px', background: 'var(--surface)', boxShadow: sidebarOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none', position: 'relative' }}>
         <div style={{ width: schemaW, height: '100%', overflow: 'hidden' }}>
           <SchemaSidebar dbName={db} executeQuery={executeQuery} onPreviewTable={handlePreviewTable} onClose={() => setSidebarOpen(false)} />
         </div>
       </div>
+      
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          style={{
+            position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+            background: 'var(--surface)', border: '1px solid var(--border)', borderRight: 'none',
+            borderRadius: '8px 0 0 8px', padding: '12px 6px', cursor: 'pointer',
+            boxShadow: '-2px 0 10px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--primary)', zIndex: 50, transition: 'background 0.2s'
+          }}
+          title="Open Schema"
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}
+        >
+          <Database size={16} />
+        </button>
+      )}
 
     </div>
 
