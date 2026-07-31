@@ -30,7 +30,11 @@ const app = express();
 app.use(helmet()); // Sets secure HTTP headers
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: [
+      env.clientUrl,
+      'http://localhost:5173',
+      'https://sql-practice-sepia.vercel.app'
+    ],
     credentials: true,
   })
 );
