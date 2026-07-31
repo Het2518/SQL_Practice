@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { loadShortcuts, saveShortcuts, DEFAULT_SHORTCUTS, eventToComboString } from '@/utils/shortcutManager';
 import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { getGroqKey, saveGroqKey, hasGroqKey } from '@/lib/groq';
+import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (
@@ -132,9 +133,9 @@ export function SettingsModal({ settings, onSave, onClose }) {
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
   const [activeTab, setActiveTab] = useState('general');
   const [searchQuery, setSearchQuery] = useState('');
-  // AI key state
   const [groqKeyInput, setGroqKeyInput] = useState(() => getGroqKey() || '');
   const [keySaved, setKeySaved] = useState(false);
+  const [confirmState, setConfirmState] = useState(null);
   
   const importRef = useRef();
 
@@ -189,15 +190,11 @@ export function SettingsModal({ settings, onSave, onClose }) {
   };
 
   const handleResetGeneral = () => {
-    if (window.confirm('Reset general settings to default?')) {
-      setLocal({ ...defaultSettings });
-    }
+    setConfirmState('general');
   };
   
   const handleResetShortcuts = () => {
-    if (window.confirm('Reset all keyboard shortcuts to default?')) {
-      setShortcuts({ ...DEFAULT_SHORTCUTS });
-    }
+    setConfirmState('shortcuts');
   };
 
   const handleReassignShortcut = (id, combo) => {
@@ -425,6 +422,18 @@ export function SettingsModal({ settings, onSave, onClose }) {
           </button>
         </div>
       </div>
+      <ConfirmModal
+        isOpen={confirmState !== null}
+        title={confirmState === 'general' ? 'Reset Settings' : 'Reset Shortcuts'}
+        message={confirmState === 'general' ? 'Reset general settings to default?' : 'Reset all keyboard shortcuts to default?'}
+        confirmText="Reset"
+        onConfirm={() => {
+          if (confirmState === 'general') setLocal({ ...defaultSettings });
+          if (confirmState === 'shortcuts') setShortcuts({ ...DEFAULT_SHORTCUTS });
+          setConfirmState(null);
+        }}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }

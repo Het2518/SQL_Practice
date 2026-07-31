@@ -316,15 +316,46 @@ const generateCTEName = (subquery) => {
 };
 
 export const convertSubqueryToCTE = (sql) => {
-  // Simple heuristic based transformation for educational purposes
-  const subqueryMatch = sql.match(/\((\s*SELECT[\s\S]+?)\)/i);
-  if (!subqueryMatch) return null;
+  // Find the first (SELECT ... ) subquery by scanning and counting parentheses
+  const upperSql = sql.toUpperCase();
+  const selectIdx = upperSql.indexOf('(SELECT ');
+  if (selectIdx === -1) {
+    const selectIdx2 = upperSql.indexOf('(\nSELECT ');
+    if (selectIdx2 === -1) return null;
+  }
   
-  const subquery = subqueryMatch[1].trim();
+  const startIdx = upperSql.indexOf('(', upperSql.indexOf('SELECT') - 5);
+  if (startIdx === -1) return null;
+
+  let depth = 0;
+  let endIdx = -1;
+
+  for (let i = startIdx; i < sql.length; i++) {
+    if (sql[i] === '(') depth++;
+    else if (sql[i] === ')') {
+      depth--;
+      if (depth === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (endIdx === -1) return null; // Unbalanced
+
+  const fullMatch = sql.substring(startIdx, endIdx + 1);
+  const subquery = fullMatch.substring(1, fullMatch.length - 1).trim();
   const cteName = generateCTEName(subquery);
   
   const cteBlock = `WITH ${cteName} AS (\n  ${subquery}\n)`;
-  const mainQuery = sql.replace(subqueryMatch[0], `(SELECT * FROM ${cteName})`);
+  
+  // If the subquery was in a FROM clause, replacing with just the CTE name is cleaner.
+  // We check if it was preceded by FROM or JOIN.
+  const beforeMatch = sql.substring(0, startIdx).trimRight().toUpperCase();
+  const isFromClause = beforeMatch.endsWith('FROM') || beforeMatch.endsWith('JOIN');
+  
+  const replacement = isFromClause ? cteName : `(SELECT * FROM ${cteName})`;
+  const mainQuery = sql.substring(0, startIdx) + replacement + sql.substring(endIdx + 1);
   
   return `${cteBlock}\n${mainQuery}`;
 };

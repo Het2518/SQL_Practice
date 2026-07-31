@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { DB_INFO } from '@/data/schemas';
 import { Search, Key, Link as LinkIcon, ZoomIn, ZoomOut, Maximize, Database } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 const NODE_WIDTH = 300;
 const HEADER_HEIGHT = 46;
 const ROW_HEIGHT = 32;
 
 export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ dbName, onClose }) {
+  const trapRef = useFocusTrap(true);
   const dbInfo = DB_INFO[dbName];
   const tables = dbInfo?.tables || [];
 
@@ -181,7 +183,7 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--bg)', display: 'flex' }}>
+    <div ref={trapRef} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--bg)', display: 'flex' }}>
       
       <style>{`
         @keyframes fadeIn {

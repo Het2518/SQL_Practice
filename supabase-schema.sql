@@ -103,11 +103,27 @@ CREATE INDEX IF NOT EXISTS idx_ai_analytics_user_id ON public.ai_analytics(user_
 CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON public.interview_sessions(user_id);
 
 -- Policies for user_progress
+-- SECURITY: Users can only read/write their OWN progress.
+-- The previous "Anyone can view progress" policy was removed — it exposed all users'
+-- completed_questions JSON to any unauthenticated API caller.
 DROP POLICY IF EXISTS "Anyone can view progress" ON public.user_progress;
-CREATE POLICY "Anyone can view progress" ON public.user_progress FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Users can insert/update their own progress" ON public.user_progress;
-CREATE POLICY "Users can insert/update their own progress" ON public.user_progress FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users manage their own progress"
+  ON public.user_progress FOR ALL
+  USING (auth.uid() = user_id);
+
+-- Safe leaderboard view: exposes ONLY non-sensitive columns for public display.
+-- Use this view instead of querying user_progress directly from the client.
+CREATE OR REPLACE VIEW public.leaderboard AS
+  SELECT
+    display_name,
+    current_streak,
+    max_streak,
+    badges
+  FROM public.user_progress
+  ORDER BY max_streak DESC, current_streak DESC
+  LIMIT 100;
 
 -- Policies for read-only public data
 DROP POLICY IF EXISTS "Public read access for companies" ON public.companies;

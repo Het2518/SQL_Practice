@@ -74,9 +74,11 @@ export function Header({
             <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--surface-2)', padding: 4, borderRadius: 8 }}>
               {navLinks.map((link, i) => (
-                <span
+                <button
                   key={i}
+                  type="button"
                   onClick={link.onClick}
+                  aria-pressed={link.primary ? true : undefined}
                   style={{
                     fontSize: 13,
                     fontWeight: 600,
@@ -84,7 +86,10 @@ export function Header({
                     cursor: 'pointer',
                     padding: '6px 12px',
                     borderRadius: 6,
-                    transition: 'all 0.15s ease'
+                    background: 'transparent',
+                    border: 'none',
+                    transition: 'all 0.15s ease',
+                    fontFamily: 'var(--font-sans)',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.background = 'var(--surface)';
@@ -96,11 +101,12 @@ export function Header({
                   }}
                 >
                   {link.label}
-                </span>
+                </button>
               ))}
             </div>
           </>
         )}
+
       </div>
 
       {/* ── RIGHT: Actions ── */}
@@ -115,6 +121,7 @@ export function Header({
             onClick={onToggleDark}
             style={{ padding: '8px', color: 'var(--text-secondary)' }}
             title="Toggle Dark Mode"
+            aria-label={settings.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           />
         )}
 
@@ -125,6 +132,7 @@ export function Header({
           onClick={() => setShowLeaderboard(true)}
           style={{ padding: '8px', color: '#f59e0b' }}
           title="Leaderboard"
+          aria-label="Open leaderboard"
         />
         
         {onShowSettings && (
@@ -135,10 +143,12 @@ export function Header({
             onClick={onShowSettings}
             style={{ padding: '8px', color: 'var(--text-secondary)' }}
             title="Settings"
+            aria-label="Open settings"
           />
         )}
 
         <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 8px' }} />
+
 
         {user ? (
           <Button 
@@ -178,14 +188,25 @@ export function HeaderBreadcrumbs({ items }) {
       {items.map((item, i) => (
         <React.Fragment key={i}>
           {item.onClick ? (
-            <span 
+            <button
+              type="button"
               onClick={item.onClick}
-              style={{ color: 'var(--muted)', cursor: 'pointer', transition: 'color 0.15s' }}
+              style={{
+                color: 'var(--muted)',
+                cursor: 'pointer',
+                transition: 'color 0.15s',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: 'var(--font-sans)',
+              }}
               onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text)'}
               onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}
             >
               {item.label}
-            </span>
+            </button>
           ) : (
             <span style={{ color: 'var(--text)' }}>
               {item.label}
@@ -200,3 +221,4 @@ export function HeaderBreadcrumbs({ items }) {
     </div>
   );
 }
+

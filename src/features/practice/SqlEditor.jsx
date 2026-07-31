@@ -1,9 +1,81 @@
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
 import { format } from 'sql-formatter';
 import { DB_INFO } from '@/data/schemas';
 import { sqlKeywords } from '@/data/sqlKeywords';
 import { loadShortcuts, comboToMonaco } from '@/utils/shortcutManager';
+
+const handleEditorWillMount = monaco => {
+  monaco.editor.defineTheme('earthy-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [{
+      token: 'keyword',
+      foreground: 'AB886D',
+      fontStyle: 'bold'
+    }, {
+      token: 'string',
+      foreground: '9A887A'
+    }, {
+      token: 'number',
+      foreground: 'AB886D'
+    }, {
+      token: 'identifier',
+      foreground: '493628'
+    }, {
+      token: 'comment',
+      foreground: 'D6C0B3',
+      fontStyle: 'italic'
+    }, {
+      token: 'operator',
+      foreground: 'AB886D'
+    }],
+    colors: {
+      'editor.background': '#FFFFFF',
+      'editor.foreground': '#493628',
+      'editor.lineHighlightBackground': '#F5F2F0',
+      'editorLineNumber.foreground': '#D6C0B3',
+      'editorLineNumber.activeForeground': '#AB886D',
+      'editorCursor.foreground': '#AB886D',
+      'editor.selectionBackground': '#E4E0E1'
+    }
+  });
+
+  monaco.editor.defineTheme('earthy-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [{
+      token: 'keyword',
+      foreground: 'C4AFA7',
+      fontStyle: 'bold'
+    }, {
+      token: 'string',
+      foreground: '8A7268'
+    }, {
+      token: 'number',
+      foreground: 'C4AFA7'
+    }, {
+      token: 'identifier',
+      foreground: 'F0EBE8'
+    }, {
+      token: 'comment',
+      foreground: '6B5548',
+      fontStyle: 'italic'
+    }, {
+      token: 'operator',
+      foreground: 'C4AFA7'
+    }],
+    colors: {
+      'editor.background': '#2A2421',
+      'editor.foreground': '#F0EBE8',
+      'editor.lineHighlightBackground': '#322C29',
+      'editorLineNumber.foreground': '#6B5548',
+      'editorLineNumber.activeForeground': '#C4AFA7',
+      'editorCursor.foreground': '#C4AFA7',
+      'editor.selectionBackground': '#3D342F'
+    }
+  });
+};
 
 export function SqlEditor({
   value,
@@ -126,80 +198,38 @@ export function SqlEditor({
         return { suggestions };
       }
     });
-    return () => disposable.dispose();
+    return () => {
+      try { disposable.dispose(); } catch (e) { /* Monaco might have already been disposed */ }
+    };
   }, [monacoInstance, dbName, autoComplete, customSchema]);
-  const handleEditorWillMount = monaco => {
-    monaco.editor.defineTheme('earthy-light', {
-      base: 'vs',
-      inherit: true,
-      rules: [{
-        token: 'keyword',
-        foreground: 'AB886D',
-        fontStyle: 'bold'
-      }, {
-        token: 'string',
-        foreground: '9A887A'
-      }, {
-        token: 'number',
-        foreground: 'AB886D'
-      }, {
-        token: 'identifier',
-        foreground: '493628'
-      }, {
-        token: 'comment',
-        foreground: 'D6C0B3',
-        fontStyle: 'italic'
-      }, {
-        token: 'operator',
-        foreground: 'AB886D'
-      }],
-      colors: {
-        'editor.background': '#FFFFFF',
-        'editor.foreground': '#493628',
-        'editor.lineHighlightBackground': '#F5F2F0',
-        'editorLineNumber.foreground': '#D6C0B3',
-        'editorLineNumber.activeForeground': '#AB886D',
-        'editorCursor.foreground': '#AB886D',
-        'editor.selectionBackground': '#E4E0E1'
-      }
-    });
 
-    monaco.editor.defineTheme('earthy-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [{
-        token: 'keyword',
-        foreground: 'C4AFA7',
-        fontStyle: 'bold'
-      }, {
-        token: 'string',
-        foreground: '8A7268'
-      }, {
-        token: 'number',
-        foreground: 'C4AFA7'
-      }, {
-        token: 'identifier',
-        foreground: 'F0EBE8'
-      }, {
-        token: 'comment',
-        foreground: '6B5548',
-        fontStyle: 'italic'
-      }, {
-        token: 'operator',
-        foreground: 'C4AFA7'
-      }],
-      colors: {
-        'editor.background': '#2A2421',
-        'editor.foreground': '#F0EBE8',
-        'editor.lineHighlightBackground': '#322C29',
-        'editorLineNumber.foreground': '#6B5548',
-        'editorLineNumber.activeForeground': '#C4AFA7',
-        'editorCursor.foreground': '#C4AFA7',
-        'editor.selectionBackground': '#3D342F'
-      }
-    });
-  };
+  const editorOptions = useMemo(() => ({
+    readOnly: readOnly,
+    fontSize: fontSize,
+    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    fontLigatures: true,
+    minimap: { enabled: false },
+    lineNumbers: 'on',
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    padding: { top: 16, bottom: 16 },
+    cursorBlinking: 'smooth',
+    smoothScrolling: true,
+    renderWhitespace: 'selection',
+    bracketPairColorization: { enabled: true },
+    suggest: {
+      showKeywords: autoComplete,
+      showSnippets: autoComplete,
+    },
+    quickSuggestions: autoComplete ? {
+      other: true,
+      comments: false,
+      strings: false,
+    } : false,
+  }), [readOnly, fontSize, autoComplete]);
+
   return <div style={{
+
     height: '100%',
     width: '100%',
     minWidth: 0,
@@ -272,30 +302,7 @@ export function SqlEditor({
           beforeMount={handleEditorWillMount}
           onMount={handleEditorMount}
           theme={darkMode ? 'earthy-dark' : 'earthy-light'}
-          options={{
-            readOnly: readOnly,
-            fontSize: fontSize,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontLigatures: true,
-            minimap: { enabled: false },
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            padding: { top: 16, bottom: 16 },
-            cursorBlinking: 'smooth',
-            smoothScrolling: true,
-            renderWhitespace: 'selection',
-            bracketPairColorization: { enabled: true },
-            suggest: {
-              showKeywords: autoComplete,
-              showSnippets: autoComplete,
-            },
-            quickSuggestions: autoComplete ? {
-              other: true,
-              comments: false,
-              strings: false,
-            } : false,
-          }}
+          options={editorOptions}
         />
       </div>
     </div>;

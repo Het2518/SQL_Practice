@@ -1,35 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Check, X, AlertTriangle, SkipBack, SkipForward, FastForward } from 'lucide-react';
-
-// Enhanced parser to extract ON conditions and handle aliases properly
-const detectTablesAndJoins = (sql) => {
-  let cleanSql = sql.replace(/\([^)]+\)/g, '(SUBQUERY)');
-  
-  const tablePattern = /\b(?:FROM|JOIN)\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?\b/gi;
-  const tables = [];
-  let match;
-  while ((match = tablePattern.exec(cleanSql)) !== null) {
-    const rawAlias = match[2] || '';
-    const isKeyword = ['ON', 'WHERE', 'GROUP', 'ORDER', 'HAVING', 'LEFT', 'RIGHT', 'INNER', 'FULL', 'CROSS', 'JOIN'].includes(rawAlias.toUpperCase());
-    tables.push({
-      name: match[1].split('.').pop(),
-      alias: isKeyword ? null : rawAlias,
-      index: match.index
-    });
-  }
-
-  const joinPattern = /\b(INNER\s+JOIN|LEFT\s+(?:OUTER\s+)?JOIN|RIGHT\s+(?:OUTER\s+)?JOIN|FULL\s+(?:OUTER\s+)?JOIN|CROSS\s+JOIN|JOIN)\b\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?[a-zA-Z0-9_]+)?(?:\s+ON\s+([\s\S]*?))?(?=\b(?:INNER|LEFT|RIGHT|FULL|CROSS|JOIN|WHERE|GROUP|ORDER|LIMIT)\b|$)/gi;
-  const joins = [];
-  while ((match = joinPattern.exec(cleanSql)) !== null) {
-    joins.push({
-      type: match[1].trim().toUpperCase().replace(/\s+OUTER\s+/, ' '),
-      rightTable: match[2].split('.').pop(),
-      condition: match[3] ? match[3].replace(/;+\s*$/, '').trim() : null,
-      index: match.index
-    });
-  }
-  return { tables, joins };
-};
+import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
 
 const PHASES = {
   SETUP: 0,

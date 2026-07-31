@@ -1,6 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wxtrinsikqdgaigvcxxr.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dHJpbnNpa3FkZ2FpZ3ZjeHhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzYxNDUsImV4cCI6MjA5ODIxMjE0NX0.JzJ1sI9GcYF2xSh6DBfsqnNxHndRd_dG6kDOpIA7bNA';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    '[DataDesk] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY.\n' +
+    'Create a .env file in the project root with these values.\n' +
+    'See README.md for setup instructions.'
+  );
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import SqlWorker from '../workers/sql.worker.js?worker';
+import { sqlWorkerManager } from '../workers/SqlWorkerManager';
 
 const dbPaths = {
   hospital: '/databases/hospital.sqlite',
@@ -14,52 +14,27 @@ const dbPaths = {
   music: '/databases/music.sqlite'
 };
 
-let sharedWorker = null;
-let msgIdCounter = 1;
-const sharedPendingRequests = new Map();
-
-function initSharedWorker() {
-  if (sharedWorker) return;
-  sharedWorker = new SqlWorker();
-  
-  sharedWorker.onerror = (err) => {
-    console.error("Worker error:", err);
-    for (const { reject } of sharedPendingRequests.values()) {
-      reject(new Error(err.message || 'Worker crashed or failed to load.'));
-    }
-    sharedPendingRequests.clear();
-  };
-  
-  sharedWorker.onmessage = (e) => {
-    const { id, success, data, error } = e.data;
-    if (sharedPendingRequests.has(id)) {
-      const { resolve, reject } = sharedPendingRequests.get(id);
-      sharedPendingRequests.delete(id);
-      if (success) {
-        resolve(data);
-      } else {
-        reject(new Error(error));
-      }
-    }
-  };
-}
-
 export function useSqlDatabase(dbInput) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const currentDbRef = useRef(null);
 
   useEffect(() => {
-    initSharedWorker();
+    sqlWorkerManager.init();
+    
+    const handleProgress = (e) => {
+      setDownloadProgress(e.detail);
+    };
+    window.addEventListener('sql-worker-progress', handleProgress);
+
+    return () => {
+      window.removeEventListener('sql-worker-progress', handleProgress);
+    };
   }, []);
 
   const sendMessage = useCallback((type, payload) => {
-    return new Promise((resolve, reject) => {
-      initSharedWorker();
-      const id = msgIdCounter++;
-      sharedPendingRequests.set(id, { resolve, reject });
-      sharedWorker.postMessage({ type, payload, id });
-    });
+    return sqlWorkerManager.sendMessage(type, payload);
   }, []);
 
   const initDb = useCallback(async input => {
@@ -77,10 +52,13 @@ export function useSqlDatabase(dbInput) {
         throw new Error('Invalid database input');
       }
       
+      setDownloadProgress({ loaded: 0, total: 1, percent: 0 });
       await sendMessage('INIT', payload);
+      setDownloadProgress(null);
       setIsLoading(false);
     } catch (err) {
       setError(`Failed to load database: ${err.message}`);
+      setDownloadProgress(null);
       setIsLoading(false);
     }
   }, [sendMessage]);
@@ -95,19 +73,6 @@ export function useSqlDatabase(dbInput) {
     }
     try {
       const result = await sendMessage('EXECUTE', { sql });
-      
-      if (sql.trim().toUpperCase().startsWith('SELECT')) {
-        try {
-          const planResult = await sendMessage('EXECUTE', { sql: `EXPLAIN QUERY PLAN ${sql}` });
-          if (planResult && planResult.rows) {
-            // SQLite EXPLAIN QUERY PLAN typically returns [id, parent, notused, detail]
-            result.explainPlan = planResult.rows;
-          }
-        } catch (planErr) {
-          // Ignore EXPLAIN errors
-        }
-      }
-
       return result;
     } catch (err) {
       return { columns: [], rows: [], error: err.message };
@@ -199,6 +164,7 @@ export function useSqlDatabase(dbInput) {
     runVerification,
     getExpectedResultDynamic,
     getExplainPlan,
+    downloadProgress,
     dbInstance: null
   };
 }

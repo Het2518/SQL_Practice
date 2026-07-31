@@ -84,7 +84,7 @@ export function useGamification(progress, user, progressLoaded = false) {
 
   const recordActivity = useCallback((question = null, dbName = null, status = 'Attempted') => {
     setGameState(prev => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' in local time
       const newState = { ...prev, activity: { ...prev.activity }, recentSubmissions: [...(prev.recentSubmissions || [])] };
 
       // Increment today's activity

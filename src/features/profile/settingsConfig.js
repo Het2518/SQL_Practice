@@ -8,6 +8,15 @@ export function loadSettings() {
   }
 }
 
+/** Persist settings — single source of truth for all settings writes. */
+export function saveSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    console.warn('[DataDesk] Could not save settings to localStorage.');
+  }
+}
+
 export const defaultSettings = {
   darkMode: false,
   autoRunAfterTyping: false,

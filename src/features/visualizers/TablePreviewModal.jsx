@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { DB_INFO } from '@/data/schemas';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
+
 export function TablePreviewModal({
   db,
   tableName,
   onClose
 }) {
+  const trapRef = useFocusTrap(true);
   const dbInfo = DB_INFO[db];
   const tableInfo = dbInfo.tables.find(t => t.name === tableName);
   const {
@@ -51,7 +54,7 @@ export function TablePreviewModal({
       backgroundColor: 'rgba(0, 0, 0, 0.6)',
       animation: 'fadeIn 0.2s ease-out'
     }}>
-      <div className="modal-content" style={{
+      <div ref={trapRef} className="modal-content" style={{
         width: '96vw',
         maxWidth: '1800px',
         height: '96vh',

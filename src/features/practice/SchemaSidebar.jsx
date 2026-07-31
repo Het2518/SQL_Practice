@@ -336,7 +336,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({ dbName, execute
                     </span>
 
                     {/* NF Badge */}
-                    {nf && <span style={nfBadgeStyle(nf)}>{nf}</span>}
+                    {nf && <span style={nfBadgeStyle(nf)} title="Simplified analysis — assumes no partial dependencies">{nf}*</span>}
 
                     {/* Join Select Button */}
                     <button

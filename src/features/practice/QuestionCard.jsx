@@ -5,6 +5,8 @@ import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
 import { useGroqKey, groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
+import { QuestionHeader } from './QuestionHeader';
+import { QuestionBody } from './QuestionBody';
 
 const difficultyLabel = {
   easy: 'EASY',
@@ -237,157 +239,27 @@ export const QuestionCard = React.memo(function QuestionCard({
   };
 
   return (
-    <div style={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      background: 'var(--surface)',
-      borderLeft: '1px solid var(--border)',
-      overflow: 'hidden'
-    }}>
-      {/* Header */}
-      <div style={{
-        padding: '10px 14px',
-        borderBottom: '1px solid var(--border)',
-        background: 'var(--surface-2)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        flexShrink: 0
-      }}>
-        <button onClick={onOpenBrowser} className="btn btn-ghost" style={{ fontSize: 12, padding: '4px 8px', fontWeight: 600 }}>
-          ☰ All Questions
-        </button>
-        <div style={{ flex: 1 }} />
-        {/* Timed Challenge Timer */}
-        {timedChallenges && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: timeLeft <= 60 ? 'rgba(239,68,68,0.1)' : 'var(--surface)',
-            border: `1px solid ${timerColor}`,
-            borderRadius: 8, padding: '4px 10px',
-            animation: timeLeft <= 30 ? 'pulse 1s ease infinite' : 'none'
-          }}>
-            <span style={{ fontSize: 16 }}>⏱</span>
-            <span style={{ fontSize: 14, fontWeight: 800, color: timerColor, fontFamily: 'var(--font-mono)', letterSpacing: 1 }}>
-              {timeLeft <= 0 ? 'Time\'s Up!' : formatTime(timeLeft)}
-            </span>
-          </div>
-        )}
-        <button onClick={() => onNavigate('prev')} disabled={!hasPrev} className="btn btn-ghost btn-icon" style={{ fontSize: 12 }}>←</button>
-        <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
-          {questionNumber} / {totalQuestions}
-        </span>
-        <button onClick={() => onNavigate('next')} disabled={!hasNext} className="btn btn-ghost btn-icon" style={{ fontSize: 12 }}>→</button>
-      </div>
-
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', borderRight: '1px solid var(--border)' }}>
       {/* Question Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-        {/* Difficulty + Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <span style={{
-            background: question.difficulty === 'hard' ? 'rgba(239, 68, 68, 0.1)' : question.difficulty === 'medium' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-            color: question.difficulty === 'hard' ? '#ef4444' : question.difficulty === 'medium' ? '#f59e0b' : '#10b981',
-            padding: '4px 10px',
-            borderRadius: 99,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.5px'
-          }}>
-            {difficultyLabel[question.difficulty] || question.difficulty?.toUpperCase() || 'CUSTOM'}
-          </span>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>
-            {statusIcon[status] || '○'} {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-          {question.isAiGenerated && (
-            <span className="ai-badge" style={{ fontSize: 10, padding: '2px 8px' }}>✨ AI Generated</span>
-          )}
-        </div>
+        
+        <QuestionHeader
+          question={question}
+          status={status}
+          timeLeft={timeLeft}
+          timedChallenges={timedChallenges}
+          questionNumber={questionNumber}
+          totalQuestions={totalQuestions}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          onNavigate={onNavigate}
+          onOpenBrowser={onOpenBrowser}
+        />
 
-        {/* AI Challenge Banner */}
-        {question.isAiGenerated && (
-          <div style={{
-            marginBottom: 16, padding: '10px 14px', borderRadius: 8,
-            background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))',
-            border: '1px solid rgba(139,92,246,0.2)',
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-          }}>
-            <span style={{ fontSize: 20, flexShrink: 0 }}>🤖</span>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#8b5cf6', marginBottom: 3 }}>
-                AI-Generated {question.companyName ? `${question.companyName} Challenge` : 'Challenge'}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5 }}>
-                This question was generated by AI. It uses real schema tables — try it like any other question!
-                No automatic validation — focus on writing correct SQL.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Prompt */}
-        <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text)', marginBottom: 20, fontWeight: 500 }}>
-          {question.prompt}
-        </div>
-
-        {/* Keywords */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
-          {/* Dynamic Supabase Companies */}
-          {realCompanies.length > 0 && (
-            <span key={'comp-group'} style={{
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              fontSize: 12,
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '2px 0',
-            }}>
-              <Building2 size={13} style={{ color: 'var(--primary)' }} />
-              <span><strong style={{color: 'var(--text)', fontWeight: 600}}>Asked in:</strong> {realCompanies.join(', ')}</span>
-            </span>
-          )}
-
-          {(question.keywords || []).map(kw => {
-            // Ignore the local hardcoded fake company tags
-            if (kw.startsWith('company:')) {
-              return null;
-            }
-            if (kw.startsWith('topic:')) {
-              const topic = kw.split(':')[1];
-              return (
-                <span key={kw} style={{
-                  background: 'var(--primary-muted)',
-                  color: 'var(--primary)',
-                  border: 'none',
-                  padding: '4px 12px',
-                  borderRadius: 99,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}>
-                  <Tag size={13} /> {topic}
-                </span>
-              );
-            }
-            return (
-              <span key={kw} style={{
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-secondary)',
-                padding: '4px 10px',
-                borderRadius: 6,
-                fontSize: 11,
-                fontWeight: 600
-              }}>
-                {kw}
-              </span>
-            );
-          })}
-        </div>
+        <QuestionBody 
+          question={question}
+          realCompanies={realCompanies}
+        />
 
         {/* Unified Hint/Solution Section */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>

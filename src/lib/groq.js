@@ -2,8 +2,12 @@
  * Groq AI Gateway — SQL Practice Platform
  * Model: llama-3.1-8b-instant (cheapest + max rate limits on Groq free tier)
  *   Free tier: 30 RPM | 131,072 TPM | 14,400 RPD
- * Key security: localStorage per-user key → .env fallback (never hardcoded in source)
+ * Key security: sessionStorage per-tab key → .env fallback (never hardcoded in source)
+ * Using sessionStorage (not localStorage) reduces XSS attack surface:
+ *   keys are cleared automatically when the tab closes.
+ * React hook: see @/hooks/useGroqKey.js
  */
+
 
 const GROQ_BASE = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -12,23 +16,24 @@ export const MODEL_FAST = 'llama-3.1-8b-instant';
 // Fallback for complex tasks (mock interview final report)
 export const MODEL_SMART = 'llama-3.3-70b-versatile';
 
+// sessionStorage key — scoped to current tab session, cleared on tab close
 const GROQ_KEY_STORAGE = 'groq-api-key';
 
-/** Retrieves the active API key. localStorage (user-specific) takes priority over .env */
+/** Retrieves the active API key. sessionStorage (tab-scoped) takes priority over .env */
 export function getGroqKey() {
-  const userKey = localStorage.getItem(GROQ_KEY_STORAGE);
+  const userKey = sessionStorage.getItem(GROQ_KEY_STORAGE);
   if (userKey && userKey.startsWith('gsk_')) return userKey;
   const envKey = import.meta.env.VITE_GROQ_API_KEY;
   if (envKey && envKey.startsWith('gsk_')) return envKey;
   return null;
 }
 
-/** Saves user's personal API key to localStorage */
+/** Saves user's personal API key to sessionStorage (tab-scoped, clears on close) */
 export function saveGroqKey(key) {
   if (key && key.trim()) {
-    localStorage.setItem(GROQ_KEY_STORAGE, key.trim());
+    sessionStorage.setItem(GROQ_KEY_STORAGE, key.trim());
   } else {
-    localStorage.removeItem(GROQ_KEY_STORAGE);
+    sessionStorage.removeItem(GROQ_KEY_STORAGE);
   }
   // Clear any cached AI responses from the previous key or error state
   try {
@@ -46,19 +51,13 @@ export function hasGroqKey() {
   return !!getGroqKey();
 }
 
-/** Hook to reactively track if a Groq key is available */
-import { useState, useEffect } from 'react';
-export function useGroqKey() {
-  const [hasKey, setHasKey] = useState(hasGroqKey());
-  
-  useEffect(() => {
-    const checkKey = () => setHasKey(hasGroqKey());
-    window.addEventListener('storage', checkKey);
-    return () => window.removeEventListener('storage', checkKey);
-  }, []);
-  
-  return hasKey;
-}
+/**
+ * useGroqKey has been moved to @/hooks/useGroqKey.js
+ * This re-export exists for backward compatibility with existing import sites.
+ * Update your imports to: import { useGroqKey } from '@/hooks/useGroqKey';
+ */
+export { useGroqKey } from '@/hooks/useGroqKey';
+
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {

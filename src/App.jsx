@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { loadSettings, defaultSettings } from '@/features/profile/settingsConfig';
+import { loadSettings, saveSettings, defaultSettings } from '@/features/profile/settingsConfig';
 import { useGamification } from '@/hooks/useGamification';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/shared/ui/ToastSystem';
 import '@/styles/styles.css';
 
 // Lazy load large views for performance with automatic retry for chunk errors
@@ -62,6 +63,7 @@ function ProtectedRoute({ children, user }) {
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   const [progress, setProgress] = useState({});
   const [progressLoaded, setProgressLoaded] = useState(false);
   const { user, loading, logout } = useAuth();
@@ -70,14 +72,12 @@ export default function App() {
   
   const [settings, setSettings] = useState(() => ({ ...defaultSettings, ...loadSettings() }));
   const [showSettings, setShowSettings] = useState(false);
-  const [showInterview, setShowInterview] = useState(false);
-  const showInterviewPage = useCallback(() => navigate('/interview'), [navigate]);
 
 
   const toggleDark = useCallback(() => {
     setSettings(prev => {
       const next = { ...prev, darkMode: !prev.darkMode };
-      localStorage.setItem('sql-platform-settings', JSON.stringify(next));
+      saveSettings(next);
       return next;
     });
   }, []);
@@ -97,7 +97,12 @@ export default function App() {
       const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
       const errorMsg = hashParams.get('error_description');
       if (errorMsg) {
-        alert('Authentication Error: ' + decodeURIComponent(errorMsg).replace(/\+/g, ' '));
+        // Use toast instead of alert() — avoids blocking the thread and XSS risk
+        toast({
+          type: 'error',
+          title: 'Authentication Error',
+          message: decodeURIComponent(errorMsg).replace(/\+/g, ' ').slice(0, 200),
+        });
         window.history.replaceState(null, '', window.location.pathname);
       }
     }
@@ -146,7 +151,9 @@ export default function App() {
     const id = question.id;
     setProgress(prev => {
       const next = { ...prev, [id]: status };
-      saveProgress(next);
+      // Only persist to localStorage for guests. Logged-in users rely on Supabase.
+      // This prevents cross-user progress bleed on shared machines.
+      if (!user) saveProgress(next);
       if (status === 'complete' && prev[id] !== 'complete') {
         recordActivity(question, dbName, status);
       }
@@ -161,7 +168,7 @@ export default function App() {
   return (
     <Suspense fallback={<div style={{height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)'}}><div className="spinner" /></div>}>
       <Routes>
-        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={showInterviewPage} settings={settings} onToggleDark={toggleDark} />} />
+        <Route path="/" element={<DbSelector progress={progress} gameState={gameState} user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} onShowInterview={() => navigate('/interview')} settings={settings} onToggleDark={toggleDark} />} />
 
         <Route path="/guide" element={<UserGuide user={user} onShowAuth={() => setShowAuth(true)} onShowSettings={() => setShowSettings(true)} settings={settings} onToggleDark={toggleDark} />} />
         
@@ -198,7 +205,7 @@ export default function App() {
               settings={settings}
               onSaveSettings={(newSettings) => {
                 setSettings(newSettings);
-                localStorage.setItem('sql-platform-settings', JSON.stringify(newSettings));
+                saveSettings(newSettings);
               }}
               onHome={() => navigate('/')} 
               onSignOut={async () => {
@@ -225,16 +232,4 @@ export default function App() {
   );
 }
 
-export function AppWrapper() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('login') === 'true') {
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate]);
-
-  return <App />;
-}
+// AppWrapper removed — was dead code duplicating App's login param logic

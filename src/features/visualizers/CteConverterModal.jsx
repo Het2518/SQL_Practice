@@ -1,7 +1,9 @@
 import React from 'react';
 import { SqlEditor } from '@/features/practice/SqlEditor';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, onUseConverted }) => {
+  const trapRef = useFocusTrap(isOpen);
   if (!isOpen) return null;
 
   return (
@@ -16,7 +18,7 @@ export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, 
       zIndex: 1000,
       padding: '24px'
     }}>
-      <div style={{
+      <div ref={trapRef} style={{
         background: 'var(--bg)',
         width: '100%',
         maxWidth: '1200px',

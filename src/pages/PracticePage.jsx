@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RotateCcw, Play, Settings as SettingsIcon, List, Home, ChevronDown, Database, Sun, Moon } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
@@ -9,10 +9,10 @@ import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 import { QuestionCard } from '@/features/practice/QuestionCard';
 import { QuestionBrowser } from '@/features/practice/QuestionBrowser';
-import { ERDiagramModal } from '@/features/visualizers/ERDiagramModal';
-import { TablePreviewModal } from '@/features/visualizers/TablePreviewModal';
-import { AnimatedJoinVisualizer } from '@/features/visualizers/AnimatedJoinVisualizer';
-import { CteConverterModal } from '@/features/visualizers/CteConverterModal';
+const ERDiagramModal = lazy(() => import('@/features/visualizers/ERDiagramModal').then(m => ({ default: m.ERDiagramModal })));
+const TablePreviewModal = lazy(() => import('@/features/visualizers/TablePreviewModal').then(m => ({ default: m.TablePreviewModal })));
+const AnimatedJoinVisualizer = lazy(() => import('@/features/visualizers/AnimatedJoinVisualizer').then(m => ({ default: m.AnimatedJoinVisualizer })));
+const CteConverterModal = lazy(() => import('@/features/visualizers/CteConverterModal').then(m => ({ default: m.CteConverterModal })));
 import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { loadShortcuts, isShortcutMatch } from '@/utils/shortcutManager';
@@ -95,6 +95,22 @@ export function PracticeView({
     window.addEventListener('open-join-analysis', handleOpenJoinAnalysis);
     return () => window.removeEventListener('open-join-analysis', handleOpenJoinAnalysis);
   }, []);
+
+  // Idle prefetching for heavy visualizers
+  useEffect(() => {
+    const prefetch = () => {
+      import('@/features/visualizers/ERDiagramModal');
+      import('@/features/visualizers/TablePreviewModal');
+      import('@/features/visualizers/AnimatedJoinVisualizer');
+      import('@/features/visualizers/CteConverterModal');
+    };
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(prefetch);
+    } else {
+      setTimeout(prefetch, 2000);
+    }
+  }, []);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [showOverflow, setShowOverflow] = useState(false);
@@ -607,12 +623,14 @@ export function PracticeView({
 
     </div>
 
-    {/* Modals */}
-    {showBrowser && <QuestionBrowser questions={allQuestions} progress={progress} currentQuestionId={currentQ.id} onSelectQuestion={handleSelectQuestion} onClose={() => setShowBrowser(false)} />}
-    {showERDiagram && <ERDiagramModal dbName={db} onClose={() => setShowERDiagram(false)} />}
-    {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
-    {joinAnalysisData && <AnimatedJoinVisualizer executeQuery={joinAnalysisData.db} sql={joinAnalysisData.sql} onClose={() => setJoinAnalysisData(null)} />}
-    <CteConverterModal isOpen={showCteModal} onClose={() => setShowCteModal(false)} originalSql={sql} convertedSql={convertSubqueryToCTE(sql) || sql} onUseConverted={s => { setSql(s); setResult(null); }} />
+    {/* Modals wrapped in Suspense */}
+    <Suspense fallback={null}>
+      {showBrowser && <QuestionBrowser questions={allQuestions} progress={progress} currentQuestionId={currentQ.id} onSelectQuestion={handleSelectQuestion} onClose={() => setShowBrowser(false)} />}
+      {showERDiagram && <ERDiagramModal dbName={db} onClose={() => setShowERDiagram(false)} />}
+      {previewTableName && <TablePreviewModal db={db} tableName={previewTableName} onClose={() => setPreviewTableName(null)} />}
+      {joinAnalysisData && <AnimatedJoinVisualizer executeQuery={joinAnalysisData.db} sql={joinAnalysisData.sql} onClose={() => setJoinAnalysisData(null)} />}
+      <CteConverterModal isOpen={showCteModal} onClose={() => setShowCteModal(false)} originalSql={sql} convertedSql={convertSubqueryToCTE(sql) || sql} onUseConverted={s => { setSql(s); setResult(null); }} />
+    </Suspense>
     <ConfettiComponent />
     <SafetyModal />
   </div>;

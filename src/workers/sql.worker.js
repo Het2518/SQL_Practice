@@ -1,26 +1,33 @@
 let db = null;
 let SQL = null;
+let currentSchema = null; // Caches GET_SCHEMA results to avoid repetitive O(N) COUNT(*) scans
 
 // Beast Optimization: LRU Cache for query results
 const queryCache = new Map();
 const MAX_CACHE_SIZE = 50;
 
+function normalizeSql(sql) {
+  return typeof sql === 'string' ? sql.trim().toLowerCase() : String(sql);
+}
+
 function getCachedResult(sql) {
-  if (queryCache.has(sql)) {
-    const result = queryCache.get(sql);
-    queryCache.delete(sql);
-    queryCache.set(sql, result);
+  const key = normalizeSql(sql);
+  if (queryCache.has(key)) {
+    const result = queryCache.get(key);
+    queryCache.delete(key);
+    queryCache.set(key, result);
     return result;
   }
   return null;
 }
 
 function setCachedResult(sql, result) {
+  const key = normalizeSql(sql);
   if (queryCache.size >= MAX_CACHE_SIZE) {
     const firstKey = queryCache.keys().next().value;
     queryCache.delete(firstKey);
   }
-  queryCache.set(sql, result);
+  queryCache.set(key, result);
 }
 
 async function loadSqlJs() {
@@ -64,13 +71,38 @@ self.onmessage = async (e) => {
         db = null;
       }
       queryCache.clear();
+      currentSchema = null;
       
       if (payload.dbPath) {
         // Fetch from origin
         const response = await fetch(payload.dbPath);
         if (!response.ok) throw new Error(`Failed to fetch database file`);
-        const buffer = await response.arrayBuffer();
-        db = new sqlJS.Database(new Uint8Array(buffer));
+        
+        const contentLength = response.headers.get('content-length');
+        const total = contentLength ? parseInt(contentLength, 10) : 0;
+        
+        let loaded = 0;
+        const reader = response.body.getReader();
+        const chunks = [];
+        
+        while(true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          loaded += value.length;
+          if (total) {
+            self.postMessage({ type: 'PROGRESS', id, payload: { loaded, total, percent: Math.round((loaded / total) * 100) } });
+          }
+        }
+        
+        const buffer = new Uint8Array(loaded);
+        let offset = 0;
+        for (const chunk of chunks) {
+          buffer.set(chunk, offset);
+          offset += chunk.length;
+        }
+        
+        db = new sqlJS.Database(buffer);
       } else if (payload.initSql) {
         db = new sqlJS.Database();
         db.run(payload.initSql);
@@ -101,6 +133,7 @@ self.onmessage = async (e) => {
       
       if (isDML) {
         queryCache.clear();
+        currentSchema = null;
       }
       
       if (results.length === 0) {
@@ -124,6 +157,15 @@ self.onmessage = async (e) => {
            execTimeMs, 
            totalRows: values.length 
          };
+         
+         if (payload.sql.trim().toUpperCase().startsWith('SELECT')) {
+           try {
+             const explainRes = db.exec(`EXPLAIN QUERY PLAN ${payload.sql}`);
+             if (explainRes.length > 0) {
+               data.explainPlan = explainRes[explainRes.length - 1].values;
+             }
+           } catch(e) {}
+         }
          
          if (!isDML) setCachedResult(payload.sql, data);
          
@@ -317,6 +359,12 @@ self.onmessage = async (e) => {
 
     else if (type === 'GET_SCHEMA') {
       if (!db) throw new Error("Database not initialized");
+      
+      if (currentSchema) {
+        self.postMessage({ id, success: true, data: { tables: currentSchema } });
+        return;
+      }
+
       // Get all user-created tables (exclude sqlite internal ones)
       const tablesResult = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
       const tableNames = tablesResult.length > 0 ? tablesResult[0].values.map(r => r[0]) : [];
@@ -339,6 +387,7 @@ self.onmessage = async (e) => {
         } catch {}
         schema.push({ name: tableName, columns, rowCount });
       }
+      currentSchema = schema;
       self.postMessage({ id, success: true, data: { tables: schema } });
     }
   } catch (err) {

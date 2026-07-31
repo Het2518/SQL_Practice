@@ -1,64 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const JoinVennDiagram = ({ joinType }) => {
-  const type = (joinType || '').toUpperCase();
-  const isLeft = type.includes('LEFT');
-  const isRight = type.includes('RIGHT');
-  const isOuter = type.includes('FULL') || type.includes('OUTER');
-  const isInner = type.includes('INNER') || type === 'JOIN';
-  
-  return (
-    <svg width="64" height="40" viewBox="0 0 64 40" style={{ display: 'block', flexShrink: 0 }}>
-      <defs>
-        <clipPath id={`clip-right-${type.replace(/\s+/g, '-')}`}>
-          <circle cx="40" cy="20" r="16" />
-        </clipPath>
-      </defs>
-      <circle cx="24" cy="20" r="16" fill="transparent" stroke="var(--primary)" strokeWidth="2" opacity="0.4" />
-      <circle cx="40" cy="20" r="16" fill="transparent" stroke="var(--success)" strokeWidth="2" opacity="0.4" />
-      
-      {(isLeft || isOuter) && <circle cx="24" cy="20" r="16" fill="var(--primary)" opacity="0.3" />}
-      {(isRight || isOuter) && <circle cx="40" cy="20" r="16" fill="var(--success)" opacity="0.3" />}
-      
-      {(isInner || isLeft || isRight || isOuter) && (
-        <circle cx="24" cy="20" r="16" fill="var(--text)" opacity="0.5" clipPath={`url(#clip-right-${type.replace(/\s+/g, '-')})`} />
-      )}
-    </svg>
-  );
-};
-
-// Enhanced parser to extract ON conditions and handle aliases properly
-const detectTablesAndJoins = (sql) => {
-  // Simplify subqueries to avoid parsing their internal joins
-  let cleanSql = sql.replace(/\([^)]+\)/g, '(SUBQUERY)');
-  
-  // Extract all FROM and JOIN tables with optional aliases
-  const tablePattern = /\b(?:FROM|JOIN)\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?([a-zA-Z0-9_]+))?\b/gi;
-  const tables = [];
-  let match;
-  while ((match = tablePattern.exec(cleanSql)) !== null) {
-    const rawAlias = match[2] || '';
-    const isKeyword = ['ON', 'WHERE', 'GROUP', 'ORDER', 'HAVING', 'LEFT', 'RIGHT', 'INNER', 'FULL', 'CROSS', 'JOIN'].includes(rawAlias.toUpperCase());
-    tables.push({
-      name: match[1].split('.').pop(),
-      alias: isKeyword ? null : rawAlias,
-      index: match.index
-    });
-  }
-
-  // Extract Joins and their ON conditions
-  const joinPattern = /\b(INNER\s+JOIN|LEFT\s+(?:OUTER\s+)?JOIN|RIGHT\s+(?:OUTER\s+)?JOIN|FULL\s+(?:OUTER\s+)?JOIN|CROSS\s+JOIN|JOIN)\b\s+([a-zA-Z0-9_.]+)(?:\s+(?:AS\s+)?[a-zA-Z0-9_]+)?(?:\s+ON\s+([\s\S]*?))?(?=\b(?:INNER|LEFT|RIGHT|FULL|CROSS|JOIN|WHERE|GROUP|ORDER|LIMIT)\b|$)/gi;
-  const joins = [];
-  while ((match = joinPattern.exec(cleanSql)) !== null) {
-    joins.push({
-      type: match[1].trim().toUpperCase().replace(/\s+OUTER\s+/, ' '),
-      rightTable: match[2].split('.').pop(),
-      condition: match[3] ? match[3].replace(/;+\s*$/, '').trim() : null,
-      index: match.index
-    });
-  }
-  return { tables, joins };
-};
+import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
+import { JoinVennDiagram } from './JoinVennDiagram';
 
 export function JoinAnalysisModal({ executeQuery, sql, onClose }) {
   const [joinNodes, setJoinNodes] = useState([]);
@@ -101,14 +44,23 @@ export function JoinAnalysisModal({ executeQuery, sql, onClose }) {
           if (join.condition) currentJoinSql += ` ON ${join.condition}`;
           
           // Execute stats
+          // Execute stats with a 1500ms bailout timeout to prevent blocking the worker on huge joins
           let leftTotal = 0, rightTotal = 0, matchTotal = 0;
+          
+          const executeWithTimeout = async (query) => {
+            return Promise.race([
+              executeQuery(query),
+              new Promise((resolve) => setTimeout(() => resolve(null), 1500))
+            ]);
+          };
+
           try {
-            const lRes = await executeQuery(`SELECT COUNT(*) FROM ${cumulativeJoinSql}`);
+            const lRes = await executeWithTimeout(`SELECT COUNT(*) FROM ${cumulativeJoinSql}`);
             if (lRes?.rows) leftTotal = lRes.rows[0][0];
-            const rRes = await executeQuery(`SELECT COUNT(*) FROM ${rightTableName}`);
+            const rRes = await executeWithTimeout(`SELECT COUNT(*) FROM ${rightTableName}`);
             if (rRes?.rows) rightTotal = rRes.rows[0][0];
             
-            const mRes = await executeQuery(`SELECT COUNT(*) FROM ${currentJoinSql}`);
+            const mRes = await executeWithTimeout(`SELECT COUNT(*) FROM ${currentJoinSql}`);
             if (mRes?.rows) matchTotal = mRes.rows[0][0];
           } catch(e) { console.error("Stats query failed", e); }
 
