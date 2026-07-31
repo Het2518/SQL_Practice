@@ -12,6 +12,7 @@ export const useAuth = create((set, get) => ({
   user: null,
   loading: true,
 
+  
   /**
    * Called once on app mount.
    * If a token exists in storage, validate it against /auth/me.
