@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -9,10 +10,10 @@ import { Card } from '@/shared/ui/Card';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 
 const TABS = [
-  { id: 'overview',     label: 'Overview' },
-  { id: 'questions',   label: 'Question Bank' },
+  { id: 'overview', label: 'Overview' },
+  { id: 'questions', label: 'Question Bank' },
   { id: 'experiences', label: 'Experiences' },
-  { id: 'roadmap',     label: 'Learning Path' },
+  { id: 'roadmap', label: 'Learning Path' },
 ];
 
 function extractTopics(sql) {
@@ -31,18 +32,40 @@ function extractTopics(sql) {
   return topics;
 }
 
-
-
 function StatCard({ value, label, color }) {
   return (
-    <div style={{
-      flex: 1, padding: '16px 20px', background: 'var(--surface)',
-      border: '1px solid var(--border)', borderRadius: 10, textAlign: 'center', minWidth: 96,
-    }}>
-      <div style={{ fontSize: 22, fontWeight: 900, color: color || 'var(--text)', lineHeight: 1.1, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>
+    <div
+      style={{
+        flex: 1,
+        padding: '16px 20px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        textAlign: 'center',
+        minWidth: 96,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 22,
+          fontWeight: 900,
+          color: color || 'var(--text)',
+          lineHeight: 1.1,
+          marginBottom: 4,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {value}
       </div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          color: 'var(--muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+        }}
+      >
         {label}
       </div>
     </div>
@@ -51,107 +74,177 @@ function StatCard({ value, label, color }) {
 
 function DiffBar({ easy, medium, hard }) {
   return (
-    <div style={{ display: 'flex', height: 8, borderRadius: 8, overflow: 'hidden', width: '100%', gap: 2 }}>
-      <div style={{ flex: easy, background: 'var(--success)', borderRadius: '8px 0 0 8px', opacity: easy > 0 ? 1 : 0, transition: 'flex 0.8s' }} />
-      <div style={{ flex: medium, background: 'var(--warning)', opacity: medium > 0 ? 1 : 0, transition: 'flex 0.8s' }} />
-      <div style={{ flex: hard, background: 'var(--error)', borderRadius: '0 8px 8px 0', opacity: hard > 0 ? 1 : 0, transition: 'flex 0.8s' }} />
+    <div
+      style={{
+        display: 'flex',
+        height: 8,
+        borderRadius: 8,
+        overflow: 'hidden',
+        width: '100%',
+        gap: 2,
+      }}
+    >
+      <div
+        style={{
+          flex: easy,
+          background: 'var(--success)',
+          borderRadius: '8px 0 0 8px',
+          opacity: easy > 0 ? 1 : 0,
+          transition: 'flex 0.8s',
+        }}
+      />
+      <div
+        style={{
+          flex: medium,
+          background: 'var(--warning)',
+          opacity: medium > 0 ? 1 : 0,
+          transition: 'flex 0.8s',
+        }}
+      />
+      <div
+        style={{
+          flex: hard,
+          background: 'var(--error)',
+          borderRadius: '0 8px 8px 0',
+          opacity: hard > 0 ? 1 : 0,
+          transition: 'flex 0.8s',
+        }}
+      />
     </div>
   );
 }
-
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function CompanyPrepPage(props) {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const [company, setCompany] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [loadingQ, setLoadingQ] = useState(true);
 
   const kbSlug = slug?.replace(/-/g, ' ');
   const kb = getCompanyKB(kbSlug || slug || '');
   const diffDist = getDifficultyDistribution(kbSlug || slug || '');
 
-  const companyName = kb?.name || slug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || 'Company';
+  const companyName =
+    kb?.name ||
+    slug
+      ?.split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ') ||
+    'Company';
+  const { data: company } = useQuery({
+    queryKey: ['company', slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const namePart = slug.split('-')[0];
+      const { data } = await supabase
+        .from('companies')
+        .select('*')
+        .ilike('name', `%${namePart}%`)
+        .limit(1);
+      return data?.[0] || { name: companyName };
+    },
+    enabled: !!slug,
+  });
 
-  useEffect(() => {
-    if (!slug) return;
-    const namePart = slug.split('-')[0];
-    supabase.from('companies').select('*').ilike('name', `%${namePart}%`).limit(1)
-      .then(({ data }) => {
-        if (data?.[0]) setCompany(data[0]);
-        else setCompany({ name: companyName });
-      });
-  }, [slug]);
-
-  useEffect(() => {
-    if (!company?.id) { setLoadingQ(false); return; }
-    setLoadingQ(true);
-    supabase.from('questions')
-      .select(`*, question_company_mapping!inner(company_id, frequency_score)`)
-      .eq('question_company_mapping.company_id', company.id)
-      .order('difficulty')
-      .then(({ data }) => { setQuestions(data || []); setLoadingQ(false); });
-  }, [company?.id]);
+  const { data: questions = [], isLoading: loadingQ } = useQuery({
+    queryKey: ['company-questions', company?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('questions')
+        .select(`*, question_company_mapping!inner(company_id, frequency_score)`)
+        .eq('question_company_mapping.company_id', company.id)
+        .order('difficulty');
+      return data || [];
+    },
+    enabled: !!company?.id,
+  });
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-
       {/* ── Global Header ── */}
       <Header
-        user={props.user}
-        settings={props.settings}
         onShowAuth={props.onShowAuth}
         onShowSettings={props.onShowSettings}
-        onToggleDark={props.onToggleDark}
         leftContent={
-          <HeaderBreadcrumbs 
+          <HeaderBreadcrumbs
             items={[
-              { label: 'Interview Prep', onClick: () => navigate('/interview') }, 
-              { label: companyName }
-            ]} 
+              { label: 'Interview Prep', onClick: () => navigate('/interview') },
+              { label: companyName },
+            ]}
           />
         }
       />
 
       {/* ── Premium Company Hero ── */}
-      <div style={{ 
-        background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)', 
-        borderBottom: '1px solid var(--border)' 
-      }}>
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)',
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 0' }}>
-
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, marginBottom: 32, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 20,
+              marginBottom: 32,
+              flexWrap: 'wrap',
+            }}
+          >
             <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
               {/* Logo mark */}
-              <div style={{
-                width: 72, height: 72, borderRadius: 18, flexShrink: 0,
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 32, fontWeight: 900, color: '#fff', fontFamily: 'var(--font-mono)',
-              }}>
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 18,
+                  flexShrink: 0,
+                  background:
+                    'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 32,
+                  fontWeight: 900,
+                  color: '#fff',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
                 {companyName.charAt(0).toUpperCase()}
               </div>
 
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                  <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>
+                  <h1
+                    style={{
+                      fontSize: 32,
+                      fontWeight: 900,
+                      color: 'var(--text)',
+                      margin: 0,
+                      letterSpacing: '-0.5px',
+                    }}
+                  >
                     {companyName}
                   </h1>
-                  {company?.category && (
-                    <Badge variant="primary">{company.category}</Badge>
-                  )}
+                  {company?.category && <Badge variant="primary">{company.category}</Badge>}
                   {kb?.avgDifficulty && (
-                    <Badge variant={kb.avgDifficulty}>
-                      Avg: {kb.avgDifficulty}
-                    </Badge>
+                    <Badge variant={kb.avgDifficulty}>Avg: {kb.avgDifficulty}</Badge>
                   )}
                 </div>
-                <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, maxWidth: 600 }}>
-                  {kb?.style?.slice(0, 180) || `Comprehensive SQL interview preparation guide for ${companyName}`}
+                <p
+                  style={{
+                    fontSize: 15,
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.6,
+                    margin: 0,
+                    maxWidth: 600,
+                  }}
+                >
+                  {kb?.style?.slice(0, 180) ||
+                    `Comprehensive SQL interview preparation guide for ${companyName}`}
                 </p>
               </div>
             </div>
@@ -176,19 +269,26 @@ export default function CompanyPrepPage(props) {
 
           {/* Segmented Tabs */}
           <div style={{ display: 'flex', gap: 8, marginBottom: -1 }}>
-            {TABS.map(t => (
+            {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 style={{
-                  padding: '12px 24px', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                  fontWeight: activeTab === t.id ? 700 : 500, fontSize: 14,
-                  background: activeTab === t.id ? 'var(--surface-2)' : 'transparent', 
+                  padding: '12px 24px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  fontWeight: activeTab === t.id ? 700 : 500,
+                  fontSize: 14,
+                  background: activeTab === t.id ? 'var(--surface-2)' : 'transparent',
                   transition: 'all 0.15s ease',
                   color: activeTab === t.id ? 'var(--text)' : 'var(--text-secondary)',
-                  borderTop: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                  borderLeft: activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
-                  borderRight: activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+                  borderTop:
+                    activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
+                  borderLeft:
+                    activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
+                  borderRight:
+                    activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
                   borderRadius: '8px 8px 0 0',
                 }}
               >
@@ -201,7 +301,6 @@ export default function CompanyPrepPage(props) {
 
       {/* ── Tab Content ── */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 32px 64px' }}>
-
         {/* ━━ OVERVIEW ━━ */}
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -212,9 +311,27 @@ export default function CompanyPrepPage(props) {
                   { label: 'Easy', pct: diffDist.easy, color: 'var(--success)' },
                   { label: 'Medium', pct: diffDist.medium, color: 'var(--warning)' },
                   { label: 'Hard', pct: diffDist.hard, color: 'var(--error)' },
-                ].map(d => (
-                  <span key={d.label} style={{ fontSize: 12, color: d.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, display: 'inline-block' }} />
+                ].map((d) => (
+                  <span
+                    key={d.label}
+                    style={{
+                      fontSize: 12,
+                      color: d.color,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: d.color,
+                        display: 'inline-block',
+                      }}
+                    />
                     {d.label} {d.pct}%
                   </span>
                 ))}
@@ -223,12 +340,18 @@ export default function CompanyPrepPage(props) {
 
             <Card title="Frequently Asked Topics">
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                {(kb?.topics || ['Joins', 'Window Functions', 'Aggregations', 'Subqueries', 'CTEs']).map(t => (
+                {(
+                  kb?.topics || ['Joins', 'Window Functions', 'Aggregations', 'Subqueries', 'CTEs']
+                ).map((t) => (
                   <span
                     key={t}
                     style={{
-                      padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                      background: 'var(--surface-2)', border: '1px solid var(--border)',
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      background: 'var(--surface-2)',
+                      border: '1px solid var(--border)',
                       color: 'var(--text-secondary)',
                     }}
                   >
@@ -239,15 +362,43 @@ export default function CompanyPrepPage(props) {
             </Card>
 
             {kb?.patterns && kb.patterns.length > 0 && (
-              <Card title={`Common Question Patterns at ${companyName}`} style={{ gridColumn: '1 / -1' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+              <Card
+                title={`Common Question Patterns at ${companyName}`}
+                style={{ gridColumn: '1 / -1' }}
+              >
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: 12,
+                  }}
+                >
                   {kb.patterns.slice(0, 3).map((p, i) => (
-                    <div key={i} style={{
-                      padding: '12px 16px', borderRadius: 8, background: 'var(--surface-2)',
-                      border: '1px solid var(--border)', fontSize: 13, color: 'var(--text-secondary)',
-                      lineHeight: 1.55, display: 'flex', gap: 10, alignItems: 'flex-start',
-                    }}>
-                      <span style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
+                    <div
+                      key={i}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: 8,
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--border)',
+                        fontSize: 13,
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.55,
+                        display: 'flex',
+                        gap: 10,
+                        alignItems: 'flex-start',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--primary)',
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {i + 1}.
+                      </span>
                       {p}
                     </div>
                   ))}
@@ -290,19 +441,51 @@ export default function CompanyPrepPage(props) {
         {activeTab === 'questions' && (
           <div>
             {loadingQ ? (
-              <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>Loading questions...</div>
+              <div
+                style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}
+              >
+                Loading questions...
+              </div>
             ) : questions.length === 0 ? (
               <div style={{ padding: 60, textAlign: 'center' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>No questions mapped yet</div>
+                <div
+                  style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}
+                >
+                  No questions mapped yet
+                </div>
                 <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 auto', maxWidth: 400 }}>
                   We are working on adding more questions for this company. Check back soon!
                 </p>
               </div>
             ) : (
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '14px 20px',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
                   <span style={{ fontWeight: 700, fontSize: 14 }}>Question Bank</span>
-                  <span style={{ padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: 'var(--primary-muted)', color: 'var(--primary)' }}>
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 99,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      background: 'var(--primary-muted)',
+                      color: 'var(--primary)',
+                    }}
+                  >
                     {questions.length}
                   </span>
                 </div>
@@ -310,34 +493,70 @@ export default function CompanyPrepPage(props) {
                   <thead>
                     <tr style={{ background: 'var(--surface-2)' }}>
                       {['Title', 'Topics', 'Difficulty', 'Time', 'Practice'].map((h, i) => (
-                        <th key={h} style={{ padding: '10px 16px', textAlign: i === 4 ? 'right' : 'left', fontWeight: 700, color: 'var(--muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        <th
+                          key={h}
+                          style={{
+                            padding: '10px 16px',
+                            textAlign: i === 4 ? 'right' : 'left',
+                            fontWeight: 700,
+                            color: 'var(--muted)',
+                            fontSize: 10,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                          }}
+                        >
                           {h}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {questions.map(q => {
+                    {questions.map((q) => {
                       const topics = extractTopics(q.solution_sql);
                       return (
                         <tr
                           key={q.id}
-                          style={{ borderTop: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.12s' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
-                          onMouseLeave={e => e.currentTarget.style.background = ''}
+                          style={{
+                            borderTop: '1px solid var(--border)',
+                            cursor: 'pointer',
+                            transition: 'background 0.12s',
+                          }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background = 'var(--surface-2)')
+                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                         >
-                          <td style={{ padding: '13px 16px', fontWeight: 600, color: 'var(--text)', maxWidth: 280 }}>{q.title}</td>
+                          <td
+                            style={{
+                              padding: '13px 16px',
+                              fontWeight: 600,
+                              color: 'var(--text)',
+                              maxWidth: 280,
+                            }}
+                          >
+                            {q.title}
+                          </td>
                           <td style={{ padding: '13px 16px' }}>
                             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                              {topics.slice(0, 2).map(t => (
-                                <span key={t} style={{ padding: '2px 7px', borderRadius: 5, fontSize: 10, fontWeight: 600, background: 'var(--primary-muted)', color: 'var(--primary)' }}>{t}</span>
+                              {topics.slice(0, 2).map((t) => (
+                                <span
+                                  key={t}
+                                  style={{
+                                    padding: '2px 7px',
+                                    borderRadius: 5,
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    background: 'var(--primary-muted)',
+                                    color: 'var(--primary)',
+                                  }}
+                                >
+                                  {t}
+                                </span>
                               ))}
                             </div>
                           </td>
                           <td style={{ padding: '13px 16px' }}>
-                            <Badge variant={q.difficulty}>
-                              {q.difficulty}
-                            </Badge>
+                            <Badge variant={q.difficulty}>{q.difficulty}</Badge>
                           </td>
                           <td style={{ padding: '13px 16px', color: 'var(--muted)', fontSize: 12 }}>
                             {q.estimated_time_minutes || 15}m
@@ -346,10 +565,16 @@ export default function CompanyPrepPage(props) {
                             <Link
                               to={`/practice/${(q.schema_name || 'ecommerce').toLowerCase()}`}
                               style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 5,
-                                padding: '6px 12px', borderRadius: 7, textDecoration: 'none',
-                                background: 'var(--primary)', color: '#fff',
-                                fontWeight: 700, fontSize: 12,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                padding: '6px 12px',
+                                borderRadius: 7,
+                                textDecoration: 'none',
+                                background: 'var(--primary)',
+                                color: '#fff',
+                                fontWeight: 700,
+                                fontSize: 12,
                               }}
                             >
                               Practice
@@ -369,29 +594,51 @@ export default function CompanyPrepPage(props) {
         {activeTab === 'experiences' && (
           <div>
             <div style={{ marginBottom: 24 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}>Real Interview Experiences</h2>
+              <h2
+                style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}
+              >
+                Real Interview Experiences
+              </h2>
               <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
                 Reported by SQL candidates at {companyName}.
               </p>
             </div>
-            {(kb?.experiences && kb.experiences.length > 0) ? (
+            {kb?.experiences && kb.experiences.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {kb.experiences.map((exp, i) => (
                   <div
                     key={i}
                     style={{
-                      padding: '20px 24px', borderRadius: 10, background: 'var(--surface)',
-                      border: '1px solid var(--border)', borderLeft: '3px solid var(--primary)',
+                      padding: '20px 24px',
+                      borderRadius: 10,
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderLeft: '3px solid var(--primary)',
                     }}
                   >
-                    <p style={{ fontSize: 14, lineHeight: 1.75, color: 'var(--text)', margin: '0 0 10px' }}>{exp}</p>
-                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>— {companyName} Interview Candidate</div>
+                    <p
+                      style={{
+                        fontSize: 14,
+                        lineHeight: 1.75,
+                        color: 'var(--text)',
+                        margin: '0 0 10px',
+                      }}
+                    >
+                      {exp}
+                    </p>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      — {companyName} Interview Candidate
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>No experiences yet</div>
+                <div
+                  style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}
+                >
+                  No experiences yet
+                </div>
                 <div style={{ fontSize: 13 }}>No experiences available for this company yet.</div>
               </div>
             )}
@@ -402,42 +649,101 @@ export default function CompanyPrepPage(props) {
         {activeTab === 'roadmap' && (
           <div>
             <div style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}>Learning Path for {companyName}</h2>
+              <h2
+                style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}
+              >
+                Learning Path for {companyName}
+              </h2>
               <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
                 Master these topics in order to be ready for {companyName} SQL interviews.
               </p>
             </div>
-            {(kb?.recommendedTopics && kb.recommendedTopics.length > 0) ? (
+            {kb?.recommendedTopics && kb.recommendedTopics.length > 0 ? (
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 27, top: 0, bottom: 0, width: 2, background: 'var(--border)' }} />
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 27,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
+                    background: 'var(--border)',
+                  }}
+                />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {kb.recommendedTopics.map((topic, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 16, alignItems: 'flex-start', paddingLeft: 8 }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                        background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: '#fff', fontWeight: 800, fontSize: 14, zIndex: 1,
-                      }}>
+                    <div
+                      key={i}
+                      style={{ display: 'flex', gap: 16, alignItems: 'flex-start', paddingLeft: 8 }}
+                    >
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          background: 'var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          fontWeight: 800,
+                          fontSize: 14,
+                          zIndex: 1,
+                        }}
+                      >
                         {i + 1}
                       </div>
-                      <div style={{
-                        flex: 1, padding: '14px 18px', background: 'var(--surface)',
-                        border: '1px solid var(--border)', borderRadius: 10,
-                        display: 'flex', alignItems: 'center', gap: 16,
-                      }}>
+                      <div
+                        style={{
+                          flex: 1,
+                          padding: '14px 18px',
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border)',
+                          borderRadius: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 16,
+                        }}
+                      >
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 3 }}>{topic}</div>
+                          <div
+                            style={{
+                              fontWeight: 700,
+                              fontSize: 14,
+                              color: 'var(--text)',
+                              marginBottom: 3,
+                            }}
+                          >
+                            {topic}
+                          </div>
                           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                            {['Master the basics', 'Build complexity', 'Practice optimization', 'Learn advanced patterns', 'Speed and accuracy'][i % 5]}
+                            {
+                              [
+                                'Master the basics',
+                                'Build complexity',
+                                'Practice optimization',
+                                'Learn advanced patterns',
+                                'Speed and accuracy',
+                              ][i % 5]
+                            }
                           </div>
                         </div>
                         <Link
                           to="/practice/ecommerce"
                           style={{
-                            flexShrink: 0, padding: '7px 14px', borderRadius: 7, textDecoration: 'none',
-                            background: 'var(--primary-muted)', color: 'var(--primary)',
-                            border: '1px solid var(--primary-light)', fontWeight: 700, fontSize: 12,
-                            display: 'flex', alignItems: 'center', gap: 5,
+                            flexShrink: 0,
+                            padding: '7px 14px',
+                            borderRadius: 7,
+                            textDecoration: 'none',
+                            background: 'var(--primary-muted)',
+                            color: 'var(--primary)',
+                            border: '1px solid var(--primary-light)',
+                            fontWeight: 700,
+                            fontSize: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 5,
                           }}
                         >
                           Practice <ChevronRight size={12} />
@@ -449,8 +755,14 @@ export default function CompanyPrepPage(props) {
               </div>
             ) : (
               <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>Learning path not available</div>
-                <div style={{ fontSize: 13 }}>No recommended learning path for this company yet.</div>
+                <div
+                  style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}
+                >
+                  Learning path not available
+                </div>
+                <div style={{ fontSize: 13 }}>
+                  No recommended learning path for this company yet.
+                </div>
               </div>
             )}
           </div>

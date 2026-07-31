@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { getQuestionsForDb } from '@/data/index';
+import { isDailyChallenge } from '@/utils/dailyChallenge';
+import posthog from 'posthog-js';
 
 /**
  * Custom hook to manage execution of SQL queries and verifying answers.
@@ -16,7 +18,7 @@ export function useQueryExecution({
   checkSafety,
   fireConfetti,
   toast,
-  setQueryHistory
+  setQueryHistory,
 }) {
   const [executedSql, setExecutedSql] = useState('');
   const [result, setResult] = useState(null);
@@ -33,34 +35,67 @@ export function useQueryExecution({
 
     setIsExecuting(true);
     setExecutedSql(sql);
-    
+
+    posthog.capture('query_executed', {
+      db_name: db,
+      question_id: currentQ?.id,
+      difficulty: currentQ?.difficulty,
+      is_ai_generated: currentQ?.isAiGenerated || false,
+    });
+
     // Add full context entry to history if not a duplicate of last
-    setQueryHistory(prev => {
-      const entry = { sql, questionId: currentQ.id, dbName: db, prompt: currentQ.prompt?.substring(0, 50) };
-      const filtered = prev.filter(h => h.sql !== sql);
+    setQueryHistory((prev) => {
+      const entry = {
+        sql,
+        questionId: currentQ.id,
+        dbName: db,
+        prompt: currentQ.prompt?.substring(0, 50),
+      };
+      const filtered = prev.filter((h) => h.sql !== sql);
       return [entry, ...filtered].slice(0, 50);
     });
 
     try {
       if (currentQ && currentQ.solutionSQL && !currentQ.isAiGenerated) {
-        const val = await validateAnswer(sql, currentQ.solutionSQL, currentQ.verificationSQL, currentQ.requiresOrder);
+        const val = await validateAnswer(
+          sql,
+          currentQ.solutionSQL,
+          currentQ.verificationSQL,
+          currentQ.requiresOrder
+        );
         if (val.userResult) {
-           setResult(val.userResult);
-        } else if (val.message.startsWith('SQL Error:') || val.message.startsWith('System Error:')) {
-           setResult({ error: val.message });
+          setResult(val.userResult);
+        } else if (
+          val.message.startsWith('SQL Error:') ||
+          val.message.startsWith('System Error:')
+        ) {
+          setResult({ error: val.message });
         }
-        
+
         setValidation(val);
         if (val.isCorrect) {
+          posthog.capture('question_completed', {
+            db_name: db,
+            question_id: currentQ?.id,
+            difficulty: currentQ?.difficulty,
+          });
+
           onProgressUpdate(currentQ, db, 'complete');
           if (progress[currentQ.id] !== 'complete') {
             const diff = (currentQ.difficulty || '').toLowerCase();
-            const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
+            let pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
+            const isDaily = isDailyChallenge(currentQ.id);
+            if (isDaily) pts *= 3;
             fireConfetti();
             toast({
               type: 'success',
-              title: diff === 'hard' ? '🔥 Hard Problem Solved!' : diff === 'medium' ? '⭐ Nice Work!' : '✅ Correct!',
-              message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
+              title:
+                diff === 'hard'
+                  ? '🔥 Hard Problem Solved!'
+                  : diff === 'medium'
+                    ? '⭐ Nice Work!'
+                    : '✅ Correct!',
+              message: `You earned ${pts} XP!${isDaily ? ' (3x Daily Bonus 🔥)' : ''}`,
             });
           }
         } else {
@@ -73,17 +108,26 @@ export function useQueryExecution({
         const originalRes = await executeQuery(sql);
         setResult(originalRes);
         if (originalRes.error) {
-           setValidation({ isCorrect: false, message: originalRes.error });
+          setValidation({ isCorrect: false, message: originalRes.error });
         } else {
-           setValidation(null);
+          setValidation(null);
         }
       }
     } finally {
       setIsExecuting(false);
     }
   }, [
-    sql, executeQuery, currentQ, validateAnswer, onProgressUpdate, 
-    progress, db, fireConfetti, toast, setQueryHistory, checkSafety
+    sql,
+    executeQuery,
+    currentQ,
+    validateAnswer,
+    onProgressUpdate,
+    progress,
+    db,
+    fireConfetti,
+    toast,
+    setQueryHistory,
+    checkSafety,
   ]);
 
   const handleExplain = useCallback(async () => {
@@ -108,6 +152,6 @@ export function useQueryExecution({
     isExecuting,
     setIsExecuting,
     handleRun,
-    handleExplain
+    handleExplain,
   };
 }

@@ -1,27 +1,27 @@
-import { useState, useEffect } from 'react';
+import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 
-export function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const useAuth = create((set, get) => ({
+  user: null,
+  loading: true,
 
-  useEffect(() => {
+  initializeAuth: () => {
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+      set({ user: session?.user ?? null, loading: false });
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      set({ user: session?.user ?? null, loading: false });
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  },
 
-  const loginWithGoogle = async () => {
+  loginWithGoogle: async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -29,9 +29,9 @@ export function useAuth() {
       },
     });
     if (error) console.error('Error logging in with Google:', error.message);
-  };
+  },
 
-  const loginWithEmail = async (email) => {
+  loginWithEmail: async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -39,12 +39,10 @@ export function useAuth() {
       },
     });
     if (error) throw error;
-  };
+  },
 
-  const logout = async () => {
+  logout: async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error('Error logging out:', error.message);
-  };
-
-  return { user, loading, loginWithGoogle, loginWithEmail, logout };
-}
+  },
+}));

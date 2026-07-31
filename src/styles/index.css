@@ -1,10 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* index.css — minimal reset only, real styles in styles.css */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-html, body {
+html,
+body {
   height: 100%;
 }
 #root {

@@ -1,64 +1,58 @@
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from './Button';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
-export function ConfirmModal({ isOpen, title, message, confirmText = 'Confirm', cancelText = 'Cancel', onConfirm, onCancel, isDanger = true }) {
+export function ConfirmModal({
+  isOpen,
+  title,
+  message,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  onConfirm,
+  onCancel,
+  isDanger = true,
+}) {
   const trapRef = useFocusTrap(isOpen);
 
   if (!isOpen) return null;
 
   return (
-    <div 
-      style={{
-        position: 'fixed', inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '16px'
-      }}
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onCancel}
     >
-      <div 
+      <div
         ref={trapRef}
-        style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '12px',
-          width: '100%', maxWidth: '400px',
-          padding: '24px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)',
-          display: 'flex', flexDirection: 'column', gap: '20px'
-        }}
-        onClick={e => e.stopPropagation()}
+        className="bg-surface border border-border rounded-xl w-full max-w-md p-6 shadow-2xl flex flex-col gap-5 animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div style={{
-            background: isDanger ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
-            color: isDanger ? '#ef4444' : '#3b82f6',
-            padding: '12px',
-            borderRadius: '50%',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '48px', width: '48px', flexShrink: 0
-          }}>
+        <div className="flex gap-4">
+          <div
+            className={`
+            flex items-center justify-center h-12 w-12 rounded-full shrink-0
+            ${isDanger ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}
+          `}
+          >
             <AlertTriangle size={24} />
           </div>
           <div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', color: 'var(--text)' }}>
-              {title}
-            </h3>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              {message}
-            </p>
+            <h3 className="m-0 mb-2 text-lg font-semibold text-text">{title}</h3>
+            <p className="m-0 text-sm text-text-secondary leading-relaxed">{message}</p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+        <div className="flex justify-end gap-3 mt-2">
           <Button variant="secondary" onClick={onCancel}>
             {cancelText}
           </Button>
-          <Button variant={isDanger ? 'danger' : 'primary'} onClick={() => { onConfirm(); onCancel(); }}>
+          <Button
+            variant={isDanger ? 'danger' : 'primary'}
+            onClick={() => {
+              onConfirm();
+              onCancel();
+            }}
+          >
             {confirmText}
           </Button>
         </div>

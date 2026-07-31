@@ -1,101 +1,61 @@
 import React from 'react';
 import { RotateCcw } from 'lucide-react';
+import { cva } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-export function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  isLoading = false, 
-  disabled = false, 
+const buttonVariants = cva(
+  'inline-flex items-center justify-center gap-1.5 border border-transparent font-sans font-semibold transition-all duration-150 select-none whitespace-nowrap no-underline',
+  {
+    variants: {
+      variant: {
+        primary:
+          'bg-primary text-white border-transparent hover:bg-primary-hover active:scale-95 shadow-[0_2px_4px_rgba(37,99,235,0.2)]',
+        secondary:
+          'bg-surface-2 text-text border-border hover:bg-surface-3 hover:border-border-hover active:scale-95',
+        ghost:
+          'bg-transparent text-text-secondary border-transparent hover:bg-surface-2 hover:text-text active:scale-95',
+        danger:
+          'bg-error text-white border-transparent hover:bg-error/90 active:scale-95 shadow-[0_2px_4px_rgba(220,38,38,0.2)]',
+        outline: 'bg-transparent text-text border-border hover:bg-surface-2 active:scale-95',
+        nav: 'bg-transparent text-text-secondary border-transparent hover:bg-surface-2 hover:text-text !font-medium',
+      },
+      size: {
+        sm: 'px-3 py-1.5 text-[11px] rounded-md h-7',
+        md: 'px-4 py-2 text-[13px] rounded-lg h-9',
+        lg: 'px-6 py-3 text-[14px] rounded-xl h-11',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  }
+);
+
+export function Button({
+  children,
+  variant,
+  size,
+  isLoading = false,
+  disabled = false,
   icon: Icon,
-  className = '',
-  style = {},
-  ...props 
+  className,
+  ...props
 }) {
-  const baseStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '6px',
-    border: '1px solid transparent',
-    fontFamily: 'var(--font-sans)',
-    fontWeight: 600,
-    cursor: disabled || isLoading ? 'not-allowed' : 'pointer',
-    opacity: disabled && !isLoading ? 0.6 : 1,
-    transition: 'all 0.15s ease',
-    userSelect: 'none',
-    whiteSpace: 'nowrap',
-    textDecoration: 'none',
-  };
-
-  const sizes = {
-    sm: { padding: '6px 12px', fontSize: '11px', borderRadius: '6px', height: '28px' },
-    md: { padding: '8px 16px', fontSize: '13px', borderRadius: '8px', height: '36px' },
-    lg: { padding: '12px 24px', fontSize: '14px', borderRadius: '10px', height: '44px' },
-  };
-
-  const variants = {
-    primary: {
-      background: 'var(--primary)',
-      color: '#fff',
-      borderColor: 'transparent',
-    },
-    secondary: {
-      background: 'var(--surface-2)',
-      color: 'var(--text)',
-      borderColor: 'var(--border)',
-    },
-    ghost: {
-      background: 'transparent',
-      color: 'var(--text-secondary)',
-      borderColor: 'transparent',
-    },
-    danger: {
-      background: 'var(--error)',
-      color: '#fff',
-      borderColor: 'transparent',
-    },
-    outline: {
-      background: 'transparent',
-      color: 'var(--primary)',
-      borderColor: 'var(--primary)',
-    }
-  };
-
-  const vStyle = variants[variant] || variants.primary;
-  const sStyle = sizes[size] || sizes.md;
-
-  const handleMouseEnter = (e) => {
-    if (disabled || isLoading) return;
-    if (variant === 'primary') e.currentTarget.style.background = 'var(--primary-hover)';
-    if (variant === 'secondary') e.currentTarget.style.background = 'var(--border)';
-    if (variant === 'ghost') {
-      e.currentTarget.style.background = 'var(--surface-2)';
-      e.currentTarget.style.color = 'var(--text)';
-    }
-    if (variant === 'danger') e.currentTarget.style.background = 'var(--error-muted)';
-    if (variant === 'outline') e.currentTarget.style.background = 'var(--primary-muted)';
-  };
-
-  const handleMouseLeave = (e) => {
-    if (disabled || isLoading) return;
-    e.currentTarget.style.background = vStyle.background;
-    if (variant === 'ghost') e.currentTarget.style.color = vStyle.color;
-  };
-
   return (
     <button
+      className={cn(
+        buttonVariants({ variant, size }),
+        (disabled || isLoading) && 'cursor-not-allowed opacity-60 pointer-events-none',
+        className
+      )}
       disabled={disabled || isLoading}
-      style={{ ...baseStyle, ...vStyle, ...sStyle, ...style }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={className}
       {...props}
     >
       {isLoading ? (
-        <RotateCcw size={size === 'sm' ? 12 : 14} style={{ animation: 'spin 1s linear infinite' }} />
+        <RotateCcw className="animate-spin" size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
       ) : Icon ? (
-        <Icon size={size === 'sm' ? 14 : 16} />
+        <Icon size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
       ) : null}
       {children}
     </button>
