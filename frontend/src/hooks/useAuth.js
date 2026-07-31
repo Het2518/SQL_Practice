@@ -47,9 +47,19 @@ export const useAuth = create((set, get) => ({
 
   /**
    * Register a new account with email, password, and optional display name.
+   * Does NOT log the user in; they must verify their email first.
    */
   register: async ({ email, password, displayName }) => {
     const { data } = await api.auth.register({ email, password, displayName });
+    return data.data; // returns { email }
+  },
+
+  /**
+   * Verify email using 6-digit code.
+   * Logs the user in upon success.
+   */
+  verifyEmail: async (email, code) => {
+    const { data } = await api.auth.verifyEmail({ email, code });
     tokenStorage.set(data.data.token);
     set({ user: data.data.user });
     return data.data.user;

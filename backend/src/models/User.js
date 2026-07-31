@@ -24,6 +24,14 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [50, 'Display name cannot exceed 50 characters'],
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: String,
+    verificationCodeExpires: Date,
+    resetPasswordCode: String,
+    resetPasswordExpires: Date,
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

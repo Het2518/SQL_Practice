@@ -51,7 +51,10 @@ export const api = {
   // Auth
   auth: {
     register: (data) => apiClient.post('/auth/register', data),
+    verifyEmail: (data) => apiClient.post('/auth/verify-email', data),
     login: (data) => apiClient.post('/auth/login', data),
+    forgotPassword: (data) => apiClient.post('/auth/forgot-password', data),
+    resetPassword: (data) => apiClient.post('/auth/reset-password', data),
     getMe: () => apiClient.get('/auth/me'),
     updateName: (displayName) => apiClient.patch('/auth/me/name', { displayName }),
   },
