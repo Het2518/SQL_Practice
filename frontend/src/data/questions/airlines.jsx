@@ -14,7 +14,7 @@ const make = (id, db, diff, kw, prompt, h1, h2, h3, sql) => ({
   hint3: h3,
   solutionSQL: sql,
   expectedResult: noRows
-});
+}); 
 
 // AIRLINES QUESTIONS (IDs 181-240)
 export const airlinesQuestions = [
