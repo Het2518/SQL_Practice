@@ -21,12 +21,19 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
   const isSubmittedRef = useRef(false);
 
   useEffect(() => {
-    const handleAntiCheat = async () => {
+    const handleAntiCheat = async (reason) => {
       if (!isOpen || isSubmittedRef.current) return;
       
-      // If user exits full screen or switches tabs
-      if (!document.fullscreenElement || document.visibilityState === 'hidden') {
-        toast({ title: 'Interview Terminated', message: 'You exited full-screen mode or switched tabs. Score recorded as 0.', type: 'error' });
+      const isBlur = reason === 'blur';
+      const isExit = !document.fullscreenElement;
+      const isHidden = document.visibilityState === 'hidden';
+
+      // If user exits full screen, switches tabs, or loses window focus
+      if (isExit || isHidden || isBlur) {
+        let msg = 'You exited full-screen mode or switched tabs.';
+        if (isBlur) msg = 'Window lost focus. Strict proctoring forbids switching to other applications or monitors.';
+
+        toast({ title: 'Interview Terminated', message: `${msg} Score recorded as 0.`, type: 'error' });
         isSubmittedRef.current = true;
         
         try {
@@ -34,7 +41,7 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
             companyName,
             score: 0,
             verdict: 'No Hire',
-            feedback: 'Interview terminated early due to anti-cheat violation (exited full screen or lost focus).',
+            feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
             durationMinutes: 0
           });
         } catch(e) {
@@ -44,6 +51,10 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
         onClose();
       }
     };
+
+    const onVisibilityChange = () => handleAntiCheat('visibility');
+    const onFullscreenChange = () => handleAntiCheat('fullscreen');
+    const onWindowBlur = () => handleAntiCheat('blur');
 
     const handleProctoring = (e) => {
       if (!isOpen || isSubmittedRef.current) return;
@@ -63,6 +74,11 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
       if (e.type === 'paste') {
         e.preventDefault();
         toast({ title: 'Proctoring Alert', message: 'Pasting external code is strictly prohibited.', type: 'error' });
+      }
+
+      if (e.type === 'dragstart' || e.type === 'drop') {
+        e.preventDefault();
+        toast({ title: 'Proctoring Alert', message: 'Drag and drop is disabled to prevent copying external code.', type: 'error' });
       }
 
       if (e.type === 'keydown') {
@@ -91,21 +107,27 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
       }
     };
 
-    document.addEventListener('fullscreenchange', handleAntiCheat);
-    document.addEventListener('visibilitychange', handleAntiCheat);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
     document.addEventListener('contextmenu', handleProctoring, { capture: true });
     document.addEventListener('copy', handleProctoring, { capture: true });
     document.addEventListener('cut', handleProctoring, { capture: true });
     document.addEventListener('paste', handleProctoring, { capture: true });
+    document.addEventListener('dragstart', handleProctoring, { capture: true });
+    document.addEventListener('drop', handleProctoring, { capture: true });
     document.addEventListener('keydown', handleProctoring, { capture: true });
 
     return () => {
-      document.removeEventListener('fullscreenchange', handleAntiCheat);
-      document.removeEventListener('visibilitychange', handleAntiCheat);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
       document.removeEventListener('contextmenu', handleProctoring, { capture: true });
       document.removeEventListener('copy', handleProctoring, { capture: true });
       document.removeEventListener('cut', handleProctoring, { capture: true });
       document.removeEventListener('paste', handleProctoring, { capture: true });
+      document.removeEventListener('dragstart', handleProctoring, { capture: true });
+      document.removeEventListener('drop', handleProctoring, { capture: true });
       document.removeEventListener('keydown', handleProctoring, { capture: true });
     };
   }, [isOpen, companyName, onClose, toast]);
@@ -244,8 +266,10 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-surface z-[9999] flex flex-col animate-in fade-in duration-200 select-none">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg shadow-sm">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: '@media print { body { display: none !important; } }' }} />
+      <div className="fixed inset-0 bg-surface z-[9999] flex flex-col animate-in fade-in duration-200 select-none">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-bold text-text">Agentic Interview Mode: {companyName}</h2>
@@ -331,7 +355,8 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
           </div>
         </div>
       </div>
-    </div>,
+    </div>
+    </>,
     document.body
   );
 }
