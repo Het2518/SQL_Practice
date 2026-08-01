@@ -104,7 +104,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
 
     const completedSet = new Set();
     Object.entries(progress || {}).forEach(([qid, status]) => {
-      if (status === 'complete') completedSet.add(Number(qid));
+      if (status === 'complete') completedSet.add(String(qid));
     });
 
     const skillsProgress = {
@@ -118,7 +118,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
 
     allQuestions.forEach((q) => {
       const qkw = (q.keywords || []).map((k) => k.toLowerCase());
-      const isSolved = completedSet.has(Number(q.id));
+      const isSolved = completedSet.has(String(q.id));
 
       const isJoin = qkw.some((k) => k.includes('join'));
       const isWindow = qkw.some(
@@ -174,7 +174,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
     const score = easySolved * 10 + mediumSolved * 30 + hardSolved * 50;
 
     // Find next recommended questions (1 Easy, 1 Medium, 1 Hard)
-    const unsolved = allQuestions.filter((q) => !completedSet.has(Number(q.id)));
+    const unsolved = allQuestions.filter((q) => !completedSet.has(String(q.id)));
     const nextRecs = [];
     const getNext = (diff) => unsolved.find((q) => (q.difficulty || '').toLowerCase() === diff);
     const recEasy = getNext('easy');

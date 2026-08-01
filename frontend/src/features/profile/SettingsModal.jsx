@@ -8,6 +8,7 @@ import {
 import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { getGroqKey, saveGroqKey, hasGroqKey } from '@/lib/groq';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
+import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 
 function ToggleRow({ label, description, checked, onChange }) {
@@ -697,18 +698,12 @@ export function SettingsModal({ onClose }) {
             background: 'var(--surface)',
           }}
         >
-          <button
-            onClick={onClose}
-            className="px-4 py-2 hover:bg-surface-2 text-text rounded-lg text-sm font-semibold transition-colors"
-          >
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold shadow-sm transition-all active:scale-95"
-          >
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
             Save Changes
-          </button>
+          </Button>
         </div>
       </div>
       <ConfirmModal

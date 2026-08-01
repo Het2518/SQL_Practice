@@ -123,7 +123,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         </div>
 
         {/* ── Stats Row ── */}
-        <div className="mt-12 flex flex-wrap justify-center gap-6 w-full max-w-3xl z-10">
+        <div className="mt-12 flex flex-wrap justify-center gap-6 w-full max-w-5xl z-10">
           <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
             <div
               className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
@@ -322,7 +322,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
           </span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { title: '1. Basic Filtering', desc: 'SELECT, WHERE, AND/OR', icon: Target },
             { title: '2. Aggregations', desc: 'GROUP BY, HAVING, SUM/AVG', icon: BarChart2 },
@@ -334,11 +334,11 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             { title: '8. Advanced Topics', desc: 'Recursive CTEs, PIVOT', icon: Zap },
           ].map((topic, i) => (
             <div key={topic.title} className="bg-surface border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/practice/hospital')}>
-              <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center mb-3 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                <topic.icon size={16} />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors border border-primary/20">
+                <topic.icon size={20} strokeWidth={2} fill="none" />
               </div>
-              <h3 className="text-sm font-bold text-text mb-1">{topic.title}</h3>
-              <p className="text-xs text-text-secondary leading-relaxed">{topic.desc}</p>
+              <h3 className="text-base font-bold text-text mb-1.5">{topic.title}</h3>
+              <p className="text-sm text-text-secondary leading-relaxed">{topic.desc}</p>
             </div>
           ))}
         </div>

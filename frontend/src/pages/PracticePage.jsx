@@ -94,7 +94,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         setCurrentQ(targetQ);
         setResult(null);
         setValidation(null);
-        const savedSql = localStorage.getItem(`sql-persist-${targetQ.id}`);
+        const savedSql = settings?.persistEditorText ? localStorage.getItem(`sql-persist-${targetQ.id}`) : null;
         setSql(savedSql || '');
         setPreviewTableName(null);
       }
@@ -104,7 +104,9 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeDb, qParam]);
 
-  const [sql, setSql] = useState('');
+  const [sql, setSql] = useState(() => {
+    return settings?.persistEditorText ? (localStorage.getItem(`sql-persist-${currentQ?.id}`) || '') : '';
+  });
   const [executedSql, setExecutedSql] = useState('');
   const [result, setResult] = useState(null);
   const [expectedResult, setExpectedResult] = useState(null);
@@ -513,8 +515,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       if (direction === 'next' && idx < dbQuestions.length - 1) nextQ = dbQuestions[idx + 1];
       if (nextQ) {
         setCurrentQ(nextQ);
-        // Restore persisted SQL for this question
-        const savedSql = localStorage.getItem(`sql-persist-${nextQ.id}`);
+        // Restore persisted SQL for this question if setting enabled
+        const savedSql = settings?.persistEditorText ? localStorage.getItem(`sql-persist-${nextQ.id}`) : null;
         setSql(savedSql || '');
         setResult(null);
         setValidation(null);
@@ -533,8 +535,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       setShowBrowser(false);
       setResult(null);
       setValidation(null);
-      // Restore persisted SQL for this specific question
-      const savedSql = localStorage.getItem(`sql-persist-${q.id}`);
+      // Restore persisted SQL for this specific question if enabled
+      const savedSql = settings?.persistEditorText ? localStorage.getItem(`sql-persist-${q.id}`) : null;
       setSql(savedSql || '');
     },
     [db]
@@ -966,7 +968,9 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   value={sql}
                   onChange={(val) => {
                     setSql(val);
-                    localStorage.setItem(`sql-persist-${currentQ?.id}`, val);
+                    if (settings?.persistEditorText) {
+                      localStorage.setItem(`sql-persist-${currentQ?.id}`, val);
+                    }
                   }}
                   onRun={runQuery}
                   onFormat={() => setSql(formatQuery(sql))}
