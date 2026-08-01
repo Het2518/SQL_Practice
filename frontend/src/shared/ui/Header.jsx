@@ -65,7 +65,7 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
         ))}
 
         {rightContent && (
-          <div className="hidden md:flex">
+          <div className="flex items-center gap-1.5">
              {rightContent}
           </div>
         )}

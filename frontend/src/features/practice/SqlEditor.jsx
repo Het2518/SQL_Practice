@@ -138,95 +138,184 @@ export function SqlEditor({
     });
   }, [shortcuts.runQuery.combo, shortcuts.formatCode.combo, handleFormatProxy]);
 
-  // Register SQL autocomplete for tables and columns (only if enabled)
+  // Register SQL autocomplete for tables, columns, functions, and keywords
   useEffect(() => {
-    if (!monacoInstance || !autoComplete) return;
+    if (!monacoInstance || autoComplete === false) return;
 
     // Resolve which schema to use: custom upload takes priority over built-in dbName
     let schemaTables = [];
-    if (customSchema && customSchema.length > 0) {
+    if (customSchema && Array.isArray(customSchema) && customSchema.length > 0) {
       schemaTables = customSchema;
-    } else if (dbName) {
-      const dbInfo = DB_INFO[dbName];
-      if (dbInfo) schemaTables = dbInfo.tables || [];
+    } else if (dbName && DB_INFO[dbName]) {
+      schemaTables = DB_INFO[dbName].tables || [];
     }
-    if (schemaTables.length === 0 && !dbName) return;
 
     const disposable = monacoInstance.languages.registerCompletionItemProvider('sql', {
+      triggerCharacters: ['.', ' ', '(', ','],
       provideCompletionItems: (model, position) => {
+        const lineContent = model.getLineContent(position.lineNumber);
+        const textBeforeCursor = lineContent.substring(0, position.column - 1);
         const word = model.getWordUntilPosition(position);
+        
         const range = {
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
           startColumn: word.startColumn,
-          endColumn: word.endColumn
+          endColumn: word.endColumn,
         };
+
         const suggestions = [];
 
-        // Tables
-        schemaTables.forEach(table => {
+        // 1. Table prefix detection: e.g. "patients." or "p."
+        const dotMatch = textBeforeCursor.match(/([a-zA-Z0-9_]+)\.$/);
+        if (dotMatch) {
+          const targetName = dotMatch[1].toLowerCase();
+          const targetTable = schemaTables.find(
+            (t) => t.name.toLowerCase() === targetName
+          );
+          if (targetTable) {
+            (targetTable.columns || []).forEach((col) => {
+              const colName = typeof col === 'string' ? col : col.name;
+              const colType = typeof col === 'object' ? col.type : 'TEXT';
+              const isPk = typeof col === 'object' ? col.pk : false;
+              suggestions.push({
+                label: colName,
+                kind: monacoInstance.languages.CompletionItemKind.Field,
+                insertText: colName,
+                detail: `${colType} — ${targetTable.name}${isPk ? ' 🔑 (PK)' : ''}`,
+                sortText: `0_${colName}`,
+                range,
+              });
+            });
+            return { suggestions };
+          }
+        }
+
+        // 2. Tables from active schema
+        schemaTables.forEach((table) => {
           suggestions.push({
             label: table.name,
             kind: monacoInstance.languages.CompletionItemKind.Struct,
             insertText: table.name,
             detail: `Table${table.rowCount != null ? ` (${table.rowCount.toLocaleString()} rows)` : ''}`,
-            documentation: `Columns: ${(table.columns || []).map(c => c.name).join(', ')}`,
-            range
+            documentation: `Columns: ${(table.columns || [])
+              .map((c) => (typeof c === 'string' ? c : c.name))
+              .join(', ')}`,
+            sortText: `1_${table.name}`,
+            range,
           });
-          // Columns
-          (table.columns || []).forEach(col => {
+
+          // 3. Columns from all schema tables
+          (table.columns || []).forEach((col) => {
+            const colName = typeof col === 'string' ? col : col.name;
+            const colType = typeof col === 'object' ? col.type : 'TEXT';
+            const isPk = typeof col === 'object' ? col.pk : false;
             suggestions.push({
-              label: col.name,
+              label: colName,
               kind: monacoInstance.languages.CompletionItemKind.Field,
-              insertText: col.name,
-              detail: `${col.type || 'TEXT'} — ${table.name}${col.pk ? ' 🔑' : ''}`,
-              range
+              insertText: colName,
+              detail: `${colType} — ${table.name}${isPk ? ' 🔑' : ''}`,
+              sortText: `2_${colName}`,
+              range,
             });
           });
         });
 
-        // Common SQL Keywords
-        sqlKeywords.forEach(kw => {
+        // 4. SQL Functions with interactive snippets
+        const sqlFunctions = [
+          { name: 'COUNT', snippet: 'COUNT(${1:*})', desc: 'Count rows' },
+          { name: 'SUM', snippet: 'SUM(${1:column})', desc: 'Sum values' },
+          { name: 'AVG', snippet: 'AVG(${1:column})', desc: 'Average values' },
+          { name: 'MIN', snippet: 'MIN(${1:column})', desc: 'Minimum value' },
+          { name: 'MAX', snippet: 'MAX(${1:column})', desc: 'Maximum value' },
+          { name: 'ROUND', snippet: 'ROUND(${1:column}, ${2:2})', desc: 'Round number' },
+          { name: 'COALESCE', snippet: 'COALESCE(${1:column}, ${2:default})', desc: 'First non-null value' },
+          { name: 'DENSE_RANK', snippet: 'DENSE_RANK() OVER (ORDER BY ${1:column})', desc: 'Dense rank window function' },
+          { name: 'RANK', snippet: 'RANK() OVER (ORDER BY ${1:column})', desc: 'Rank window function' },
+          { name: 'ROW_NUMBER', snippet: 'ROW_NUMBER() OVER (ORDER BY ${1:column})', desc: 'Row number window function' },
+          { name: 'DATE', snippet: 'DATE(${1:date_string})', desc: 'Parse date' },
+          { name: 'STRFTIME', snippet: "STRFTIME('${1:%Y-%m}', ${2:date_col})", desc: 'Format date' },
+          { name: 'LENGTH', snippet: 'LENGTH(${1:column})', desc: 'String length' },
+          { name: 'UPPER', snippet: 'UPPER(${1:column})', desc: 'Uppercase string' },
+          { name: 'LOWER', snippet: 'LOWER(${1:column})', desc: 'Lowercase string' },
+          { name: 'CONCAT', snippet: 'CONCAT(${1:col1}, ${2:col2})', desc: 'Concatenate strings' },
+          { name: 'SUBSTR', snippet: 'SUBSTR(${1:column}, ${2:start}, ${3:length})', desc: 'Substring' },
+        ];
+
+        sqlFunctions.forEach((fn) => {
+          suggestions.push({
+            label: fn.name,
+            kind: monacoInstance.languages.CompletionItemKind.Function,
+            insertText: fn.snippet,
+            insertTextRules: monacoInstance.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            detail: `SQL Function: ${fn.desc}`,
+            sortText: `3_${fn.name}`,
+            range,
+          });
+        });
+
+        // 5. Common SQL Keywords
+        sqlKeywords.forEach((kw) => {
           suggestions.push({
             label: kw,
             kind: monacoInstance.languages.CompletionItemKind.Keyword,
             insertText: kw,
-            detail: 'Keyword',
-            range
+            detail: 'SQL Keyword',
+            sortText: `4_${kw}`,
+            range,
           });
         });
+
         return { suggestions };
-      }
+      },
     });
+
     return () => {
-      try { disposable.dispose(); } catch (e) { /* Monaco might have already been disposed */ }
+      try {
+        disposable.dispose();
+      } catch (e) {
+        // Safe disposal
+      }
     };
   }, [monacoInstance, dbName, autoComplete, customSchema]);
 
-  const editorOptions = useMemo(() => ({
-    readOnly: readOnly,
-    fontSize: fontSize,
-    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-    fontLigatures: true,
-    minimap: { enabled: false },
-    lineNumbers: 'on',
-    scrollBeyondLastLine: false,
-    wordWrap: 'on',
-    padding: { top: 16, bottom: 16 },
-    cursorBlinking: 'smooth',
-    smoothScrolling: true,
-    renderWhitespace: 'selection',
-    bracketPairColorization: { enabled: true },
-    suggest: {
-      showKeywords: autoComplete,
-      showSnippets: autoComplete,
-    },
-    quickSuggestions: autoComplete ? {
-      other: true,
-      comments: false,
-      strings: false,
-    } : false,
-  }), [readOnly, fontSize, autoComplete]);
+  const editorOptions = useMemo(
+    () => ({
+      readOnly: readOnly,
+      fontSize: fontSize,
+      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      fontLigatures: true,
+      minimap: { enabled: false },
+      lineNumbers: 'on',
+      scrollBeyondLastLine: false,
+      wordWrap: 'on',
+      padding: { top: 16, bottom: 16 },
+      cursorBlinking: 'smooth',
+      smoothScrolling: true,
+      renderWhitespace: 'selection',
+      bracketPairColorization: { enabled: true },
+      suggestOnTriggerCharacters: true,
+      acceptSuggestionOnEnter: 'on',
+      tabCompletion: 'on',
+      quickSuggestions: {
+        other: true,
+        comments: false,
+        strings: true,
+      },
+      suggest: {
+        showKeywords: true,
+        showSnippets: true,
+        showWords: true,
+        showFunctions: true,
+        showFields: true,
+        showStructs: true,
+        localityBonus: true,
+        preview: true,
+        shareSuggestSelections: true,
+      },
+    }),
+    [readOnly, fontSize]
+  );
 
   return (
     <div className="h-full w-full min-w-0 flex flex-col">

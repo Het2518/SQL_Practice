@@ -144,17 +144,36 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     }
   }, []);
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('schema-sidebar-open');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleSidebar = useCallback((val) => {
+    setSidebarOpen((prev) => {
+      const next = typeof val === 'boolean' ? val : !prev;
+      localStorage.setItem('schema-sidebar-open', String(next));
+      return next;
+    });
+  }, []);
+
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [activeLeftPane, setActiveLeftPane] = useState('problem'); // 'problem' or 'discussions'
   const [showOverflow, setShowOverflow] = useState(false);
 
   // Column widths (px) — draggable
   const [questionW, setQuestionW] = useState(360);
-  const [schemaW, setSchemaW] = useState(280);
+  const [schemaW, setSchemaW] = useState(300);
   const [isDraggingLeft, setIsDraggingLeft] = useState(false);
   const [isDraggingRight, setIsDraggingRight] = useState(false);
   const layoutRef = useRef(null);
+
+  const handleMouseDown = useCallback((e, direction) => {
+    e.preventDefault();
+    if (direction === 'left') setIsDraggingLeft(true);
+    else if (direction === 'right') setIsDraggingRight(true);
+    else if (direction === 'vertical') setIsDragging(true);
+  }, []);
 
   // Horizontal column resize
   useEffect(() => {
@@ -529,13 +548,6 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     }
   }, []);
 
-  const handleMouseDown = useCallback((e, type) => {
-    e.preventDefault();
-    if (type === 'left') setIsDraggingLeft(true);
-    if (type === 'vertical') setIsDragging(true);
-    if (type === 'right') setIsDraggingRight(true);
-  }, []);
-
   const currentIdx = dbQuestions.findIndex((q) => q.id === currentQ.id);
   const currentQIndex = currentIdx !== -1 ? currentIdx : 0;
   const hasPrev = currentQIndex > 0;
@@ -774,15 +786,30 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         }
         navLinks={[]}
         rightContent={
-          <div style={{ position: 'relative' }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowOverflow((v) => !v)}
-              style={{ color: 'var(--text-secondary)' }}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => toggleSidebar()}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                sidebarOpen
+                  ? 'bg-primary/10 text-primary border-primary/30 shadow-xs'
+                  : 'bg-surface-2 text-text-secondary border-border hover:text-text hover:bg-surface-3'
+              }`}
+              title={sidebarOpen ? "Hide Database Schema & Tables" : "Open Database Schema & Tables"}
             >
-              History
-            </Button>
+              <Database size={13} className={sidebarOpen ? "text-primary" : "text-text-secondary"} />
+              <span>Schema</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${sidebarOpen ? 'bg-primary' : 'bg-muted'}`} />
+            </button>
+
+            <div style={{ position: 'relative' }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowOverflow((v) => !v)}
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                History
+              </Button>
             {showOverflow && (
               <>
                 <div
@@ -843,6 +870,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                 </div>
               </>
             )}
+            </div>
           </div>
         }
       />
@@ -941,10 +969,11 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   }}
                   onRun={runQuery}
                   onFormat={() => setSql(formatQuery(sql))}
+                  dbName={db}
                   height="100%"
-                  darkMode={settings.darkMode}
-                  fontSize={settings.editorFontSize}
-                  autoComplete={settings.autoComplete}
+                  darkMode={settings?.darkMode}
+                  fontSize={settings?.editorFontSize || 14}
+                  autoComplete={settings?.autoCompleteSql !== false}
                 />
               </Suspense>
             </div>
@@ -995,18 +1024,34 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
 
         {/* RIGHT PANE: SCHEMA SIDEBAR */}
         <div 
-          className="shrink-0 border-l border-border bg-surface h-full transition-all duration-300"
-          style={{ width: sidebarOpen ? schemaW : 0 }}
+          className="shrink-0 border-l border-border bg-surface h-full transition-all duration-300 relative"
+          style={{ width: sidebarOpen ? schemaW : 0, display: sidebarOpen ? 'block' : 'none' }}
         >
-          <div className="w-full h-full overflow-hidden">
-            <SchemaSidebar
-              dbName={db}
-              executeQuery={executeQuery}
-              onPreviewTable={handlePreviewTable}
-              onClose={() => setSidebarOpen(false)}
-            />
-          </div>
+          {sidebarOpen && (
+            <div className="w-full h-full overflow-hidden">
+              <SchemaSidebar
+                dbName={db}
+                executeQuery={executeQuery}
+                onPreviewTable={handlePreviewTable}
+                onClose={() => toggleSidebar(false)}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Floating reopen button when sidebar is closed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => toggleSidebar(true)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5 py-3 px-1.5 bg-surface hover:bg-surface-2 border-l border-t border-b border-border rounded-l-lg shadow-md text-text-secondary hover:text-primary transition-all cursor-pointer group"
+            title="Open Database Schema & Tables Sidebar"
+          >
+            <Database size={13} className="text-primary group-hover:scale-110 transition-transform" />
+            <span className="text-[10px] font-bold tracking-widest text-text-secondary group-hover:text-primary [writing-mode:vertical-lr] rotate-180">
+              SCHEMA
+            </span>
+          </button>
+        )}
       </main>
 
       {/* Modals wrapped in Suspense */}
