@@ -11,12 +11,11 @@ const { sendError } = require('../utils/apiResponse');
  */
 async function protect(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token = req.cookies?.token;
+    if (!token) {
       return sendError(res, { statusCode: 401, message: 'Authentication required. Please log in.' });
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = verifyToken(token); // Throws if expired or invalid
 
     const user = await User.findById(decoded.sub).select('-password');

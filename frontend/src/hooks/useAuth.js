@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import { api, tokenStorage } from '@/lib/api';
+import { api } from '@/lib/api';
 
 /**
  * Zustand store for JWT-based authentication.
  *
- * - Persists token in localStorage via tokenStorage.
+ * - Relies on HttpOnly cookies for session management.
  * - Listens for the `datadesk:auth:expired` event (fired by apiClient on 401)
- *   to handle token expiration without circular imports.
+ *   to handle session expiration.
  */
 export const useAuth = create((set, get) => ({
   user: null,
@@ -15,25 +15,24 @@ export const useAuth = create((set, get) => ({
   
   /**
    * Called once on app mount.
-   * If a token exists in storage, validate it against /auth/me.
+   * If successful, user is set. If 401, user remains null.
    */
-  initializeAuth: () => {
-    const token = tokenStorage.get();
-
-    if (!token) {
-      set({ user: null, loading: false });
-      return () => {};
+  initializeAuth: async () => {
+    // Ensure we have a CSRF token from the server
+    try {
+      await api.auth.getCsrfToken();
+    } catch (err) {
+      console.warn('Failed to fetch CSRF token:', err);
     }
 
-    // Validate token by fetching the current user
+    // Validate session by fetching the current user
     api.auth
       .getMe()
       .then(({ data }) => {
         set({ user: data.data.user, loading: false });
       })
       .catch(() => {
-        // Token is invalid or expired
-        tokenStorage.remove();
+        // No active session or expired
         set({ user: null, loading: false });
       });
 
@@ -51,9 +50,8 @@ export const useAuth = create((set, get) => ({
   register: async ({ email, username, password, displayName }) => {
     const { data } = await api.auth.register({ email, username, password, displayName });
     
-    // Automatically log the user in after registration
-    if (data.data?.token) {
-      tokenStorage.set(data.data.token);
+    // Server sets the HttpOnly cookie
+    if (data.data?.user) {
       set({ user: data.data.user });
       return { verified: true, user: data.data.user };
     }
@@ -66,7 +64,6 @@ export const useAuth = create((set, get) => ({
    */
   login: async (identifier, password) => {
     const { data } = await api.auth.login({ identifier, password });
-    tokenStorage.set(data.data.token);
     set({ user: data.data.user });
     return data.data.user;
   },
@@ -83,8 +80,12 @@ export const useAuth = create((set, get) => ({
   /**
    * Log out: remove token and clear user state.
    */
-  logout: () => {
-    tokenStorage.remove();
+  logout: async () => {
+    try {
+      await api.auth.logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
     set({ user: null });
   },
 }));

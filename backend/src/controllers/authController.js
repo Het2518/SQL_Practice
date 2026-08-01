@@ -1,8 +1,10 @@
 'use strict';
 
 const { body } = require('express-validator');
+const crypto = require('crypto');
 const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
+const RefreshToken = require('../models/RefreshToken');
 const AuditLog = require('../models/AuditLog');
 const RefreshToken = require('../models/RefreshToken');
 const { signToken } = require('../utils/jwt');
@@ -100,13 +102,37 @@ async function register(req, res, next) {
       ipAddress: req.ip || req.connection.remoteAddress,
     });
 
-    const token = signToken(user._id);
+    const token = signToken(user._id, '15m'); // 15 mins
+    const refreshStr = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    await RefreshToken.create({
+      userId: user._id,
+      token: refreshStr,
+      expiresAt,
+      ipAddress: req.ip || req.connection.remoteAddress,
+      deviceInfo: req.headers['user-agent']
+    });
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+    res.cookie('refreshToken', refreshStr, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/api/auth/refresh', // Only sent to this endpoint
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
 
     return sendSuccess(res, {
       statusCode: 201,
       message: 'Account created successfully!',
       data: { 
-        token,
         user: formatUser(user)
       },
     });
@@ -166,11 +192,36 @@ async function login(req, res, next) {
 
     await AuditLog.create({ userId: user._id, action: 'LOGIN_SUCCESS', ipAddress: req.ip });
 
-    const token = signToken(user._id);
+    const token = signToken(user._id, '15m'); // 15 mins
+    const refreshStr = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    await RefreshToken.create({
+      userId: user._id,
+      token: refreshStr,
+      expiresAt,
+      ipAddress: req.ip || req.connection.remoteAddress,
+      deviceInfo: req.headers['user-agent']
+    });
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+    res.cookie('refreshToken', refreshStr, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/api/auth/refresh', // Only sent to this endpoint
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
 
     return sendSuccess(res, {
       message: 'Logged in successfully',
-      data: { token, user: formatUser(user) },
+      data: { user: formatUser(user) },
     });
   } catch (err) {
     next(err);
@@ -237,6 +288,83 @@ async function getMe(req, res) {
 }
 
 /**
+ * POST /api/auth/logout
+ * Clears the HttpOnly authentication cookie.
+ */
+async function logout(req, res) {
+  const refreshStr = req.cookies?.refreshToken;
+  if (refreshStr) {
+    await RefreshToken.deleteOne({ token: refreshStr });
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('token', '', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    expires: new Date(0)
+  });
+  res.cookie('refreshToken', '', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/api/auth/refresh',
+    expires: new Date(0)
+  });
+  
+  return sendSuccess(res, { message: 'Logged out successfully' });
+}
+
+/**
+ * POST /api/auth/refresh
+ * Validates refreshToken and issues a new access token.
+ */
+async function refreshTokenEndpoint(req, res) {
+  const refreshStr = req.cookies?.refreshToken;
+  if (!refreshStr) {
+    return sendError(res, { statusCode: 401, message: 'No refresh token provided.' });
+  }
+
+  const tokenDoc = await RefreshToken.findOne({ token: refreshStr }).populate('userId');
+  if (!tokenDoc || tokenDoc.revoked) {
+    return sendError(res, { statusCode: 401, message: 'Invalid refresh token.' });
+  }
+
+  if (new Date() > tokenDoc.expiresAt) {
+    await RefreshToken.deleteOne({ _id: tokenDoc._id });
+    return sendError(res, { statusCode: 401, message: 'Refresh token expired. Please log in.' });
+  }
+
+  const user = tokenDoc.userId;
+  if (!user) {
+    return sendError(res, { statusCode: 401, message: 'User not found.' });
+  }
+
+  // Issue new access token (15 mins)
+  const token = signToken(user._id, '15m');
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 15 * 60 * 1000 // 15 mins
+  });
+
+  return sendSuccess(res, { message: 'Token refreshed successfully' });
+}
+
+/**
+ * GET /api/auth/csrf
+ * Issues a CSRF token to the client.
+ */
+async function getCsrfToken(req, res) {
+  const { setCsrfCookie } = require('../middleware/csrf');
+  const token = setCsrfCookie(req, res);
+  return sendSuccess(res, { data: { csrfToken: token } });
+}
+
+/**
  * PATCH /api/auth/me/name
  * Updates the authenticated user's display name.
  */
@@ -292,9 +420,12 @@ async function updatePassword(req, res, next) {
 module.exports = {
   register,
   login,
+  logout,
+  refreshTokenEndpoint,
   forgotPassword,
   resetPassword,
   getMe,
+  getCsrfToken,
   updateDisplayName,
   updatePassword,
   registerValidation,

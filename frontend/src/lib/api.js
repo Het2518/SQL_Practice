@@ -7,51 +7,84 @@ const TOKEN_KEY = 'datadesk_token';
 // ── Axios Instance ─────────────────────────────────────────────────────────
 export const apiClient = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
+  xsrfCookieName: 'csrfToken',
+  xsrfHeaderName: 'X-CSRF-Token',
   timeout: 30000,
 });
 
-// ── Request Interceptor: Attach JWT to every request ──────────────────────
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// ── Request Interceptor: (No longer attaching JWT manually, cookie handles it) ──
 
-// ── Response Interceptor: Handle auth errors globally ─────────────────────
+// ── Response Interceptor: Handle auth errors and Silent Refresh ────────────
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+function onRefreshed() {
+  refreshSubscribers.forEach(cb => cb());
+  refreshSubscribers = [];
+}
+
+function subscribeTokenRefresh(cb) {
+  refreshSubscribers.push(cb);
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid — clear storage and redirect to login
-      localStorage.removeItem(TOKEN_KEY);
-      // Emit a custom event so the auth store can react without a circular import
+    const originalRequest = error.config;
+
+    // Prevent retry loops
+    if (error.response?.status === 401 && originalRequest.url !== '/auth/refresh' && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(resolve => {
+          subscribeTokenRefresh(() => {
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      return new Promise((resolve, reject) => {
+        apiClient.post('/auth/refresh')
+          .then(() => {
+            isRefreshing = false;
+            onRefreshed();
+            resolve(apiClient(originalRequest));
+          })
+          .catch((err) => {
+            isRefreshing = false;
+            refreshSubscribers = [];
+            // Refresh failed, user must log in again
+            window.dispatchEvent(new CustomEvent('datadesk:auth:expired'));
+            reject(err);
+          });
+      });
+    }
+
+    // If the refresh endpoint itself fails with 401, or generic 401 without retry
+    if (error.response?.status === 401 && originalRequest.url === '/auth/refresh') {
       window.dispatchEvent(new CustomEvent('datadesk:auth:expired'));
     }
+
     return Promise.reject(error);
   }
 );
 
-// ── Token Helpers ──────────────────────────────────────────────────────────
-export const tokenStorage = {
-  get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token) => localStorage.setItem(TOKEN_KEY, token),
-  remove: () => localStorage.removeItem(TOKEN_KEY),
-};
+// ── Token Helpers (Removed, using HttpOnly cookies) ──────────────────────
 
 // ── Typed API methods (short, composable helpers) ──────────────────────────
 export const api = {
   // Auth
   auth: {
+    getCsrfToken: () => apiClient.get('/auth/csrf'),
     register: (data) => apiClient.post('/auth/register', data),
     login: (data) => apiClient.post('/auth/login', data),
+    logout: () => apiClient.post('/auth/logout'),
     forgotPassword: (data) => apiClient.post('/auth/forgot-password', data),
     resetPassword: (data) => apiClient.post('/auth/reset-password', data),
     getMe: () => apiClient.get('/auth/me'),

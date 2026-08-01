@@ -7,9 +7,12 @@ const { authLimiter } = require('../middleware/rateLimiter');
 const {
   register,
   login,
+  logout,
   forgotPassword,
   resetPassword,
   getMe,
+  getCsrfToken,
+  refreshTokenEndpoint,
   updateDisplayName,
   updatePassword,
   registerValidation,
@@ -23,8 +26,11 @@ const {
 const router = Router();
 
 // Public routes (rate-limited for brute-force protection)
+router.get('/csrf', getCsrfToken);
 router.post('/register', authLimiter, registerValidation, validate, register);
 router.post('/login', authLimiter, loginValidation, validate, login);
+router.post('/logout', logout);
+router.post('/refresh', refreshTokenEndpoint);
 router.post('/forgot-password', authLimiter, forgotPasswordValidation, validate, forgotPassword);
 router.post('/reset-password', authLimiter, resetPasswordValidation, validate, resetPassword);
 
