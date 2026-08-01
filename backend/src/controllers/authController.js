@@ -6,7 +6,6 @@ const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
 const RefreshToken = require('../models/RefreshToken');
 const AuditLog = require('../models/AuditLog');
-const RefreshToken = require('../models/RefreshToken');
 const { signToken } = require('../utils/jwt');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
