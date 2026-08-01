@@ -24,12 +24,13 @@ function sendSuccess(res, { statusCode = 200, message = 'Success', data } = {}) 
  * @param {string} [options.message='Internal Server Error']
  * @param {*} [options.errors]
  */
-function sendError(res, { statusCode = 500, message = 'Internal Server Error', errors } = {}) {
+function sendError(res, { statusCode = 500, message = 'Internal Server Error', errors, code } = {}) {
   const payload = {
     success: false,
     message,
   };
   if (errors) payload.errors = errors;
+  if (code) payload.code = code;
   return res.status(statusCode).json(payload);
 }
 

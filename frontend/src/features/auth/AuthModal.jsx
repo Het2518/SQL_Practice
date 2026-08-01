@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { Mail, Lock, User, Zap, X, ShieldCheck, KeyRound, ArrowRight, Loader2 } from 'lucide-react';
 
 const VIEWS = { 
   LOGIN: 'login', 
@@ -22,6 +23,11 @@ export function AuthModal({ onClose }) {
   });
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
   const [message, setMessage] = useState('');
+  const [animateIn, setAnimateIn] = useState(false);
+
+  useEffect(() => {
+    setAnimateIn(true);
+  }, []);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -87,268 +93,241 @@ export function AuthModal({ onClose }) {
     }
   };
 
+  const getIcon = () => {
+    switch(view) {
+      case VIEWS.VERIFY: return <ShieldCheck size={32} className="text-primary" />;
+      case VIEWS.FORGOT_PASSWORD:
+      case VIEWS.RESET_PASSWORD: return <KeyRound size={32} className="text-primary" />;
+      case VIEWS.REGISTER: return <User size={32} className="text-primary" />;
+      default: return <Zap size={32} className="text-primary" />;
+    }
+  };
+
+  const getTitle = () => {
+    switch(view) {
+      case VIEWS.LOGIN: return 'Welcome Back';
+      case VIEWS.REGISTER: return 'Create Account';
+      case VIEWS.VERIFY: return 'Verify Email';
+      case VIEWS.FORGOT_PASSWORD: return 'Reset Password';
+      case VIEWS.RESET_PASSWORD: return 'Enter Reset Code';
+      default: return '';
+    }
+  };
+
+  const getSubtitle = () => {
+    switch(view) {
+      case VIEWS.LOGIN: return 'Log in to sync your progress and join the leaderboard.';
+      case VIEWS.REGISTER: return 'Join DataDesk to track your SQL journey.';
+      case VIEWS.VERIFY: return `We sent a 6-digit code to ${form.email || 'your email'}.`;
+      case VIEWS.FORGOT_PASSWORD: return 'Enter your email to receive a password reset code.';
+      case VIEWS.RESET_PASSWORD: return `Enter the 6-digit code sent to ${form.email || 'your email'}.`;
+      default: return '';
+    }
+  };
+
   return (
     <div
-      className="modal-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all duration-300"
       onClick={onClose}
-      style={{ backdropFilter: 'blur(8px)', background: 'rgba(0,0,0,0.4)' }}
     >
       <div
-        className="modal-content"
-        style={{
-          maxWidth: 420,
-          textAlign: 'center',
-          padding: '40px 32px',
-          borderRadius: 24,
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          boxShadow: '0 24px 48px rgba(0,0,0,0.1)',
-        }}
+        className={`relative w-full max-w-md overflow-hidden rounded-2xl bg-surface border border-border/50 shadow-2xl transition-all duration-500 ease-out transform ${
+          animateIn ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-8 opacity-0 scale-95'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="modal-close" onClick={onClose} style={{ top: 20, right: 20 }}>
-          ×
+        {/* Decorative Top Gradient */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary to-accent-1" />
+
+        <button
+          className="absolute top-4 right-4 p-2 text-text-secondary hover:text-text rounded-full hover:bg-surface-2 transition-colors"
+          onClick={onClose}
+        >
+          <X size={20} />
         </button>
 
-        {/* Icon */}
-        <div
-          style={{
-            width: 64,
-            height: 64,
-            background: 'var(--surface-2)',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-            border: '1px solid var(--border)',
-            fontSize: 28,
-          }}
-        >
-          {view === VIEWS.VERIFY ? '✉️' : view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD ? '🔒' : '⚡'}
-        </div>
-
-        <h2
-          style={{
-            marginBottom: 8,
-            fontSize: 28,
-            fontWeight: 800,
-            color: 'var(--text)',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          {view === VIEWS.LOGIN && 'Welcome Back'}
-          {view === VIEWS.REGISTER && 'Create Account'}
-          {view === VIEWS.VERIFY && 'Verify Email'}
-          {view === VIEWS.FORGOT_PASSWORD && 'Reset Password'}
-          {view === VIEWS.RESET_PASSWORD && 'Enter Reset Code'}
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 32, fontSize: 15, lineHeight: 1.6 }}>
-          {view === VIEWS.LOGIN && 'Log in to sync your progress and join the leaderboard.'}
-          {view === VIEWS.REGISTER && 'Join DataDesk to track your SQL journey.'}
-          {view === VIEWS.VERIFY && `We sent a 6-digit code to ${form.email || 'your email'}.`}
-          {view === VIEWS.FORGOT_PASSWORD && 'Enter your email to receive a password reset code.'}
-          {view === VIEWS.RESET_PASSWORD && `Enter the 6-digit code sent to ${form.email || 'your email'}.`}
-        </p>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
-          
-          {/* Display Name (register only) */}
-          {view === VIEWS.REGISTER && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Display Name (optional)</label>
-              <input
-                type="text"
-                name="displayName"
-                placeholder="e.g. SQL Ninja"
-                value={form.displayName}
-                onChange={handleChange}
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-              />
+        <div className="px-8 pt-10 pb-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4 ring-8 ring-primary/5">
+              {getIcon()}
             </div>
-          )}
+            <h2 className="text-2xl font-bold text-text tracking-tight mb-2">
+              {getTitle()}
+            </h2>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {getSubtitle()}
+            </p>
+          </div>
 
-          {/* Email (not needed for verify/reset if already entered, but good to keep visible/editable) */}
-          {(view === VIEWS.LOGIN || view === VIEWS.REGISTER || view === VIEWS.FORGOT_PASSWORD) && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Email address</label>
-              <input
-                type="email"
-                name="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-              />
-            </div>
-          )}
-
-          {/* Password (login, register) */}
-          {(view === VIEWS.LOGIN || view === VIEWS.REGISTER) && (
-            <div style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <label style={labelStyle}>Password</label>
-                {view === VIEWS.LOGIN && (
-                  <button 
-                    type="button" 
-                    onClick={() => switchView(VIEWS.FORGOT_PASSWORD)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', padding: 0 }}
-                  >
-                    Forgot password?
-                  </button>
-                )}
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Display Name (register only) */}
+            {view === VIEWS.REGISTER && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Display Name <span className="lowercase normal-case font-medium text-muted">(optional)</span></label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+                    <User size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="displayName"
+                    placeholder="SQL Ninja"
+                    value={form.displayName}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
               </div>
-              <input
-                type="password"
-                name="password"
-                placeholder={view === VIEWS.LOGIN ? '••••••••' : 'Min. 6 characters'}
-                value={form.password}
-                onChange={handleChange}
-                required
-                minLength={6}
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-              />
-            </div>
-          )}
+            )}
 
-          {/* Verification / Reset Code */}
-          {(view === VIEWS.VERIFY || view === VIEWS.RESET_PASSWORD) && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>6-Digit Code</label>
-              <input
-                type="text"
-                name="code"
-                placeholder="123456"
-                value={form.code}
-                onChange={handleChange}
-                required
-                maxLength={6}
-                style={{ ...inputStyle, letterSpacing: '8px', textAlign: 'center', fontSize: 20, fontWeight: 'bold' }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-              />
-            </div>
-          )}
+            {/* Email */}
+            {(view === VIEWS.LOGIN || view === VIEWS.REGISTER || view === VIEWS.FORGOT_PASSWORD) && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+                    <Mail size={18} />
+                  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
+              </div>
+            )}
 
-          {/* New Password (reset password only) */}
-          {view === VIEWS.RESET_PASSWORD && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>New Password</label>
-              <input
-                type="password"
-                name="newPassword"
-                placeholder="Min. 6 characters"
-                value={form.newPassword}
-                onChange={handleChange}
-                required
-                minLength={6}
-                style={inputStyle}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-              />
-            </div>
-          )}
+            {/* Password */}
+            {(view === VIEWS.LOGIN || view === VIEWS.REGISTER) && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Password</label>
+                  {view === VIEWS.LOGIN && (
+                    <button 
+                      type="button" 
+                      onClick={() => switchView(VIEWS.FORGOT_PASSWORD)}
+                      className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    placeholder={view === VIEWS.LOGIN ? '••••••••' : 'Min. 6 characters'}
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
+              </div>
+            )}
 
-          {/* Messages */}
-          {message && (
-            <div
-              style={{
-                color: status === 'error' ? 'var(--error)' : 'var(--success, #10b981)',
-                marginTop: 16,
-                marginBottom: 16,
-                fontSize: 13,
-                fontWeight: 500,
-                padding: '10px 14px',
-                background: status === 'error' ? 'var(--error-muted, rgba(239,68,68,0.08))' : 'rgba(16, 185, 129, 0.08)',
-                borderRadius: 8,
-                border: `1px solid ${status === 'error' ? 'var(--error)' : '#10b981'}`,
-              }}
+            {/* Verification / Reset Code */}
+            {(view === VIEWS.VERIFY || view === VIEWS.RESET_PASSWORD) && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider text-center block">6-Digit Code</label>
+                <input
+                  type="text"
+                  name="code"
+                  placeholder="------"
+                  value={form.code}
+                  onChange={handleChange}
+                  required
+                  maxLength={6}
+                  className="w-full py-4 bg-surface-2 border border-border rounded-xl text-center text-2xl tracking-[0.75em] font-mono font-bold text-text focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                />
+              </div>
+            )}
+
+            {/* New Password */}
+            {view === VIEWS.RESET_PASSWORD && (
+              <div className="space-y-1.5 mt-4">
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">New Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
+                    <Lock size={18} />
+                  </div>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    placeholder="Min. 6 characters"
+                    value={form.newPassword}
+                    onChange={handleChange}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Status Messages */}
+            {message && (
+              <div
+                className={`p-3 rounded-lg text-sm font-medium border ${
+                  status === 'error' 
+                    ? 'bg-error/10 text-error border-error/20' 
+                    : 'bg-success/10 text-success border-success/20'
+                } flex items-start gap-2 animate-in fade-in zoom-in-95 duration-200`}
+              >
+                {message}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={status === 'loading'}
+              className="group relative w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary to-primary-hover hover:to-accent-1 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {message}
-            </div>
-          )}
+              {status === 'loading' ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    {view === VIEWS.LOGIN ? 'Log In' :
+                     view === VIEWS.REGISTER ? 'Create Account' :
+                     view === VIEWS.VERIFY ? 'Verify & Log In' :
+                     view === VIEWS.FORGOT_PASSWORD ? 'Send Reset Code' :
+                     'Reset Password'}
+                  </span>
+                  {(view === VIEWS.LOGIN || view === VIEWS.VERIFY) && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
+                </>
+              )}
+            </button>
+          </form>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={status === 'loading'}
-            style={{
-              width: '100%',
-              marginTop: 16,
-              padding: '14px',
-              fontSize: 15,
-              fontWeight: 600,
-              background: 'var(--primary)',
-              color: '#fff',
-              borderRadius: 12,
-              border: 'none',
-              cursor: status === 'loading' ? 'default' : 'pointer',
-              opacity: status === 'loading' ? 0.7 : 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            {status === 'loading' ? 'Processing...' : 
-             view === VIEWS.LOGIN ? 'Log In' :
-             view === VIEWS.REGISTER ? 'Create Account' :
-             view === VIEWS.VERIFY ? 'Verify & Log In' :
-             view === VIEWS.FORGOT_PASSWORD ? 'Send Reset Code' :
-             'Reset Password'}
-          </button>
-        </form>
-
-        {/* Toggle view */}
-        <div style={{ marginTop: 24, fontSize: 14, color: 'var(--text-secondary)' }}>
-          {view === VIEWS.LOGIN && (
-            <p>Don't have an account? <button onClick={() => switchView(VIEWS.REGISTER)} style={linkBtnStyle}>Sign Up</button></p>
-          )}
-          {view === VIEWS.REGISTER && (
-            <p>Already have an account? <button onClick={() => switchView(VIEWS.LOGIN)} style={linkBtnStyle}>Log In</button></p>
-          )}
-          {(view === VIEWS.VERIFY || view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
-            <p><button onClick={() => switchView(VIEWS.LOGIN)} style={linkBtnStyle}>Back to Log In</button></p>
-          )}
+          {/* Toggle View Links */}
+          <div className="mt-8 text-center text-sm text-text-secondary">
+            {view === VIEWS.LOGIN && (
+              <p>Don't have an account? <button onClick={() => switchView(VIEWS.REGISTER)} className="font-semibold text-primary hover:text-primary-hover transition-colors">Sign Up</button></p>
+            )}
+            {view === VIEWS.REGISTER && (
+              <p>Already have an account? <button onClick={() => switchView(VIEWS.LOGIN)} className="font-semibold text-primary hover:text-primary-hover transition-colors">Log In</button></p>
+            )}
+            {(view === VIEWS.VERIFY || view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
+              <p><button onClick={() => switchView(VIEWS.LOGIN)} className="font-semibold text-primary hover:text-primary-hover transition-colors flex items-center justify-center gap-1 mx-auto"><ArrowRight size={14} className="rotate-180" /> Back to Log In</button></p>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-// Shared styles
-const inputStyle = {
-  width: '100%',
-  padding: '12px 14px',
-  borderRadius: 10,
-  border: '1px solid var(--border)',
-  background: 'var(--surface-2)',
-  color: 'var(--text)',
-  fontSize: 14,
-  outline: 'none',
-  transition: 'border 0.2s',
-  boxSizing: 'border-box',
-};
-
-const labelStyle = {
-  display: 'block',
-  fontSize: 13,
-  fontWeight: 600,
-  color: 'var(--text-secondary)',
-  marginBottom: 6,
-};
-
-const linkBtnStyle = {
-  background: 'none',
-  border: 'none',
-  color: 'var(--primary)',
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontSize: 14,
-  padding: 0,
-};
