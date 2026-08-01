@@ -133,7 +133,16 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
           className="hero-btn-primary" 
           size="lg" 
           style={{ marginBottom: 40 }}
-          onClick={() => setShowAgenticInterviewer(true)}
+          onClick={async () => {
+            try {
+              if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+              }
+            } catch (err) {
+              console.warn('Fullscreen failed:', err);
+            }
+            setShowAgenticInterviewer(true);
+          }}
         >
           <Bot size={18} />
           Try Agentic Interview Mode

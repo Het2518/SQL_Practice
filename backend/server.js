@@ -26,6 +26,7 @@ const companyRoutes = require('./src/routes/companyRoutes');
 const progressRoutes = require('./src/routes/progressRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
+const interviewRoutes = require('./src/routes/interviewRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -60,6 +61,7 @@ app.use('/api/companies', companyRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/interviews', interviewRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -126,5 +126,11 @@ export const api = {
     create: (data) => apiClient.post('/comments', data),
     upvote: (id) => apiClient.post(`/comments/${id}/upvote`),
     getMyComments: () => apiClient.get('/comments/user/me'),
+  },
+
+  // Interviews (protected)
+  interviews: {
+    saveScore: (data) => apiClient.post('/interviews/score', data),
+    getHistory: (limit = 50) => apiClient.get('/interviews/history', { params: { limit } }),
   }
 };

@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
+import { api } from '@/lib/api';
 
 export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
   const [messages, setMessages] = useState([]);
@@ -15,6 +16,41 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
   const { toast } = useToast();
 
   const [hasStarted, setHasStarted] = useState(false);
+  const isSubmittedRef = useRef(false);
+
+  useEffect(() => {
+    const handleAntiCheat = async () => {
+      if (!isOpen || isSubmittedRef.current) return;
+      
+      // If user exits full screen or switches tabs
+      if (!document.fullscreenElement || document.visibilityState === 'hidden') {
+        toast({ title: 'Interview Terminated', message: 'You exited full-screen mode or switched tabs. Score recorded as 0.', type: 'error' });
+        isSubmittedRef.current = true;
+        
+        try {
+          await api.interviews.saveScore({
+            companyName,
+            score: 0,
+            verdict: 'No Hire',
+            feedback: 'Interview terminated early due to anti-cheat violation (exited full screen or lost focus).',
+            durationMinutes: 0
+          });
+        } catch(e) {
+          console.error(e);
+        }
+        
+        onClose();
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleAntiCheat);
+    document.addEventListener('visibilitychange', handleAntiCheat);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleAntiCheat);
+      document.removeEventListener('visibilitychange', handleAntiCheat);
+    };
+  }, [isOpen, companyName, onClose, toast]);
 
   useEffect(() => {
     if (isOpen && !hasStarted) {
@@ -107,10 +143,39 @@ Here is the candidate's SQL submission:
 ${sql}
 \`\`\`
 
-Evaluate this query rigorously. Tell them if they passed or failed, and point out any edge cases they missed (e.g., date filtering, GROUP BY, aggregations). Keep your feedback under 100 words and be direct.`;
+Evaluate this query rigorously. Tell them if they passed or failed, and point out any edge cases they missed.
+CRITICAL: You MUST end your response with a JSON-like block containing the numeric score out of 100 and a short verdict ("Strong Hire", "Hire", "Borderline", "No Hire"), in exactly this format:
+[SCORE: 85/100]
+[VERDICT: Hire]`;
       
       const response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 500, false);
       setMessages((prev) => [...prev, { role: 'assistant', content: `**Evaluation:**\n\n${response}` }]);
+
+      // Extract score and verdict
+      const scoreMatch = response.match(/\[SCORE:\s*(\d+)\/100\]/i);
+      const verdictMatch = response.match(/\[VERDICT:\s*(.+?)\]/i);
+      
+      const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
+      const verdict = verdictMatch ? verdictMatch[1].trim() : 'Borderline';
+      
+      isSubmittedRef.current = true;
+
+      try {
+        await api.interviews.saveScore({
+          companyName,
+          score,
+          verdict,
+          feedback: response,
+          durationMinutes: 30
+        });
+      } catch (saveErr) {
+        console.error('Failed to save score:', saveErr);
+      }
+
+      // Exit fullscreen if active
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
     } catch (err) {
       setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Sorry, I could not evaluate your SQL due to a network error.' }]);
     } finally {

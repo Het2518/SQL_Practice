@@ -41,6 +41,7 @@ import { LeaderboardTab } from './LeaderboardTab';
 import { SettingsTab } from './SettingsTab';
 import { PlaylistsTab } from './PlaylistsTab';
 import { DiscussionsTab } from './DiscussionsTab';
+import { MockInterviewsTab } from './MockInterviewsTab';
 import { MessageSquare, Folder } from 'lucide-react';
 
 export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
@@ -370,6 +371,12 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
                   onClick={() => setActiveTab('playlists')}
                 />
                 <TopNavItem
+                  icon={<Target size={14} />}
+                  label="Interviews"
+                  active={activeTab === 'interviews'}
+                  onClick={() => setActiveTab('interviews')}
+                />
+                <TopNavItem
                   icon={<SettingsIcon size={14} />}
                   label="Settings"
                   active={activeTab === 'settings'}
@@ -400,6 +407,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
           )}
           {activeTab === 'discussions' && <DiscussionsTab />}
           {activeTab === 'playlists' && <PlaylistsTab />}
+          {activeTab === 'interviews' && <MockInterviewsTab />}
           {activeTab === 'settings' && <SettingsTab />}
         </div>
       </main>
