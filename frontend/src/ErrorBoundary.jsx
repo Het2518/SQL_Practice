@@ -69,74 +69,40 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ 
-          padding: '40px 20px', 
-          fontFamily: 'var(--font-sans)', 
-          color: 'var(--text)', 
-          background: 'var(--bg)', 
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center'
-        }}>
-          <div style={{ 
-            background: 'var(--surface)', 
-            padding: '48px 40px', 
-            borderRadius: 'var(--radius-xl)', 
-            border: '1px solid var(--border)',
-            maxWidth: '540px',
-            width: '100%',
-            boxShadow: 'var(--shadow-lg)'
-          }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '16px',
-              background: 'var(--error-muted)',
-              color: 'var(--error)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 24px',
-              border: '1px solid rgba(239, 68, 68, 0.2)'
-            }}>
+        <div className="p-5 font-sans text-text bg-bg min-h-screen flex flex-col items-center justify-center text-center">
+          <div className="bg-surface p-8 sm:p-12 rounded-2xl border border-border max-w-[540px] w-full shadow-2xl">
+            <div className="w-16 h-16 rounded-2xl bg-error/10 text-error flex items-center justify-center mx-auto mb-6 border border-error/20">
               <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
             </div>
             
-            <h1 style={{ color: 'var(--text)', fontSize: '24px', marginBottom: '12px', fontWeight: 800, letterSpacing: '-0.02em' }}>Application Error</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px', lineHeight: 1.6 }}>
+            <h1 className="text-text text-2xl mb-3 font-extrabold tracking-tight">Application Error</h1>
+            <p className="text-text-secondary text-sm sm:text-base mb-8 leading-relaxed">
               We encountered an unexpected issue while loading this view. This is usually temporary or caused by a background update.
             </p>
             
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <div className="flex flex-wrap gap-3 justify-center">
               <button 
                 onClick={() => window.location.assign('/?t=' + Date.now())}
-                style={{ padding: '12px 24px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.15s ease', boxShadow: 'var(--shadow-sm)' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.opacity = '0.9'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.opacity = '1'; }}
+                className="px-6 py-3 bg-text text-bg border-none rounded-xl cursor-pointer font-semibold text-sm transition-all duration-150 hover:opacity-90 hover:-translate-y-0.5 shadow-sm"
               >
                 Refresh Page
               </button>
               <button 
                 onClick={this.handleHardReset}
-                style={{ padding: '12px 24px', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.15s ease' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
+                className="px-6 py-3 bg-surface-2 text-text border border-border rounded-xl cursor-pointer font-semibold text-sm transition-all duration-150 hover:bg-surface-3"
               >
                 Clear Cache & Restart
               </button>
             </div>
 
-            <details style={{ whiteSpace: 'pre-wrap', marginTop: '32px', textAlign: 'left', background: 'var(--bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <summary style={{ fontWeight: '600', cursor: 'pointer', color: 'var(--muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            <details className="whitespace-pre-wrap mt-8 text-left bg-bg p-4 rounded-xl border border-border group">
+              <summary className="font-semibold cursor-pointer text-muted text-xs flex items-center gap-1.5 select-none hover:text-text transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform group-open:rotate-90"><path d="m9 18 6-6-6-6"/></svg>
                 View Technical Details
               </summary>
-              <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text)', fontFamily: 'monospace', overflowX: 'auto' }}>
-                <div style={{ color: 'var(--error)', fontWeight: 'bold' }}>{this.state.error && this.state.error.toString()}</div>
-                <div style={{ marginTop: '8px', color: 'var(--muted)' }}>{this.state.errorInfo && this.state.errorInfo.componentStack}</div>
+              <div className="mt-4 text-xs text-text font-mono overflow-x-auto">
+                <div className="text-error font-bold">{this.state.error && this.state.error.toString()}</div>
+                <div className="mt-2 text-muted leading-relaxed">{this.state.errorInfo && this.state.errorInfo.componentStack}</div>
               </div>
             </details>
           </div>

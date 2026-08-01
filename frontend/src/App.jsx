@@ -117,10 +117,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = initializeAuth();
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    initializeAuth();
   }, [initializeAuth]);
 
   // Settings dark mode effect is now handled inside useSettingsStore update functions
@@ -182,17 +179,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--bg)',
-          color: 'var(--text)',
-        }}
-      >
-        Loading...
+      <div className="h-screen w-full flex items-center justify-center bg-bg text-text">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-surface-3 border-t-primary rounded-full animate-spin" />
+          <span className="text-sm text-muted font-medium">Loading DataDesk...</span>
+        </div>
       </div>
     );
   }
@@ -200,16 +191,8 @@ export default function App() {
   return (
     <Suspense
       fallback={
-        <div
-          style={{
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--bg)',
-          }}
-        >
-          <div className="w-8 h-8 border-4 border-surface-3 border-t-primary rounded-full animate-spin" />
+        <div className="h-screen w-full flex items-center justify-center bg-bg">
+          <div className="w-8 h-8 border-3 border-surface-3 border-t-primary rounded-full animate-spin" />
         </div>
       }
     >

@@ -8,9 +8,16 @@ import { api, apiClient } from '@/lib/api';
  * - Listens for the `datadesk:auth:expired` event (fired by apiClient on 401)
  *   to handle session expiration.
  */
-export const useAuth = create((set, get) => ({
-  user: null,
-  loading: true,
+export const useAuth = create((set, get) => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('datadesk:auth:expired', () => {
+      set({ user: null, loading: false });
+    });
+  }
+
+  return {
+    user: null,
+    loading: true,
 
   
   /**
@@ -29,22 +36,13 @@ export const useAuth = create((set, get) => ({
     }
 
     // Validate session by fetching the current user
-    api.auth
-      .getMe()
-      .then(({ data }) => {
-        set({ user: data.data.user, loading: false });
-      })
-      .catch(() => {
-        // No active session or expired
-        set({ user: null, loading: false });
-      });
-
-    // Listen for global auth-expired event from the API client
-    const handleExpired = () => {
+    try {
+      const { data } = await api.auth.getMe();
+      set({ user: data.data.user, loading: false });
+    } catch {
+      // No active session or expired
       set({ user: null, loading: false });
-    };
-    window.addEventListener('datadesk:auth:expired', handleExpired);
-    return () => window.removeEventListener('datadesk:auth:expired', handleExpired);
+    }
   },
 
   /**
@@ -91,4 +89,5 @@ export const useAuth = create((set, get) => ({
     }
     set({ user: null });
   },
-}));
+};
+});
