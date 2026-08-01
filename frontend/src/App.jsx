@@ -62,10 +62,8 @@ const InterviewPage = lazy(() =>
     }))
   )
 );
-const AuthModal = lazy(() =>
-  lazyRetry(() =>
-    import('@/features/auth/AuthModal').then((module) => ({ default: module.AuthModal }))
-  )
+const AuthPage = lazy(() =>
+  lazyRetry(() => import('@/pages/AuthPage'))
 );
 const SettingsModal = lazy(() =>
   lazyRetry(() =>
@@ -98,7 +96,7 @@ function saveProgress(p) {
 // ─── Protected Route Component ───────────────────────────────────────────────
 function ProtectedRoute({ children, user }) {
   if (!user) {
-    return <Navigate to="/?login=true" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
@@ -116,7 +114,6 @@ export default function App() {
   } = useProgressStore();
   const { gameState, syncFromServer: syncGamificationServer } = useGamificationStore();
 
-  const [showAuth, setShowAuth] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
@@ -138,8 +135,7 @@ export default function App() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('login') === 'true') {
-      setShowAuth(true);
-      navigate(location.pathname, { replace: true });
+      navigate('/login', { replace: true });
     }
 
     if (window.location.hash && window.location.hash.includes('error_description')) {
@@ -225,7 +221,7 @@ export default function App() {
               progress={progress}
               gameState={gameState}
               user={user}
-              onShowAuth={() => setShowAuth(true)}
+              onShowAuth={() => navigate('/login')}
               onShowSettings={() => setShowSettings(true)}
               onShowInterview={() => navigate('/interview')}
             />
@@ -237,7 +233,7 @@ export default function App() {
           element={
             <UserGuide
               user={user}
-              onShowAuth={() => setShowAuth(true)}
+              onShowAuth={() => navigate('/login')}
               onShowSettings={() => setShowSettings(true)}
             />
           }
@@ -248,7 +244,7 @@ export default function App() {
           element={
             <InterviewPage
               user={user}
-              onShowAuth={() => setShowAuth(true)}
+              onShowAuth={() => navigate('/login')}
               onShowSettings={() => setShowSettings(true)}
             />
           }
@@ -258,7 +254,7 @@ export default function App() {
           element={
             <CompanyPrepPage
               user={user}
-              onShowAuth={() => setShowAuth(true)}
+              onShowAuth={() => navigate('/login')}
               onShowSettings={() => setShowSettings(true)}
             />
           }
@@ -267,19 +263,19 @@ export default function App() {
         <Route path="/sandbox" element={<CustomDatasetPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage user={user} />} />
 
+        <Route path="/login" element={<AuthPage />} />
+        
         <Route
           path="/practice/:db"
           element={
-            <ProtectedRoute user={user}>
-              <PracticeView
-                progress={progress}
-                gameState={gameState}
-                user={user}
-                onShowAuth={() => setShowAuth(true)}
-                onShowSettings={() => setShowSettings(true)}
-                onProgressUpdate={handleProgressUpdate}
-              />
-            </ProtectedRoute>
+            <PracticeView
+              progress={progress}
+              gameState={gameState}
+              user={user}
+              onShowAuth={() => navigate('/login')}
+              onShowSettings={() => setShowSettings(true)}
+              onProgressUpdate={handleProgressUpdate}
+            />
           }
         />
 
@@ -313,7 +309,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </Suspense>
   );

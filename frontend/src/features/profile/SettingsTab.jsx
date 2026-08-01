@@ -1,6 +1,9 @@
 import React from 'react';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 function ProfileToggleRow({ label, description, checked, onChange }) {
   return (
@@ -112,6 +115,11 @@ export function SettingsTab() {
         onChange={(v) => updateSetting('disableAdvertisements', v)}
       />
 
+      {/* CHANGE PASSWORD SECTION */}
+      {useAuth().user && (
+        <ChangePasswordSection />
+      )}
+
       <div
         style={{
           display: 'flex',
@@ -150,6 +158,95 @@ export function SettingsTab() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ChangePasswordSection() {
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [status, setStatus] = React.useState('idle');
+  const [message, setMessage] = React.useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setStatus('error');
+      setMessage('New passwords do not match.');
+      return;
+    }
+    
+    setStatus('loading');
+    setMessage('');
+    
+    try {
+      await api.auth.updatePassword({ currentPassword, newPassword });
+      setStatus('success');
+      setMessage('Password updated successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setStatus('error');
+      setMessage(err.response?.data?.message || err.message || 'Failed to update password.');
+    } finally {
+      if (status !== 'error' && status !== 'success') setStatus('idle');
+    }
+  };
+
+  return (
+    <div style={{ background: 'var(--surface-2)', padding: '24px', borderRadius: '12px' }}>
+      <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Change Password</h3>
+      
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>Current Password</label>
+          <input 
+            type="password" 
+            required
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>New Password</label>
+          <input 
+            type="password" 
+            required
+            minLength={6}
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>Confirm New Password</label>
+          <input 
+            type="password" 
+            required
+            minLength={6}
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+          />
+        </div>
+
+        {message && (
+          <div style={{ padding: '8px', borderRadius: 6, fontSize: 13, background: status === 'error' ? 'var(--error-muted, rgba(239,68,68,0.1))' : 'var(--success-muted, rgba(34,197,94,0.1))', color: status === 'error' ? 'var(--error)' : 'var(--success)' }}>
+            {message}
+          </div>
+        )}
+
+        <button 
+          type="submit" 
+          disabled={status === 'loading'}
+          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
+        >
+          {status === 'loading' ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
+        </button>
+      </form>
     </div>
   );
 }

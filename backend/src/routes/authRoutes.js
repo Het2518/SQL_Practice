@@ -7,17 +7,17 @@ const { authLimiter } = require('../middleware/rateLimiter');
 const {
   register,
   login,
-  verifyEmail,
   forgotPassword,
   resetPassword,
   getMe,
   updateDisplayName,
+  updatePassword,
   registerValidation,
   loginValidation,
-  verifyEmailValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
   updateNameValidation,
+  updatePasswordValidation,
 } = require('../controllers/authController');
 
 const router = Router();
@@ -25,12 +25,12 @@ const router = Router();
 // Public routes (rate-limited for brute-force protection)
 router.post('/register', authLimiter, registerValidation, validate, register);
 router.post('/login', authLimiter, loginValidation, validate, login);
-router.post('/verify-email', authLimiter, verifyEmailValidation, validate, verifyEmail);
 router.post('/forgot-password', authLimiter, forgotPasswordValidation, validate, forgotPassword);
 router.post('/reset-password', authLimiter, resetPasswordValidation, validate, resetPassword);
 
 // Protected routes (require valid JWT)
 router.get('/me', protect, getMe);
 router.patch('/me/name', protect, updateNameValidation, validate, updateDisplayName);
+router.patch('/me/password', protect, updatePasswordValidation, validate, updatePassword);
 
 module.exports = router;

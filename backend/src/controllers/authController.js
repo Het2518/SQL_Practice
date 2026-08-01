@@ -12,6 +12,7 @@ const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString(
 // ── Validation Rules ───────────────────────────────────────────────────────
 const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
+  body('username').trim().notEmpty().withMessage('Username is required').isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
@@ -23,13 +24,13 @@ const registerValidation = [
 ];
 
 const loginValidation = [
-  body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
+  body('identifier').notEmpty().withMessage('Email or Username is required'),
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
-const verifyEmailValidation = [
-  body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits'),
+const updatePasswordValidation = [
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
 ];
 
 const forgotPasswordValidation = [
@@ -56,7 +57,8 @@ function formatUser(user) {
   return {
     id: user._id,
     email: user.email,
-    displayName: user.displayName || user.email.split('@')[0],
+    username: user.username,
+    displayName: user.displayName || user.username,
   };
 }
 
@@ -67,46 +69,35 @@ function formatUser(user) {
  */
 async function register(req, res, next) {
   try {
-    const { email, password, displayName } = req.body;
+    const { email, username, password, displayName } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return sendError(res, { statusCode: 409, message: 'An account with this email already exists.' });
+      if (existingUser.email === email) {
+        return sendError(res, { statusCode: 409, message: 'An account with this email already exists.' });
+      }
+      return sendError(res, { statusCode: 409, message: 'This username is already taken.' });
     }
 
-    const verificationCode = generateCode();
-    const verificationCodeExpires = Date.now() + 15 * 60 * 1000; // 15 mins
-
-    // Render Free Tier SMTP Block Bypass: Auto-verify accounts
     const user = await User.create({ 
       email, 
+      username,
       password, 
       displayName,
-      isVerified: true, // Auto verify to bypass email
-      verificationCode,
-      verificationCodeExpires
+      isVerified: true, // Auto verify to bypass email entirely
     });
 
-    // Skip sending email because Render blocks SMTP
-    // const emailResult = await sendVerificationEmail(user.email, verificationCode);
-    // if (!emailResult.success) {
-    //   return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
-    // }
+    // Create an empty progress record for the new user
+    await UserProgress.create({ userId: user._id, displayName: user.displayName || user.username });
 
-    // Log them in immediately since we bypassed verification
     const token = signToken(user._id);
 
     return sendSuccess(res, {
       statusCode: 201,
-      message: 'Account created successfully! Email verification is bypassed for now.',
+      message: 'Account created successfully!',
       data: { 
         token,
-        user: {
-          id: user._id,
-          email: user.email,
-          displayName: user.displayName,
-          role: user.role,
-        }
+        user: formatUser(user)
       },
     });
   } catch (err) {
@@ -114,57 +105,26 @@ async function register(req, res, next) {
   }
 }
 
-/**
- * POST /api/auth/verify-email
- */
-async function verifyEmail(req, res, next) {
-  try {
-    const { email, code } = req.body;
-    const user = await User.findOne({ email });
-    
-    if (!user) return sendError(res, { statusCode: 400, message: 'User not found.' });
-    if (user.isVerified) return sendError(res, { statusCode: 400, message: 'User already verified.' });
-    if (user.verificationCode !== code) return sendError(res, { statusCode: 400, message: 'Invalid verification code.' });
-    if (user.verificationCodeExpires < Date.now()) return sendError(res, { statusCode: 400, message: 'Verification code has expired.' });
-
-    user.isVerified = true;
-    user.verificationCode = undefined;
-    user.verificationCodeExpires = undefined;
-    await user.save();
-
-    const token = signToken(user._id);
-
-    return sendSuccess(res, {
-      message: 'Email verified successfully',
-      data: { token, user: formatUser(user) },
-    });
-  } catch (err) {
-    next(err);
-  }
-}
+// Email Verification logic removed as per requirements.
 
 /**
  * POST /api/auth/login
  */
 async function login(req, res, next) {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    // Explicitly select password
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ 
+      $or: [{ email: identifier }, { username: identifier }] 
+    }).select('+password');
+    
     if (!user) {
-      return sendError(res, { statusCode: 401, message: 'No account found with this email. Please sign up.' });
+      return sendError(res, { statusCode: 401, message: 'No account found with this username or email.' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return sendError(res, { statusCode: 401, message: 'Incorrect password.' });
-    }
-
-    // Render Free Tier Bypass: Treat all users as verified if they try to login
-    if (!user.isVerified) {
-      user.isVerified = true;
-      await user.save();
     }
 
     const token = signToken(user._id);
@@ -248,10 +208,9 @@ async function updateDisplayName(req, res, next) {
     req.user.displayName = displayName;
     await req.user.save();
 
-    // Also update the display name in UserProgress for leaderboard
     await UserProgress.findOneAndUpdate(
       { userId: req.user._id },
-      { displayName },
+      { displayName: displayName || req.user.username },
       { upsert: true }
     );
 
@@ -264,18 +223,43 @@ async function updateDisplayName(req, res, next) {
   }
 }
 
+/**
+ * PATCH /api/auth/me/password
+ * Updates the authenticated user's password.
+ */
+async function updatePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // We need to re-fetch the user to get the password field which is select: false
+    const user = await User.findById(req.user._id).select('+password');
+    
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return sendError(res, { statusCode: 400, message: 'Incorrect current password.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    return sendSuccess(res, { message: 'Password updated successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   register,
   login,
-  verifyEmail,
   forgotPassword,
   resetPassword,
   getMe,
   updateDisplayName,
+  updatePassword,
   registerValidation,
   loginValidation,
-  verifyEmailValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
   updateNameValidation,
+  updatePasswordValidation,
 };

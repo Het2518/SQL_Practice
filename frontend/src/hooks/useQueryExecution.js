@@ -19,6 +19,8 @@ export function useQueryExecution({
   fireConfetti,
   toast,
   setQueryHistory,
+  user,
+  onShowAuth,
 }) {
   const [executedSql, setExecutedSql] = useState('');
   const [result, setResult] = useState(null);
@@ -28,6 +30,20 @@ export function useQueryExecution({
 
   const handleRun = useCallback(async () => {
     if (!sql.trim()) return;
+
+    // FREEMIUM GATING LOGIC
+    if (!user) {
+      const freemiumCount = parseInt(localStorage.getItem('freemiumCount') || '0', 10);
+      if (freemiumCount >= 15) {
+        toast({
+          type: 'error',
+          title: 'Free Limit Reached',
+          message: 'You have solved 15 free problems! Create an account to continue your SQL journey and save your progress.',
+        });
+        if (onShowAuth) onShowAuth();
+        return;
+      }
+    }
 
     // Run safety check first
     const isSafe = await checkSafety(sql, currentQ);
@@ -74,6 +90,11 @@ export function useQueryExecution({
 
         setValidation(val);
         if (val.isCorrect) {
+          if (!user) {
+            const count = parseInt(localStorage.getItem('freemiumCount') || '0', 10);
+            localStorage.setItem('freemiumCount', (count + 1).toString());
+          }
+
           posthog.capture('question_completed', {
             db_name: db,
             question_id: currentQ?.id,
@@ -126,8 +147,9 @@ export function useQueryExecution({
     db,
     fireConfetti,
     toast,
-    setQueryHistory,
     checkSafety,
+    user,
+    onShowAuth,
   ]);
 
   const handleExplain = useCallback(async () => {

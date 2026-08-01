@@ -13,6 +13,16 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
     },
+    username: {
+      type: String,
+      required: [true, 'Username is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'],
+      minlength: [3, 'Username must be at least 3 characters'],
+      maxlength: [30, 'Username cannot exceed 30 characters'],
+    },
     password: {
       type: String,
       required: [true, 'Password is required'],
@@ -54,7 +64,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // ── Virtual: derived display name fallback ─────────────────────────────────
 userSchema.virtual('name').get(function () {
-  return this.displayName || this.email.split('@')[0];
+  return this.displayName || this.username || this.email.split('@')[0];
 });
 
 const User = mongoose.model('User', userSchema);

@@ -46,38 +46,26 @@ export const useAuth = create((set, get) => ({
   },
 
   /**
-   * Register a new account with email, password, and optional display name.
-   * Does NOT log the user in; they must verify their email first.
+   * Register a new account with email, username, password, and optional display name.
    */
-  register: async ({ email, password, displayName }) => {
-    const { data } = await api.auth.register({ email, password, displayName });
+  register: async ({ email, username, password, displayName }) => {
+    const { data } = await api.auth.register({ email, username, password, displayName });
     
-    // If backend returns a token (Render Free Tier bypass), log the user in instantly
+    // Automatically log the user in after registration
     if (data.data?.token) {
       tokenStorage.set(data.data.token);
       set({ user: data.data.user });
       return { verified: true, user: data.data.user };
     }
     
-    return { verified: false, email: data.data.email };
+    return { verified: false, user: null };
   },
 
   /**
-   * Verify email using 6-digit code.
-   * Logs the user in upon success.
+   * Login with identifier (email or username) and password.
    */
-  verifyEmail: async (email, code) => {
-    const { data } = await api.auth.verifyEmail({ email, code });
-    tokenStorage.set(data.data.token);
-    set({ user: data.data.user });
-    return data.data.user;
-  },
-
-  /**
-   * Login with email and password.
-   */
-  loginWithEmail: async (email, password) => {
-    const { data } = await api.auth.login({ email, password });
+  login: async (identifier, password) => {
+    const { data } = await api.auth.login({ identifier, password });
     tokenStorage.set(data.data.token);
     set({ user: data.data.user });
     return data.data.user;
