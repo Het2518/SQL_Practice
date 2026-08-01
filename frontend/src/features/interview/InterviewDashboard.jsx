@@ -317,6 +317,12 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
           </>
         )}
       </div>
+
+      <AgenticInterviewer 
+        isOpen={showAgenticInterviewer} 
+        onClose={() => setShowAgenticInterviewer(false)} 
+        companyName="FAANG"
+      />
     </div>
   );
 }
