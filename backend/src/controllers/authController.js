@@ -140,12 +140,12 @@ async function login(req, res, next) {
     // Explicitly select password
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return sendError(res, { statusCode: 401, message: 'Invalid email or password.' });
+      return sendError(res, { statusCode: 401, message: 'No account found with this email. Please sign up.' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return sendError(res, { statusCode: 401, message: 'Invalid email or password.' });
+      return sendError(res, { statusCode: 401, message: 'Incorrect password.' });
     }
 
     // Check if verified
