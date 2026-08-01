@@ -917,34 +917,8 @@ export function CustomDatasetPage() {
           </span>
         </div>
 
-        {/* Centered Run button */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          {hasData && (
-            <button
-              id="sandbox-run-btn"
-              className="btn btn-primary"
-              onClick={handleRun}
-              disabled={isExecuting || !sql.trim()}
-              style={{
-                gap: 8,
-                minWidth: 150,
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: 13,
-              }}
-            >
-              {isExecuting ? (
-                <>
-                  <RotateCcw size={13} className="spin" /> Running...
-                </>
-              ) : (
-                <>
-                  <Play size={13} strokeWidth={2.5} fill="currentColor" /> Run&nbsp;&nbsp;Ctrl+↵
-                </>
-              )}
-            </button>
-          )}
-        </div>
+        {/* Center space placeholder to push right icons to the edge */}
+        <div style={{ flex: 1 }} />
 
         {!qPanelVisible && hasData && (
           <button
@@ -992,16 +966,15 @@ export function CustomDatasetPage() {
 
             {/* CENTER — Editor + Results */}
             <div
-              className="cds-center"
+              className="flex-1 flex flex-col h-full overflow-hidden bg-bg min-w-[300px]"
               ref={workspaceRef}
-              style={{ gridTemplateRows: `${editorHeightPct}% 5px 1fr` }}
             >
-              <div className="sandbox-editor-pane">
-                <div className="sandbox-editor-header">
-                  <span className="sandbox-pane-label">SQL Editor</span>
-                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>Ctrl+Enter to run</span>
-                </div>
-                <div className="sandbox-editor-body">
+              {/* EDITOR SECTION */}
+              <div 
+                className="shrink-0 flex flex-col bg-surface border-b border-border min-h-[140px] overflow-hidden"
+                style={{ height: `${editorHeightPct}%` }}
+              >
+                <div className="flex-1 relative min-h-0 bg-surface overflow-hidden">
                   <SqlEditor
                     value={sql}
                     onChange={setSql}
@@ -1015,11 +988,15 @@ export function CustomDatasetPage() {
                   />
                 </div>
               </div>
+              
+              {/* RESIZER */}
               <div
-                className={`sandbox-resizer${isDragging ? ' dragging' : ''}`}
+                className={`h-1.5 cursor-row-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10 shrink-0${isDragging ? ' dragging' : ''}`}
                 onMouseDown={() => setIsDragging(true)}
               />
-              <div className="sandbox-results-pane">
+              
+              {/* RESULTS SECTION */}
+              <div className="flex-1 min-h-0 relative bg-bg overflow-hidden flex flex-col">
                 <ResultsPanel
                   result={result}
                   validation={validation}
