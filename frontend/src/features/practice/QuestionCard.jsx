@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, Lightbulb, Code, Building2, Tag, Sparkles, C
 import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
+import { useProactiveTutor } from '@/features/ai/useProactiveTutor';
 import { useGroqKey, groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
 import { QuestionHeader } from './QuestionHeader';
 import { QuestionBody } from './QuestionBody';
@@ -66,6 +67,15 @@ export const QuestionCard = React.memo(function QuestionCard({
   const [realCompanies, setRealCompanies] = useState([]);
 
   const hasKey = useGroqKey();
+
+  // Proactive Background AI Tutor (analyzes code if user is stuck for 30s)
+  useProactiveTutor({
+    sql: currentSql,
+    question: question,
+    dbSchemaContext,
+    delayMs: 30000, 
+    isEnabled: status !== 'complete', // Disable if already completed
+  });
 
   // Reset all state when question changes
   useEffect(() => {

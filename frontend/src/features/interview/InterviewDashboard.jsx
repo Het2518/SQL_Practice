@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import { Search } from 'lucide-react';
+import { Search, Bot } from 'lucide-react';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';
 import { CompanyGrid } from './CompanyGrid';
+import { AgenticInterviewer } from './AgenticInterviewer';
 
 const CATEGORIES = [
   'All',
@@ -27,6 +28,7 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAgenticInterviewer, setShowAgenticInterviewer] = useState(false);
 
   const {
     data: companies = [],
@@ -126,6 +128,16 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
           Master company-specific SQL questions, study real candidate experiences, and follow guided
           roadmaps to land your dream role.
         </p>
+
+        <Button 
+          className="hero-btn-primary" 
+          size="lg" 
+          style={{ marginBottom: 40 }}
+          onClick={() => setShowAgenticInterviewer(true)}
+        >
+          <Bot size={18} />
+          Try Agentic Interview Mode
+        </Button>
 
         {/* Floating Search Bar */}
         <div

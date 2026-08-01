@@ -23,7 +23,7 @@ import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { groqChat, buildSandboxQuestionsPrompt, useGroqKey, MODEL_SMART } from '@/lib/groq';
+import { groqChat, buildSandboxQuestionsPrompt, useGroqKey, MODEL_SMART, generateSchema } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import '@/styles/sandbox.css';
@@ -483,8 +483,9 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
 }
 
 // ─── Upload Zone ──────────────────────────────────────────────────────────────
-function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
+function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGenerate, generatingSchema }) {
   const [dragOver, setDragOver] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
   const inputRef = useRef(null);
   const onDrop = useCallback(
     (e) => {
@@ -655,6 +656,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
           maxWidth: 400,
           fontSize: 12,
           color: 'var(--text-secondary)',
+          margin: '0 auto',
         }}
       >
         <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
@@ -662,6 +664,33 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
           After upload, AI generates{' '}
           <strong style={{ color: 'var(--text)' }}>5 MAANG-style questions</strong> for your schema.
         </span>
+      </div>
+
+      {/* AI Generate Box */}
+      <div style={{ marginTop: 32, width: '100%', maxWidth: 500, margin: '32px auto 0' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+          <Sparkles size={14} color="var(--primary)" /> Generate Schema with AI
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+           <input 
+             type="text" 
+             value={aiPrompt}
+             onChange={e => setAiPrompt(e.target.value)}
+             placeholder="e.g. Netflix viewing history with users and movies" 
+             style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, outline: 'none' }}
+             onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
+             disabled={generatingSchema || uploading}
+           />
+           <Button 
+             onClick={() => onAiGenerate(aiPrompt)} 
+             disabled={!aiPrompt.trim() || generatingSchema || uploading} 
+             className="hero-btn-primary" 
+             size="sm"
+             style={{ padding: '0 20px' }}
+           >
+             {generatingSchema ? 'Building...' : 'Generate'}
+           </Button>
+        </div>
       </div>
     </div>
   );
@@ -678,6 +707,7 @@ export function CustomDatasetPage() {
   const [validation, setValidation] = useState(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generatingSchema, setGeneratingSchema] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
   const [editorHeightPct, setEditorHeightPct] = useState(55);
   const [isDragging, setIsDragging] = useState(false);
@@ -771,6 +801,39 @@ export function CustomDatasetPage() {
       }
     },
     [initWithBinary, initWithSql, getSchema, fetchSampleData]
+  );
+
+  // AI Schema Generation
+  const handleAiGenerate = useCallback(
+    async (promptText) => {
+      if (!promptText.trim()) return;
+      setGeneratingSchema(true);
+      setUploadStatus({ type: 'loading', message: 'AI is building your sandbox...' });
+      setSampleData({});
+      try {
+        const generatedSql = await generateSchema(promptText);
+        await initWithSql(generatedSql);
+
+        const tables = (await getSchema())?.tables || [];
+        if (!tables.length) throw new Error('AI failed to generate a valid schema. Please try a different prompt.');
+        
+        setSchema(tables);
+        setSql(
+          `-- ✅ AI generated ${tables.length} table${tables.length > 1 ? 's' : ''}.\n-- AI questions are generating in the right panel →\n\nSELECT *\nFROM "${tables[0].name}"\nLIMIT 10;`
+        );
+        const total = tables.reduce((a, t) => a + (t.rowCount || 0), 0);
+        setUploadStatus({
+          type: 'success',
+          message: `${tables.length} table${tables.length > 1 ? 's' : ''} · ${total.toLocaleString()} rows`,
+        });
+        fetchSampleData(tables);
+      } catch (err) {
+        setUploadStatus({ type: 'error', message: err.message });
+      } finally {
+        setGeneratingSchema(false);
+      }
+    },
+    [initWithSql, getSchema, fetchSampleData]
   );
 
   // Run query
@@ -916,6 +979,8 @@ export function CustomDatasetPage() {
             schema={schema}
             uploadStatus={uploadStatus}
             onReset={handleReset}
+            onAiGenerate={handleAiGenerate}
+            generatingSchema={generatingSchema}
           />
 
           {/* ── Layout: Schema | Editor+Results | Questions ── */}

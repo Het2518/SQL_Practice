@@ -281,6 +281,31 @@ SQL Solution:`,
  * Builds a prompt to validate user's SQL against an open-ended AI question.
  * Returns JSON: { correct: bool, score: 0-100, feedback: string, suggestion: string }
  */
+export async function generateSchema(userPrompt) {
+  const systemPrompt = `You are an expert database architect. The user wants to practice SQL with a specific dataset concept.
+Generate valid SQLite statements to create the schema and insert 5-10 rows of realistic sample data.
+
+RULES:
+1. Output ONLY valid SQLite statements (CREATE TABLE, INSERT INTO).
+2. Do NOT use markdown code blocks (\`\`\`sql). Just plain text.
+3. Do NOT provide any explanations.
+4. Ensure relationships (foreign keys) make sense.
+5. Add IF NOT EXISTS to CREATE TABLE.`;
+
+  try {
+    const response = await groqChat([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ], MODEL_SMART, 1024, false);
+
+    // Clean up potential markdown if the model disobeys
+    let cleanSql = response.replace(/\`\`\`sql/g, '').replace(/\`\`\`/g, '').trim();
+    return cleanSql;
+  } catch (err) {
+    throw new Error('Failed to generate schema: ' + err.message);
+  }
+}
+
 export function buildAiValidationPrompt({ questionPrompt, userSQL, sampleRows, schemaContext }) {
   const rowsStr = sampleRows?.length
     ? `\nQuery returned ${sampleRows.length} rows. First 3: ${JSON.stringify(sampleRows.slice(0, 3))}`
