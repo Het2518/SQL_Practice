@@ -240,7 +240,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                           data={currentRows}
                           fixedHeaderContent={() => (
                             <tr>
-                              {/\bGROUP\s+BY\b/i.test(sql) && (
+                              {sql && /\bGROUP\s+BY\b/i.test(sql) && (
                                 <th className="w-[30px] bg-surface-2"></th>
                               )}
                               {result.columns.map((col, i) => (

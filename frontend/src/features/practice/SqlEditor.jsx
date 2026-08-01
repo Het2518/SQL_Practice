@@ -153,15 +153,20 @@ export function SqlEditor({
     const disposable = monacoInstance.languages.registerCompletionItemProvider('sql', {
       triggerCharacters: ['.', ' ', '(', ','],
       provideCompletionItems: (model, position) => {
-        const lineContent = model.getLineContent(position.lineNumber);
-        const textBeforeCursor = lineContent.substring(0, position.column - 1);
-        const word = model.getWordUntilPosition(position);
+        if (!model) return { suggestions: [] };
+        const lineContent = model.getLineContent(position.lineNumber) || '';
+        const textBeforeCursor = lineContent.substring(0, Math.max(0, position.column - 1));
+        const word = model.getWordUntilPosition(position) || {
+          word: '',
+          startColumn: position.column,
+          endColumn: position.column,
+        };
         
         const range = {
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
-          startColumn: word.startColumn,
-          endColumn: word.endColumn,
+          startColumn: word.startColumn || position.column,
+          endColumn: word.endColumn || position.column,
         };
 
         const suggestions = [];

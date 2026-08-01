@@ -1009,6 +1009,9 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                 result={result}
                 validation={validation}
                 isRunning={isRunning}
+                sql={sql}
+                executeQuery={executeQuery}
+                question={currentQ}
               />
             </Suspense>
           </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TableCell } from '@/features/visualizers/NullVisualizer';
 
 const getGroupConstituents = async (executeQuery, sql, groupByCols, rowData, allColumns) => {
+  if (!sql || typeof sql !== 'string') return null;
   // Find the base FROM and WHERE clauses
   const fromMatch = sql.match(/FROM\s+([\s\S]+?)(?:GROUP BY|ORDER BY|LIMIT|$)/i);
   if (!fromMatch) return null;
@@ -41,6 +42,7 @@ const getGroupConstituents = async (executeQuery, sql, groupByCols, rowData, all
 };
 
 const extractGroupByColumns = (sql) => {
+  if (!sql || typeof sql !== 'string') return [];
   const match = sql.match(/GROUP\s+BY\s+([a-zA-Z0-9_,\s]+)(?:HAVING|ORDER BY|LIMIT|$)/i);
   if (match) {
     return match[1].split(',').map(s => s.trim());

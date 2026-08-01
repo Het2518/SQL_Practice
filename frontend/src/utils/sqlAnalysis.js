@@ -4,8 +4,9 @@
  */
 
 // Parses a SQL query to detect which clauses it contains.
-export const parseQueryClauses = (sql) => {
-  const upperSql = sql.toUpperCase();
+export const parseQueryClauses = (sql = '') => {
+  const safeSql = typeof sql === 'string' ? sql : '';
+  const upperSql = safeSql.toUpperCase();
   return {
     hasFROM: /\bFROM\b/.test(upperSql),
     hasJOIN: /\bJOIN\b/.test(upperSql),
@@ -16,18 +17,20 @@ export const parseQueryClauses = (sql) => {
     hasORDERBY: /\bORDER\s+BY\b/.test(upperSql),
     hasLIMIT: /\bLIMIT\b/.test(upperSql),
     hasCTE: /\bWITH\b/.test(upperSql),
-    hasSubquery: /\(SELECT\b/i.test(sql),
+    hasSubquery: /\(SELECT\b/i.test(safeSql),
   };
 };
 
 // Extremely basic extraction of the primary table from a FROM clause.
-export const extractFromTable = (sql) => {
+export const extractFromTable = (sql = '') => {
+  if (!sql || typeof sql !== 'string') return null;
   const match = sql.match(/\bFROM\s+([a-zA-Z0-9_]+)/i);
   return match ? match[1] : null;
 };
 
 // Strips GROUP BY, HAVING, ORDER BY, LIMIT to leave just the WHERE clause (heuristic).
-export const buildWhereOnlySql = (sql) => {
+export const buildWhereOnlySql = (sql = '') => {
+  if (!sql || typeof sql !== 'string') return '';
   let modified = sql;
   const stripRegexes = [
     /\bGROUP\s+BY\b[\s\S]*/i,
