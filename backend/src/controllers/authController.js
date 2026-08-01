@@ -94,7 +94,7 @@ async function register(req, res, next) {
     // }
 
     // Log them in immediately since we bypassed verification
-    const token = generateToken(user._id);
+    const token = signToken(user._id);
 
     return sendSuccess(res, {
       statusCode: 201,
