@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { groqChat, buildSolutionReviewPrompt, useGroqKey } from '@/lib/groq';
+import { Search, Zap, GitCompare, CheckCircle, XCircle, Clock, Lightbulb, AlertTriangle } from 'lucide-react';
 
 const APPROACH_LABELS = {
-  optimized: { label: 'Optimized Query', icon: '⚡', color: 'var(--success)' },
-  alternative: { label: 'Alternative Approach', icon: '🔀', color: 'var(--accent-1)' },
+  optimized: { label: 'Optimized Query', icon: <Zap size={12} />, color: 'var(--success)' },
+  alternative: { label: 'Alternative Approach', icon: <GitCompare size={12} />, color: 'var(--accent-1)' },
 };
 
 /**
@@ -57,7 +58,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
     <div className="ai-panel" style={{ marginTop: 8 }}>
       <div className="ai-panel-header" onClick={!review && !loading ? generateReview : undefined}>
         <div className="ai-panel-title">
-          <span>🔍</span>
+          <Search size={14} strokeWidth={2} />
           <span>AI Solution Review</span>
           <span className="ai-badge">Groq</span>
         </div>
@@ -86,7 +87,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               fontSize: 13, color: 'var(--warning)', padding: '10px 14px',
               background: 'var(--warning-muted)', borderRadius: 8, borderLeft: '3px solid var(--warning)'
             }}>
-              ⚠️ {error}
+              <AlertTriangle size={14} /> {error}
             </div>
           )}
 
@@ -95,9 +96,9 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               {/* Tab switcher */}
               <div className="review-tab-list">
                 {[
-                  { id: 'feedback', label: '📝 Feedback' },
-                  { id: 'optimized', label: '⚡ Optimized' },
-                  { id: 'alternative', label: '🔀 Alternative' },
+                  { id: 'feedback', label: 'Feedback' },
+                  { id: 'optimized', label: 'Optimized' },
+                  { id: 'alternative', label: 'Alternative' },
                 ].map(t => (
                   <button
                     key={t.id}
@@ -118,7 +119,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
                       background: 'var(--success-muted)', borderLeft: '3px solid var(--success)',
                       fontSize: 13, color: 'var(--text)', lineHeight: 1.6
                     }}>
-                      <strong style={{ color: 'var(--success)', display: 'block', marginBottom: 4 }}>✅ What's Correct</strong>
+                      <strong style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><CheckCircle size={12} /> What's Correct</strong>
                       {review.correct}
                     </div>
                   )}
@@ -128,7 +129,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
                       background: 'var(--error-muted)', borderLeft: '3px solid var(--error)',
                       fontSize: 13, color: 'var(--text)', lineHeight: 1.6
                     }}>
-                      <strong style={{ color: 'var(--error)', display: 'block', marginBottom: 4 }}>❌ Issues Found</strong>
+                      <strong style={{ color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><XCircle size={12} /> Issues Found</strong>
                       {review.incorrect}
                     </div>
                   )}
@@ -138,7 +139,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
                       background: 'var(--surface-2)', border: '1px solid var(--border)',
                       fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6
                     }}>
-                      <strong style={{ color: 'var(--text)' }}>⏱ Complexity: </strong>
+                      <strong style={{ color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> Complexity: </strong>
                       {review.complexity}
                     </div>
                   )}
@@ -148,7 +149,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
                       background: 'var(--primary-muted)', borderLeft: '3px solid var(--primary)',
                       fontSize: 13, color: 'var(--text)', lineHeight: 1.6
                     }}>
-                      <strong style={{ color: 'var(--primary)', display: 'block', marginBottom: 4 }}>💡 Tips</strong>
+                      <strong style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><Lightbulb size={12} /> Tips</strong>
                       {review.tips}
                     </div>
                   )}
@@ -158,7 +159,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               {/* Optimized Tab */}
               {activeTab === 'optimized' && review.optimized_sql && (
                 <div className="review-approach-block">
-                  <div className="review-approach-label">⚡ Optimized Query</div>
+                  <div className="review-approach-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Zap size={12} /> Optimized Query</div>
                   <pre className="review-code">{review.optimized_sql}</pre>
                 </div>
               )}

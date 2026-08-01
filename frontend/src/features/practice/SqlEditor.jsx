@@ -288,7 +288,7 @@ export function SqlEditor({
         padding: '2px 8px',
         fontSize: 11
       }}>
-          ✨ Format
+          Format
         </button>
       </div>
       <div style={{

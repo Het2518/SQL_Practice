@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
+import { CheckCircle, XCircle, AlertTriangle, Info, Trophy, Star, X } from 'lucide-react';
 
 // ─── Toast Context ─────────────────────────────────────────────────────────────
 const ToastContext = createContext(null);
@@ -8,12 +9,12 @@ export function useToast() {
 }
 
 const TOAST_ICONS = {
-  success: '✅',
-  error: '❌',
-  warning: '⚠️',
-  info: 'ℹ️',
-  badge: '🏆',
-  points: '⭐',
+  success: <CheckCircle size={18} strokeWidth={2} />,
+  error: <XCircle size={18} strokeWidth={2} />,
+  warning: <AlertTriangle size={18} strokeWidth={2} />,
+  info: <Info size={18} strokeWidth={2} />,
+  badge: <Trophy size={18} strokeWidth={2} />,
+  points: <Star size={18} strokeWidth={2} />,
 };
 
 const TOAST_COLORS = {
@@ -102,7 +103,7 @@ function Toast({ id, type, title, message, onRemove }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 18, flexShrink: 0,
       }}>
-        {TOAST_ICONS[type] || '💡'}
+        {TOAST_ICONS[type] || <Info size={18} strokeWidth={2} />}
       </div>
 
       <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
@@ -126,7 +127,7 @@ function Toast({ id, type, title, message, onRemove }) {
         onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
         onClick={e => { e.stopPropagation(); dismiss(); }}
       >
-        ×
+        <X size={14} strokeWidth={2} />
       </button>
     </div>
   );

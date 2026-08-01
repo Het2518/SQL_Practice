@@ -11,6 +11,7 @@ import {
   Trophy,
   Menu,
   X,
+  Flame,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
@@ -78,8 +79,8 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
         </button>
 
         {gameState?.currentStreak > 0 && (
-          <div className="pill pill-easy" title={`${gameState.currentStreak} Day Streak`} style={{ gap: 4 }}>
-            <span>🔥</span> {gameState.currentStreak}
+          <div className="pill pill-easy" title={`${gameState.currentStreak} Day Streak`} style={{ gap: 4, display: 'flex', alignItems: 'center' }}>
+            <Flame size={12} />{gameState.currentStreak}
           </div>
         )}
 

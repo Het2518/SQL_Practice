@@ -371,7 +371,7 @@ export function SettingsModal({ onClose }) {
                 fontWeight: 600,
               }}
             >
-              ✨ AI Config
+              AI Config
             </button>
           </div>
         </div>

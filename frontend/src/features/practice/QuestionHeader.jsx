@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Timer, Cpu, Zap, Check } from 'lucide-react';
 import { isDailyChallenge } from '@/utils/dailyChallenge';
 
 const difficultyLabel = {
@@ -9,8 +9,8 @@ const difficultyLabel = {
 };
 
 const statusIcon = {
-  complete: '✅',
-  attempted: '🔄',
+  complete: <Check size={11} strokeWidth={2.5} />,
+  attempted: '·',
   incomplete: '○',
 };
 
@@ -81,7 +81,7 @@ export const QuestionHeader = React.memo(function QuestionHeader({
                 gap: 6,
               }}
             >
-              ⏱️ {formatTime(timeLeft)}
+              <Timer size={14} /> {formatTime(timeLeft)}
             </div>
           )}
           <div
@@ -106,7 +106,7 @@ export const QuestionHeader = React.memo(function QuestionHeader({
                 color: hasPrev ? 'var(--text)' : 'var(--border)',
               }}
             >
-              ◀
+              <ChevronLeft size={14} />
             </button>
             <div
               style={{
@@ -130,7 +130,7 @@ export const QuestionHeader = React.memo(function QuestionHeader({
                 color: hasNext ? 'var(--text)' : 'var(--border)',
               }}
             >
-              ▶
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -164,8 +164,8 @@ export const QuestionHeader = React.memo(function QuestionHeader({
           {statusIcon[status] || '○'} {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
         {question.isAiGenerated && (
-          <span className="ai-badge" style={{ fontSize: 10, padding: '2px 8px' }}>
-            ✨ AI Generated
+          <span className="ai-badge" style={{ fontSize: 10, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Cpu size={10} /> AI Generated
           </span>
         )}
         {isDailyChallenge(question.id) && (
@@ -180,7 +180,7 @@ export const QuestionHeader = React.memo(function QuestionHeader({
               border: '1px solid var(--warning)',
             }}
           >
-            🔥 Daily Challenge
+            <Zap size={10} /> Daily Challenge
           </span>
         )}
       </div>

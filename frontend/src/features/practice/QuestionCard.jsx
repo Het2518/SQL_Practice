@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Lightbulb, Code, Building2, Tag, Sparkles } from 'lucide-react';
+import { ChevronDown, Lightbulb, Code, Building2, Tag, Sparkles, CheckCircle, AlertTriangle, KeyRound, Cpu } from 'lucide-react';
 import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
@@ -14,8 +14,8 @@ const difficultyLabel = {
 };
 
 const statusIcon = {
-  complete: '✅',
-  attempted: '🔄',
+  complete: '✓',
+  attempted: '·',
   incomplete: '○',
 };
 
@@ -464,7 +464,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                         (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)')
                       }
                     >
-                      ✨ Get AI Personalized Hint
+                      <Sparkles size={13} strokeWidth={2} /> Get AI Personalized Hint
                       {hasKey ? null : (
                         <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 4 }}>
                           (needs key)
@@ -573,19 +573,9 @@ export const QuestionCard = React.memo(function QuestionCard({
                   </span>
                 )}
                 {question.isAiGenerated && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: '1px 6px',
-                      borderRadius: 8,
-                      background: 'rgba(139,92,246,0.1)',
-                      color: '#8b5cf6',
-                      border: '1px solid rgba(139,92,246,0.25)',
-                    }}
-                  >
-                    ✨ AI Generated
-                  </span>
+                    <span className="ai-badge" style={{ fontSize: 10, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <Cpu size={9} /> AI Generated
+                    </span>
                 )}
               </div>
               <ChevronDown
@@ -687,9 +677,9 @@ export const QuestionCard = React.memo(function QuestionCard({
                                 : 'var(--warning-muted)',
                             }}
                           >
-                            <span style={{ fontSize: 22 }}>
-                              {aiValidation.correct ? '✅' : '⚠️'}
-                            </span>
+                            {aiValidation.correct 
+                              ? <CheckCircle size={22} strokeWidth={1.5} color="var(--success)" />
+                              : <AlertTriangle size={22} strokeWidth={1.5} color="var(--warning)" />}
                             <div style={{ flex: 1 }}>
                               <div
                                 style={{
@@ -746,14 +736,8 @@ export const QuestionCard = React.memo(function QuestionCard({
                                   lineHeight: 1.6,
                                 }}
                               >
-                                <strong
-                                  style={{
-                                    color: 'var(--text)',
-                                    display: 'block',
-                                    marginBottom: 3,
-                                  }}
-                                >
-                                  💡 Suggestion
+                                <strong style={{ color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+                                  <Lightbulb size={11} /> Suggestion
                                 </strong>
                                 {aiValidation.suggestion}
                               </div>
@@ -806,7 +790,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                                   border: '1px solid var(--warning)',
                                 }}
                               >
-                                🔑 Add your Groq API key in{' '}
+                                <KeyRound size={13} strokeWidth={2} /> Add your Groq API key in{' '}
                                 <strong>Settings → AI Configuration</strong> to generate solutions.
                               </div>
                             ) : (
@@ -864,7 +848,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                                   boxShadow: '0 2px 8px rgba(139,92,246,0.35)',
                                 }}
                               >
-                                ✨ Generate AI Solution
+                                <Sparkles size={13} strokeWidth={2} /> Generate AI Solution
                               </button>
                             )}
                           </div>
@@ -896,7 +880,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                         )}
                         {aiSolutionError && (
                           <div style={{ fontSize: 12, color: 'var(--warning)', padding: '10px 0' }}>
-                            ⚠️ {aiSolutionError}
+                          <AlertTriangle size={13} style={{ flexShrink: 0 }} /> {aiSolutionError}
                           </div>
                         )}
                         {aiSolution && (
@@ -909,19 +893,9 @@ export const QuestionCard = React.memo(function QuestionCard({
                                 marginBottom: 8,
                               }}
                             >
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  padding: '2px 8px',
-                                  borderRadius: 8,
-                                  background: 'rgba(139,92,246,0.1)',
-                                  color: '#8b5cf6',
-                                  border: '1px solid rgba(139,92,246,0.25)',
-                                }}
-                              >
-                                ✨ AI-Generated Solution
-                              </span>
+                                <span className="ai-badge" style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <Cpu size={10} /> AI-Generated Solution
+                                </span>
                               <button
                                 onClick={() => {
                                   setAiSolution(null);
@@ -1148,7 +1122,7 @@ export const QuestionCard = React.memo(function QuestionCard({
               </table>
             ) : (question.isAiGenerated ? aiExpectedResult : expectedResult)?.columns ? (
               <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
+                <CheckCircle size={24} strokeWidth={1.5} color="var(--success)" style={{ marginBottom: 8 }} />
                 <div
                   style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}
                 >

@@ -6,6 +6,7 @@ import { TheoryConnector } from '@/features/visualizers/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
 import { DataVisualizer } from '@/features/practice/DataVisualizer';
 import { TableVirtuoso } from 'react-virtuoso';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 export const ResultsPanel = React.memo(function ResultsPanel({
   result,
@@ -170,7 +171,15 @@ export const ResultsPanel = React.memo(function ResultsPanel({
         {/* Status Badge */}
         {validation && (
           <div className={validation.isCorrect ? 'badge badge-success' : 'badge badge-danger'}>
-            {validation.isCorrect ? '✅ Correct' : '❌ Incorrect'}
+            {validation.isCorrect ? (
+              <div className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CheckCircle size={12} /> Correct
+              </div>
+            ) : (
+              <div className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <XCircle size={12} /> Incorrect
+              </div>
+            )}
           </div>
         )}
         {isError && !validation && <div className="badge badge-danger">SQL Error</div>}
@@ -329,7 +338,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                           gap: 12,
                         }}
                       >
-                        <div style={{ fontSize: 24 }}>✅</div>
+                        <CheckCircle size={20} strokeWidth={1.5} color="var(--success)" />
                         <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>
                           Query Successful
                         </div>
@@ -432,7 +441,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
               fontWeight: 600,
             }}
           >
-            <span style={{ fontSize: 20 }}>❌</span>
+            <XCircle size={20} strokeWidth={1.5} color="var(--error)" />
             Execution Failed
           </div>
           <pre

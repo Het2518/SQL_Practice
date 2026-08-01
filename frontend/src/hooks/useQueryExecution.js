@@ -112,11 +112,11 @@ export function useQueryExecution({
               type: 'success',
               title:
                 diff === 'hard'
-                  ? '🔥 Hard Problem Solved!'
+                  ? 'Hard Problem Solved!'
                   : diff === 'medium'
-                    ? '⭐ Nice Work!'
-                    : '✅ Correct!',
-              message: `You earned ${pts} XP!${isDaily ? ' (3x Daily Bonus 🔥)' : ''}`,
+                    ? 'Nice Work!'
+                    : 'Correct!',
+              message: `You earned ${pts} XP!${isDaily ? ' (3x Daily Bonus)' : ''}`,
             });
           }
         } else {

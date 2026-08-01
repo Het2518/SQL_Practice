@@ -372,10 +372,10 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               type: 'success',
               title:
                 diff === 'hard'
-                  ? '🔥 Hard Problem Solved!'
+                  ? 'Hard Problem Solved!'
                   : diff === 'medium'
-                    ? '⭐ Nice Work!'
-                    : '✅ Correct!',
+                    ? 'Nice Work!'
+                    : 'Correct!',
               message: `+${pts} points earned • ${currentQ.difficulty || 'Easy'} question completed`,
             });
           }
@@ -833,7 +833,6 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                         setShowOverflow(false);
                       }}
                     >
-                      📜{' '}
                       {entry.prompt
                         ? entry.prompt.substring(0, 28) + '…'
                         : entry.sql?.substring(0, 32)}

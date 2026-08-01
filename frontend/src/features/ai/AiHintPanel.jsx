@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { groqChat, buildHintPrompt, useGroqKey } from '@/lib/groq';
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
 /**
  * AiHintPanel — On-demand AI-powered personalized hint.
@@ -56,7 +57,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
     <div className="ai-panel" style={{ marginTop: 8 }}>
       <div className="ai-panel-header" onClick={!generated && !loading ? generateHint : undefined} style={{ flexWrap: 'wrap', gap: 12 }}>
         <div className="ai-panel-title" style={{ flexWrap: 'wrap' }}>
-          <span>✨</span>
+          <Sparkles size={14} strokeWidth={2} />
           <span>AI Personalized Hint</span>
           <span className="ai-badge">llama-3.1-8b</span>
         </div>
@@ -101,7 +102,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
               fontSize: 13, color: 'var(--warning)', padding: '10px 14px',
               background: 'var(--warning-muted)', borderRadius: 8, borderLeft: '3px solid var(--warning)'
             }}>
-              ⚠️ {error}
+              <AlertTriangle size={14} style={{ flexShrink: 0 }} /> {error}
             </div>
           )}
         </div>
