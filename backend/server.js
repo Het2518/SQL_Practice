@@ -25,6 +25,7 @@ const questionRoutes = require('./src/routes/questionRoutes');
 const companyRoutes = require('./src/routes/companyRoutes');
 const progressRoutes = require('./src/routes/progressRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+const commentRoutes = require('./src/routes/commentRoutes');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/questions', questionRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/comments', commentRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

@@ -119,4 +119,12 @@ export const api = {
   leaderboard: {
     get: (limit) => apiClient.get('/leaderboard', { params: { limit } }),
   },
+
+  // Comments / Discussions
+  comments: {
+    getByQuestion: (questionId) => apiClient.get(`/comments/question/${questionId}`),
+    create: (data) => apiClient.post('/comments', data),
+    upvote: (id) => apiClient.post(`/comments/${id}/upvote`),
+    getMyComments: () => apiClient.get('/comments/user/me'),
+  }
 };

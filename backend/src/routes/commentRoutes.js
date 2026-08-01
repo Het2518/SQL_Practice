@@ -1,0 +1,17 @@
+'use strict';
+
+const express = require('express');
+const router = express.Router();
+const commentController = require('../controllers/commentController');
+const { requireAuth, attachUserIfPresent } = require('../middleware/auth');
+
+// Public endpoints (with optional user attachment for ownership flag)
+router.get('/question/:questionId', attachUserIfPresent, commentController.getCommentsByQuestion);
+
+// Protected endpoints
+router.use(requireAuth);
+router.get('/user/me', commentController.getMyComments);
+router.post('/', commentController.validateComment, commentController.createComment);
+router.post('/:id/upvote', commentController.upvoteComment);
+
+module.exports = router;
