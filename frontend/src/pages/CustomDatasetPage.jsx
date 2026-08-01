@@ -969,6 +969,8 @@ export function CustomDatasetPage() {
           schema={schema}
           uploadStatus={uploadStatus}
           onReset={handleReset}
+          onAiGenerate={handleAiGenerate}
+          generatingSchema={generatingSchema}
         />
       ) : (
         <>
