@@ -89,7 +89,10 @@ async function register(req, res, next) {
     await UserProgress.create({ userId: user._id, displayName: user.displayName });
 
     // Send email asynchronously but await so it doesn't get killed
-    await sendVerificationEmail(user.email, verificationCode);
+    const emailSent = await sendVerificationEmail(user.email, verificationCode);
+    if (!emailSent) {
+      return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+    }
 
     return sendSuccess(res, {
       statusCode: 201,
@@ -153,7 +156,10 @@ async function login(req, res, next) {
       user.verificationCode = generateCode();
       user.verificationCodeExpires = Date.now() + 15 * 60 * 1000;
       await user.save();
-      await sendVerificationEmail(user.email, user.verificationCode);
+      const emailSent = await sendVerificationEmail(user.email, user.verificationCode);
+      if (!emailSent) {
+        return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+      }
       return sendError(res, { 
         statusCode: 403, 
         message: 'Account not verified. A new 6-digit code has been sent to your email.',
@@ -184,7 +190,10 @@ async function forgotPassword(req, res, next) {
       user.resetPasswordCode = generateCode();
       user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
       await user.save();
-      await sendPasswordResetEmail(user.email, user.resetPasswordCode);
+      const emailSent = await sendPasswordResetEmail(user.email, user.resetPasswordCode);
+      if (!emailSent) {
+        return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+      }
     }
 
     // Always return success even if user not found (security best practice)
