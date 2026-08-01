@@ -38,8 +38,8 @@ function setCsrfCookie(req, res) {
   
   res.cookie('csrfToken', token, {
     httpOnly: false, // Must be readable by frontend JS
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000 // 1 day
   });
 

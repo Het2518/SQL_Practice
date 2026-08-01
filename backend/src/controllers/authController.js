@@ -117,15 +117,15 @@ async function register(req, res, next) {
     const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       path: '/',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
     res.cookie('refreshToken', refreshStr, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       path: '/api/auth/refresh', // Only sent to this endpoint
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
@@ -208,15 +208,15 @@ async function login(req, res, next) {
     const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       path: '/',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
     res.cookie('refreshToken', refreshStr, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
       path: '/api/auth/refresh', // Only sent to this endpoint
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
@@ -302,15 +302,15 @@ async function logout(req, res) {
   const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('token', '', {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
     expires: new Date(0)
   });
   res.cookie('refreshToken', '', {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/api/auth/refresh',
     expires: new Date(0)
   });
@@ -349,8 +349,8 @@ async function refreshTokenEndpoint(req, res) {
   
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
     maxAge: 15 * 60 * 1000 // 15 mins
   });

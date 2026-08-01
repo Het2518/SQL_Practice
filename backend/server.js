@@ -28,6 +28,7 @@ const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // ── Security & Utility Middleware ──────────────────────────────────────────
 app.use(helmet()); // Sets secure HTTP headers
