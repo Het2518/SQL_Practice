@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
+import { format as formatSql } from 'sql-formatter';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SchemaSidebar } from '@/features/practice/SchemaSidebar';
 import { QuestionCard } from '@/features/practice/QuestionCard';
@@ -520,7 +521,28 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     [db]
   );
 
+  const formatQuery = useCallback((query) => {
+    try {
+      return formatSql(query, { language: 'sqlite', keywordCase: 'upper' });
+    } catch {
+      return query;
+    }
+  }, []);
+
+  const handleMouseDown = useCallback((e, type) => {
+    e.preventDefault();
+    if (type === 'left') setIsDraggingLeft(true);
+    if (type === 'vertical') setIsDragging(true);
+    if (type === 'right') setIsDraggingRight(true);
+  }, []);
+
   const currentIdx = dbQuestions.findIndex((q) => q.id === currentQ.id);
+  const currentQIndex = currentIdx !== -1 ? currentIdx : 0;
+  const hasPrev = currentQIndex > 0;
+  const hasNext = currentQIndex < dbQuestions.length - 1;
+  const handleNavigate = navigateTo;
+  const runQuery = handleRun;
+  const isRunning = isExecuting;
 
   // Close DB picker when clicking outside
   useEffect(() => {
@@ -834,16 +856,14 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       )}
 
       <main 
+        ref={layoutRef}
         className="flex-1 flex overflow-hidden min-h-0 relative bg-surface-2"
-        onMouseMove={handleMouseMove} 
-        onMouseUp={handleMouseUp} 
-        onMouseLeave={handleMouseUp}
       >
         {/* LEFT PANE */}
         <div 
           className="shrink-0 border-r border-border bg-bg h-full flex flex-col overflow-hidden transition-all duration-300"
           style={{ 
-            width: rightPanelOpen ? leftPaneWidth : 0, 
+            width: rightPanelOpen ? questionW : 0, 
             opacity: rightPanelOpen ? 1 : 0 
           }}
         >
@@ -877,7 +897,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               }}
               currentSql={sql}
               lastValidation={validation}
-              dbSchemaContext={schemaContextForAi}
+              dbSchemaContext={dbSchemaContext}
               executeQuery={executeQuery}
             />
           ) : (
