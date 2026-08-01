@@ -2,6 +2,12 @@
    Home Page — Premium Enterprise Architecture
    ================================================================ */
 
+/* ────────── Layout ────────── */
+.home-root {
+  overflow-y: auto;
+  height: 100dvh;
+}
+
 /* ────────── Unified Top Navbar ────────── */
 .home-header {
   position: relative;
@@ -154,6 +160,20 @@
   pointer-events: none;
   z-index: 0;
 }
+
+.floating-icon {
+  position: absolute;
+  color: var(--primary);
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+.icon-1 { top: 15%; left: 15%; transform: rotate(-15deg); }
+.icon-2 { top: 20%; right: 20%; transform: rotate(10deg); }
+.icon-3 { bottom: 30%; left: 10%; transform: rotate(-5deg); }
+.icon-4 { bottom: 25%; right: 15%; transform: rotate(20deg); }
+.icon-5 { top: 40%; left: 25%; transform: scale(0.8) rotate(15deg); }
+.icon-6 { top: 60%; right: 25%; transform: scale(1.2) rotate(-10deg); }
 
 .home-hero-content {
   position: relative;

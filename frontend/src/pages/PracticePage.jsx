@@ -1110,35 +1110,6 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           </div>
         </div>
 
-        {!sidebarOpen && (
-          <button
-            onClick={() => setSidebarOpen(true)}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRight: 'none',
-              borderRadius: '8px 0 0 8px',
-              padding: '12px 6px',
-              cursor: 'pointer',
-              boxShadow: '-2px 0 10px rgba(0,0,0,0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--primary)',
-              zIndex: 50,
-              transition: 'background 0.2s',
-            }}
-            title="Open Schema"
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-2)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
-          >
-            <Database size={16} />
-          </button>
-        )}
       </div>
 
       {/* Modals wrapped in Suspense */}

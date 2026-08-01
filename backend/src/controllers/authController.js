@@ -119,6 +119,7 @@ async function register(req, res, next) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
     res.cookie('refreshToken', refreshStr, {
@@ -209,6 +210,7 @@ async function login(req, res, next) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
     res.cookie('refreshToken', refreshStr, {
@@ -302,6 +304,7 @@ async function logout(req, res) {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
     expires: new Date(0)
   });
   res.cookie('refreshToken', '', {
@@ -348,6 +351,7 @@ async function refreshTokenEndpoint(req, res) {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
     maxAge: 15 * 60 * 1000 // 15 mins
   });
 
