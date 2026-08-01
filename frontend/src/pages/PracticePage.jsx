@@ -53,6 +53,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProgressStore } from '@/stores/useProgressStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { hasGroqKey } from '@/lib/groq';
 
 export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const { user } = useAuth();
@@ -926,11 +927,11 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               }
               onOpenBrowser={() => setShowBrowser(true)}
               onOpenAiTutor={() => {
-                if (settings.aiFeatures) setShowAiTutor(true);
+                if (hasGroqKey()) setShowAiTutor(true);
                 else {
                   toast({
                     title: 'AI Disabled',
-                    message: 'Enable AI features in settings.',
+                    message: 'Please configure your Groq API Key in Settings.',
                     type: 'error',
                   });
                 }
