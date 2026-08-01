@@ -1,6 +1,12 @@
 'use strict';
 
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+// Render containers often lack outbound IPv6 routing. 
+// Force Node.js to prioritize IPv4 when resolving smtp.gmail.com
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 /**
  * Creates a transporter using standard SMTP environment variables.
