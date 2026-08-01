@@ -12,14 +12,23 @@ function getTransporter() {
   if (transporterInstance) return transporterInstance;
   if (!process.env.EMAIL_USER) return null;
 
+  // Render often throttles or inspects port 587 (STARTTLS).
+  // Port 465 (Implicit SSL) is significantly more reliable and faster for Gmail on cloud hosts.
+  const isGmail = (process.env.EMAIL_HOST || '').includes('gmail');
+
   transporterInstance = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
+    port: isGmail ? 465 : (process.env.EMAIL_PORT || 465),
+    secure: isGmail ? true : (process.env.EMAIL_SECURE === 'true'),
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    connectionTimeout: 10000, // 10 seconds max to connect
+    greetingTimeout: 5000,    // 5 seconds max for greeting
+    socketTimeout: 10000,     // 10 seconds max for socket inactivity
+    pool: true,               // Use pooled connections for better reliability
+    maxConnections: 3,
   });
   return transporterInstance;
 }
