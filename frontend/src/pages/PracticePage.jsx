@@ -11,6 +11,7 @@ import {
   Database,
   Sun,
   Moon,
+  Network,
 } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
@@ -789,6 +790,14 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         navLinks={[]}
         rightContent={
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowERDiagram(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer bg-surface-2 text-text-secondary border-border hover:text-text hover:bg-surface-3"
+              title="View ER Diagram"
+            >
+              <Network size={13} />
+              <span className="hidden sm:inline">ER Diagram</span>
+            </button>
             <button
               onClick={() => toggleSidebar()}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${

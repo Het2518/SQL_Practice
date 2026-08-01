@@ -123,8 +123,8 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         </div>
 
         {/* ── Stats Row ── */}
-        <div className="mt-12 flex flex-wrap justify-center gap-6 w-full max-w-5xl z-10">
-          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl z-10 px-6">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
             <div
               className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
@@ -142,7 +142,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Solved</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
             <div
               className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
@@ -160,7 +160,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">In Progress</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
             <div
               className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
@@ -178,7 +178,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Score</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
             <div
               className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
