@@ -2,7 +2,6 @@ import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import {
   ReactFlow,
   MiniMap,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -13,7 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { DB_INFO } from '@/data/schemas';
-import { Search, Database } from 'lucide-react';
+import { Search, Database, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { TableNode } from './TableNode';
 
@@ -57,6 +56,76 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
 
   return { nodes: newNodes, edges };
 };
+
+// Custom Controls Panel — fully themed, no React Flow default styles
+function CustomControls() {
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+
+  const btnStyle = {
+    width: 36,
+    height: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'var(--text-secondary)',
+    borderRadius: 6,
+    transition: 'background 0.15s, color 0.15s',
+  };
+
+  const handleHover = (e, enter) => {
+    e.currentTarget.style.background = enter ? 'var(--surface-2)' : 'transparent';
+    e.currentTarget.style.color = enter ? 'var(--text)' : 'var(--text-secondary)';
+  };
+
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 24,
+      left: 16,
+      zIndex: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 2,
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 10,
+      padding: 4,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+    }}>
+      <button
+        onClick={() => zoomIn({ duration: 300 })}
+        title="Zoom In"
+        style={btnStyle}
+        onMouseEnter={e => handleHover(e, true)}
+        onMouseLeave={e => handleHover(e, false)}
+      >
+        <ZoomIn size={16} strokeWidth={2} />
+      </button>
+      <button
+        onClick={() => zoomOut({ duration: 300 })}
+        title="Zoom Out"
+        style={btnStyle}
+        onMouseEnter={e => handleHover(e, true)}
+        onMouseLeave={e => handleHover(e, false)}
+      >
+        <ZoomOut size={16} strokeWidth={2} />
+      </button>
+      <div style={{ height: 1, background: 'var(--border)', margin: '2px 4px' }} />
+      <button
+        onClick={() => fitView({ padding: 0.2, duration: 600 })}
+        title="Fit to Screen"
+        style={btnStyle}
+        onMouseEnter={e => handleHover(e, true)}
+        onMouseLeave={e => handleHover(e, false)}
+      >
+        <Maximize2 size={16} strokeWidth={2} />
+      </button>
+    </div>
+  );
+}
 
 function ERDiagramFlow({ dbName, onClose }) {
   const trapRef = useFocusTrap(true);
@@ -261,14 +330,10 @@ function ERDiagramFlow({ dbName, onClose }) {
           defaultEdgeOptions={{ zIndex: 0 }}
         >
           <Background color="var(--border)" gap={24} size={1} />
-          <Controls 
-            style={{ 
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)', 
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              overflow: 'hidden'
-            }} 
-          />
+
+          {/* Custom Controls */}
+          <CustomControls />
+
           <MiniMap 
             nodeColor={(node) => node.id === activeFocus ? 'var(--primary)' : 'var(--surface-2)'}
             maskColor="var(--bg)"
