@@ -6,25 +6,29 @@ const nodemailer = require('nodemailer');
  * Creates a transporter using standard SMTP environment variables.
  * If EMAIL_USER is not set, it will log the code to the console instead (useful for local dev).
  */
-function createTransporter() {
+let transporterInstance = null;
+
+function getTransporter() {
+  if (transporterInstance) return transporterInstance;
   if (!process.env.EMAIL_USER) return null;
 
-  return nodemailer.createTransport({
+  transporterInstance = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+    secure: process.env.EMAIL_SECURE === 'true',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
   });
+  return transporterInstance;
 }
 
 /**
  * Send an email with a 6-digit verification code.
  */
 async function sendVerificationEmail(toEmail, code) {
-  const transporter = createTransporter();
+  const transporter = getTransporter();
   
   const subject = 'Verify your DataDesk account';
   const text = `Welcome to DataDesk!\n\nYour 6-digit verification code is: ${code}\n\nThis code will expire in 15 minutes.`;
@@ -63,7 +67,7 @@ async function sendVerificationEmail(toEmail, code) {
  * Send a password reset email with a 6-digit code.
  */
 async function sendPasswordResetEmail(toEmail, code) {
-  const transporter = createTransporter();
+  const transporter = getTransporter();
   
   const subject = 'Reset your DataDesk password';
   const text = `You requested a password reset.\n\nYour 6-digit reset code is: ${code}\n\nThis code will expire in 15 minutes.`;
