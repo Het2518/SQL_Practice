@@ -65,10 +65,10 @@ async function sendVerificationEmail(toEmail, code) {
       text,
       html,
     });
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error sending verification email:', error);
-    return false;
+    return { success: false, error: error.message || String(error) };
   }
 }
 
@@ -104,10 +104,10 @@ async function sendPasswordResetEmail(toEmail, code) {
       text,
       html,
     });
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error sending password reset email:', error);
-    return false;
+    return { success: false, error: error.message || String(error) };
   }
 }
 

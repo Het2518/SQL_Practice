@@ -89,9 +89,9 @@ async function register(req, res, next) {
     await UserProgress.create({ userId: user._id, displayName: user.displayName });
 
     // Send email asynchronously but await so it doesn't get killed
-    const emailSent = await sendVerificationEmail(user.email, verificationCode);
-    if (!emailSent) {
-      return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+    const emailResult = await sendVerificationEmail(user.email, verificationCode);
+    if (!emailResult.success) {
+      return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
     }
 
     return sendSuccess(res, {
@@ -156,9 +156,9 @@ async function login(req, res, next) {
       user.verificationCode = generateCode();
       user.verificationCodeExpires = Date.now() + 15 * 60 * 1000;
       await user.save();
-      const emailSent = await sendVerificationEmail(user.email, user.verificationCode);
-      if (!emailSent) {
-        return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+      const emailResult = await sendVerificationEmail(user.email, user.verificationCode);
+      if (!emailResult.success) {
+        return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
       }
       return sendError(res, { 
         statusCode: 403, 
@@ -190,9 +190,9 @@ async function forgotPassword(req, res, next) {
       user.resetPasswordCode = generateCode();
       user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
       await user.save();
-      const emailSent = await sendPasswordResetEmail(user.email, user.resetPasswordCode);
-      if (!emailSent) {
-        return sendError(res, { statusCode: 500, message: 'Failed to send email. Check SMTP credentials.' });
+      const emailResult = await sendPasswordResetEmail(user.email, user.resetPasswordCode);
+      if (!emailResult.success) {
+        return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
       }
     }
 
