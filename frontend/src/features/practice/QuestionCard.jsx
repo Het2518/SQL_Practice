@@ -275,9 +275,8 @@ export const QuestionCard = React.memo(function QuestionCard({
           <div
             style={{
               background: 'var(--surface)',
-              borderRadius: 12,
+              borderRadius: 8,
               border: '1px solid var(--border)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.02)',
               overflow: 'hidden',
             }}
           >
@@ -288,14 +287,14 @@ export const QuestionCard = React.memo(function QuestionCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '14px 16px',
-                background: showHints ? 'var(--warning-muted)' : 'transparent',
+                padding: '12px 16px',
+                background: showHints ? 'rgba(245,158,11,0.06)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 color: showHints ? 'var(--warning)' : 'var(--text-secondary)',
                 fontWeight: 600,
-                fontSize: 14,
-                transition: 'all 0.2s ease',
+                fontSize: 13,
+                transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (!showHints) e.currentTarget.style.background = 'var(--surface)';
@@ -305,14 +304,15 @@ export const QuestionCard = React.memo(function QuestionCard({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Lightbulb size={18} strokeWidth={2.5} />
-                <span>Hints {hintsUsed > 0 ? `(${hintsUsed}/3)` : ''}</span>
+                <Lightbulb size={15} strokeWidth={2} />
+                <span>Hints{hintsUsed > 0 ? ` (${hintsUsed}/3)` : ''}</span>
               </div>
               <ChevronDown
-                size={18}
+                size={15}
                 style={{
                   transform: showHints ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s',
+                  transition: 'transform 0.25s',
+                  opacity: 0.6,
                 }}
               />
             </button>
@@ -492,7 +492,6 @@ export const QuestionCard = React.memo(function QuestionCard({
             </div>
           </div>
 
-          {/* Solution Accordion */}
           <div
             style={{
               background: 'var(--surface-2)',
@@ -501,6 +500,23 @@ export const QuestionCard = React.memo(function QuestionCard({
               overflow: 'hidden',
             }}
           >
+            {/* Lock notice — only shown when not yet attempted */}
+            {!Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete') && (
+              <div style={{
+                padding: '8px 16px',
+                background: 'var(--surface)',
+                borderBottom: '1px solid var(--border)',
+                fontSize: 11,
+                color: 'var(--muted)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--border)', flexShrink: 0, display: 'inline-block' }} />
+                Write and run a query first to unlock the solution
+              </div>
+            )}
+
             <button
               onClick={() => {
                 const hasAttempted = Boolean(
@@ -513,11 +529,11 @@ export const QuestionCard = React.memo(function QuestionCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '14px 16px',
+                padding: '13px 16px',
                 background: showSolution
                   ? question.isAiGenerated
-                    ? 'rgba(139,92,246,0.08)'
-                    : 'var(--success-muted)'
+                    ? 'rgba(139,92,246,0.06)'
+                    : 'rgba(16,185,129,0.06)'
                   : 'transparent',
                 border: 'none',
                 cursor: Boolean(
@@ -527,19 +543,19 @@ export const QuestionCard = React.memo(function QuestionCard({
                   : 'not-allowed',
                 color: showSolution
                   ? question.isAiGenerated
-                    ? '#8b5cf6'
+                    ? 'var(--primary)'
                     : 'var(--success)'
                   : Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete')
                     ? 'var(--text-secondary)'
                     : 'var(--muted)',
                 fontWeight: 600,
-                fontSize: 14,
-                transition: 'all 0.2s ease',
+                fontSize: 13,
+                transition: 'all 0.15s ease',
                 opacity: Boolean(
                   currentSql?.trim() || status === 'attempted' || status === 'complete'
                 )
                   ? 1
-                  : 0.6,
+                  : 0.5,
               }}
               onMouseEnter={(e) => {
                 if (
@@ -553,36 +569,20 @@ export const QuestionCard = React.memo(function QuestionCard({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Code size={18} strokeWidth={2.5} />
+                <Code size={15} strokeWidth={2} />
                 <span>Solution & AI Review</span>
-                {!Boolean(
-                  currentSql?.trim() || status === 'attempted' || status === 'complete'
-                ) && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: 8,
-                      background: 'var(--surface)',
-                      color: 'var(--muted)',
-                      border: '1px solid var(--border)',
-                    }}
-                  >
-                    Attempt required
-                  </span>
-                )}
                 {question.isAiGenerated && (
-                    <span className="ai-badge" style={{ fontSize: 10, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Cpu size={9} /> AI Generated
-                    </span>
+                  <span className="ai-badge" style={{ fontSize: 10, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <Cpu size={9} /> AI
+                  </span>
                 )}
               </div>
               <ChevronDown
-                size={18}
+                size={15}
                 style={{
                   transform: showSolution ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s',
+                  transition: 'transform 0.25s',
+                  opacity: 0.6,
                 }}
               />
             </button>
