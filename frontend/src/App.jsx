@@ -167,14 +167,14 @@ export default function App() {
   // ── No client → server sync needed: updates are fired directly in updateProgress ──
 
   const handleProgressUpdate = useCallback(
-    (question, dbName, status) => {
+    (question, dbName, status, sql, executionTimeMs = 0) => {
       if (!question || !question.id) return;
       const id = question.id;
       useProgressStore.getState().updateProgress(id, status);
 
       const currentProgress = useProgressStore.getState().progress;
       if (status === 'complete' && currentProgress[id] !== 'complete') {
-        useGamificationStore.getState().recordActivity(question, dbName, status, user);
+        useGamificationStore.getState().recordActivity(question, dbName, status, user, sql, executionTimeMs);
       }
     },
     [user]

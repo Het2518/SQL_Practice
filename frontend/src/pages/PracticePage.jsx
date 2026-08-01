@@ -19,6 +19,7 @@ import { SchemaSidebar } from '@/features/practice/SchemaSidebar';
 import { QuestionCard } from '@/features/practice/QuestionCard';
 import { QuestionBrowser } from '@/features/practice/QuestionBrowser';
 import { AiTutorPanel } from '@/features/ai/AiTutorPanel';
+import { DiscussionsPanel } from '@/features/practice/DiscussionsPanel';
 const SqlEditor = lazy(() =>
   import('@/features/practice/SqlEditor').then((m) => ({ default: m.SqlEditor }))
 );
@@ -142,8 +143,9 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     }
   }, []);
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [activeLeftPane, setActiveLeftPane] = useState('problem'); // 'problem' or 'discussions'
   const [showOverflow, setShowOverflow] = useState(false);
 
   // Column widths (px) — draggable
@@ -570,22 +572,52 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         leftContent={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
-              onClick={() => setRightPanelOpen((v) => !v)}
+              onClick={() => {
+                if (!rightPanelOpen) setRightPanelOpen(true);
+                if (activeLeftPane === 'problem' && rightPanelOpen) {
+                  setRightPanelOpen(false);
+                } else {
+                  setActiveLeftPane('problem');
+                }
+              }}
               style={{
                 fontSize: 13,
                 fontWeight: 600,
                 padding: '6px 12px',
-                background: rightPanelOpen ? 'var(--primary-muted)' : 'transparent',
+                background: (rightPanelOpen && activeLeftPane === 'problem') ? 'var(--primary-muted)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                color: rightPanelOpen ? 'var(--primary)' : 'var(--text-secondary)',
+                color: (rightPanelOpen && activeLeftPane === 'problem') ? 'var(--primary)' : 'var(--text-secondary)',
                 borderRadius: 6,
                 transition: 'all 0.15s',
               }}
-              title={rightPanelOpen ? 'Hide problem panel' : 'Show problem panel'}
+              title={rightPanelOpen && activeLeftPane === 'problem' ? 'Hide problem panel' : 'Show problem panel'}
             >
               <List size={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
               Problem
+            </button>
+            <button
+              onClick={() => {
+                if (!rightPanelOpen) setRightPanelOpen(true);
+                if (activeLeftPane === 'discussions' && rightPanelOpen) {
+                  setRightPanelOpen(false);
+                } else {
+                  setActiveLeftPane('discussions');
+                }
+              }}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                padding: '6px 12px',
+                background: (rightPanelOpen && activeLeftPane === 'discussions') ? 'var(--primary-muted)' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: (rightPanelOpen && activeLeftPane === 'discussions') ? 'var(--primary)' : 'var(--text-secondary)',
+                borderRadius: 6,
+                transition: 'all 0.15s',
+              }}
+            >
+              💬 Discussions
             </button>
             <div
               style={{
@@ -861,26 +893,30 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           }}
         >
           <div style={{ width: questionW, height: '100%', overflow: 'hidden' }}>
-            <QuestionCard
-              question={currentQ}
-              expectedResult={expectedResult}
-              status={progress[currentQ.id] ?? 'incomplete'}
-              onOpenBrowser={() => setShowBrowser(true)}
-              onOpenAiTutor={() => setShowAiTutor(true)}
-              onNavigate={navigateTo}
-              hasPrev={currentIdx > 0}
-              hasNext={currentIdx < dbQuestions.length - 1}
-              questionNumber={currentIdx + 1}
-              totalQuestions={dbQuestions.length}
-              timedChallenges={settings.timedChallenges}
-              onTimerExpire={() => {
-                if (sql.trim()) handleRun();
-              }}
-              currentSql={sql}
-              lastValidation={validation}
-              dbSchemaContext={dbSchemaContext}
-              executeQuery={executeQuery}
-            />
+            {activeLeftPane === 'problem' ? (
+              <QuestionCard
+                question={currentQ}
+                expectedResult={expectedResult}
+                status={progress[currentQ.id] ?? 'incomplete'}
+                onOpenBrowser={() => setShowBrowser(true)}
+                onOpenAiTutor={() => setShowAiTutor(true)}
+                onNavigate={navigateTo}
+                hasPrev={currentIdx > 0}
+                hasNext={currentIdx < dbQuestions.length - 1}
+                questionNumber={currentIdx + 1}
+                totalQuestions={dbQuestions.length}
+                timedChallenges={settings.timedChallenges}
+                onTimerExpire={() => {
+                  if (sql.trim()) handleRun();
+                }}
+                currentSql={sql}
+                lastValidation={validation}
+                dbSchemaContext={dbSchemaContext}
+                executeQuery={executeQuery}
+              />
+            ) : (
+              <DiscussionsPanel questionId={currentQ.id} />
+            )}
           </div>
         </div>
 

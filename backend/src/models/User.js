@@ -42,6 +42,45 @@ const userSchema = new mongoose.Schema(
     verificationCodeExpires: Date,
     resetPasswordCode: String,
     resetPasswordExpires: Date,
+    
+    // --- Security & Auditing ---
+    role: {
+      type: String,
+      enum: ['user', 'moderator', 'admin', 'premium'],
+      default: 'user',
+    },
+    accountStatus: {
+      type: String,
+      enum: ['active', 'suspended', 'banned'],
+      default: 'active',
+    },
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+    },
+    lastLoginAt: {
+      type: Date,
+    },
+
+    // --- Profile & Social ---
+    bio: {
+      type: String,
+      maxlength: [500, 'Bio cannot exceed 500 characters'],
+    },
+    avatarUrl: String,
+    socialLinks: {
+      github: String,
+      linkedin: String,
+      website: String,
+    },
+    githubId: {
+      type: String, // For future OAuth implementation
+      sparse: true,
+      unique: true,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt
@@ -61,6 +100,11 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
+// ── Virtual: check if account is locked ────────────────────────────────────
+userSchema.virtual('isLocked').get(function () {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
 
 // ── Virtual: derived display name fallback ─────────────────────────────────
 userSchema.virtual('name').get(function () {

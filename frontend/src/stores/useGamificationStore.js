@@ -80,13 +80,13 @@ export const useGamificationStore = create((set, get) => ({
    * - Updates local state immediately (optimistic).
    * - POSTs to the backend API, then updates state with server-confirmed values.
    */
-  recordActivity: (question = null, dbName = null, status = 'attempted', user = null) => {
+  recordActivity: (question = null, dbName = null, status = 'attempted', user = null, sql = '', executionTimeMs = 0) => {
     // Only record if user is logged in (progress is server-side)
     if (!user) return;
 
     // Fire-and-forget API call; update local state with server response
     api.progress
-      .recordActivity(question, dbName, status)
+      .recordActivity(question, dbName, status, sql, executionTimeMs)
       .then(({ data }) => {
         const d = data.data;
         set((state) => ({

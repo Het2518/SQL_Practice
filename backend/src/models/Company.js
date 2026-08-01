@@ -53,6 +53,15 @@ const companySchema = new mongoose.Schema(
       type: Number,
       default: 3,
     },
+    websiteUrl: String,
+    activeHiring: {
+      type: Boolean,
+      default: false,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

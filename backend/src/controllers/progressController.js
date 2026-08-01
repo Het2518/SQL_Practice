@@ -2,7 +2,9 @@
 
 const { body } = require('express-validator');
 const UserProgress = require('../models/UserProgress');
+const Submission = require('../models/Submission');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const mongoose = require('mongoose');
 
 // ── Validation ─────────────────────────────────────────────────────────────
 const updateProgressValidation = [
@@ -15,51 +17,82 @@ const updateProgressValidation = [
 const recordActivityValidation = [
   body('question').isObject().withMessage('question object is required'),
   body('question.id').notEmpty().withMessage('question.id is required'),
-  body('dbName').notEmpty().withMessage('dbName is required'),
+  body('sql').notEmpty().withMessage('sql query is required'),
   body('status').optional().isString(),
+  body('executionTimeMs').optional().isNumeric(),
 ];
-
-// ── Helper: Convert Map → plain object for JSON serialization ──────────────
-function mapToObject(map) {
-  if (!map) return {};
-  if (map instanceof Map) return Object.fromEntries(map);
-  return map;
-}
 
 // ── Controllers ────────────────────────────────────────────────────────────
 
 /**
  * GET /api/progress
- * Returns the authenticated user's full progress document.
+ * Returns the authenticated user's full progress document + aggregates from Submissions.
  */
 async function getProgress(req, res, next) {
   try {
-    const progress = await UserProgress.findOne({ userId: req.user._id }).lean();
-
+    let progress = await UserProgress.findOne({ userId: req.user._id }).lean();
     if (!progress) {
-      // No record yet — return defaults
-      return sendSuccess(res, {
-        data: {
-          completedQuestions: {},
-          activity: {},
-          currentStreak: 0,
-          maxStreak: 0,
-          lastPracticeDate: null,
-          badges: [],
-          recentSubmissions: [],
-        },
-      });
+      progress = {
+        totalXp: 0,
+        eloRating: 1000,
+        level: 1,
+        rankTitle: 'Novice',
+        currentStreak: 0,
+        maxStreak: 0,
+        lastPracticeDate: null,
+        badges: [],
+      };
     }
+
+    // Aggregate completed questions from Submissions
+    const completedRaw = await Submission.aggregate([
+      { $match: { userId: req.user._id, status: 'Accepted' } },
+      { $group: { _id: '$questionId' } }
+    ]);
+    const completedQuestions = {};
+    completedRaw.forEach(q => { completedQuestions[q._id] = 'complete'; });
+
+    // Activity heatmap (last 365 days or just raw aggregate)
+    // For simplicity, we just aggregate all accepted submissions by date string
+    const activityRaw = await Submission.aggregate([
+      { $match: { userId: req.user._id } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    const activity = {};
+    activityRaw.forEach(a => { activity[a._id] = a.count; });
+
+    // Recent Submissions (Top 20)
+    const recentSubmissions = await Submission.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    // Map recentSubmissions to the format the frontend expects temporarily
+    const formattedRecentSubmissions = recentSubmissions.map(s => ({
+      questionId: s.questionId,
+      title: `Question ${s.questionId}`, // Need question join for real title, but this keeps UI from crashing
+      status: s.status === 'Accepted' ? 'complete' : 'attempted',
+      timestamp: s.createdAt,
+    }));
 
     return sendSuccess(res, {
       data: {
-        completedQuestions: mapToObject(progress.completedQuestions),
-        activity: mapToObject(progress.activity),
+        completedQuestions,
+        activity,
         currentStreak: progress.currentStreak,
         maxStreak: progress.maxStreak,
         lastPracticeDate: progress.lastPracticeDate,
         badges: progress.badges,
-        recentSubmissions: progress.recentSubmissions,
+        totalXp: progress.totalXp,
+        eloRating: progress.eloRating,
+        level: progress.level,
+        rankTitle: progress.rankTitle,
+        recentSubmissions: formattedRecentSubmissions,
       },
     });
   } catch (err) {
@@ -69,44 +102,39 @@ async function getProgress(req, res, next) {
 
 /**
  * PATCH /api/progress/question
- * Updates a single question's completion status for the authenticated user.
+ * Deprecated endpoint - use recordActivity instead.
  */
 async function updateQuestionProgress(req, res, next) {
-  try {
-    const { questionId, status } = req.body;
-
-    const progress = await UserProgress.findOneAndUpdate(
-      { userId: req.user._id },
-      { $set: { [`completedQuestions.${questionId}`]: status } },
-      { new: true, upsert: true }
-    ).lean();
-
-    return sendSuccess(res, {
-      message: 'Progress updated',
-      data: { completedQuestions: mapToObject(progress.completedQuestions) },
-    });
-  } catch (err) {
-    next(err);
-  }
+  return sendSuccess(res, { message: 'Deprecated. Use POST /api/progress/activity.' });
 }
 
 /**
  * POST /api/progress/activity
- * Records a question attempt and updates streaks, badges, and recent submissions.
+ * Records a question attempt (Submission) and updates streaks, badges, and XP.
  */
 async function recordActivity(req, res, next) {
   try {
-    const { question, dbName, status = 'attempted' } = req.body;
+    const { question, sql, status = 'Error', executionTimeMs = 0 } = req.body;
     const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
+    const isAccepted = status === 'Accepted' || status === 'complete';
+    const dbStatus = isAccepted ? 'Accepted' : 'Error';
 
+    // 1. Create the Submission Record
+    await Submission.create({
+      userId: req.user._id,
+      questionId: String(question.id),
+      sql,
+      status: dbStatus,
+      executionTimeMs,
+      // Automatically set expiration to 30 days for failed queries to save space
+      expiresAt: isAccepted ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    });
+
+    // 2. Update gamification stats
     let doc = await UserProgress.findOne({ userId: req.user._id });
     if (!doc) {
       doc = new UserProgress({ userId: req.user._id });
     }
-
-    // Update activity heatmap
-    const currentCount = doc.activity.get(today) || 0;
-    doc.activity.set(today, currentCount + 1);
 
     // Update streak
     if (doc.lastPracticeDate !== today) {
@@ -126,34 +154,17 @@ async function recordActivity(req, res, next) {
       doc.maxStreak = Math.max(doc.maxStreak, doc.currentStreak);
     }
 
+    if (isAccepted) {
+      doc.totalXp += 10;
+      doc.eloRating += 5;
+    }
+
     // Compute badges
     const badgeSet = new Set(doc.badges);
-    if (doc.activity.get(today) >= 1) badgeSet.add('first_query');
+    badgeSet.add('first_query');
     if (doc.currentStreak >= 3) badgeSet.add('streak_3');
     if (doc.currentStreak >= 7) badgeSet.add('streak_7');
-
-    const totalSolved = Array.from(doc.completedQuestions.values()).filter(
-      (s) => s === 'complete'
-    ).length;
-    if (totalSolved >= 10) badgeSet.add('solved_10');
-    if (totalSolved >= 50) badgeSet.add('solved_50');
     doc.badges = Array.from(badgeSet);
-
-    // Add recent submission
-    if (question && dbName) {
-      const sub = {
-        questionId: String(question.id),
-        title: question.title || (question.prompt || '').substring(0, 40) + '...',
-        db: dbName,
-        difficulty: question.difficulty,
-        status,
-        timestamp: new Date(),
-      };
-      doc.recentSubmissions.unshift(sub);
-      if (doc.recentSubmissions.length > 20) {
-        doc.recentSubmissions = doc.recentSubmissions.slice(0, 20);
-      }
-    }
 
     await doc.save();
 
@@ -164,8 +175,7 @@ async function recordActivity(req, res, next) {
         maxStreak: doc.maxStreak,
         lastPracticeDate: doc.lastPracticeDate,
         badges: doc.badges,
-        activity: mapToObject(doc.activity),
-        recentSubmissions: doc.recentSubmissions,
+        totalXp: doc.totalXp,
       },
     });
   } catch (err) {
@@ -175,23 +185,11 @@ async function recordActivity(req, res, next) {
 
 /**
  * DELETE /api/progress/reset
- * Resets all user progress (for dev/testing or user account reset).
  */
 async function resetProgress(req, res, next) {
   try {
-    await UserProgress.findOneAndUpdate(
-      { userId: req.user._id },
-      {
-        completedQuestions: new Map(),
-        activity: new Map(),
-        currentStreak: 0,
-        maxStreak: 0,
-        lastPracticeDate: null,
-        badges: [],
-        recentSubmissions: [],
-      },
-      { upsert: true }
-    );
+    await UserProgress.findOneAndDelete({ userId: req.user._id });
+    await Submission.deleteMany({ userId: req.user._id });
 
     return sendSuccess(res, { message: 'Progress reset successfully' });
   } catch (err) {

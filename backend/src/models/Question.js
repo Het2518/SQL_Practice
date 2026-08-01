@@ -61,6 +61,48 @@ const questionSchema = new mongoose.Schema(
         ref: 'Topic',
       },
     ],
+    
+    // --- Advanced Community / Platform Features ---
+    isPublished: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null, // null if created by system admin
+    },
+    hints: {
+      type: [String],
+      default: [],
+    },
+    likes: {
+      type: Number,
+      default: 0,
+    },
+    dislikes: {
+      type: Number,
+      default: 0,
+    },
+    
+    // --- Computed Stats ---
+    totalAttempts: {
+      type: Number,
+      default: 0,
+    },
+    totalAccepted: {
+      type: Number,
+      default: 0,
+    },
+    acceptanceRate: {
+      type: Number,
+      default: 0, // Computed as (totalAccepted / totalAttempts) * 100
+    },
+    averageExecutionTimeMs: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

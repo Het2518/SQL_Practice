@@ -11,6 +11,12 @@ const topicSchema = new mongoose.Schema(
       trim: true,
     },
     description: String,
+    icon: String, // e.g., Lucide icon name or URL
+    parentTopic: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Topic',
+      default: null,
+    },
   },
   {
     timestamps: true,

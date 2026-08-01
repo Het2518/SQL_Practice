@@ -41,6 +41,18 @@ const interviewSessionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    status: {
+      type: String,
+      enum: ['in-progress', 'completed', 'abandoned'],
+      default: 'in-progress',
+    },
+    durationMinutes: {
+      type: Number,
+      default: 0,
+    },
+    aiFeedbackSummary: {
+      type: String, // Detailed generated text review
+    },
   },
   {
     timestamps: true,

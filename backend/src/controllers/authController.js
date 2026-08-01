@@ -3,6 +3,8 @@
 const { body } = require('express-validator');
 const User = require('../models/User');
 const UserProgress = require('../models/UserProgress');
+const AuditLog = require('../models/AuditLog');
+const RefreshToken = require('../models/RefreshToken');
 const { signToken } = require('../utils/jwt');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
@@ -59,6 +61,8 @@ function formatUser(user) {
     email: user.email,
     username: user.username,
     displayName: user.displayName || user.username,
+    role: user.role,
+    avatarUrl: user.avatarUrl,
   };
 }
 
@@ -89,6 +93,12 @@ async function register(req, res, next) {
 
     // Create an empty progress record for the new user
     await UserProgress.create({ userId: user._id, displayName: user.displayName || user.username });
+    
+    await AuditLog.create({
+      userId: user._id,
+      action: 'ACCOUNT_CREATED',
+      ipAddress: req.ip || req.connection.remoteAddress,
+    });
 
     const token = signToken(user._id);
 
@@ -122,10 +132,39 @@ async function login(req, res, next) {
       return sendError(res, { statusCode: 401, message: 'No account found with this username or email.' });
     }
 
+    if (user.accountStatus === 'suspended' || user.accountStatus === 'banned') {
+      return sendError(res, { statusCode: 403, message: `Your account is ${user.accountStatus}.` });
+    }
+
+    if (user.isLocked) {
+      const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+      return sendError(res, { statusCode: 429, message: `Account locked. Try again in ${minutesLeft} minutes.` });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      user.failedLoginAttempts += 1;
+      let auditAction = 'LOGIN_FAILED';
+      if (user.failedLoginAttempts >= 5) {
+        user.lockUntil = Date.now() + 15 * 60 * 1000; // Lock for 15 mins
+        auditAction = 'ACCOUNT_LOCKED';
+      }
+      await user.save();
+      await AuditLog.create({ userId: user._id, action: auditAction, ipAddress: req.ip });
+      
+      if (auditAction === 'ACCOUNT_LOCKED') {
+        return sendError(res, { statusCode: 429, message: 'Too many failed attempts. Account locked for 15 minutes.' });
+      }
       return sendError(res, { statusCode: 401, message: 'Incorrect password.' });
     }
+
+    // Success! Reset lockouts
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    user.lastLoginAt = Date.now();
+    await user.save();
+
+    await AuditLog.create({ userId: user._id, action: 'LOGIN_SUCCESS', ipAddress: req.ip });
 
     const token = signToken(user._id);
 
@@ -241,6 +280,8 @@ async function updatePassword(req, res, next) {
 
     user.password = newPassword;
     await user.save();
+    
+    await AuditLog.create({ userId: user._id, action: 'PASSWORD_CHANGE', ipAddress: req.ip });
 
     return sendSuccess(res, { message: 'Password updated successfully.' });
   } catch (err) {

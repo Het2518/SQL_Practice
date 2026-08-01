@@ -77,8 +77,8 @@ export const api = {
     get: () => apiClient.get('/progress'),
     updateQuestion: (questionId, status) =>
       apiClient.patch('/progress/question', { questionId, status }),
-    recordActivity: (question, dbName, status) =>
-      apiClient.post('/progress/activity', { question, dbName, status }),
+    recordActivity: (question, dbName, status, sql, executionTimeMs) =>
+      apiClient.post('/progress/activity', { question, dbName, status, sql, executionTimeMs }),
     reset: () => apiClient.delete('/progress/reset'),
   },
 

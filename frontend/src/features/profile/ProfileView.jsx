@@ -39,6 +39,7 @@ import { RadarChart } from './RadarChart';
 import { DashboardTab } from './DashboardTab';
 import { LeaderboardTab } from './LeaderboardTab';
 import { SettingsTab } from './SettingsTab';
+import { PlaylistsTab } from './PlaylistsTab';
 
 export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   const navigate = useNavigate();
@@ -431,6 +432,12 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
                   onClick={() => setActiveTab('leaderboard')}
                 />
                 <TopNavItem
+                  icon={<Folder size={14} />}
+                  label="Playlists"
+                  active={activeTab === 'playlists'}
+                  onClick={() => setActiveTab('playlists')}
+                />
+                <TopNavItem
                   icon={<SettingsIcon size={14} />}
                   label="Settings"
                   active={activeTab === 'settings'}
@@ -471,6 +478,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
           {activeTab === 'leaderboard' && (
             <LeaderboardTab currentUser={user} currentScore={stats.score} />
           )}
+          {activeTab === 'playlists' && <PlaylistsTab />}
           {activeTab === 'settings' && <SettingsTab />}
         </div>
       </main>

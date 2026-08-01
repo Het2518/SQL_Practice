@@ -2,18 +2,8 @@
 
 const mongoose = require('mongoose');
 
-// Sub-schema for recent submissions
-const submissionSchema = new mongoose.Schema(
-  {
-    questionId: { type: String, required: true },
-    title: String,
-    db: String,
-    difficulty: String,
-    status: { type: String, enum: ['complete', 'attempted'], default: 'attempted' },
-    timestamp: { type: Date, default: Date.now },
-  },
-  { _id: false } // No separate _id for sub-documents
-);
+// The Submission model now handles raw query history.
+// UserProgress acts as a gamification and aggregate caching layer.
 
 const userProgressSchema = new mongoose.Schema(
   {
@@ -28,27 +18,16 @@ const userProgressSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    // Map of questionId → status ('complete' | 'attempted')
-    completedQuestions: {
-      type: Map,
-      of: String,
-      default: new Map(),
-    },
-    // Activity heatmap: date string → count of questions solved
-    activity: {
-      type: Map,
-      of: Number,
-      default: new Map(),
-    },
+    totalXp: { type: Number, default: 0 },
+    eloRating: { type: Number, default: 1000 }, // ELO matchmaking rating
+    level: { type: Number, default: 1 },
+    rankTitle: { type: String, default: 'Novice' },
+    
     currentStreak: { type: Number, default: 0, min: 0 },
     maxStreak: { type: Number, default: 0, min: 0 },
     lastPracticeDate: { type: String, default: null }, // 'YYYY-MM-DD'
     badges: {
       type: [String],
-      default: [],
-    },
-    recentSubmissions: {
-      type: [submissionSchema],
       default: [],
     },
   },
