@@ -21,53 +21,49 @@ export function DailyChallengeWidget({ progress }) {
       style={{
         margin: '0 auto 32px',
         maxWidth: 900,
-        background: 'var(--surface)',
+        background: 'var(--surface-2)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
+        borderRadius: 10,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '20px 32px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-        transition: 'box-shadow 0.2s, transform 0.2s',
+        padding: '14px 20px',
+        transition: 'all 0.15s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.borderColor = 'var(--border-hover)';
+        e.currentTarget.style.background = 'var(--surface)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.03)';
-        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.background = 'var(--surface-2)';
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         {/* Icon */}
         <div
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: 12,
+            width: 36,
+            height: 36,
+            borderRadius: 8,
             flexShrink: 0,
             background: isCompleted ? 'var(--success-muted)' : 'var(--primary-muted)',
-            border: isCompleted
-              ? '1px solid var(--success-light)'
-              : '1px solid var(--primary-light)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: isCompleted ? 'var(--success)' : 'var(--primary)',
           }}
         >
-          {isCompleted ? <Star size={24} /> : <Target size={24} />}
+          {isCompleted ? <Star size={18} /> : <Target size={18} />}
         </div>
 
         {/* Content */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
             <span
               style={{
-                fontSize: 13,
-                fontWeight: 700,
+                fontSize: 11,
+                fontWeight: 600,
                 color: 'var(--text-secondary)',
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -76,21 +72,21 @@ export function DailyChallengeWidget({ progress }) {
               {isCompleted ? 'Completed' : 'Daily Challenge'}
             </span>
           </div>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
             {dailyQuestion.title || 'Mystery SQL Problem'}
           </h3>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span
             className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`}
-            style={{ padding: '4px 10px', fontSize: 12, fontWeight: 600 }}
+            style={{ padding: '2px 8px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}
           >
             {dailyQuestion.difficulty || 'Easy'}
           </span>
-          <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
             {dailyQuestion.db}
           </span>
         </div>
@@ -98,9 +94,9 @@ export function DailyChallengeWidget({ progress }) {
         <Button
           variant={isCompleted ? 'secondary' : 'primary'}
           onClick={() => navigate(`/practice/${dailyQuestion.db}?q=${dailyQuestion.id}`)}
-          style={{ paddingLeft: 24, paddingRight: 24 }}
+          style={{ padding: '6px 14px', fontSize: 12, height: 'auto' }}
         >
-          {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={16} />
+          {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={14} />
         </Button>
       </div>
     </div>

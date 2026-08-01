@@ -944,33 +944,32 @@ export const QuestionCard = React.memo(function QuestionCard({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '14px 16px',
+                        padding: '12px 16px',
                         borderRadius: 8,
-                        border: '1px solid rgba(139,92,246,0.3)',
-                        background:
-                          'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))',
+                        border: '1px solid var(--border)',
+                        background: 'var(--surface-2)',
                         cursor: 'pointer',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: 600,
-                        color: '#8b5cf6',
-                        transition: 'all 0.2s',
+                        color: 'var(--text)',
+                        transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))';
+                        e.currentTarget.style.background = 'var(--surface)';
+                        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.04))';
+                        e.currentTarget.style.background = 'var(--surface-2)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Sparkles size={18} strokeWidth={2.5} />
+                        <Sparkles size={15} strokeWidth={2} style={{ color: 'var(--primary)' }} />
                         <span>AI Tutor Chat</span>
-                        <span className="ai-badge">Groq</span>
+                        <span className="ai-badge" style={{ fontSize: 10, padding: '1px 6px' }}>Groq</span>
                       </div>
-                      <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
-                        Ask the AI Tutor →
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        Ask the AI Tutor <ChevronRight size={14} />
                       </span>
                     </button>
                   )}

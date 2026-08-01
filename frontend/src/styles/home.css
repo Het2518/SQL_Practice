@@ -277,46 +277,48 @@
 .hero-stat-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: var(--surface);
+  gap: 12px;
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 16px 24px;
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition-fast);
-  min-width: 180px;
+  transition: all var(--transition-fast);
+  min-width: 160px;
   text-align: left;
 }
 .hero-stat-card:hover {
   transform: translateY(-2px);
+  background: var(--surface);
   border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
 }
 
 .hero-stat-icon-wrap {
-  width: 44px; height: 44px;
-  border-radius: 12px;
+  width: 32px; height: 32px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--surface-2);
+  background: transparent;
   color: var(--text);
   flex-shrink: 0;
 }
 
 .hero-stat-value {
   display: block;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
-  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
 }
 
 .hero-stat-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 /* ────────── Custom Dataset Banner ────────── */
@@ -418,18 +420,19 @@
   display: flex;
   flex-direction: column;
   padding: 0;
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
-  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
 .db-card:hover {
   border-color: var(--border-hover);
+  background: var(--surface);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -450,9 +453,9 @@
 }
 
 .db-card-icon-wrap {
-  width: 44px; height: 44px;
-  border-radius: var(--radius);
-  background: var(--surface-2);
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
