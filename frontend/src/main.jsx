@@ -7,12 +7,10 @@ import './styles/index.css';
 import App from './App.jsx';
 import { ToastProvider } from '@/shared/ui/ToastSystem.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
-import { registerSW } from 'virtual:pwa-register';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-if ('serviceWorker' in navigator) {
-  registerSW({ immediate: true });
-}
+
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
