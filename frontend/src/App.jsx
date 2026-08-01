@@ -94,7 +94,17 @@ function saveProgress(p) {
 }
 
 // ─── Protected Route Component ───────────────────────────────────────────────
-function ProtectedRoute({ children, user }) {
+function ProtectedRoute({ children, user, isCheckingSession }) {
+  if (!user && isCheckingSession) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-bg text-text">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-surface-3 border-t-primary rounded-full animate-spin" />
+          <span className="text-sm text-muted font-medium">Verifying session...</span>
+        </div>
+      </div>
+    );
+  }
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -106,7 +116,7 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { user, loading, logout, initializeAuth } = useAuth();
+  const { user, isCheckingSession, logout, initializeAuth } = useAuth();
 
   const {
     progress,
@@ -176,17 +186,6 @@ export default function App() {
     },
     [user]
   );
-
-  if (loading) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-bg text-text">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-3 border-surface-3 border-t-primary rounded-full animate-spin" />
-          <span className="text-sm text-muted font-medium">Loading DataDesk...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Suspense
@@ -265,7 +264,7 @@ export default function App() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute user={user}>
+            <ProtectedRoute user={user} isCheckingSession={isCheckingSession}>
               <ProfileView
                 user={user}
                 gameState={gameState}

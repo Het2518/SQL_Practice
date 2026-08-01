@@ -81,15 +81,15 @@ apiClient.interceptors.response.use(
 export const api = {
   // Auth
   auth: {
-    getCsrfToken: () => apiClient.get('/auth/csrf'),
-    register: (data) => apiClient.post('/auth/register', data),
-    login: (data) => apiClient.post('/auth/login', data),
-    logout: () => apiClient.post('/auth/logout'),
-    forgotPassword: (data) => apiClient.post('/auth/forgot-password', data),
-    resetPassword: (data) => apiClient.post('/auth/reset-password', data),
-    getMe: () => apiClient.get('/auth/me'),
-    updateName: (displayName) => apiClient.patch('/auth/me/name', { displayName }),
-    updatePassword: (data) => apiClient.patch('/auth/me/password', data),
+    getCsrfToken: (config = {}) => apiClient.get('/auth/csrf', config),
+    register: (data, config = {}) => apiClient.post('/auth/register', data, config),
+    login: (data, config = {}) => apiClient.post('/auth/login', data, config),
+    logout: (config = {}) => apiClient.post('/auth/logout', config),
+    forgotPassword: (data, config = {}) => apiClient.post('/auth/forgot-password', data, config),
+    resetPassword: (data, config = {}) => apiClient.post('/auth/reset-password', data, config),
+    getMe: (config = {}) => apiClient.get('/auth/me', config),
+    updateName: (displayName, config = {}) => apiClient.patch('/auth/me/name', { displayName }, config),
+    updatePassword: (data, config = {}) => apiClient.patch('/auth/me/password', data, config),
   },
 
   // Questions (public)

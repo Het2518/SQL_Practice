@@ -17,33 +17,46 @@ export const useAuth = create((set, get) => {
 
   return {
     user: null,
-    loading: true,
+    loading: false,
+    isCheckingSession: true,
 
-  
-  /**
-   * Called once on app mount.
-   * If successful, user is set. If 401, user remains null.
-   */
-  initializeAuth: async () => {
-    // Ensure we have a CSRF token from the server
-    try {
-      const { data } = await api.auth.getCsrfToken();
-      if (data?.data?.csrfToken) {
-        apiClient.defaults.headers.common['X-CSRF-Token'] = data.data.csrfToken;
+    /**
+     * Called once on app mount. Runs asynchronously in the background.
+     * Never blocks the initial render of the application.
+     */
+    initializeAuth: async () => {
+      // 1. Fetch CSRF token in the background with an 8s timeout (handles backend cold-starts gracefully)
+      const csrfPromise = api.auth
+        .getCsrfToken({ timeout: 8000 })
+        .then(({ data }) => {
+          if (data?.data?.csrfToken) {
+            apiClient.defaults.headers.common['X-CSRF-Token'] = data.data.csrfToken;
+          }
+        })
+        .catch((err) => {
+          // Graceful fallback — backend may be spinning up
+          console.debug('[Auth] CSRF token background warm-up:', err?.message || err);
+        });
+
+      // 2. Validate user session in the background
+      const sessionPromise = api.auth
+        .getMe({ timeout: 8000 })
+        .then(({ data }) => {
+          if (data?.data?.user) {
+            set({ user: data.data.user });
+          }
+        })
+        .catch(() => {
+          // No active session, user remains guest
+          set({ user: null });
+        });
+
+      try {
+        await Promise.allSettled([csrfPromise, sessionPromise]);
+      } finally {
+        set({ isCheckingSession: false });
       }
-    } catch (err) {
-      console.warn('Failed to fetch CSRF token:', err);
-    }
-
-    // Validate session by fetching the current user
-    try {
-      const { data } = await api.auth.getMe();
-      set({ user: data.data.user, loading: false });
-    } catch {
-      // No active session or expired
-      set({ user: null, loading: false });
-    }
-  },
+    },
 
   /**
    * Register a new account with email, username, password, and optional display name.

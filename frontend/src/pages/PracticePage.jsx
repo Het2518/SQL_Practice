@@ -801,23 +801,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   {queryHistory.slice(0, 10).map((entry, i) => (
                     <button
                       key={i}
-                      className="overflow-menu-item"
-                      style={{
-                        fontSize: 12,
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '8px 14px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text)',
-                        cursor: 'pointer',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--surface-2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'none';
-                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs bg-transparent border-none text-text hover:bg-surface-2 cursor-pointer transition-colors rounded-lg truncate"
                       onClick={() => {
                         if (entry.dbName && entry.dbName !== db)
                           navigate('/practice/' + entry.dbName);
@@ -841,11 +825,11 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         }
       />
 
-      {/* Global Loading Overlay */}
-      {globalLoading && (
+      {/* Database Loading Overlay */}
+      {isLoading && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-sm">
-          <div className="w-8 h-8 border-4 border-surface-3 border-t-primary rounded-full animate-spin" />
-          <p className="mt-4 text-sm font-semibold text-text-secondary animate-pulse">{globalLoadingMsg}</p>
+          <div className="w-8 h-8 border-3 border-surface-3 border-t-primary rounded-full animate-spin" />
+          <p className="mt-4 text-sm font-semibold text-text-secondary animate-pulse">Initializing Database...</p>
         </div>
       )}
 
