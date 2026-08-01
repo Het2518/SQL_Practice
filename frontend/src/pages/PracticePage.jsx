@@ -570,8 +570,151 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         onShowAuth={onShowAuth}
         onShowSettings={onShowSettings}
         leftContent={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
+              onClick={() => setShowDbPicker((v) => !v)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 600,
+                padding: '4px 8px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text)',
+                borderRadius: 'var(--radius)',
+                transition: 'background var(--transition-fast)',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              {dbInfo.label} <ChevronDown size={14} style={{ opacity: 0.5 }} />
+            </button>
+            {showDbPicker && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 4px)',
+                  left: 0,
+                  zIndex: 999,
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-float)',
+                  minWidth: 230,
+                  padding: '6px 0',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '5px 14px 6px',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  }}
+                >
+                  Switch Database
+                </div>
+                {Object.keys(DB_INFO).map((d) => {
+                  const info = DB_INFO[d];
+                  const dbQs = getQuestionsForDb(d);
+                  const comp = dbQs.filter((q) => progress[q.id] === 'complete').length;
+                  const isActive = d === db;
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => handleSwitchDb(d)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        width: '100%',
+                        padding: '8px 14px',
+                        background: isActive ? 'var(--primary-muted)' : 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text)',
+                        fontSize: 13,
+                        fontFamily: 'var(--font-sans)',
+                        transition: 'background 0.12s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) e.currentTarget.style.background = 'var(--surface-2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) e.currentTarget.style.background = 'transparent';
+                      }}
+                    >
+                      <span
+                        style={{ flex: 1, fontWeight: isActive ? 600 : 400, textAlign: 'left' }}
+                      >
+                        {info.label}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--muted)',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >
+                        {comp}/{info.questionCount}
+                      </span>
+                      {isActive && (
+                        <span style={{ color: 'var(--text)', fontSize: 11, fontWeight: 700 }}>
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                <button
+                  onClick={() => {
+                    if (window.confirm('Reset all progress for ' + dbInfo.label + '?'))
+                      resetDb(db);
+                    setShowDbPicker(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '8px 14px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--error)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    transition: 'background 0.12s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface-2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  ↺ Reset Progress
+                </button>
+              </div>
+            )}
+          </div>
+        }
+        centerContent={
+          <div className="segmented-control">
+            <button
+              className={`segment-btn ${rightPanelOpen && activeLeftPane === 'problem' ? 'active' : ''}`}
               onClick={() => {
                 if (!rightPanelOpen) setRightPanelOpen(true);
                 if (activeLeftPane === 'problem' && rightPanelOpen) {
@@ -580,23 +723,12 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   setActiveLeftPane('problem');
                 }
               }}
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '6px 12px',
-                background: (rightPanelOpen && activeLeftPane === 'problem') ? 'var(--primary-muted)' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: (rightPanelOpen && activeLeftPane === 'problem') ? 'var(--primary)' : 'var(--text-secondary)',
-                borderRadius: 6,
-                transition: 'all 0.15s',
-              }}
-              title={rightPanelOpen && activeLeftPane === 'problem' ? 'Hide problem panel' : 'Show problem panel'}
             >
-              <List size={14} style={{ marginRight: 6, verticalAlign: '-2px' }} />
+              <List size={13} style={{ marginRight: 6, verticalAlign: '-2px', display: 'inline-block' }} />
               Problem
             </button>
             <button
+              className={`segment-btn ${rightPanelOpen && activeLeftPane === 'discussions' ? 'active' : ''}`}
               onClick={() => {
                 if (!rightPanelOpen) setRightPanelOpen(true);
                 if (activeLeftPane === 'discussions' && rightPanelOpen) {
@@ -605,158 +737,17 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   setActiveLeftPane('discussions');
                 }
               }}
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '6px 12px',
-                background: (rightPanelOpen && activeLeftPane === 'discussions') ? 'var(--primary-muted)' : 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: (rightPanelOpen && activeLeftPane === 'discussions') ? 'var(--primary)' : 'var(--text-secondary)',
-                borderRadius: 6,
-                transition: 'all 0.15s',
-              }}
             >
               💬 Discussions
             </button>
-            <div
+            <div 
+              className="segment-indicator" 
               style={{
-                position: 'relative',
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowDbPicker((v) => !v)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  padding: '6px 12px',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--text)',
-                  borderRadius: 6,
-                }}
-              >
-                {dbInfo.label} <ChevronDown size={12} style={{ opacity: 0.5 }} />
-              </button>
-              {showDbPicker && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    left: 0,
-                    zIndex: 999,
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-                    minWidth: 230,
-                    padding: '6px 0',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '5px 14px 6px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: 'var(--muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: 1,
-                    }}
-                  >
-                    Switch Database
-                  </div>
-                  {Object.keys(DB_INFO).map((d) => {
-                    const info = DB_INFO[d];
-                    const dbQs = getQuestionsForDb(d);
-                    const comp = dbQs.filter((q) => progress[q.id] === 'complete').length;
-                    const isActive = d === db;
-                    return (
-                      <button
-                        key={d}
-                        onClick={() => handleSwitchDb(d)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          width: '100%',
-                          padding: '8px 14px',
-                          background: isActive ? 'var(--primary-muted)' : 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text)',
-                          fontSize: 13,
-                          fontFamily: 'var(--font-sans)',
-                          transition: 'background 0.12s',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive) e.currentTarget.style.background = 'var(--surface-2)';
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive) e.currentTarget.style.background = 'none';
-                        }}
-                      >
-                        <span
-                          style={{ flex: 1, fontWeight: isActive ? 700 : 400, textAlign: 'left' }}
-                        >
-                          {info.label}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            color: 'var(--muted)',
-                            fontVariantNumeric: 'tabular-nums',
-                          }}
-                        >
-                          {comp}/{info.questionCount}
-                        </span>
-                        {isActive && (
-                          <span style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 700 }}>
-                            ✓
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                  <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Reset all progress for ' + dbInfo.label + '?'))
-                        resetDb(db);
-                      setShowDbPicker(false);
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '8px 14px',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--error)',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      transition: 'background 0.12s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'var(--surface-2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'none';
-                    }}
-                  >
-                    ↺ Reset Progress
-                  </button>
-                </div>
-              )}
-            </div>
+                width: rightPanelOpen ? '50%' : '0%',
+                opacity: rightPanelOpen ? 1 : 0,
+                transform: `translateX(${activeLeftPane === 'problem' ? '0%' : '100%'})`
+              }} 
+            />
           </div>
         }
         navLinks={[
@@ -788,8 +779,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                     zIndex: 99,
                     background: 'var(--surface)',
                     border: '1px solid var(--border)',
-                    borderRadius: 10,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-float)',
                     minWidth: 220,
                     padding: '6px 0',
                   }}

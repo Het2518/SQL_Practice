@@ -241,9 +241,9 @@
 .sidebar-wrap {
   width: 100%;
   height: 100%;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-sm);
   overflow: hidden auto;
   background: var(--surface);
   display: flex;
@@ -259,9 +259,9 @@
 .question-pane-wrap {
   width: 100%;
   height: 100%;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   background: var(--surface);
 }
@@ -293,9 +293,9 @@
   overflow: hidden;
   min-width: 0;
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-sm);
 }
 
 .editor-col-header {
@@ -338,9 +338,9 @@
   overflow: hidden;
   min-width: 0;
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-sm);
 }
 
 /* — Responsive: stack on narrow screens */

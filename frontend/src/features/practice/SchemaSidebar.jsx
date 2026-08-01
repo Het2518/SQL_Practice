@@ -291,7 +291,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
         style={{
           padding: '14px 16px',
           borderBottom: '1px solid var(--border)',
-          background: 'var(--surface-2)',
+          background: 'var(--surface)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -383,11 +383,12 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
             <div style={{ padding: '0 12px 12px' }}>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('open-er-diagram'))}
-                className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 rounded-xl text-primary font-semibold text-sm transition-all"
+                className="btn btn-secondary w-full"
+                style={{ justifyContent: 'center' }}
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
