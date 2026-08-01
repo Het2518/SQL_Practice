@@ -252,7 +252,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                     border: activeTab === tab.id ? 'none' : '1px solid var(--border)',
                     padding: '4px 12px',
                     borderRadius: 20,
-                    color: activeTab === tab.id ? '#fff' : 'var(--text-secondary)',
+                    color: activeTab === tab.id ? 'var(--primary-foreground)' : 'var(--text-secondary)',
                     fontWeight: activeTab === tab.id ? 600 : 500,
                     cursor: 'pointer',
                     fontSize: 12,

@@ -206,17 +206,21 @@ async function login(req, res, next) {
     });
 
     const isProduction = process.env.NODE_ENV === 'production';
+    const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
+    const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const cookieSameSite = isCrossSite ? 'none' : 'lax';
+
     res.cookie('token', token, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: cookieSecure,
+      sameSite: cookieSameSite,
       path: '/',
       maxAge: 15 * 60 * 1000 // 15 mins
     });
     res.cookie('refreshToken', refreshStr, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: cookieSecure,
+      sameSite: cookieSameSite,
       path: '/api/auth/refresh', // Only sent to this endpoint
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
@@ -300,17 +304,21 @@ async function logout(req, res) {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
+  const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
+  const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const cookieSameSite = isCrossSite ? 'none' : 'lax';
+
   res.cookie('token', '', {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: cookieSecure,
+    sameSite: cookieSameSite,
     path: '/',
     expires: new Date(0)
   });
   res.cookie('refreshToken', '', {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: cookieSecure,
+    sameSite: cookieSameSite,
     path: '/api/auth/refresh',
     expires: new Date(0)
   });
@@ -346,11 +354,14 @@ async function refreshTokenEndpoint(req, res) {
   // Issue new access token (15 mins)
   const token = signToken(user._id, '15m');
   const isProduction = process.env.NODE_ENV === 'production';
+  const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
+  const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
+  const cookieSameSite = isCrossSite ? 'none' : 'lax';
   
   res.cookie('token', token, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: cookieSecure,
+    sameSite: cookieSameSite,
     path: '/',
     maxAge: 15 * 60 * 1000 // 15 mins
   });

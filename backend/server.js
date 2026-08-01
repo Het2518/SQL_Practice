@@ -34,11 +34,13 @@ app.set('trust proxy', 1);
 app.use(helmet()); // Sets secure HTTP headers
 app.use(
   cors({
-    origin: [
-      env.clientUrl,
-      'http://localhost:5173',
-      'https://sql-practice-sepia.vercel.app'
-    ],
+    origin: function (origin, callback) {
+      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.includes('vercel.app') || origin === env.clientUrl) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );

@@ -5,6 +5,8 @@ import { useGroqKey } from '@/hooks/useGroqKey';
 import { groqChat, MODEL_SMART } from '@/lib/groq';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function AiTutorPanel({ isOpen, onClose, question, currentSql, dbSchemaContext }) {
   const hasKey = useGroqKey();
@@ -147,10 +149,16 @@ Rules:
                   'px-4 py-2.5 rounded-2xl max-w-[85%] text-[14px] leading-relaxed shadow-sm',
                   msg.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-tr-none'
-                    : 'bg-surface-2 text-text border border-border rounded-tl-none whitespace-pre-wrap'
+                    : 'bg-surface-2 text-text border border-border rounded-tl-none prose prose-sm dark:prose-invert prose-p:leading-relaxed prose-pre:bg-bg prose-pre:border prose-pre:border-border'
                 )}
               >
-                {msg.content}
+                {msg.role === 'user' ? (
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
+                )}
               </div>
             </div>
           ))}

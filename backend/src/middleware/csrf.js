@@ -36,11 +36,13 @@ function setCsrfCookie(req, res) {
   const token = crypto.randomBytes(32).toString('hex');
   const isProduction = process.env.NODE_ENV === 'production';
   
+  const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
   res.cookie('csrfToken', token, {
-    httpOnly: false, // Must be readable by frontend JS
-    secure: true,
-    sameSite: 'none',
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
+    httpOnly: false, // Must be accessible to frontend
+    secure: isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: isCrossSite ? 'none' : 'lax',
+    path: '/',
+    maxAge: 24 * 60 * 60 * 1000,
   });
 
   return token;
