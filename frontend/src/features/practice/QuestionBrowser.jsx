@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DB_INFO } from '@/data/schemas';
 import { api } from '@/lib/api';
+import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 
 const ALL_KEYWORDS = [
   'Select', 'Where', 'Order By', 'Group By', 'Having',
@@ -18,6 +19,16 @@ const DIFF_COLORS = {
   hard:   { color: 'var(--error)',    bg: 'var(--error-muted)' },
 };
 
+const DIFF_ORDER = { easy: 0, medium: 1, hard: 2 };
+const STATUS_ORDER = { complete: 0, attempted: 1, incomplete: 2 };
+
+function SortIcon({ col, sortCol, sortDir }) {
+  if (sortCol !== col) return <ChevronsUpDown size={11} className="opacity-30 shrink-0" />;
+  return sortDir === 'asc'
+    ? <ChevronUp size={11} className="text-primary shrink-0" />
+    : <ChevronDown size={11} className="text-primary shrink-0" />;
+}
+
 export const QuestionBrowser = React.memo(function QuestionBrowser({
   questions, progress, currentQuestionId, onSelectQuestion, onClose,
 }) {
@@ -31,6 +42,8 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
   const [selectedCompanies, setSelectedCompanies] = useState(new Set());
   const [dynamicCompanies, setDynamicCompanies] = useState([]);
   const [qCompanyMap, setQCompanyMap]           = useState({});
+  const [sortCol, setSortCol]                   = useState('id');
+  const [sortDir, setSortDir]                   = useState('asc');
 
   const dynamicTopics = useMemo(() => {
     const topics = new Set();
@@ -46,18 +59,12 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
   }, [search]);
 
   useEffect(() => {
-    // Fetch companies to build company filter list
     api.companies
       .getAll()
       .then(({ data }) => {
         const companies = data.data.companies ?? [];
-        const comps = companies.map((c) => c.name).sort();
-        setDynamicCompanies(comps);
-        // Build a map of company name -> question prompts
-        // Note: full company-question mapping requires a separate endpoint
-        // For now, we filter by company name using the local question data
-        const map = {};
-        setQCompanyMap(map);
+        setDynamicCompanies(companies.map((c) => c.name).sort());
+        setQCompanyMap({});
       })
       .catch((err) => {
         console.error('[QuestionBrowser] Failed to load companies:', err.message);
@@ -70,28 +77,63 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     return next;
   };
 
-  const filtered = useMemo(() => questions.filter(q => {
-    if (selectedDbs.size > 0 && !selectedDbs.has(q.db)) return false;
-    if (selectedDiffs.size > 0 && !selectedDiffs.has(q.difficulty)) return false;
-    const status = progress[q.id] ?? 'incomplete';
-    if (selectedStatuses.size > 0 && !selectedStatuses.has(status)) return false;
-    if (selectedKeywords.size > 0) {
-      const kws = q.keywords?.filter(k => !k.startsWith('company:') && !k.startsWith('topic:')) || [];
-      if (!Array.from(selectedKeywords).some(sk => 
-        kws.some(k => k.toLowerCase().includes(sk.toLowerCase()))
-      )) return false;
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
     }
-    if (selectedTopics.size > 0) {
-      const tops = q.keywords?.filter(k => k.startsWith('topic:')).map(k => k.replace('topic:', '')) || [];
-      if (!tops.some(t => selectedTopics.has(t))) return false;
-    }
-    if (selectedCompanies.size > 0) {
-      const qComps = qCompanyMap[q.prompt] ? Array.from(qCompanyMap[q.prompt]) : [];
-      if (!qComps.some(c => selectedCompanies.has(c))) return false;
-    }
-    if (debouncedSearch && !q.prompt.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
-    return true;
-  }), [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, debouncedSearch, qCompanyMap]);
+  };
+
+  const filtered = useMemo(() => {
+    const base = questions.filter(q => {
+      if (selectedDbs.size > 0 && !selectedDbs.has(q.db)) return false;
+      if (selectedDiffs.size > 0 && !selectedDiffs.has(q.difficulty)) return false;
+      const status = progress[q.id] ?? 'incomplete';
+      if (selectedStatuses.size > 0 && !selectedStatuses.has(status)) return false;
+      if (selectedKeywords.size > 0) {
+        const kws = q.keywords?.filter(k => !k.startsWith('company:') && !k.startsWith('topic:')) || [];
+        if (!Array.from(selectedKeywords).some(sk =>
+          kws.some(k => k.toLowerCase().includes(sk.toLowerCase()))
+        )) return false;
+      }
+      if (selectedTopics.size > 0) {
+        const tops = q.keywords?.filter(k => k.startsWith('topic:')).map(k => k.replace('topic:', '')) || [];
+        if (!tops.some(t => selectedTopics.has(t))) return false;
+      }
+      if (selectedCompanies.size > 0) {
+        const qComps = qCompanyMap[q.prompt] ? Array.from(qCompanyMap[q.prompt]) : [];
+        if (!qComps.some(c => selectedCompanies.has(c))) return false;
+      }
+      if (debouncedSearch && !q.prompt.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
+      return true;
+    });
+
+    return [...base].sort((a, b) => {
+      let av, bv;
+      if (sortCol === 'id') {
+        av = Number(a.id); bv = Number(b.id);
+      } else if (sortCol === 'db') {
+        av = (DB_INFO[a.db]?.label || a.db).toLowerCase();
+        bv = (DB_INFO[b.db]?.label || b.db).toLowerCase();
+      } else if (sortCol === 'difficulty') {
+        av = DIFF_ORDER[a.difficulty] ?? 0;
+        bv = DIFF_ORDER[b.difficulty] ?? 0;
+      } else if (sortCol === 'status') {
+        av = STATUS_ORDER[progress[a.id] ?? 'incomplete'] ?? 2;
+        bv = STATUS_ORDER[progress[b.id] ?? 'incomplete'] ?? 2;
+      } else if (sortCol === 'prompt') {
+        av = (a.prompt || '').toLowerCase();
+        bv = (b.prompt || '').toLowerCase();
+      } else {
+        return 0;
+      }
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [questions, progress, selectedDbs, selectedDiffs, selectedStatuses, selectedKeywords, selectedTopics, selectedCompanies, debouncedSearch, qCompanyMap, sortCol, sortDir]);
 
   const stats = useMemo(() => {
     const complete  = questions.filter(q => progress[q.id] === 'complete').length;
@@ -106,6 +148,18 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     setSelectedDbs(new Set()); setSelectedDiffs(new Set()); setSelectedStatuses(new Set());
     setSelectedKeywords(new Set()); setSelectedTopics(new Set()); setSelectedCompanies(new Set());
   };
+
+  const SortableTh = ({ col, children, className = '' }) => (
+    <th
+      className={`p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em] cursor-pointer select-none hover:text-text transition-colors ${className}`}
+      onClick={() => handleSort(col)}
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        <SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
+      </span>
+    </th>
+  );
 
   return (
     <div
@@ -152,7 +206,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
               {hasFilters && (
                 <button
                   onClick={clearAll}
-                  className="text-[11px] text-primary bg-transparent border-none cursor-pointer font-semibold font-sans hover:text-primary/80 transition-colors"
+                  className="text-[11px] text-primary bg-transparent border-none cursor-pointer font-semibold font-sans hover:opacity-70 transition-opacity"
                 >
                   Clear all
                 </button>
@@ -239,11 +293,11 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
               <table className="w-full border-collapse text-[13px]">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-surface-2 border-b border-border">
-                    <th className="w-8 px-2.5 py-2 text-center" />
-                    <th className="w-[52px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">#</th>
-                    <th className="w-[130px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Database</th>
-                    <th className="w-[76px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Level</th>
-                    <th className="py-2 pr-2 pl-0 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Question</th>
+                    <SortableTh col="status" className="w-8 px-2.5" />
+                    <SortableTh col="id" className="w-[52px]">#</SortableTh>
+                    <SortableTh col="db" className="w-[130px]">Database</SortableTh>
+                    <SortableTh col="difficulty" className="w-[76px]">Level</SortableTh>
+                    <SortableTh col="prompt" className="">Question</SortableTh>
                   </tr>
                 </thead>
                 <tbody>
@@ -256,7 +310,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                       <tr
                         key={q.id}
                         onClick={() => { onSelectQuestion(q); onClose(); }}
-                        className={`border-b border-border cursor-pointer transition-colors duration-100 ${isCurrent ? 'bg-primary-muted' : 'bg-surface hover:bg-surface-2'}`}
+                        className={`border-b border-border cursor-pointer transition-colors duration-100 ${isCurrent ? 'bg-primary/5' : 'bg-surface hover:bg-surface-2'}`}
                       >
                         {/* Status dot */}
                         <td className="p-2.5 text-center w-8">
@@ -277,7 +331,8 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
 
                         {/* Difficulty */}
                         <td className="p-2">
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-[5px] tracking-[0.04em]"
+                          <span
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded-[5px] tracking-[0.04em]"
                             style={{ color: diff.color, backgroundColor: diff.bg }}
                           >
                             {q.difficulty?.toUpperCase()}
@@ -285,7 +340,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                         </td>
 
                         {/* Prompt */}
-                        <td className={`py-2.5 pr-2 pl-0 max-w-0 overflow-hidden whitespace-nowrap text-ellipsis ${isCurrent ? 'text-primary font-semibold' : 'text-text font-normal'}`}>
+                        <td className={`py-2.5 pr-3 pl-0 max-w-0 overflow-hidden whitespace-nowrap text-ellipsis ${isCurrent ? 'text-primary font-semibold' : 'text-text font-normal'}`}>
                           {q.prompt}
                         </td>
                       </tr>
@@ -314,13 +369,21 @@ function FilterGroup({ title, children }) {
   );
 }
 
-function FilterChip({ label, active, onClick }) {
+function FilterChip({ label, active, onClick, activeColor, activeBg }) {
   return (
     <button
       onClick={onClick}
-      className={`px-2.5 py-1 rounded-[5px] cursor-pointer text-[11px] font-semibold font-sans border transition-all duration-100 ${active ? 'bg-primary text-white border-primary' : 'bg-surface text-text-secondary border-border hover:bg-surface-2'}`}
+      style={active && activeColor ? { color: activeColor, backgroundColor: activeBg, borderColor: activeColor } : undefined}
+      className={`px-2.5 py-1 rounded-[5px] cursor-pointer text-[11px] font-semibold font-sans border transition-all duration-100 ${
+        active && !activeColor
+          ? 'bg-primary text-white border-primary'
+          : !active
+            ? 'bg-surface text-text-secondary border-border hover:bg-surface-2 hover:text-text hover:border-text-secondary'
+            : ''
+      }`}
     >
       {label}
     </button>
   );
 }
+

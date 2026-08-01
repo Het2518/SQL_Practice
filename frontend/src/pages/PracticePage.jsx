@@ -898,6 +898,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           {activeLeftPane === 'problem' ? (
             <QuestionCard
               question={currentQ}
+              expectedResult={expectedResult}
               status={progress[currentQ.id]}
               onNavigate={handleNavigate}
               hasPrev={hasPrev}
@@ -1042,19 +1043,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           )}
         </div>
 
-        {/* Floating reopen button when sidebar is closed */}
-        {!sidebarOpen && (
-          <button
-            onClick={() => toggleSidebar(true)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5 py-3 px-1.5 bg-surface hover:bg-surface-2 border-l border-t border-b border-border rounded-l-lg shadow-md text-text-secondary hover:text-primary transition-all cursor-pointer group"
-            title="Open Database Schema & Tables Sidebar"
-          >
-            <Database size={13} className="text-primary group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-bold tracking-widest text-text-secondary group-hover:text-primary [writing-mode:vertical-lr] rotate-180">
-              SCHEMA
-            </span>
-          </button>
-        )}
+
       </main>
 
       {/* Modals wrapped in Suspense */}
