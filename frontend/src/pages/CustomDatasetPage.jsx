@@ -824,7 +824,7 @@ export function CustomDatasetPage() {
   const hasData = schema?.length > 0;
 
   return (
-    <div className="sandbox-root" data-theme={darkMode ? 'dark' : 'light'}>
+    <div className="sandbox-root flex-1 w-full h-full flex flex-col overflow-hidden page-enter" data-theme={darkMode ? 'dark' : 'light'}>
       {/* ── Nav ── */}
       <nav className="sandbox-nav">
         <button

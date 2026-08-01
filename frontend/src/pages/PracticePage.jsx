@@ -579,7 +579,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     settings.editorFontSize >= 18 ? 'large' : settings.editorFontSize <= 12 ? 'small' : 'medium';
   return (
     <div
-      className="practice-root page-enter"
+      className="practice-root page-enter flex-1 w-full h-full flex flex-col overflow-hidden bg-bg text-text"
       data-theme={settings.darkMode ? 'dark' : 'light'}
       data-font-size={fontSizeClass}
     >
@@ -918,25 +918,16 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         )}
 
         {/* CENTER PANE: EDITOR & RESULTS */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg min-w-[300px]">
+        <div 
+          ref={workspaceRef}
+          className="flex-1 flex flex-col h-full overflow-hidden bg-bg min-w-[300px]"
+        >
           {/* EDITOR SECTION */}
           <div 
-            className="shrink-0 flex flex-col bg-surface border-b border-border"
+            className="shrink-0 flex flex-col bg-surface border-b border-border min-h-[140px] overflow-hidden"
             style={{ height: `${editorHeightPct}%` }}
           >
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-2">
-              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">SQL Editor</span>
-              <div className="flex gap-2">
-                 <button
-                   className="p-1 text-text-secondary hover:text-text rounded transition-colors"
-                   onClick={() => setSql(formatQuery(sql))}
-                   title="Format SQL (Alt+Shift+F)"
-                 >
-                   <SettingsIcon size={14} />
-                 </button>
-              </div>
-            </div>
-            <div className="flex-1 relative min-h-0 bg-surface">
+            <div className="flex-1 relative min-h-0 bg-surface overflow-hidden">
               <Suspense fallback={
                 <div className="flex-1 flex items-center justify-center text-muted h-full w-full">
                   Loading editor...
@@ -951,15 +942,23 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   onRun={runQuery}
                   onFormat={() => setSql(formatQuery(sql))}
                   height="100%"
+                  darkMode={settings.darkMode}
+                  fontSize={settings.editorFontSize}
+                  autoComplete={settings.autoComplete}
                 />
               </Suspense>
             </div>
-            <div className="flex items-center justify-end gap-2 p-3 bg-surface-2 border-t border-border">
-              <Button variant="secondary" onClick={() => setSql('')}>
-                <RotateCcw size={14} /> Reset
-              </Button>
-              <Button onClick={runQuery} isLoading={isRunning}>
-                <Play size={14} fill="currentColor" /> Run Code
+            <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
+              <div className="flex items-center gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setSql('')}>
+                  <RotateCcw size={13} /> Reset
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSql(formatQuery(sql))}>
+                  Format
+                </Button>
+              </div>
+              <Button size="sm" onClick={runQuery} isLoading={isRunning}>
+                <Play size={13} fill="currentColor" /> Run Code (Ctrl+Enter)
               </Button>
             </div>
           </div>

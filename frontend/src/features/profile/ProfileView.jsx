@@ -278,7 +278,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   const stats = difficultyStats;
 
   return (
-    <div className="flex flex-col min-h-screen bg-bg text-text animate-in fade-in duration-300">
+    <div className="flex-1 w-full h-full overflow-y-auto flex flex-col bg-bg text-text page-enter">
       {/* ── Global Header ── */}
       <Header
         user={user}

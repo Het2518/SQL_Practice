@@ -59,14 +59,7 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
   );
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--bg)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text flex flex-col page-enter">
       {/* ── Global Header ── */}
       <Header
         user={user}

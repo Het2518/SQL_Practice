@@ -100,7 +100,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex-1 w-full h-full overflow-y-auto flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 page-enter">
       <div className="max-w-md w-full space-y-8 bg-surface p-8 sm:p-10 rounded-2xl shadow-xl border border-border">
         
         {/* Header */}

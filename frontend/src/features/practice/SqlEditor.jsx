@@ -252,7 +252,7 @@ export function SqlEditor({
           Format
         </button>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-h-0 relative w-full h-full">
         <Editor
           height="100%"
           language="sql"

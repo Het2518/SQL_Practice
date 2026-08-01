@@ -21,7 +21,7 @@ export function LeaderboardPage({ user }) {
   });
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col page-enter">
+    <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text flex flex-col page-enter">
       <Helmet>
         <title>Global Leaderboard | DataDesk</title>
         <meta name="description" content="Check out the top SQL developers on DataDesk. Solve problems to climb the ranks!" />

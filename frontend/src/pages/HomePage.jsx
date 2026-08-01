@@ -65,7 +65,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
   const badges = (gameState?.badges ?? []).length;
 
   return (
-    <div className="relative min-h-screen bg-bg text-text pb-20 animate-in fade-in duration-300">
+    <div className="relative flex-1 w-full h-full overflow-y-auto bg-bg text-text pb-20 page-enter">
       <Helmet>
         <title>DataDesk | Practice SQL & Prepare for Interviews</title>
         <meta name="description" content="Master SQL with real-world databases. Interactive practice environment for JOINs, CTEs, and Window Functions." />

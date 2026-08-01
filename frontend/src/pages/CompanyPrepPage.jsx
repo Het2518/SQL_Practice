@@ -156,7 +156,7 @@ export default function CompanyPrepPage(props) {
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text page-enter">
       {/* ── Global Header ── */}
       <Header
         onShowAuth={props.onShowAuth}
