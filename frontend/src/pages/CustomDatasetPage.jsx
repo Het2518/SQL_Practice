@@ -669,7 +669,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function CustomDatasetPage() {
-  const { settings } = useSettingsStore();
+  const { settings, updateSettings } = useSettingsStore();
   const navigate = useNavigate();
   const [schema, setSchema] = useState(null);
   const [sampleData, setSampleData] = useState({});
@@ -683,6 +683,10 @@ export function CustomDatasetPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [qPanelVisible, setQPanelVisible] = useState(true);
   const workspaceRef = useRef(null);
+
+  const onToggleDark = useCallback(() => {
+    updateSettings({ darkMode: !settings?.darkMode });
+  }, [settings?.darkMode, updateSettings]);
 
   const { executeQuery, initWithBinary, initWithSql, getSchema } = useSqlDatabase(null);
 
