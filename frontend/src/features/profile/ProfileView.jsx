@@ -330,7 +330,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
                   justifyContent: 'center',
                   fontSize: 28,
                   fontWeight: 900,
-                  color: '#fff',
+                  color: 'var(--primary-foreground)',
                 }}
               >
                 {fullName.charAt(0).toUpperCase()}

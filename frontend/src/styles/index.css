@@ -23,5 +23,6 @@ html, body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Internal scrolling handled by panes */
+  overflow-y: auto;
+  overflow-x: hidden;
 }

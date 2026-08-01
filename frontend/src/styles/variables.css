@@ -20,6 +20,7 @@
   --muted:           #6b7280;
 
   --primary:         #000000;
+  --primary-foreground: #ffffff;
   --primary-hover:   #333333;
   --primary-muted:   rgba(0, 0, 0, 0.05);
   --primary-light:   rgba(0, 0, 0, 0.1);
@@ -82,6 +83,7 @@ html[data-theme="dark"],
   --muted:           #737373;
 
   --primary:         #ffffff;
+  --primary-foreground: #000000;
   --primary-hover:   #e5e5e5;
   --primary-muted:   rgba(255, 255, 255, 0.08);
   --primary-light:   rgba(255, 255, 255, 0.15);

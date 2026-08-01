@@ -137,7 +137,7 @@ Rules:
                   'w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1',
                   msg.role === 'user'
                     ? 'bg-surface-3 text-text-secondary'
-                    : 'bg-primary text-white shadow-md shadow-primary/20'
+                    : 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
                 )}
               >
                 {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
@@ -146,7 +146,7 @@ Rules:
                 className={cn(
                   'px-4 py-2.5 rounded-2xl max-w-[85%] text-[14px] leading-relaxed shadow-sm',
                   msg.role === 'user'
-                    ? 'bg-primary text-white rounded-tr-none'
+                    ? 'bg-primary text-primary-foreground rounded-tr-none'
                     : 'bg-surface-2 text-text border border-border rounded-tl-none whitespace-pre-wrap'
                 )}
               >
@@ -156,7 +156,7 @@ Rules:
           ))}
           {isLoading && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-1">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 mt-1">
                 <Bot size={16} />
               </div>
               <div className="px-4 py-3 rounded-2xl bg-surface-2 text-text border border-border rounded-tl-none">

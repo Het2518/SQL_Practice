@@ -16,6 +16,7 @@ export default {
         muted: 'var(--muted)',
         primary: {
           DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
           hover: 'var(--primary-hover)',
           muted: 'var(--primary-muted)',
           light: 'var(--primary-light)',
