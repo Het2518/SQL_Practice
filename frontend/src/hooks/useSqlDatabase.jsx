@@ -110,6 +110,7 @@ export function useSqlDatabase(dbInput) {
     } catch (err) {
       setError(`Failed to load database: ${err.message}`);
       setIsLoading(false);
+      throw err;
     }
   }, [sendMessage]);
 
@@ -123,6 +124,7 @@ export function useSqlDatabase(dbInput) {
     } catch (err) {
       setError(`Failed to build database from SQL: ${err.message}`);
       setIsLoading(false);
+      throw err;
     }
   }, [sendMessage]);
 

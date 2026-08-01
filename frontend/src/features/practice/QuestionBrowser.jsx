@@ -28,6 +28,19 @@ function SortIcon({ col, sortCol, sortDir }) {
     ? <ChevronUp size={11} className="text-primary shrink-0" />
     : <ChevronDown size={11} className="text-primary shrink-0" />;
 }
+function SortableTh({ col, sortCol, sortDir, handleSort, children, className = '' }) {
+  return (
+    <th
+      className={`p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em] cursor-pointer select-none hover:text-text transition-colors ${className}`}
+      onClick={() => handleSort(col)}
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        <SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
+      </span>
+    </th>
+  );
+}
 
 export const QuestionBrowser = React.memo(function QuestionBrowser({
   questions, progress, currentQuestionId, onSelectQuestion, onClose,
@@ -113,7 +126,9 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     return [...base].sort((a, b) => {
       let av, bv;
       if (sortCol === 'id') {
-        av = Number(a.id); bv = Number(b.id);
+        // Compound key: db alphabetical + id numerical
+        av = a.db + '_' + String(a.id).padStart(4, '0');
+        bv = b.db + '_' + String(b.id).padStart(4, '0');
       } else if (sortCol === 'db') {
         av = (DB_INFO[a.db]?.label || a.db).toLowerCase();
         bv = (DB_INFO[b.db]?.label || b.db).toLowerCase();
@@ -149,17 +164,6 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
     setSelectedKeywords(new Set()); setSelectedTopics(new Set()); setSelectedCompanies(new Set());
   };
 
-  const SortableTh = ({ col, children, className = '' }) => (
-    <th
-      className={`p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em] cursor-pointer select-none hover:text-text transition-colors ${className}`}
-      onClick={() => handleSort(col)}
-    >
-      <span className="flex items-center gap-1">
-        {children}
-        <SortIcon col={col} sortCol={sortCol} sortDir={sortDir} />
-      </span>
-    </th>
-  );
 
   return (
     <div
@@ -293,11 +297,11 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
               <table className="w-full border-collapse text-[13px]">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-surface-2 border-b border-border">
-                    <SortableTh col="status" className="w-8 px-2.5" />
-                    <SortableTh col="id" className="w-[52px]">#</SortableTh>
-                    <SortableTh col="db" className="w-[130px]">Database</SortableTh>
-                    <SortableTh col="difficulty" className="w-[76px]">Level</SortableTh>
-                    <SortableTh col="prompt" className="">Question</SortableTh>
+                    <SortableTh col="status" sortCol={sortCol} sortDir={sortDir} handleSort={handleSort} className="w-8 px-2.5" />
+                    <SortableTh col="id" sortCol={sortCol} sortDir={sortDir} handleSort={handleSort} className="w-[52px]">#</SortableTh>
+                    <SortableTh col="db" sortCol={sortCol} sortDir={sortDir} handleSort={handleSort} className="w-[130px]">Database</SortableTh>
+                    <SortableTh col="difficulty" sortCol={sortCol} sortDir={sortDir} handleSort={handleSort} className="w-[76px]">Level</SortableTh>
+                    <SortableTh col="prompt" sortCol={sortCol} sortDir={sortDir} handleSort={handleSort} className="">Question</SortableTh>
                   </tr>
                 </thead>
                 <tbody>

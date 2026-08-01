@@ -204,7 +204,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       </div>
 
       {/* ── Custom Dataset Section ── */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-5xl mx-auto mt-12 mx-6 p-6 rounded-2xl bg-gradient-to-br from-surface to-surface-2 border border-border shadow-sm cursor-pointer transition-all hover:border-primary/50 hover:shadow-md group" onClick={() => navigate('/sandbox')}>
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-7xl mx-auto mt-12 mx-6 p-6 rounded-2xl bg-gradient-to-br from-surface to-surface-2 border border-border shadow-sm cursor-pointer transition-all hover:border-primary/50 hover:shadow-md group" onClick={() => navigate('/sandbox')}>
         <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
           <Upload size={20} color="var(--primary)" strokeWidth={2} />
         </div>
@@ -224,7 +224,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       </div>
 
       {/* ── Database Grid Header ── */}
-      <div className="flex items-center justify-between max-w-5xl mx-auto mt-12 mb-6 px-6">
+      <div className="flex items-center justify-between max-w-7xl mx-auto mt-12 mb-6 px-6">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Layers size={14} color="var(--muted)" />
           <span
@@ -246,7 +246,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       </div>
 
       {/* ── DB Cards ── */}
-      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto px-6">
         {DB_NAMES.map((db, i) => {
           const info = DB_INFO[db];
           const dbQs = getQuestionsForDb(db);
@@ -304,6 +304,77 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
           );
         })}
       </main>
+
+      {/* ── Learn SQL Section ── */}
+      <div className="max-w-7xl mx-auto mt-20 mb-12 px-6">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <BookOpen size={14} color="var(--muted)" />
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--text-secondary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Learn SQL Step-by-Step
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { title: '1. Basic Filtering', desc: 'SELECT, WHERE, AND/OR', icon: Target },
+            { title: '2. Aggregations', desc: 'GROUP BY, HAVING, SUM/AVG', icon: BarChart2 },
+            { title: '3. Joining Data', desc: 'INNER, LEFT, RIGHT JOINs', icon: Layers },
+            { title: '4. Subqueries', desc: 'Nested queries, IN, EXISTS', icon: Code },
+            { title: '5. Date & Time', desc: 'Date math, EXTRACT, Formatting', icon: Clock },
+            { title: '6. Window Functions', desc: 'ROW_NUMBER, RANK, OVER', icon: LineChart },
+            { title: '7. CTEs', desc: 'WITH clause, readability', icon: Code2 },
+            { title: '8. Advanced Topics', desc: 'Recursive CTEs, PIVOT', icon: Zap },
+          ].map((topic, i) => (
+            <div key={topic.title} className="bg-surface border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/practice/hospital')}>
+              <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center mb-3 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                <topic.icon size={16} />
+              </div>
+              <h3 className="text-sm font-bold text-text mb-1">{topic.title}</h3>
+              <p className="text-xs text-text-secondary leading-relaxed">{topic.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* ── Why DataDesk Section ── */}
+      <section className="border-t border-border mt-20 py-20 bg-surface-2">
+        <div className="max-w-7xl mx-auto px-6 text-center mb-16">
+          <h2 className="text-3xl font-extrabold text-text mb-4">Why practice on DataDesk?</h2>
+          <p className="text-text-secondary max-w-2xl mx-auto">We built the ultimate environment for mastering SQL, focusing on the concepts that actually matter in tech interviews.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto px-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+              <Database size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2">Real-world Schema</h3>
+            <p className="text-sm text-text-secondary">Practice on full-scale databases (E-commerce, Healthcare, Airlines) with realistic data complexity, not toy tables.</p>
+          </div>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-xl bg-success-muted flex items-center justify-center text-success mb-4 border border-success-light">
+              <CheckCircle size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2">Instant Verification</h3>
+            <p className="text-sm text-text-secondary">Our in-browser SQLite engine validates your answers instantly against verified solutions, highlighting precise diffs.</p>
+          </div>
+          <div className="flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-xl bg-warning-muted flex items-center justify-center text-warning mb-4 border border-warning-light">
+              <Trophy size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2">Interview Ready</h3>
+            <p className="text-sm text-text-secondary">Questions are sourced directly from FAANG data science and data engineering interviews, organized by difficulty.</p>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
