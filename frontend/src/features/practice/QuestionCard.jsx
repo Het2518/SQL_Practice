@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Lightbulb, Code, Building2, Tag, Sparkles, CheckCircle, AlertTriangle, KeyRound, Cpu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lightbulb, Code, Building2, Tag, Sparkles, CheckCircle, AlertTriangle, KeyRound, Cpu } from 'lucide-react';
 import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
