@@ -1,197 +1,191 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
+import {
+  ReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+  ReactFlowProvider,
+  useReactFlow,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import dagre from 'dagre';
 import { DB_INFO } from '@/data/schemas';
-import { Search, Key, Link as LinkIcon, ZoomIn, ZoomOut, Maximize, Database } from 'lucide-react';
+import { Search, Database } from 'lucide-react';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
+import { TableNode } from './TableNode';
+
+const nodeTypes = {
+  table: TableNode,
+};
+
+const dagreGraph = new dagre.graphlib.Graph();
+dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 const NODE_WIDTH = 300;
-const HEADER_HEIGHT = 46;
-const ROW_HEIGHT = 32;
+const NODE_HEIGHT_ESTIMATE = 150; // Will be adjusted by Dagre dynamically, but good enough for init
 
-export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ dbName, onClose }) {
+const getLayoutedElements = (nodes, edges, direction = 'LR') => {
+  const isHorizontal = direction === 'LR';
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 50 });
+
+  nodes.forEach((node) => {
+    dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT_ESTIMATE });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  const newNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    const newNode = {
+      ...node,
+      targetPosition: isHorizontal ? 'left' : 'top',
+      sourcePosition: isHorizontal ? 'right' : 'bottom',
+      position: {
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT_ESTIMATE / 2,
+      },
+    };
+    return newNode;
+  });
+
+  return { nodes: newNodes, edges };
+};
+
+function ERDiagramFlow({ dbName, onClose }) {
   const trapRef = useFocusTrap(true);
   const dbInfo = DB_INFO[dbName];
   const tables = dbInfo?.tables || [];
 
-  const [nodes, setNodes] = useState({});
-  const [layoutBounds, setLayoutBounds] = useState({ width: 0, height: 0 });
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFocus, setActiveFocus] = useState(null);
   
-  const [highlightedTable, setHighlightedTable] = useState(null);
-  const [selectedTable, setSelectedTable] = useState(null);
-  
-  const transformRef = useRef(null);
+  const { fitView, setCenter } = useReactFlow();
 
-  // 1. Generate Hierarchical Auto-Layout
+  // Initialize Nodes and Edges
   useEffect(() => {
     if (tables.length === 0) return;
 
-    const edges = [];
-    tables.forEach(t => t.columns.forEach(c => {
-      if (c.isForeignKey && c.references) {
-        edges.push({ from: t.name, to: c.references });
-      }
+    const initialNodes = tables.map((t) => ({
+      id: t.name,
+      type: 'table',
+      data: { 
+        table: t,
+        isFocus: false,
+        activeConnections: null 
+      },
+      position: { x: 0, y: 0 },
     }));
 
-    const levels = {};
-    tables.forEach(t => levels[t.name] = 0);
-    
-    let changed = true;
-    let iterations = 0;
-    while(changed && iterations < tables.length) {
-      changed = false;
-      edges.forEach(e => {
-        if(levels[e.from] <= levels[e.to]) {
-          levels[e.from] = levels[e.to] + 1;
-          changed = true;
+    const initialEdges = [];
+    tables.forEach((t) => {
+      t.columns.forEach((c) => {
+        if (c.isForeignKey && c.references) {
+          const referencedTable = tables.find(rt => rt.name === c.references);
+          const referencedPk = referencedTable?.columns.find(rc => rc.isPrimaryKey)?.name || 'id';
+
+          initialEdges.push({
+            id: `e-${t.name}-${c.references}`,
+            source: c.references, 
+            sourceHandle: `${c.references}-${referencedPk}-source`,
+            target: t.name,
+            targetHandle: `${t.name}-${c.name}-target`,
+            type: 'smoothstep',
+            animated: false,
+            style: { stroke: 'var(--border)', strokeWidth: 1.5, opacity: 0.4 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: 'var(--border)',
+            },
+          });
         }
       });
-      iterations++;
-    }
-
-    const usedLevels = Array.from(new Set(Object.values(levels))).sort((a,b) => a-b);
-    const levelMap = {};
-    usedLevels.forEach((l, idx) => levelMap[l] = idx);
-    tables.forEach(t => levels[t.name] = levelMap[levels[t.name]]);
-
-    const levelGroups = {};
-    Object.entries(levels).forEach(([name, lvl]) => {
-      if(!levelGroups[lvl]) levelGroups[lvl] = [];
-      levelGroups[lvl].push(name);
     });
 
-    Object.values(levelGroups).forEach(group => group.sort());
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      initialNodes,
+      initialEdges,
+      'LR'
+    );
 
-    const initialNodes = {};
-    const GAP_X = 220; 
-    const GAP_Y = 80;
-    
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
 
-    Object.keys(levelGroups).forEach(lvl => {
-      const levelIdx = parseInt(lvl);
-      const group = levelGroups[lvl];
-      
-      const totalHeight = group.reduce((sum, name) => {
-        const t = tables.find(t => t.name === name);
-        return sum + HEADER_HEIGHT + (t.columns.length * ROW_HEIGHT) + GAP_Y;
-      }, 0);
-      
-      let yOffset = -totalHeight / 2;
+    // Give it a tiny delay to render then fit view
+    setTimeout(() => {
+      fitView({ padding: 0.2, duration: 800 });
+    }, 100);
+  }, [tables, setNodes, setEdges, fitView]);
 
-      group.forEach((name) => {
-        const table = tables.find(t => t.name === name);
-        const height = HEADER_HEIGHT + (table.columns.length * ROW_HEIGHT);
-        
-        const x = levelIdx * (NODE_WIDTH + GAP_X);
-        const y = yOffset;
-        
-        initialNodes[name] = { table, x, y };
-        
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + NODE_WIDTH);
-        maxY = Math.max(maxY, y + height);
-
-        yOffset += height + GAP_Y;
-      });
-    });
-
-    const PADDING = 100;
-    Object.values(initialNodes).forEach(n => {
-      n.x = n.x - minX + PADDING;
-      n.y = n.y - minY + PADDING;
-    });
-
-    setNodes(initialNodes);
-    setLayoutBounds({ 
-      width: maxX - minX + PADDING * 2, 
-      height: maxY - minY + PADDING * 2 
-    });
-  }, [tables]);
-
-  // Smart Panning
+  // Handle active focus updates (Highlighting lines and nodes)
   useEffect(() => {
-    if (selectedTable && transformRef.current) {
-      setTimeout(() => {
-         transformRef.current.zoomToElement(`node-${selectedTable}`, 1.2, 500, 'easeOut');
-      }, 50);
+    if (!activeFocus) {
+      setNodes((nds) => nds.map(n => ({
+        ...n,
+        data: { ...n.data, isFocus: false, activeConnections: null }
+      })));
+      setEdges((eds) => eds.map(e => ({
+        ...e,
+        style: { stroke: 'var(--border)', strokeWidth: 1.5, opacity: 0.4 },
+        animated: false,
+        markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--border)' }
+      })));
+      return;
     }
-  }, [selectedTable]);
 
-  const relationships = useMemo(() => {
-    const edges = [];
-    tables.forEach(table => {
-      table.columns.forEach(col => {
-        if (col.isForeignKey && col.references) {
-          edges.push({ sourceTable: table.name, sourceCol: col.name, targetTable: col.references });
+    // Find connections
+    const connectedNodeIds = new Set([activeFocus]);
+    edges.forEach(e => {
+      if (e.source === activeFocus) connectedNodeIds.add(e.target);
+      if (e.target === activeFocus) connectedNodeIds.add(e.source);
+    });
+
+    setNodes((nds) => nds.map(n => ({
+      ...n,
+      data: { 
+        ...n.data, 
+        isFocus: n.id === activeFocus, 
+        activeConnections: connectedNodeIds 
+      }
+    })));
+
+    setEdges((eds) => eds.map(e => {
+      const isConnected = e.source === activeFocus || e.target === activeFocus;
+      return {
+        ...e,
+        style: { 
+          stroke: isConnected ? 'var(--primary)' : 'var(--border)', 
+          strokeWidth: isConnected ? 2.5 : 1.5, 
+          opacity: isConnected ? 1 : 0.1 
+        },
+        animated: isConnected,
+        markerEnd: { 
+          type: MarkerType.ArrowClosed, 
+          color: isConnected ? 'var(--primary)' : 'var(--border)' 
         }
-      });
-    });
-    return edges;
-  }, [tables]);
+      };
+    }));
 
-  const activeFocus = highlightedTable || selectedTable;
-  const activeConnections = activeFocus ? (
-    new Set([
-      activeFocus,
-      ...relationships.filter(r => r.sourceTable === activeFocus || r.targetTable === activeFocus).map(r => r.sourceTable === activeFocus ? r.targetTable : r.sourceTable)
-    ])
-  ) : null;
+    // Pan to node
+    const targetNode = nodes.find(n => n.id === activeFocus);
+    if (targetNode) {
+      setCenter(targetNode.position.x + NODE_WIDTH/2, targetNode.position.y + 100, { zoom: 1.2, duration: 800 });
+    }
 
-  const renderLines = () => {
-    return relationships.map((edge, idx) => {
-      const sourceNode = nodes[edge.sourceTable];
-      const targetNode = nodes[edge.targetTable];
-      if (!sourceNode || !targetNode) return null;
-
-      let sourceColIndex = sourceNode.table.columns.findIndex(c => c.name === edge.sourceCol);
-      if (sourceColIndex === -1) sourceColIndex = 0;
-      
-      const sourceY = sourceNode.y + HEADER_HEIGHT + (sourceColIndex * ROW_HEIGHT + ROW_HEIGHT/2);
-      const targetY = targetNode.y + HEADER_HEIGHT/2; 
-
-      const isSourceLeft = sourceNode.x < targetNode.x;
-      const startX = isSourceLeft ? sourceNode.x + NODE_WIDTH : sourceNode.x;
-      const endX = isSourceLeft ? targetNode.x : targetNode.x + NODE_WIDTH;
-
-      const controlPointOffset = Math.max(Math.abs(endX - startX) / 2, 60);
-      const cp1X = isSourceLeft ? startX + controlPointOffset : startX - controlPointOffset;
-      const cp2X = isSourceLeft ? endX - controlPointOffset : endX + controlPointOffset;
-
-      const isHighlighted = !activeFocus || (edge.sourceTable === activeFocus || edge.targetTable === activeFocus);
-      const color = isHighlighted ? 'var(--primary)' : 'var(--border)';
-      const opacity = isHighlighted ? 1 : 0.15;
-      const strokeWidth = isHighlighted ? 2.5 : 1.5;
-      const zIndex = isHighlighted ? 5 : 0;
-
-      return (
-        <path
-          key={idx}
-          d={`M ${startX} ${sourceY} C ${cp1X} ${sourceY}, ${cp2X} ${targetY}, ${endX} ${targetY}`}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          opacity={opacity}
-          markerEnd={isHighlighted ? "url(#arrow-active)" : "url(#arrow-inactive)"}
-          style={{ transition: 'opacity 0.3s ease, stroke-width 0.3s ease', zIndex }}
-        />
-      );
-    });
-  };
+  }, [activeFocus]); // Intentionally omitting edges/nodes from deps to avoid infinite loops
 
   return (
     <div ref={trapRef} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--bg)', display: 'flex' }}>
       
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
       {/* Left Sidebar */}
       <div style={{ width: 380, borderRight: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 20, boxShadow: '4px 0 24px rgba(0,0,0,0.05)', flexShrink: 0 }}>
         {/* Header */}
@@ -225,45 +219,26 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
         {/* Table List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
            {tables.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase())).map(t => {
-             const isSelected = selectedTable === t.name;
+             const isSelected = activeFocus === t.name;
              return (
-               <div key={t.name} style={{ marginBottom: 12 }}>
-                  <div 
-                     onClick={() => setSelectedTable(isSelected ? null : t.name)}
-                     onMouseEnter={() => setHighlightedTable(t.name)}
-                     onMouseLeave={() => setHighlightedTable(null)}
-                     style={{ 
-                       padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-                       background: isSelected ? 'var(--primary-muted)' : 'var(--surface)',
-                       border: `1px solid ${isSelected ? 'var(--primary-light)' : 'var(--border)'}`,
-                       boxShadow: isSelected ? '0 4px 12px rgba(139, 92, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
-                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                       transition: 'all 0.2s'
-                     }}
-                  >
-                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Database size={16} color={isSelected ? "var(--primary)" : "var(--muted)"} />
-                        <span style={{ fontWeight: 600, color: isSelected ? 'var(--primary)' : 'var(--text)', fontSize: 14 }}>{t.name}</span>
-                     </div>
-                     <span style={{ fontSize: 11, color: isSelected ? 'var(--primary)' : 'var(--muted)', background: isSelected ? 'var(--surface)' : 'var(--surface-2)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>{t.columns.length}</span>
+               <div 
+                  key={t.name}
+                  onClick={() => setActiveFocus(isSelected ? null : t.name)}
+                  style={{ 
+                    marginBottom: 8,
+                    padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+                    background: isSelected ? 'var(--primary-muted)' : 'var(--surface)',
+                    border: `1px solid ${isSelected ? 'var(--primary-light)' : 'var(--border)'}`,
+                    boxShadow: isSelected ? '0 4px 12px rgba(139, 92, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    transition: 'all 0.2s'
+                  }}
+               >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                     <Database size={16} color={isSelected ? "var(--primary)" : "var(--muted)"} />
+                     <span style={{ fontWeight: 600, color: isSelected ? 'var(--primary)' : 'var(--text)', fontSize: 14 }}>{t.name}</span>
                   </div>
-                  
-                  {isSelected && (
-                     <div style={{ padding: '12px 16px 16px 42px', animation: 'fadeIn 0.2s ease-out' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Columns</div>
-                        {t.columns.map(c => (
-                           <div key={c.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '6px 0', borderBottom: '1px dashed var(--border)' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                 {c.isPrimaryKey && <Key size={12} color="#f59e0b" title="Primary Key" />}
-                                 {c.isForeignKey && <LinkIcon size={12} color="var(--primary)" title={`Foreign Key to ${c.references}`} />}
-                                 {!c.isPrimaryKey && !c.isForeignKey && <span style={{ width: 12 }} />}
-                                 <span style={{ color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)', fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 600 : 400 }}>{c.name}</span>
-                              </div>
-                              <span style={{ color: 'var(--muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{c.type}</span>
-                           </div>
-                        ))}
-                     </div>
-                  )}
+                  <span style={{ fontSize: 11, color: isSelected ? 'var(--primary)' : 'var(--muted)', background: isSelected ? 'var(--surface)' : 'var(--surface-2)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>{t.columns.length}</span>
                </div>
              )
            })}
@@ -271,105 +246,50 @@ export const InteractiveERDiagram = React.memo(function InteractiveERDiagram({ d
       </div>
 
       {/* Right Canvas */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg)', backgroundImage: 'radial-gradient(var(--border) 1px, transparent 1px)', backgroundSize: '24px 24px' }} onClick={() => setSelectedTable(null)}>
-        <TransformWrapper
-          ref={transformRef}
-          initialScale={1}
-          minScale={0.3}
-          maxScale={2}
-          centerOnInit={true}
-          limitToBounds={false}
-          panning={{ velocityMultiplier: 0.5 }}
-          doubleClick={{ disabled: true }}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg)' }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          onNodeClick={(_, node) => setActiveFocus(node.id === activeFocus ? null : node.id)}
+          onPaneClick={() => setActiveFocus(null)}
+          fitView
+          minZoom={0.2}
+          maxZoom={2}
+          defaultEdgeOptions={{ zIndex: 0 }}
         >
-          {({ zoomIn, zoomOut, centerView }) => (
-            <>
-              {/* Floating Controls */}
-              <div style={{ 
-                position: 'absolute', bottom: 32, right: 32, zIndex: 10, 
-                display: 'flex', flexDirection: 'column', gap: 6, 
-                background: 'var(--surface)', padding: 6, borderRadius: 12, 
-                boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: '1px solid var(--border)' 
-              }}>
-                 <button onClick={() => zoomIn(0.2, 300)} title="Zoom In" style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 8 }} onMouseOver={e => e.currentTarget.style.background='var(--surface-2)'} onMouseOut={e => e.currentTarget.style.background='transparent'}><ZoomIn size={20} /></button>
-                 <button onClick={() => zoomOut(0.2, 300)} title="Zoom Out" style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 8 }} onMouseOver={e => e.currentTarget.style.background='var(--surface-2)'} onMouseOut={e => e.currentTarget.style.background='transparent'}><ZoomOut size={20} /></button>
-                 <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                 <button onClick={() => centerView(1, 400)} title="Fit to Screen" style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text)', borderRadius: 8 }} onMouseOver={e => e.currentTarget.style.background='var(--surface-2)'} onMouseOut={e => e.currentTarget.style.background='transparent'}><Maximize size={20} /></button>
-              </div>
-
-              <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
-                <div style={{ width: layoutBounds.width, height: layoutBounds.height, position: 'relative' }}>
-                  
-                  {/* SVG Layer for Lines */}
-                  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
-                    <defs>
-                      <marker id="arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--primary)" />
-                      </marker>
-                      <marker id="arrow-inactive" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 1 L 10 5 L 0 9 z" fill="var(--border)" opacity="0.6" />
-                      </marker>
-                    </defs>
-                    {renderLines()}
-                  </svg>
-
-                  {/* HTML Layer for Nodes */}
-                  {Object.values(nodes).map((node, index) => {
-                    const t = node.table;
-                    const isFaded = activeConnections && !activeConnections.has(t.name);
-                    const isFocus = activeFocus === t.name;
-
-                    return (
-                      <div
-                        id={`node-${t.name}`}
-                        key={t.name}
-                        onClick={(e) => { e.stopPropagation(); setSelectedTable(t.name); }}
-                        onMouseEnter={() => setHighlightedTable(t.name)}
-                        onMouseLeave={() => setHighlightedTable(null)}
-                        style={{
-                          position: 'absolute',
-                          left: node.x,
-                          top: node.y,
-                          width: NODE_WIDTH,
-                          background: 'var(--surface)',
-                          border: `1px solid ${isFocus ? 'var(--primary)' : 'var(--border)'}`,
-                          borderRadius: 12,
-                          boxShadow: isFocus ? '0 0 0 3px rgba(139, 92, 246, 0.15), 0 12px 32px rgba(0,0,0,0.1)' : '0 8px 24px rgba(0,0,0,0.04)',
-                          opacity: isFaded ? 0.2 : 1,
-                          transition: 'opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
-                          zIndex: isFocus ? 10 : 1,
-                          userSelect: 'none',
-                          cursor: 'pointer',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        <div style={{ height: HEADER_HEIGHT, background: 'var(--surface-2)', borderBottom: `1px solid ${isFocus ? 'var(--primary-light)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', padding: '0 16px', justifyContent: 'space-between' }}>
-                          <span style={{ fontWeight: 700, fontSize: 14, color: isFocus ? 'var(--primary)' : 'var(--text)' }}>{t.name}</span>
-                          <span style={{ fontSize: 10, color: isFocus ? 'var(--primary)' : 'var(--muted)', fontWeight: 700, background: isFocus ? 'var(--primary-muted)' : 'var(--bg)', padding: '2px 6px', borderRadius: 4 }}>{t.columns.length} COLS</span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', padding: '4px 0' }}>
-                          {t.columns.map((c, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: ROW_HEIGHT, padding: '0 16px', fontSize: 13, background: (c.isPrimaryKey || c.isForeignKey) ? 'var(--surface)' : 'transparent' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                {c.isPrimaryKey && <Key size={14} color="#f59e0b" title="Primary Key" />}
-                                {c.isForeignKey && <LinkIcon size={14} color="var(--primary)" title={`Foreign Key to ${c.references}`} />}
-                                {!c.isPrimaryKey && !c.isForeignKey && <span style={{ width: 14 }} />}
-                                <span style={{ fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 600 : 500, color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)' }}>{c.name}</span>
-                              </div>
-                              <span style={{ color: 'var(--muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>{c.type}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </TransformComponent>
-            </>
-          )}
-        </TransformWrapper>
+          <Background color="var(--border)" gap={24} size={1} />
+          <Controls 
+            style={{ 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.15)', 
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              overflow: 'hidden'
+            }} 
+          />
+          <MiniMap 
+            nodeColor={(node) => node.id === activeFocus ? 'var(--primary)' : 'var(--surface-2)'}
+            maskColor="var(--bg)"
+            style={{ 
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+            }}
+          />
+        </ReactFlow>
       </div>
     </div>
+  );
+}
+
+// Wrap with ReactFlowProvider
+export const InteractiveERDiagram = React.memo(function WrappedERDiagram(props) {
+  return (
+    <ReactFlowProvider>
+      <ERDiagramFlow {...props} />
+    </ReactFlowProvider>
   );
 });
