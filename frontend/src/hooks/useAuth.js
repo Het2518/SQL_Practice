@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '@/lib/api';
+import { api, apiClient } from '@/lib/api';
 
 /**
  * Zustand store for JWT-based authentication.
@@ -20,7 +20,10 @@ export const useAuth = create((set, get) => ({
   initializeAuth: async () => {
     // Ensure we have a CSRF token from the server
     try {
-      await api.auth.getCsrfToken();
+      const { data } = await api.auth.getCsrfToken();
+      if (data?.data?.csrfToken) {
+        apiClient.defaults.headers.common['X-CSRF-Token'] = data.data.csrfToken;
+      }
     } catch (err) {
       console.warn('Failed to fetch CSRF token:', err);
     }
