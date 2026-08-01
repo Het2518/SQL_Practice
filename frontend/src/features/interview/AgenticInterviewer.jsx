@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Bot, User, Loader2, Play } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
@@ -83,7 +84,7 @@ Rules:
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-surface z-[9999] flex flex-col animate-in fade-in duration-200">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg shadow-sm">
         <div>
@@ -159,6 +160,7 @@ Rules:
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

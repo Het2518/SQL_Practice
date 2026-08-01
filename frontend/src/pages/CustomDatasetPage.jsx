@@ -667,26 +667,26 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
       </div>
 
       {/* AI Generate Box */}
-      <div style={{ marginTop: 32, width: '100%', maxWidth: 500, margin: '32px auto 0' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-          <Sparkles size={14} color="var(--primary)" /> Generate Schema with AI
+      <div style={{ marginTop: 32, width: '100%', maxWidth: 520, margin: '32px auto 0' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+          <Sparkles size={16} color="var(--primary)" /> Generate Schema with AI
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 10, background: 'var(--surface-2)', padding: '6px', borderRadius: 12, border: '1px solid var(--border)' }}>
            <input 
              type="text" 
              value={aiPrompt}
              onChange={e => setAiPrompt(e.target.value)}
-             placeholder="e.g. Netflix viewing history with users and movies" 
-             style={{ flex: 1, padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13, outline: 'none' }}
+             placeholder="e.g. A hospital with patients and doctors" 
+             style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' }}
              onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
              disabled={generatingSchema || uploading}
            />
            <Button 
              onClick={() => onAiGenerate(aiPrompt)} 
              disabled={!aiPrompt.trim() || generatingSchema || uploading} 
-             className="hero-btn-primary" 
-             size="sm"
-             style={{ padding: '0 20px' }}
+             variant="primary"
+             size="md"
+             style={{ borderRadius: 8, padding: '0 24px', fontWeight: 600 }}
            >
              {generatingSchema ? 'Building...' : 'Generate'}
            </Button>
