@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Bot, User, Loader2, Play } from 'lucide-react';
+import { X, Bot, User, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { api } from '@/lib/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
   const [messages, setMessages] = useState([]);
@@ -43,12 +45,68 @@ export function AgenticInterviewer({ isOpen, onClose, companyName = "FAANG" }) {
       }
     };
 
+    const handleProctoring = (e) => {
+      if (!isOpen || isSubmittedRef.current) return;
+
+      // Prevent Context Menu
+      if (e.type === 'contextmenu') {
+        e.preventDefault();
+      }
+
+      // Prevent Copy / Cut
+      if (e.type === 'copy' || e.type === 'cut') {
+        e.preventDefault();
+        toast({ title: 'Proctoring Alert', message: 'Copy/Cut operations are disabled during the interview.', type: 'warning' });
+      }
+
+      // Prevent Paste
+      if (e.type === 'paste') {
+        e.preventDefault();
+        toast({ title: 'Proctoring Alert', message: 'Pasting external code is strictly prohibited.', type: 'error' });
+      }
+
+      if (e.type === 'keydown') {
+        // Print Screen
+        if (e.key === 'PrintScreen') {
+          e.preventDefault();
+          navigator.clipboard?.writeText('');
+          toast({ title: 'Proctoring Alert', message: 'Screenshots are prohibited!', type: 'error' });
+        }
+
+        // Block Inspect / Save / Print
+        if (
+          e.key === 'F12' ||
+          ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c')) ||
+          ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P'))
+        ) {
+          e.preventDefault();
+        }
+
+        // Block Win+Shift+S / Mac Cmd+Shift+4 (Common screenshot shortcuts)
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 's' || e.key === 'S' || e.key === '3' || e.key === '4' || e.key === '5')) {
+          e.preventDefault();
+          navigator.clipboard?.writeText('');
+          toast({ title: 'Proctoring Alert', message: 'Screenshots are prohibited!', type: 'error' });
+        }
+      }
+    };
+
     document.addEventListener('fullscreenchange', handleAntiCheat);
     document.addEventListener('visibilitychange', handleAntiCheat);
+    document.addEventListener('contextmenu', handleProctoring, { capture: true });
+    document.addEventListener('copy', handleProctoring, { capture: true });
+    document.addEventListener('cut', handleProctoring, { capture: true });
+    document.addEventListener('paste', handleProctoring, { capture: true });
+    document.addEventListener('keydown', handleProctoring, { capture: true });
 
     return () => {
       document.removeEventListener('fullscreenchange', handleAntiCheat);
       document.removeEventListener('visibilitychange', handleAntiCheat);
+      document.removeEventListener('contextmenu', handleProctoring, { capture: true });
+      document.removeEventListener('copy', handleProctoring, { capture: true });
+      document.removeEventListener('cut', handleProctoring, { capture: true });
+      document.removeEventListener('paste', handleProctoring, { capture: true });
+      document.removeEventListener('keydown', handleProctoring, { capture: true });
     };
   }, [isOpen, companyName, onClose, toast]);
 
@@ -186,10 +244,15 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-surface z-[9999] flex flex-col animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-surface z-[9999] flex flex-col animate-in fade-in duration-200 select-none">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-text">Agentic Interview Mode: {companyName}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-text">Agentic Interview Mode: {companyName}</h2>
+            <div className="px-2 py-1 rounded bg-error/10 text-error border border-error/20 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
+              <ShieldAlert size={14} /> Proctored Environment
+            </div>
+          </div>
           <p className="text-sm text-text-secondary">Clarify requirements with the AI before writing your code.</p>
         </div>
         <Button variant="ghost" onClick={onClose}><X size={20} /></Button>
@@ -197,15 +260,25 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Chat */}
-        <div className="w-1/3 min-w-[350px] border-r border-border flex flex-col bg-surface-2">
+        <div className="w-1/3 min-w-[400px] border-r border-border flex flex-col bg-surface-2">
           <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary text-bg' : 'bg-surface-3 text-text'}`}>
                   {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                 </div>
-                <div className={`px-4 py-3 rounded-2xl max-w-[85%] text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-primary text-bg rounded-tr-sm' : 'bg-surface shadow-sm rounded-tl-sm border border-border text-text'}`}>
-                  {msg.content}
+                <div className={`px-4 py-3 rounded-2xl max-w-[90%] text-[13.5px] leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-primary text-bg rounded-tr-sm' 
+                    : 'bg-surface shadow-sm rounded-tl-sm border border-border text-text prose prose-sm prose-p:my-1 prose-pre:my-1 prose-pre:bg-surface-3 prose-pre:text-text prose-code:text-primary dark:prose-invert max-w-none'
+                }`}>
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  )}
                 </div>
               </div>
             ))}
