@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { Helmet } from 'react-helmet-async';
 import { Trophy, Medal, Crown, Loader2, ArrowLeft, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/shared/ui/Header';
@@ -21,6 +22,10 @@ export function LeaderboardPage({ user }) {
 
   return (
     <div className="min-h-screen bg-bg flex flex-col page-enter">
+      <Helmet>
+        <title>Global Leaderboard | DataDesk</title>
+        <meta name="description" content="Check out the top SQL developers on DataDesk. Solve problems to climb the ranks!" />
+      </Helmet>
       <Header user={user} />
 
       <main className="flex-1 max-w-4xl w-full mx-auto p-6 mt-6">

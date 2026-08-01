@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   RotateCcw,
   Play,
@@ -537,6 +538,10 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       data-theme={settings.darkMode ? 'dark' : 'light'}
       data-font-size={fontSizeClass}
     >
+      <Helmet>
+        <title>{dbInfo?.label ? `Practice ${dbInfo.label} | DataDesk` : 'SQL Practice | DataDesk'}</title>
+        <meta name="description" content={dbInfo?.description || 'Interactive SQL practice environment.'} />
+      </Helmet>
       {/* ══ NAV ══ */}
       <Header
         onShowAuth={onShowAuth}

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   Sun,
   Moon,
@@ -65,6 +66,10 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
 
   return (
     <div className="home-root page-enter">
+      <Helmet>
+        <title>DataDesk | Practice SQL & Prepare for Interviews</title>
+        <meta name="description" content="Master SQL with real-world databases. Interactive practice environment for JOINs, CTEs, and Window Functions." />
+      </Helmet>
       {/* ── Global Header ── */}
       <Header
         onShowAuth={onShowAuth}
