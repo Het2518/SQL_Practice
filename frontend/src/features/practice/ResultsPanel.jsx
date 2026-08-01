@@ -35,38 +35,16 @@ export const ResultsPanel = React.memo(function ResultsPanel({
   if (!result) {
     if (!sql || sql.trim() === '') {
       return (
-        <div className="flex flex-col items-center justify-center h-full p-8 bg-[var(--surface)]">
-          <div className="flex flex-col items-center justify-center w-full max-w-[400px] py-12 px-6 border-2 border-dashed border-[var(--border)] rounded-2xl bg-[var(--surface-2)] gap-4">
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                color: 'var(--text-secondary)',
-              }}
-            >
+        <div className="flex flex-col items-center justify-center h-full p-8 bg-surface">
+          <div className="flex flex-col items-center justify-center w-full max-w-[400px] py-12 px-6 border-2 border-dashed border-border rounded-2xl bg-surface-2 gap-4">
+            <div className="w-14 h-14 rounded-full bg-surface border border-border shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center justify-center text-2xl text-text-secondary">
               ⌨️
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div
-                style={{
-                  color: 'var(--text)',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  marginBottom: 6,
-                  letterSpacing: '-0.3px',
-                }}
-              >
+            <div className="text-center">
+              <div className="text-text text-[15px] font-semibold mb-1.5 tracking-tight">
                 Write your SQL query
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <div className="text-[13px] text-text-secondary leading-relaxed">
                 Type a query in the editor above to solve the problem
               </div>
             </div>
@@ -76,58 +54,19 @@ export const ResultsPanel = React.memo(function ResultsPanel({
     }
 
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100%',
-          gap: 12,
-          color: 'var(--muted)',
-          background: 'var(--surface)',
-        }}
-      >
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 24,
-            background: 'var(--surface-2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 20,
-            color: 'var(--text-secondary)',
-          }}
-        >
+      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted bg-surface">
+        <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center text-xl text-text-secondary">
           ▶
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 500, marginBottom: 4 }}>
-            Ready to execute
-          </div>
-          <div style={{ fontSize: 12 }}>
+        <div className="text-center">
+          <div className="text-text font-medium mb-1">Ready to execute</div>
+          <div className="text-xs">
             Press{' '}
-            <kbd
-              style={{
-                background: 'var(--surface-3)',
-                padding: '2px 6px',
-                borderRadius: 4,
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
+            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono">
               Ctrl
             </kbd>{' '}
             +{' '}
-            <kbd
-              style={{
-                background: 'var(--surface-3)',
-                padding: '2px 6px',
-                borderRadius: 4,
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
+            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono">
               Enter
             </kbd>{' '}
             to run
@@ -188,64 +127,42 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
         {/* Execution Stats — no emoji, clean text */}
         {!isError && (
-          <div style={{ display: 'flex', gap: 14, color: 'var(--text-secondary)' }}>
+          <div className="flex gap-3.5 text-text-secondary">
             <span>
-              <strong style={{ color: 'var(--text)' }}>
+              <strong className="text-text">
                 {result.execTimeMs !== undefined ? `${result.execTimeMs.toFixed(1)} ms` : '< 1 ms'}
               </strong>
             </span>
             {!isDML && (
               <span>
-                <strong style={{ color: 'var(--text)' }}>{totalRows}</strong> rows
+                <strong className="text-text">{totalRows}</strong> rows
               </span>
             )}
             {!isDML && (
               <span>
-                <strong style={{ color: 'var(--text)' }}>{result.columns.length}</strong> cols
+                <strong className="text-text">{result.columns.length}</strong> cols
               </span>
             )}
-            <span style={{ color: 'var(--muted)' }}>{new Date().toLocaleTimeString()}</span>
+            <span className="text-muted">{new Date().toLocaleTimeString()}</span>
           </div>
         )}
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
       </div>
 
       {/* Validation Message Box */}
       {validation && !validation.isCorrect && !isError && (
-        <div
-          style={{
-            padding: '10px 16px',
-            background: 'rgba(239,68,68,0.07)',
-            borderBottom: '1px solid rgba(239,68,68,0.18)',
-            color: 'var(--error)',
-            fontSize: 12,
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '8px',
-          }}
-        >
-          <div style={{ flex: 1 }}>{validation.message}</div>
+        <div className="px-4 py-2.5 bg-red-500/10 border-b border-red-500/20 text-error text-xs font-medium flex items-start gap-2">
+          <div className="flex-1">{validation.message}</div>
         </div>
       )}
 
       {/* Content Area */}
       {!isError && !isDML && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Tabs Navigation — clean pill style, no icons */}
           {(!validation || validation.isCorrect) && executeQuery && sql && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '6px 12px',
-                gap: 4,
-                borderBottom: '1px solid var(--border)',
-                background: 'var(--surface-2)',
-                flexShrink: 0,
-              }}
-            >
+            <div className="flex items-center px-3 py-1.5 gap-1 border-b border-border bg-surface-2 shrink-0">
               {[
                 { id: 'data', label: 'Data' },
                 { id: 'chart', label: 'Chart' },
@@ -256,31 +173,11 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    background: activeTab === tab.id ? 'var(--primary)' : 'transparent',
-                    border: activeTab === tab.id ? 'none' : '1px solid var(--border)',
-                    padding: '4px 12px',
-                    borderRadius: 20,
-                    color: activeTab === tab.id ? 'var(--primary-foreground)' : 'var(--text-secondary)',
-                    fontWeight: activeTab === tab.id ? 600 : 500,
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    transition: 'all 0.18s ease',
-                    letterSpacing: '0.01em',
-                    lineHeight: 1.6,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (activeTab !== tab.id) {
-                      e.currentTarget.style.background = 'var(--surface-3)';
-                      e.currentTarget.style.color = 'var(--text)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeTab !== tab.id) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                    }
-                  }}
+                  className={`px-3 py-1 rounded-full text-xs cursor-pointer transition-all duration-150 ease-in-out tracking-[0.01em] leading-relaxed border ${
+                    activeTab === tab.id
+                      ? 'bg-primary text-primary-foreground border-transparent font-semibold'
+                      : 'bg-transparent text-text-secondary border-border font-medium hover:bg-surface-3 hover:text-text'
+                  }`}
                 >
                   {tab.label}
                 </button>
@@ -288,15 +185,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
             </div>
           )}
 
-          <div
-            style={{
-              flex: 1,
-              overflowY: activeTab === 'data' ? 'hidden' : 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-            }}
-          >
+          <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'data' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {validation && !validation.isCorrect && validation.diff ? (
               <DiffTable diff={validation.diff} expectedColumns={validation.expectedColumns} />
             ) : (
@@ -352,10 +241,10 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                           fixedHeaderContent={() => (
                             <tr>
                               {/\bGROUP\s+BY\b/i.test(sql) && (
-                                <th style={{ width: '30px', background: 'var(--surface-2)' }}></th>
+                                <th className="w-[30px] bg-surface-2"></th>
                               )}
                               {result.columns.map((col, i) => (
-                                <th key={i} style={{ background: 'var(--surface-2)' }}>
+                                <th key={i} className="bg-surface-2">
                                   {col}
                                 </th>
                               ))}
@@ -365,8 +254,8 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                             Table: ({ style, ...props }) => (
                               <table
                                 {...props}
-                                className="results-table"
-                                style={{ ...style, borderSpacing: 0, width: '100%', margin: 0 }}
+                                className="results-table w-full m-0 border-spacing-0"
+                                style={style}
                               />
                             ),
                             TableRow: React.forwardRef(({ item: row, ...props }, ref) => (
@@ -388,14 +277,14 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
                 {/* Chart Tab */}
                 {activeTab === 'chart' && (
-                  <div style={{ flex: 1, overflowY: 'hidden' }}>
+                  <div className="flex-1 overflow-hidden">
                     <DataVisualizer result={result} />
                   </div>
                 )}
 
                 {/* Null Analysis Tab */}
                 {activeTab === 'analysis' && (
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                  <div className="flex-1 overflow-y-auto">
                     <NullSummaryPanel results={result} />
                   </div>
                 )}
@@ -408,7 +297,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                   sql && (
                     <>
                       {activeTab === 'plan' && (
-                        <div style={{ padding: 16 }}>
+                        <div className="p-4">
                           <ExecutionPlanTree
                             sql={sql}
                             executeQuery={executeQuery}
@@ -417,7 +306,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                         </div>
                       )}
                       {activeTab === 'theory' && (
-                        <div style={{ padding: 16 }}>
+                        <div className="p-4">
                           <TheoryConnector sql={sql} question={question} />
                         </div>
                       )}
@@ -430,33 +319,12 @@ export const ResultsPanel = React.memo(function ResultsPanel({
       )}
 
       {isError && (
-        <div style={{ padding: 24, flex: 1, overflow: 'auto' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              color: 'var(--error)',
-              marginBottom: 12,
-              fontWeight: 600,
-            }}
-          >
-            <XCircle size={20} strokeWidth={1.5} color="var(--error)" />
+        <div className="p-6 flex-1 overflow-auto">
+          <div className="flex items-center gap-2 text-error mb-3 font-semibold">
+            <XCircle size={20} strokeWidth={1.5} className="text-error" />
             Execution Failed
           </div>
-          <pre
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 13,
-              color: 'var(--error)',
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.6,
-              background: 'rgba(239,68,68,0.1)',
-              padding: 16,
-              borderRadius: 8,
-              border: '1px solid rgba(239,68,68,0.2)',
-            }}
-          >
+          <pre className="font-mono text-[13px] text-error whitespace-pre-wrap leading-relaxed bg-red-500/10 p-4 rounded-lg border border-red-500/20">
             {result.error}
           </pre>
         </div>

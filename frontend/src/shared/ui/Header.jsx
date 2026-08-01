@@ -28,50 +28,50 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
   const { gameState } = useGamificationStore();
 
   return (
-    <header className="home-header">
+    <header className="relative z-50 h-[52px] px-5 flex items-center justify-between bg-surface border-b border-border shadow-sm shrink-0">
       {/* ── LEFT: Logo & Context ── */}
-      <div className="home-header-left">
-        <div className="home-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <div className="home-logo-badge">
+      <div className="flex items-center gap-4 justify-start">
+        <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80 select-none" onClick={() => navigate('/')}>
+          <div className="w-6 h-6 rounded-md bg-text text-bg flex items-center justify-center font-extrabold text-sm">
             <Database size={14} strokeWidth={2.5} />
           </div>
-          <span className="home-title">DataDesk</span>
+          <span className="text-sm font-bold text-text tracking-tight m-0 hidden sm:block">DataDesk</span>
         </div>
 
         {leftContent && (
           <>
-            <div className="home-header-sep" />
-            {leftContent}
+            <div className="w-px h-4 bg-border hidden sm:block" />
+            <div className="hidden sm:flex">{leftContent}</div>
           </>
         )}
       </div>
 
       {/* ── CENTER: Segmented Control / Main Navigation ── */}
-      <div className="home-header-center">
+      <div className="flex justify-center flex-1 mx-4">
         {centerContent}
       </div>
 
       {/* ── RIGHT: Tools & Actions ── */}
-      <div className="home-nav">
+      <div className="flex items-center gap-1 sm:gap-2 justify-end">
         {navLinks && navLinks.map((link, i) => (
           <button
             key={i}
             type="button"
             onClick={link.onClick}
-            className={`nav-btn ${link.primary ? 'primary-text' : ''}`}
+            className={`flex items-center gap-1.5 px-2.5 py-1 bg-transparent text-text-secondary font-sans text-xs font-medium rounded-sm cursor-pointer transition-colors hover:bg-surface-2 hover:text-text hidden md:flex ${link.primary ? 'text-text font-semibold' : ''}`}
           >
             {link.label}
           </button>
         ))}
 
         {rightContent && (
-          <>
+          <div className="hidden md:flex">
              {rightContent}
-          </>
+          </div>
         )}
 
         <button
-          className="nav-btn nav-btn-icon"
+          className="flex items-center justify-center p-1.5 rounded-md text-text-secondary hover:bg-surface-2 hover:text-text transition-colors"
           onClick={toggleDarkMode}
           title={settings.darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
@@ -79,15 +79,14 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
         </button>
 
         {gameState?.currentStreak > 0 && (
-          <div className="pill pill-easy" title={`${gameState.currentStreak} Day Streak`} style={{ gap: 4, display: 'flex', alignItems: 'center' }}>
+          <div className="flex items-center gap-1 px-2 py-1 bg-orange-500/10 text-orange-500 text-xs font-bold rounded-full border border-orange-500/20" title={`${gameState.currentStreak} Day Streak`}>
             <Flame size={12} />{gameState.currentStreak}
           </div>
         )}
 
         <button
-          className="nav-btn nav-btn-icon"
+          className="flex items-center justify-center p-1.5 rounded-md hover:bg-surface-2 transition-colors text-amber-500"
           onClick={() => navigate('/leaderboard')}
-          style={{ color: '#f59e0b' }}
           title="Leaderboard"
         >
           <Trophy size={15} />
@@ -95,7 +94,7 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
 
         {onShowSettings && (
           <button
-            className="nav-btn nav-btn-icon"
+            className="flex items-center justify-center p-1.5 rounded-md text-text-secondary hover:bg-surface-2 hover:text-text transition-colors"
             onClick={onShowSettings}
             title="Settings"
           >
@@ -103,23 +102,21 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
           </button>
         )}
 
-        <div className="home-header-sep" style={{ margin: '0 8px' }} />
+        <div className="w-px h-4 bg-border mx-1 sm:mx-2" />
 
         {user ? (
           <button
-            className="nav-btn-primary"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-text text-bg rounded-full font-sans text-xs font-semibold cursor-pointer shadow-sm transition-all hover:opacity-90 hover:scale-95"
             onClick={() => navigate('/profile')}
-            style={{ borderRadius: 9999, padding: '6px 14px' }}
           >
-            <User size={14} strokeWidth={2.5} /> Profile
+            <User size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Profile</span>
           </button>
         ) : (
           <button
-            className="nav-btn-primary"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-text text-bg rounded-full font-sans text-xs font-semibold cursor-pointer shadow-sm transition-all hover:opacity-90 hover:scale-95"
             onClick={onShowAuth}
-            style={{ borderRadius: 9999, padding: '6px 14px' }}
           >
-            <LogIn size={14} strokeWidth={2.5} /> Sign In
+            <LogIn size={14} strokeWidth={2.5} /> <span className="hidden sm:inline">Sign In</span>
           </button>
         )}
       </div>
@@ -138,23 +135,22 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
 // Helper for breadcrumbs in leftContent
 export function HeaderBreadcrumbs({ items }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
+    <div className="flex items-center gap-2 text-[13px] font-semibold">
       {items.map((item, i) => (
         <React.Fragment key={i}>
           {item.onClick ? (
             <button
               type="button"
               onClick={item.onClick}
-              className="nav-btn"
-              style={{ padding: 0 }}
+              className="p-0 bg-transparent text-text-secondary hover:text-text transition-colors cursor-pointer"
             >
               {item.label}
             </button>
           ) : (
-            <span style={{ color: 'var(--text)' }}>{item.label}</span>
+            <span className="text-text">{item.label}</span>
           )}
 
-          {i < items.length - 1 && <ChevronRight size={14} color="var(--border)" />}
+          {i < items.length - 1 && <ChevronRight size={14} className="text-border" />}
         </React.Fragment>
       ))}
     </div>

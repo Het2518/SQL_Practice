@@ -109,72 +109,51 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-6"
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{
-        width: '100%', maxWidth: 1080, height: '88vh',
-        background: 'var(--surface)', borderRadius: 12, overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        border: '1px solid var(--border)', boxShadow: '0 24px 48px rgba(0,0,0,0.25)',
-      }}>
-
+      <div className="w-full max-w-[1080px] h-[88vh] bg-surface rounded-xl overflow-hidden flex flex-col border border-border shadow-[0_24px_48px_rgba(0,0,0,0.25)]">
         {/* ── Header ── */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 16, padding: '0 20px',
-          height: 52, borderBottom: '1px solid var(--border)', flexShrink: 0,
-          background: 'var(--surface)',
-        }}>
-          <div style={{ flex: 1 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Question Library</span>
-            <span style={{ marginLeft: 12, fontSize: 12, color: 'var(--muted)' }}>
+        <div className="flex items-center gap-4 px-5 h-[52px] border-b border-border shrink-0 bg-surface">
+          <div className="flex-1">
+            <span className="text-sm font-bold text-text">Question Library</span>
+            <span className="ml-3 text-xs text-muted">
               {stats.complete} solved · {stats.attempted} attempted
             </span>
           </div>
 
           {/* Search */}
-          <div style={{ position: 'relative', width: 280 }}>
+          <div className="relative w-[280px]">
             <input
               type="search"
               placeholder="Search questions..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '7px 12px', border: '1px solid var(--border)',
-                borderRadius: 7, background: 'var(--surface-2)', color: 'var(--text)',
-                fontFamily: 'var(--font-sans)', fontSize: 13, outline: 'none', boxSizing: 'border-box',
-              }}
-              onFocus={e => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              className="w-full px-3 py-1.5 border border-border rounded-md bg-surface-2 text-text font-sans text-[13px] outline-none box-border focus:border-primary transition-colors"
             />
           </div>
 
           <button
             onClick={onClose}
-            style={{
-              width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', background: 'var(--surface-2)', border: '1px solid var(--border)',
-              cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1,
-            }}
+            className="w-7 h-7 rounded-md flex items-center justify-center bg-surface-2 border border-border cursor-pointer text-text-secondary text-base leading-none hover:bg-surface-3 hover:text-text transition-colors"
           >
             ×
           </button>
         </div>
 
         {/* ── Body: Sidebar + List ── */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
+        <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div style={{
-            width: 220, flexShrink: 0, borderRight: '1px solid var(--border)',
-            overflowY: 'auto', padding: '16px 14px', background: 'var(--bg)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div className="w-[220px] shrink-0 border-r border-border overflow-y-auto px-3.5 py-4 bg-bg">
+            <div className="flex items-center justify-between mb-3.5">
+              <span className="text-[10px] font-bold text-muted uppercase tracking-widest">
                 Filters
               </span>
               {hasFilters && (
-                <button onClick={clearAll} style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
+                <button
+                  onClick={clearAll}
+                  className="text-[11px] text-primary bg-transparent border-none cursor-pointer font-semibold font-sans hover:text-primary/80 transition-colors"
+                >
                   Clear all
                 </button>
               )}
@@ -244,27 +223,27 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
           </div>
 
           {/* Question list */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="flex-1 overflow-y-auto">
             {/* Count row */}
-            <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)', fontSize: 12, color: 'var(--muted)', fontWeight: 500, background: 'var(--surface-2)' }}>
+            <div className="px-5 py-2.5 border-b border-border text-xs text-muted font-medium bg-surface-2">
               {filtered.length} of {questions.length} questions
-              {debouncedSearch && <span style={{ marginLeft: 8, color: 'var(--primary)' }}>matching "{debouncedSearch}"</span>}
+              {debouncedSearch && <span className="ml-2 text-primary">matching "{debouncedSearch}"</span>}
             </div>
 
             {filtered.length === 0 ? (
-              <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>No questions match</div>
-                <div style={{ fontSize: 13 }}>Try adjusting your search or filters.</div>
+              <div className="p-16 text-center text-muted">
+                <div className="text-sm font-semibold text-text mb-1.5">No questions match</div>
+                <div className="text-[13px]">Try adjusting your search or filters.</div>
               </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-                  <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
-                    <th style={{ width: 32, padding: '8px 10px', textAlign: 'center' }} />
-                    <th style={{ width: 52, padding: '8px 8px', textAlign: 'left', fontWeight: 700, fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>#</th>
-                    <th style={{ width: 130, padding: '8px 8px', textAlign: 'left', fontWeight: 700, fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Database</th>
-                    <th style={{ width: 76, padding: '8px 8px', textAlign: 'left', fontWeight: 700, fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Level</th>
-                    <th style={{ padding: '8px 8px 8px 0', textAlign: 'left', fontWeight: 700, fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Question</th>
+              <table className="w-full border-collapse text-[13px]">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-surface-2 border-b border-border">
+                    <th className="w-8 px-2.5 py-2 text-center" />
+                    <th className="w-[52px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">#</th>
+                    <th className="w-[130px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Database</th>
+                    <th className="w-[76px] p-2 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Level</th>
+                    <th className="py-2 pr-2 pl-0 text-left font-bold text-[10px] text-muted uppercase tracking-[0.07em]">Question</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -277,52 +256,36 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                       <tr
                         key={q.id}
                         onClick={() => { onSelectQuestion(q); onClose(); }}
-                        style={{
-                          borderBottom: '1px solid var(--border)',
-                          cursor: 'pointer',
-                          background: isCurrent ? 'var(--primary-muted)' : 'var(--surface)',
-                          transition: 'background 0.1s',
-                        }}
-                        onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                        onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--surface)'; }}
+                        className={`border-b border-border cursor-pointer transition-colors duration-100 ${isCurrent ? 'bg-primary-muted' : 'bg-surface hover:bg-surface-2'}`}
                       >
                         {/* Status dot */}
-                        <td style={{ padding: '10px 10px', textAlign: 'center', width: 32 }}>
-                          <span style={{
-                            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
-                            background: status === 'complete' ? 'var(--success)' : status === 'attempted' ? 'var(--warning)' : 'var(--border)',
-                          }} />
+                        <td className="p-2.5 text-center w-8">
+                          <span className={`inline-block w-2 h-2 rounded-full ${status === 'complete' ? 'bg-success' : status === 'attempted' ? 'bg-warning' : 'bg-border'}`} />
                         </td>
 
                         {/* Question # */}
-                        <td style={{ padding: '10px 8px', color: 'var(--muted)', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
+                        <td className="p-2 text-muted tabular-nums text-xs">
                           {q.id}
                         </td>
 
                         {/* DB name */}
-                        <td style={{ padding: '10px 8px' }}>
-                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        <td className="p-2">
+                          <span className="text-[11px] font-semibold text-text-secondary">
                             {DB_INFO[q.db]?.label || q.db}
                           </span>
                         </td>
 
                         {/* Difficulty */}
-                        <td style={{ padding: '10px 8px' }}>
-                          <span style={{
-                            fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
-                            color: diff.color, background: diff.bg, letterSpacing: '0.04em',
-                          }}>
+                        <td className="p-2">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-[5px] tracking-[0.04em]"
+                            style={{ color: diff.color, backgroundColor: diff.bg }}
+                          >
                             {q.difficulty?.toUpperCase()}
                           </span>
                         </td>
 
                         {/* Prompt */}
-                        <td style={{
-                          padding: '10px 8px 10px 0',
-                          color: isCurrent ? 'var(--primary)' : 'var(--text)',
-                          fontWeight: isCurrent ? 600 : 400,
-                          maxWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-                        }}>
+                        <td className={`py-2.5 pr-2 pl-0 max-w-0 overflow-hidden whitespace-nowrap text-ellipsis ${isCurrent ? 'text-primary font-semibold' : 'text-text font-normal'}`}>
                           {q.prompt}
                         </td>
                       </tr>
@@ -340,28 +303,22 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
 
 function FilterGroup({ title, children }) {
   return (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+    <div className="mb-5">
+      <div className="text-[10px] font-bold text-muted uppercase tracking-[0.08em] mb-2">
         {title}
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+      <div className="flex flex-wrap gap-1.5">
         {children}
       </div>
     </div>
   );
 }
 
-function FilterChip({ label, active, onClick, activeColor, activeBg }) {
+function FilterChip({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      style={{
-        padding: '4px 10px', borderRadius: 5, cursor: 'pointer', fontSize: 11, fontWeight: 600,
-        fontFamily: 'var(--font-sans)', border: '1px solid', transition: 'all 0.1s',
-        background: active ? (activeBg || 'var(--primary)') : 'var(--surface)',
-        color:      active ? (activeColor || '#fff')       : 'var(--text-secondary)',
-        borderColor: active ? (activeColor || 'var(--primary)') : 'var(--border)',
-      }}
+      className={`px-2.5 py-1 rounded-[5px] cursor-pointer text-[11px] font-semibold font-sans border transition-all duration-100 ${active ? 'bg-primary text-white border-primary' : 'bg-surface text-text-secondary border-border hover:bg-surface-2'}`}
     >
       {label}
     </button>

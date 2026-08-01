@@ -5,7 +5,7 @@ import { useProgressStore } from '@/stores/useProgressStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/shared/ui/ToastSystem';
-import '@/styles/styles.css';
+
 
 // Lazy load large views for performance with automatic retry for chunk errors
 const lazyRetry = (componentImport) => {
@@ -209,7 +209,7 @@ export default function App() {
             background: 'var(--bg)',
           }}
         >
-          <div className="spinner" />
+          <div className="w-8 h-8 border-4 border-surface-3 border-t-primary rounded-full animate-spin" />
         </div>
       }
     >

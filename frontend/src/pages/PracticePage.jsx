@@ -712,9 +712,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           </div>
         }
         centerContent={
-          <div className="segmented-control">
+          <div className="relative flex items-center p-1 bg-surface-2 rounded-lg border border-border shadow-inner mx-4">
             <button
-              className={`segment-btn ${rightPanelOpen && activeLeftPane === 'problem' ? 'active' : ''}`}
               onClick={() => {
                 if (!rightPanelOpen) setRightPanelOpen(true);
                 if (activeLeftPane === 'problem' && rightPanelOpen) {
@@ -723,12 +722,11 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   setActiveLeftPane('problem');
                 }
               }}
+              className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'problem' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
             >
-              <List size={13} style={{ marginRight: 6, verticalAlign: '-2px', display: 'inline-block' }} />
-              Problem
+              <List size={14} /> Description
             </button>
             <button
-              className={`segment-btn ${rightPanelOpen && activeLeftPane === 'discussions' ? 'active' : ''}`}
               onClick={() => {
                 if (!rightPanelOpen) setRightPanelOpen(true);
                 if (activeLeftPane === 'discussions' && rightPanelOpen) {
@@ -737,24 +735,22 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   setActiveLeftPane('discussions');
                 }
               }}
+              className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'discussions' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
             >
-              💬 Discussions
+              Discussion
             </button>
             <div 
-              className="segment-indicator" 
+              className="absolute top-1 bottom-1 w-1/2 bg-surface border border-border rounded-md shadow-sm transition-transform duration-200 ease-in-out pointer-events-none" 
               style={{
-                width: rightPanelOpen ? '50%' : '0%',
-                opacity: rightPanelOpen ? 1 : 0,
-                transform: `translateX(${activeLeftPane === 'problem' ? '0%' : '100%'})`
+                transform: rightPanelOpen 
+                  ? (activeLeftPane === 'problem' ? 'translateX(0)' : 'translateX(100%)')
+                  : 'scaleX(0)',
+                opacity: rightPanelOpen ? 1 : 0
               }} 
             />
           </div>
         }
-        navLinks={[
-          { label: 'All Questions', onClick: () => setShowBrowser(true) },
-          { label: 'ER Diagram', onClick: () => setShowERDiagram(true) },
-          { label: 'Schema', primary: sidebarOpen, onClick: () => setSidebarOpen((v) => !v) },
-        ]}
+        navLinks={[]}
         rightContent={
           <div style={{ position: 'relative' }}>
             <Button
@@ -845,261 +841,161 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         }
       />
 
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="spinner" />
-          <div style={{ marginTop: 12, color: 'var(--muted)' }}>Loading {dbInfo.label}…</div>
+      {/* Global Loading Overlay */}
+      {globalLoading && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-sm">
+          <div className="w-8 h-8 border-4 border-surface-3 border-t-primary rounded-full animate-spin" />
+          <p className="mt-4 text-sm font-semibold text-text-secondary animate-pulse">{globalLoadingMsg}</p>
         </div>
       )}
 
-      {/* ══ MAIN: 3-column flex layout ══ */}
-      <div
-        ref={layoutRef}
-        className="practice-layout"
-        style={{
-          display: 'flex',
-          flex: 1,
-          overflow: 'hidden',
-          minHeight: 0,
-          background: 'var(--bg)',
-          padding: '12px',
-          gap: '12px',
-        }}
+      <main 
+        className="flex-1 flex overflow-hidden min-h-0 relative bg-surface-2"
+        onMouseMove={handleMouseMove} 
+        onMouseUp={handleMouseUp} 
+        onMouseLeave={handleMouseUp}
       >
-        {/* LEFT: Question panel */}
-        <div
-          className={`question-pane-wrap ${rightPanelOpen ? 'open' : ''}`}
-          style={{
-            width: rightPanelOpen ? questionW : 0,
-            minWidth: 0,
-            overflow: 'hidden',
-            flexShrink: 0,
-            transition: 'width 0.22s ease',
-            border: 'none',
-            borderRadius: '16px',
-            background: 'var(--surface)',
-            boxShadow: rightPanelOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none',
+        {/* LEFT PANE */}
+        <div 
+          className="shrink-0 border-r border-border bg-bg h-full flex flex-col overflow-hidden transition-all duration-300"
+          style={{ 
+            width: rightPanelOpen ? leftPaneWidth : 0, 
+            opacity: rightPanelOpen ? 1 : 0 
           }}
         >
-          <div style={{ width: questionW, height: '100%', overflow: 'hidden' }}>
-            {activeLeftPane === 'problem' ? (
-              <QuestionCard
-                question={currentQ}
-                expectedResult={expectedResult}
-                status={progress[currentQ.id] ?? 'incomplete'}
-                onOpenBrowser={() => setShowBrowser(true)}
-                onOpenAiTutor={() => setShowAiTutor(true)}
-                onNavigate={navigateTo}
-                hasPrev={currentIdx > 0}
-                hasNext={currentIdx < dbQuestions.length - 1}
-                questionNumber={currentIdx + 1}
-                totalQuestions={dbQuestions.length}
-                timedChallenges={settings.timedChallenges}
-                onTimerExpire={() => {
-                  if (sql.trim()) handleRun();
-                }}
-                currentSql={sql}
-                lastValidation={validation}
-                dbSchemaContext={dbSchemaContext}
-                executeQuery={executeQuery}
-              />
-            ) : (
-              <DiscussionsPanel questionId={currentQ.id} />
-            )}
-          </div>
+          {activeLeftPane === 'problem' ? (
+            <QuestionCard
+              question={currentQ}
+              status={progress[currentQ.id]}
+              onNavigate={handleNavigate}
+              hasPrev={hasPrev}
+              hasNext={hasNext}
+              questionNumber={currentQIndex + 1}
+              totalQuestions={getQuestionsForDb(db).length}
+              timedChallenges={settings.timedChallenges}
+              onTimerExpire={() =>
+                toast({
+                  title: "Time's up!",
+                  message: 'The timer for this challenge has expired.',
+                  type: 'warning',
+                })
+              }
+              onOpenBrowser={() => setShowBrowser(true)}
+              onOpenAiTutor={() => {
+                if (settings.aiFeatures) setShowAiTutor(true);
+                else {
+                  toast({
+                    title: 'AI Disabled',
+                    message: 'Enable AI features in settings.',
+                    type: 'error',
+                  });
+                }
+              }}
+              currentSql={sql}
+              lastValidation={validation}
+              dbSchemaContext={schemaContextForAi}
+              executeQuery={executeQuery}
+            />
+          ) : (
+            <DiscussionsPanel 
+              questionId={currentQ?.id} 
+              user={user} 
+              onShowAuth={onShowAuth} 
+            />
+          )}
         </div>
 
-        {/* Drag handle: left column */}
+        {/* RESIZER 1 */}
         {rightPanelOpen && (
           <div
-            onMouseDown={() => setIsDraggingLeft(true)}
-            style={{
-              width: 8,
-              margin: '0 -10px',
-              zIndex: 10,
-              flexShrink: 0,
-              cursor: 'col-resize',
-              background: isDraggingLeft ? 'var(--primary)' : 'transparent',
-              transition: 'background 0.2s',
-              borderRadius: 4,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--primary)';
-              e.currentTarget.style.opacity = '0.4';
-            }}
-            onMouseLeave={(e) => {
-              if (!isDraggingLeft) {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.opacity = '1';
-              }
-            }}
+            onMouseDown={(e) => handleMouseDown(e, 'left')}
+            className="w-1.5 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10"
           />
         )}
 
-        {/* CENTER: Editor + Results */}
-        <main
-          className="center-workspace"
-          ref={workspaceRef}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: 'grid',
-            gridTemplateRows: `${editorHeightPct}% 8px 1fr`,
-            overflow: 'hidden',
-            background: 'transparent',
-          }}
-        >
-          <div className="editor-col">
-            <div className="editor-col-header">
-              <span className="editor-label">SQL Editor</span>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCteModal(true)}
-                  style={{ fontSize: 11 }}
-                >
-                  🪄 CTE
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setJoinAnalysisData({ db: executeQuery, sql })}
-                  style={{ fontSize: 11 }}
-                >
-                  🔗 Joins
-                </Button>
-                <span style={{ fontSize: 10, color: 'var(--muted)' }}>Ctrl+Enter to run</span>
+        {/* CENTER PANE: EDITOR & RESULTS */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-bg min-w-[300px]">
+          {/* EDITOR SECTION */}
+          <div 
+            className="shrink-0 flex flex-col bg-surface border-b border-border"
+            style={{ height: `${editorHeightPct}%` }}
+          >
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-2">
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">SQL Editor</span>
+              <div className="flex gap-2">
+                 <button
+                   className="p-1 text-text-secondary hover:text-text rounded transition-colors"
+                   onClick={() => setSql(formatQuery(sql))}
+                   title="Format SQL (Alt+Shift+F)"
+                 >
+                   <SettingsIcon size={14} />
+                 </button>
               </div>
             </div>
-            <div className="monaco-wrap">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center text-[var(--muted)]">
-                    Loading Editor...
-                  </div>
-                }
-              >
+            <div className="flex-1 relative min-h-0 bg-surface">
+              <Suspense fallback={
+                <div className="flex-1 flex items-center justify-center text-muted h-full w-full">
+                  Loading editor...
+                </div>
+              }>
                 <SqlEditor
                   value={sql}
-                  onChange={setSql}
-                  onRun={handleRun}
-                  disabled={isLoading}
-                  dbName={db}
-                  fontSize={settings.editorFontSize}
-                  autoComplete={settings.autoCompleteSql}
-                  darkMode={settings.darkMode}
+                  onChange={(val) => {
+                    setSql(val);
+                    localStorage.setItem(`sql-persist-${currentQ?.id}`, val);
+                  }}
+                  onRun={runQuery}
+                  onFormat={() => setSql(formatQuery(sql))}
+                  height="100%"
                 />
               </Suspense>
             </div>
-            <div className="editor-actions">
-              <Button
-                id="run-query-btn"
-                variant="primary"
-                size="md"
-                icon={Play}
-                onClick={handleRun}
-                disabled={isLoading || isExecuting || !sql.trim()}
-              >
-                {isExecuting ? 'Running…' : 'Run Query'}
+            <div className="flex items-center justify-end gap-2 p-3 bg-surface-2 border-t border-border">
+              <Button variant="secondary" onClick={() => setSql('')}>
+                <RotateCcw size={14} /> Reset
               </Button>
-              <Button
-                id="explain-query-btn"
-                variant="secondary"
-                size="md"
-                onClick={handleExplain}
-                disabled={isLoading || isExecuting || !sql.trim()}
-              >
-                Explain
+              <Button onClick={runQuery} isLoading={isRunning}>
+                <Play size={14} fill="currentColor" /> Run Code
               </Button>
             </div>
           </div>
 
-          {/* Vertical drag handle */}
+          {/* RESIZER 2 (Vertical) */}
           <div
-            onMouseDown={() => setIsDragging(true)}
-            style={{
-              height: 8,
-              margin: '-4px 0',
-              zIndex: 10,
-              cursor: 'row-resize',
-              background: isDragging ? 'var(--primary)' : 'transparent',
-              transition: 'background 0.2s',
-              borderRadius: 4,
-            }}
-            onMouseEnter={(e) => {
-              if (!isDragging) e.currentTarget.style.background = 'var(--primary-muted)';
-            }}
-            onMouseLeave={(e) => {
-              if (!isDragging) e.currentTarget.style.background = 'transparent';
-            }}
+            onMouseDown={(e) => handleMouseDown(e, 'vertical')}
+            className="h-1.5 cursor-row-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10"
           />
 
-          <div className="results-col">
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center text-[var(--muted)]">
-                  Loading Results...
+          {/* RESULTS SECTION */}
+          <div className="flex-1 flex flex-col min-h-0 bg-surface">
+            <Suspense fallback={
+                <div className="flex-1 flex items-center justify-center text-muted h-full w-full">
+                  Loading results...
                 </div>
-              }
-            >
+            }>
               <ResultsPanel
                 result={result}
                 validation={validation}
-                sql={executedSql}
-                executeQuery={executeQuery}
-                isRunning={isExecuting}
-                question={currentQ}
+                isRunning={isRunning}
               />
             </Suspense>
           </div>
-        </main>
+        </div>
 
-        {/* Drag handle: right column */}
+        {/* RESIZER 3 */}
         {sidebarOpen && (
           <div
-            onMouseDown={() => setIsDraggingRight(true)}
-            style={{
-              width: 8,
-              margin: '0 -10px',
-              zIndex: 10,
-              flexShrink: 0,
-              cursor: 'col-resize',
-              background: isDraggingRight ? 'var(--primary)' : 'transparent',
-              transition: 'background 0.2s',
-              borderRadius: 4,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--primary)';
-              e.currentTarget.style.opacity = '0.4';
-            }}
-            onMouseLeave={(e) => {
-              if (!isDraggingRight) {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.opacity = '1';
-              }
-            }}
+            onMouseDown={(e) => handleMouseDown(e, 'right')}
+            className="w-1.5 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10"
           />
         )}
 
-        {/* RIGHT: Schema sidebar */}
-        <div
-          className={`sidebar-wrap ${sidebarOpen ? 'open' : ''}`}
-          style={{
-            width: sidebarOpen ? schemaW : 0,
-            minWidth: 0,
-            overflow: 'hidden',
-            flexShrink: 0,
-            transition: 'width 0.22s ease',
-            border: 'none',
-            borderRadius: '16px',
-            background: 'var(--surface)',
-            boxShadow: sidebarOpen ? '0 4px 20px rgba(0,0,0,0.03)' : 'none',
-            position: 'relative',
-          }}
+        {/* RIGHT PANE: SCHEMA SIDEBAR */}
+        <div 
+          className="shrink-0 border-l border-border bg-surface h-full transition-all duration-300"
+          style={{ width: sidebarOpen ? schemaW : 0 }}
         >
-          <div style={{ width: schemaW, height: '100%', overflow: 'hidden' }}>
+          <div className="w-full h-full overflow-hidden">
             <SchemaSidebar
               dbName={db}
               executeQuery={executeQuery}
@@ -1108,8 +1004,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
             />
           </div>
         </div>
-
-      </div>
+      </main>
 
       {/* Modals wrapped in Suspense */}
       <Suspense fallback={null}>

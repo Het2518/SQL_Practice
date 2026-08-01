@@ -63,7 +63,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
           <span className="ai-badge">Groq</span>
         </div>
         {!review && !loading && (
-          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
+          <span className="text-xs text-muted font-medium">
             Get full code review →
           </span>
         )}
@@ -83,11 +83,8 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
           )}
 
           {error && !loading && (
-            <div style={{
-              fontSize: 13, color: 'var(--warning)', padding: '10px 14px',
-              background: 'var(--warning-muted)', borderRadius: 8, borderLeft: '3px solid var(--warning)'
-            }}>
-              <AlertTriangle size={14} /> {error}
+            <div className="text-[13px] text-warning px-3.5 py-2.5 bg-warning-muted rounded-lg border-l-[3px] border-warning flex items-center gap-1.5">
+              <AlertTriangle size={14} className="shrink-0" /> {error}
             </div>
           )}
 
@@ -112,44 +109,36 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
 
               {/* Feedback Tab */}
               {activeTab === 'feedback' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="flex flex-col gap-3">
                   {review.correct && (
-                    <div style={{
-                      padding: '12px 14px', borderRadius: 8,
-                      background: 'var(--success-muted)', borderLeft: '3px solid var(--success)',
-                      fontSize: 13, color: 'var(--text)', lineHeight: 1.6
-                    }}>
-                      <strong style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><CheckCircle size={12} /> What's Correct</strong>
+                    <div className="px-3.5 py-3 rounded-lg bg-success-muted border-l-[3px] border-success text-[13px] text-text leading-relaxed">
+                      <strong className="text-success flex items-center gap-1 mb-1">
+                        <CheckCircle size={12} /> What's Correct
+                      </strong>
                       {review.correct}
                     </div>
                   )}
                   {review.incorrect && (
-                    <div style={{
-                      padding: '12px 14px', borderRadius: 8,
-                      background: 'var(--error-muted)', borderLeft: '3px solid var(--error)',
-                      fontSize: 13, color: 'var(--text)', lineHeight: 1.6
-                    }}>
-                      <strong style={{ color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><XCircle size={12} /> Issues Found</strong>
+                    <div className="px-3.5 py-3 rounded-lg bg-error-muted border-l-[3px] border-error text-[13px] text-text leading-relaxed">
+                      <strong className="text-error flex items-center gap-1 mb-1">
+                        <XCircle size={12} /> Issues Found
+                      </strong>
                       {review.incorrect}
                     </div>
                   )}
                   {review.complexity && (
-                    <div style={{
-                      padding: '10px 14px', borderRadius: 8,
-                      background: 'var(--surface-2)', border: '1px solid var(--border)',
-                      fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6
-                    }}>
-                      <strong style={{ color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> Complexity: </strong>
+                    <div className="px-3.5 py-2.5 rounded-lg bg-surface-2 border border-border text-[13px] text-text-secondary leading-relaxed">
+                      <strong className="text-text flex items-center gap-1 mb-1">
+                        <Clock size={12} /> Complexity: 
+                      </strong>
                       {review.complexity}
                     </div>
                   )}
                   {review.tips && (
-                    <div style={{
-                      padding: '12px 14px', borderRadius: 8,
-                      background: 'var(--primary-muted)', borderLeft: '3px solid var(--primary)',
-                      fontSize: 13, color: 'var(--text)', lineHeight: 1.6
-                    }}>
-                      <strong style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}><Lightbulb size={12} /> Tips</strong>
+                    <div className="px-3.5 py-3 rounded-lg bg-primary-muted border-l-[3px] border-primary text-[13px] text-text leading-relaxed">
+                      <strong className="text-primary flex items-center gap-1 mb-1">
+                        <Lightbulb size={12} /> Tips
+                      </strong>
                       {review.tips}
                     </div>
                   )}
@@ -159,7 +148,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               {/* Optimized Tab */}
               {activeTab === 'optimized' && review.optimized_sql && (
                 <div className="review-approach-block">
-                  <div className="review-approach-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Zap size={12} /> Optimized Query</div>
+                  <div className="review-approach-label flex items-center gap-1.5"><Zap size={12} /> Optimized Query</div>
                   <pre className="review-code">{review.optimized_sql}</pre>
                 </div>
               )}
@@ -167,7 +156,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               {/* Alternative Tab */}
               {activeTab === 'alternative' && review.alternative_approach && (
                 <div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.6 }}>
+                  <p className="text-[13px] text-text-secondary mb-3 leading-relaxed">
                     {review.alternative_approach}
                   </p>
                 </div>

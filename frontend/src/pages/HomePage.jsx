@@ -65,7 +65,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
   const badges = (gameState?.badges ?? []).length;
 
   return (
-    <div className="home-root page-enter">
+    <div className="relative min-h-screen bg-bg text-text pb-20 animate-in fade-in duration-300">
       <Helmet>
         <title>DataDesk | Practice SQL & Prepare for Interviews</title>
         <meta name="description" content="Master SQL with real-world databases. Interactive practice environment for JOINs, CTEs, and Window Functions." />
@@ -81,52 +81,32 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       />
 
       {/* ── Progress Strip ── */}
-      <div className="global-progress-bar">
-        <div className="global-progress-fill" style={{ width: `${totalPct}%` }} />
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-surface-2 z-50">
+        <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${totalPct}%` }} />
       </div>
 
       {/* ── Hero ── */}
-      <section className="home-hero">
-        <div className="hero-glow-bg" />
+      <section className="relative px-6 pt-16 pb-12 overflow-hidden flex flex-col items-center text-center border-b border-border bg-surface">
+        <div className="absolute -top-1/2 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* Floating Background Icons */}
-        <div className="floating-icon icon-1">
-          <Database size={32} />
-        </div>
-        <div className="floating-icon icon-2">
-          <Terminal size={32} />
-        </div>
-        <div className="floating-icon icon-3">
-          <LineChart size={32} />
-        </div>
-        <div className="floating-icon icon-4">
-          <Code2 size={32} />
-        </div>
-        <div className="floating-icon icon-5">
-          <CheckCircle size={32} />
-        </div>
-        <div className="floating-icon icon-6">
-          <Trophy size={32} />
-        </div>
-
-        <div className="home-hero-content">
-          <div className="home-hero-badge">
+        <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
+          <div className="flex items-center gap-1.5 px-3 py-1 mb-6 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
             <Target size={12} /> SQL Interview Practice
           </div>
 
-          <h1 className="home-hero-h1">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text leading-tight mb-4">
             Master SQL with
             <br />
-            <span className="home-hero-accent">Real-World Data</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">Real-World Data</span>
           </h1>
 
-          <p className="home-hero-desc">
+          <p className="text-text-secondary text-base md:text-lg max-w-xl mb-8 leading-relaxed">
             10 hand-crafted databases. {allQuestions.length}+ progressive questions. Practice JOINs,
             Window Functions, CTEs and more — exactly the SQL that gets asked at FAANG and top tech
             companies.
           </p>
 
-          <div className="hero-cta-row">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             <Button
               className="hero-btn-primary"
               size="lg"
@@ -136,17 +116,17 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
               Start Practicing
               <ArrowRight size={15} strokeWidth={2} />
             </Button>
-            <Button className="hero-btn-secondary" size="lg" onClick={() => onShowInterview()}>
+            <Button variant="secondary" size="lg" onClick={() => onShowInterview()}>
               <Briefcase size={15} /> Interview Mode
             </Button>
           </div>
         </div>
 
         {/* ── Stats Row ── */}
-        <div className="hero-stats-row">
-          <div className="hero-stat-card">
+        <div className="mt-12 flex flex-wrap justify-center gap-6 w-full max-w-3xl z-10">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
             <div
-              className="hero-stat-icon-wrap"
+              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
                 color: 'var(--success)',
                 background: 'var(--success-muted)',
@@ -155,16 +135,16 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             >
               <TrendingUp size={22} />
             </div>
-            <div>
-              <div className="hero-stat-value" style={{ color: 'var(--success)' }}>
+            <div className="text-left">
+              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--success)' }}>
                 {totalComplete}
               </div>
-              <div className="hero-stat-label">Solved</div>
+              <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Solved</div>
             </div>
           </div>
-          <div className="hero-stat-card">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
             <div
-              className="hero-stat-icon-wrap"
+              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
                 color: 'var(--warning)',
                 background: 'var(--warning-muted)',
@@ -173,16 +153,16 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             >
               <BookOpen size={22} />
             </div>
-            <div>
-              <div className="hero-stat-value" style={{ color: 'var(--warning)' }}>
+            <div className="text-left">
+              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--warning)' }}>
                 {totalAttempted}
               </div>
-              <div className="hero-stat-label">In Progress</div>
+              <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">In Progress</div>
             </div>
           </div>
-          <div className="hero-stat-card">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
             <div
-              className="hero-stat-icon-wrap"
+              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
                 color: 'var(--primary)',
                 background: 'var(--primary-muted)',
@@ -191,16 +171,16 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             >
               <Target size={22} />
             </div>
-            <div>
-              <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>
+            <div className="text-left">
+              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--primary)' }}>
                 {score.toLocaleString()}
               </div>
-              <div className="hero-stat-label">Score</div>
+              <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Score</div>
             </div>
           </div>
-          <div className="hero-stat-card">
+          <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm min-w-[200px]">
             <div
-              className="hero-stat-icon-wrap"
+              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
               style={{
                 color: 'var(--primary)',
                 background: 'var(--primary-muted)',
@@ -209,11 +189,11 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             >
               <Building2 size={22} />
             </div>
-            <div>
-              <div className="hero-stat-value" style={{ color: 'var(--primary)' }}>
+            <div className="text-left">
+              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--primary)' }}>
                 {totalPct}%
               </div>
-              <div className="hero-stat-label">Complete</div>
+              <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Complete</div>
             </div>
           </div>
         </div>
@@ -224,27 +204,27 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       </div>
 
       {/* ── Custom Dataset Section ── */}
-      <div className="custom-db-banner" onClick={() => navigate('/sandbox')}>
-        <div className="custom-db-banner-icon">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 max-w-5xl mx-auto mt-12 mx-6 p-6 rounded-2xl bg-gradient-to-br from-surface to-surface-2 border border-border shadow-sm cursor-pointer transition-all hover:border-primary/50 hover:shadow-md group" onClick={() => navigate('/sandbox')}>
+        <div className="w-12 h-12 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
           <Upload size={20} color="var(--primary)" strokeWidth={2} />
         </div>
-        <div className="custom-db-banner-body">
-          <div className="custom-db-banner-title">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 text-lg font-bold text-text mb-1">
             Custom Dataset Practice
-            <span className="custom-db-banner-badge">NEW</span>
+            <span className="px-2 py-0.5 text-[10px] font-black uppercase bg-primary text-bg rounded-md tracking-wider">NEW</span>
           </div>
-          <div className="custom-db-banner-desc">
+          <div className="text-sm text-text-secondary leading-relaxed max-w-2xl">
             Upload any CSV or SQLite file and practice SQL on your own data — with schema-aware
             autocomplete and AI-generated questions.
           </div>
         </div>
-        <div className="custom-db-banner-action">
+        <div className="flex items-center gap-1.5 text-sm font-bold text-primary mt-4 md:mt-0 transition-transform group-hover:translate-x-1">
           Upload &amp; Practice <ChevronRight size={14} strokeWidth={2.5} />
         </div>
       </div>
 
       {/* ── Database Grid Header ── */}
-      <div className="db-grid-header">
+      <div className="flex items-center justify-between max-w-5xl mx-auto mt-12 mb-6 px-6">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Layers size={14} color="var(--muted)" />
           <span
@@ -258,7 +238,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
           >
             Built-in Databases
           </span>
-          <span className="db-grid-pill">{DB_NAMES.length}</span>
+          <span className="px-2 py-0.5 bg-surface-2 text-text text-xs font-bold rounded-md border border-border">{DB_NAMES.length}</span>
         </div>
         <span style={{ fontSize: 12, color: 'var(--muted)' }}>
           {allQuestions.length - totalComplete} questions remaining
@@ -266,7 +246,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
       </div>
 
       {/* ── DB Cards ── */}
-      <main className="db-grid">
+      <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
         {DB_NAMES.map((db, i) => {
           const info = DB_INFO[db];
           const dbQs = getQuestionsForDb(db);
@@ -277,38 +257,38 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             <button
               key={db}
               id={`db-card-${db}`}
-              className="db-card"
+              className="relative flex flex-col text-left bg-surface rounded-2xl border border-border shadow-sm overflow-hidden transition-all hover:-translate-y-1 hover:shadow-md hover:border-border-hover group outline-none focus-visible:ring-2 focus-visible:ring-primary"
               onClick={() => navigate('/practice/' + db)}
               style={{ animationDelay: `${i * 0.04}s` }}
             >
-              <div className="db-card-body">
-                <div className="db-card-header">
-                  <div className="db-card-icon-wrap">
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
                     <Database size={18} color="var(--primary)" strokeWidth={1.5} />
                   </div>
-                  <div className="db-card-meta">
-                    <span className="db-card-name">{info.label}</span>
-                    <span className="db-card-count">
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-base font-bold text-text truncate">{info.label}</span>
+                    <span className="text-xs font-medium text-text-secondary">
                       {info.tableCount} tables · {info.questionCount} questions
                     </span>
                   </div>
-                  <div className={`db-card-pct${pct === 100 ? ' complete' : ''}`}>{pct}%</div>
+                  <div className={`text-sm font-black tabular-nums transition-colors text-text-secondary ${pct === 100 ? 'text-success' : ''}`}>{pct}%</div>
                 </div>
-                <p className="db-card-desc">{info.description}</p>
-                <div className="db-card-concepts">
+                <p className="text-sm text-text-secondary leading-relaxed mb-4 flex-1 line-clamp-2">{info.description}</p>
+                <div className="flex flex-wrap gap-1.5">
                   {info.concepts.slice(0, 4).map((c) => (
-                    <span key={c} className="tag">
+                    <span key={c} className="px-2 py-1 bg-surface-2 text-text-secondary text-[10px] font-semibold uppercase tracking-wider rounded-md border border-border whitespace-nowrap">
                       {c}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="db-card-footer">
-                <div className="db-progress-bar">
-                  <div className="db-progress-fill" style={{ width: `${pct}%` }} />
+              <div className="flex items-center gap-4 px-5 py-3 bg-surface-2 border-t border-border">
+                <div className="flex-1 h-1.5 bg-bg rounded-full overflow-hidden relative">
+                  <div className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                   {attempted > 0 && (
                     <div
-                      className="db-progress-attempted"
+                      className="absolute top-0 h-full bg-warning rounded-full transition-all duration-500 opacity-60"
                       style={{
                         width: `${Math.round((attempted / info.questionCount) * 100)}%`,
                         left: `${pct}%`,
@@ -316,7 +296,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
                     />
                   )}
                 </div>
-                <span className="db-progress-label">
+                <span className="text-xs font-bold text-text-secondary tabular-nums">
                   {completed}/{info.questionCount}
                 </span>
               </div>

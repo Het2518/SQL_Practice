@@ -54,26 +54,22 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
   };
 
   return (
-    <div className="ai-panel" style={{ marginTop: 8 }}>
-      <div className="ai-panel-header" onClick={!generated && !loading ? generateHint : undefined} style={{ flexWrap: 'wrap', gap: 12 }}>
-        <div className="ai-panel-title" style={{ flexWrap: 'wrap' }}>
+    <div className="ai-panel mt-2">
+      <div className="ai-panel-header flex-wrap gap-3" onClick={!generated && !loading ? generateHint : undefined}>
+        <div className="ai-panel-title flex-wrap">
           <Sparkles size={14} strokeWidth={2} />
           <span>AI Personalized Hint</span>
           <span className="ai-badge">llama-3.1-8b</span>
         </div>
         {!generated && !loading && (
-          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
+          <span className="text-xs text-muted font-medium">
             Click to analyze your query →
           </span>
         )}
         {generated && !loading && (
           <button
             onClick={(e) => { e.stopPropagation(); handleRegenerate(); }}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 11, color: 'rgba(139,92,246,0.8)', fontWeight: 600,
-              padding: '2px 6px', borderRadius: 4,
-            }}
+            className="bg-transparent border-none cursor-pointer text-[11px] text-primary/80 font-semibold px-1.5 py-0.5 rounded transition-colors hover:bg-primary/10"
           >
             ↻ Regenerate
           </button>
@@ -98,11 +94,8 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
             </div>
           )}
           {error && !loading && (
-            <div style={{
-              fontSize: 13, color: 'var(--warning)', padding: '10px 14px',
-              background: 'var(--warning-muted)', borderRadius: 8, borderLeft: '3px solid var(--warning)'
-            }}>
-              <AlertTriangle size={14} style={{ flexShrink: 0 }} /> {error}
+            <div className="text-[13px] text-warning px-3.5 py-2.5 bg-warning-muted rounded-lg border-l-[3px] border-warning flex items-center gap-1.5">
+              <AlertTriangle size={14} className="shrink-0" /> {error}
             </div>
           )}
         </div>

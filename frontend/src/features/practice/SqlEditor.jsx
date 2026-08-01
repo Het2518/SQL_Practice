@@ -228,72 +228,31 @@ export function SqlEditor({
     } : false,
   }), [readOnly, fontSize, autoComplete]);
 
-  return <div style={{
-
-    height: '100%',
-    width: '100%',
-    minWidth: 0,
-    display: 'flex',
-    flexDirection: 'column'
-  }}>
-      <div style={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: 8,
-      padding: '6px 12px',
-      background: 'var(--surface)',
-      borderBottom: '1px solid var(--border)',
-      fontSize: 11,
-      color: 'var(--muted)',
-      fontFamily: 'var(--font-sans)'
-    }}>
-        <span style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4
-      }}>
-          <kbd style={{
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
-          borderRadius: 3,
-          padding: '1px 5px',
-          fontSize: 10,
-          color: 'var(--primary)'
-        }}>Ctrl+Enter</kbd>
+  return (
+    <div className="h-full w-full min-w-0 flex flex-col">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-1.5 bg-surface border-b border-border text-[11px] text-muted font-sans">
+        <span className="flex items-center gap-1">
+          <kbd className="bg-bg border border-border rounded px-1.5 py-[1px] text-[10px] text-primary">
+            Ctrl+Enter
+          </kbd>
           <span>Run</span>
         </span>
-        <span style={{
-        color: 'var(--border)'
-      }}>·</span>
-        <span style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4
-      }}>
-          <kbd style={{
-          background: 'var(--bg)',
-          border: '1px solid var(--border)',
-          borderRadius: 3,
-          padding: '1px 5px',
-          fontSize: 10,
-          color: 'var(--primary)'
-        }}>Ctrl+Q</kbd>
+        <span className="text-border">·</span>
+        <span className="flex items-center gap-1">
+          <kbd className="bg-bg border border-border rounded px-1.5 py-[1px] text-[10px] text-primary">
+            Ctrl+Q
+          </kbd>
           <span>Format</span>
         </span>
-        <div style={{
-        flex: 1
-      }} />
-        <button onClick={handleFormatProxy} className="btn btn-ghost" style={{
-        padding: '2px 8px',
-        fontSize: 11
-      }}>
+        <div className="flex-1" />
+        <button
+          onClick={handleFormatProxy}
+          className="px-2 py-0.5 hover:bg-surface-2 text-text rounded text-[11px] transition-colors"
+        >
           Format
         </button>
       </div>
-      <div style={{
-      flex: 1
-    }}>
+      <div className="flex-1">
         <Editor
           height="100%"
           language="sql"
@@ -305,5 +264,6 @@ export function SqlEditor({
           options={editorOptions}
         />
       </div>
-    </div>;
+    </div>
+  );
 }

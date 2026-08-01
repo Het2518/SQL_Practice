@@ -278,16 +278,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   const stats = difficultyStats;
 
   return (
-    <div
-      className="page-enter"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        background: 'var(--bg)',
-        color: 'var(--text)',
-      }}
-    >
+    <div className="flex flex-col min-h-screen bg-bg text-text animate-in fade-in duration-300">
       {/* ── Global Header ── */}
       <Header
         user={user}
@@ -299,128 +290,61 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
       />
 
       {/* Main Content Area */}
-      <main style={{ flex: 1, padding: '40px', background: 'var(--bg)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <main className="flex-1 p-6 md:p-10 bg-bg">
+        <div className="max-w-[1200px] mx-auto">
           {/* ── Profile Hero ── */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'var(--surface)',
-              padding: '24px 32px',
-              borderRadius: 16,
-              border: '1px solid var(--border)',
-              marginBottom: 24,
-              flexWrap: 'wrap',
-              gap: 24,
-            }}
-          >
+          <div className="flex items-center justify-between bg-surface p-6 md:p-8 rounded-2xl border border-border mb-6 flex-wrap gap-6">
             {/* User Info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 16,
-                  background:
-                    'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 28,
-                  fontWeight: 900,
-                  color: 'var(--primary-foreground)',
-                }}
-              >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-muted flex items-center justify-center text-3xl font-black text-primary-foreground">
                 {fullName.charAt(0).toUpperCase()}
               </div>
+
               <div>
                 {isEditingName ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <div className="flex items-center gap-2 mb-1">
                     <input
                       autoFocus
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      style={{
-                        padding: '4px 8px',
-                        borderRadius: 4,
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg)',
-                        color: 'var(--text)',
-                        outline: 'none',
-                        fontSize: 16,
-                        fontWeight: 700,
-                      }}
+                      className="px-2 py-1 rounded border border-border bg-bg text-text outline-none text-base font-bold focus:border-primary"
                     />
                     <button
                       onClick={handleSaveName}
                       disabled={isSavingName}
-                      style={{
-                        background: 'var(--success)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        padding: 4,
-                        cursor: 'pointer',
-                      }}
+                      className="bg-success text-white border-none rounded p-1 cursor-pointer hover:bg-success/90 transition-colors"
                     >
                       <Check size={14} />
                     </button>
                     <button
                       onClick={() => setIsEditingName(false)}
-                      style={{
-                        background: 'var(--surface-2)',
-                        color: 'var(--text)',
-                        border: 'none',
-                        borderRadius: 4,
-                        padding: 4,
-                        cursor: 'pointer',
-                      }}
+                      className="bg-surface-2 text-text border-none rounded p-1 cursor-pointer hover:bg-surface-3 transition-colors"
                     >
                       <X size={14} />
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <h2 style={{ margin: 0, fontSize: 24, color: 'var(--text)', fontWeight: 800 }}>
-                      {fullName}
-                    </h2>
+                  <div className="flex items-center gap-2 mb-1 group">
+                    <h2 className="m-0 text-2xl text-text font-extrabold">{fullName}</h2>
                     <button
                       onClick={() => {
                         setNewName(fullName);
                         setIsEditingName(true);
                       }}
-                      style={{
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 6,
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        padding: 6,
-                      }}
+                      className="bg-surface-2 border border-border rounded-md text-text-secondary cursor-pointer p-1.5 hover:text-text hover:border-border-hover transition-colors opacity-0 group-hover:opacity-100"
                       title="Edit Name"
                     >
                       <Edit2 size={12} />
                     </button>
                   </div>
                 )}
-                <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{email}</p>
+                <p className="m-0 text-sm text-muted">{email}</p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="flex gap-4 items-center flex-wrap">
               {/* Navigation Tabs */}
-              <nav
-                style={{
-                  display: 'flex',
-                  gap: 4,
-                  background: 'var(--bg)',
-                  padding: 4,
-                  borderRadius: 10,
-                  border: '1px solid var(--border)',
-                }}
-              >
+              <nav className="flex gap-1 bg-bg p-1 rounded-xl border border-border">
                 <TopNavItem
                   icon={<User size={14} />}
                   label="Dashboard"
@@ -455,19 +379,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
 
               <button
                 onClick={onSignOut}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '10px 16px',
-                  borderRadius: 8,
-                  background: 'var(--surface-2)',
-                  color: 'var(--error)',
-                  border: '1px solid var(--border)',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-surface-2 text-error border border-border cursor-pointer text-[13px] font-semibold hover:bg-surface-3 transition-colors"
               >
                 <LogOut size={14} /> Sign Out
               </button>
@@ -499,27 +411,11 @@ function TopNavItem({ icon, label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '6px 12px',
-        borderRadius: 6,
-        border: 'none',
-        background: active ? 'var(--surface)' : 'transparent',
-        color: active ? 'var(--text)' : 'var(--text-secondary)',
-        fontWeight: active ? 600 : 500,
-        fontSize: 13,
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.color = 'var(--text)';
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.color = 'var(--text-secondary)';
-      }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border-none text-[13px] font-medium cursor-pointer transition-all ${
+        active 
+          ? 'bg-surface text-text font-semibold shadow-sm' 
+          : 'bg-transparent text-text-secondary hover:text-text'
+      }`}
     >
       {icon}
       <span>{label}</span>

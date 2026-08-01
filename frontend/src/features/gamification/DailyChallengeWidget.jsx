@@ -17,76 +17,36 @@ export function DailyChallengeWidget({ progress }) {
   if (!dailyQuestion) return null;
 
   return (
-    <div
-      style={{
-        margin: '0 auto 32px',
-        maxWidth: 900,
-        background: 'var(--surface-2)',
-        border: '1px solid var(--border)',
-        borderRadius: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '14px 20px',
-        transition: 'all 0.15s ease',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = 'var(--border-hover)';
-        e.currentTarget.style.background = 'var(--surface)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--border)';
-        e.currentTarget.style.background = 'var(--surface-2)';
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+    <div className="mx-auto mb-8 max-w-[900px] bg-surface-2 border border-border rounded-xl flex items-center justify-between py-3.5 px-5 transition-all duration-150 ease-in hover:border-border-hover hover:bg-surface">
+      <div className="flex items-center gap-3.5">
         {/* Icon */}
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            flexShrink: 0,
-            background: isCompleted ? 'var(--success-muted)' : 'var(--primary-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: isCompleted ? 'var(--success)' : 'var(--primary)',
-          }}
-        >
+        <div className={`w-9 h-9 rounded-lg shrink-0 flex items-center justify-center ${isCompleted ? 'bg-success-muted text-success' : 'bg-primary-muted text-primary'}`}>
           {isCompleted ? <Star size={18} /> : <Target size={18} />}
         </div>
 
         {/* Content */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-              }}
-            >
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-widest">
               {isCompleted ? 'Completed' : 'Daily Challenge'}
             </span>
           </div>
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+          <h3 className="m-0 text-sm font-semibold text-text">
             {dailyQuestion.title || 'Mystery SQL Problem'}
           </h3>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span
-            className={`badge badge-${dailyQuestion.difficulty?.toLowerCase() || 'easy'}`}
-            style={{ padding: '2px 8px', fontSize: 10, fontWeight: 600, textTransform: 'uppercase' }}
-          >
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2.5">
+          <span className={`px-2 py-0.5 text-[10px] font-semibold uppercase rounded-md border ${
+            dailyQuestion.difficulty === 'hard' ? 'bg-error-muted text-error border-error/20' : 
+            dailyQuestion.difficulty === 'medium' ? 'bg-warning-muted text-warning border-warning/20' : 
+            'bg-success-muted text-success border-success/20'
+          }`}>
             {dailyQuestion.difficulty || 'Easy'}
           </span>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
+          <span className="text-[13px] text-text-secondary font-medium">
             {dailyQuestion.db}
           </span>
         </div>
@@ -94,7 +54,7 @@ export function DailyChallengeWidget({ progress }) {
         <Button
           variant={isCompleted ? 'secondary' : 'primary'}
           onClick={() => navigate(`/practice/${dailyQuestion.db}?q=${dailyQuestion.id}`)}
-          style={{ padding: '6px 14px', fontSize: 12, height: 'auto' }}
+          className="px-3.5 py-1.5 text-xs h-auto"
         >
           {isCompleted ? 'Review' : 'Solve'} <ArrowRight size={14} />
         </Button>

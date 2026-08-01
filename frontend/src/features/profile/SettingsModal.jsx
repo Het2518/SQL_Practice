@@ -285,18 +285,12 @@ export function SettingsModal({ onClose }) {
 
   return (
     <div
-      className="modal-overlay"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <div
-        className="modal-content"
+        className="w-full max-w-[560px] bg-surface rounded-2xl overflow-hidden flex flex-col shadow-xl border border-border mx-4 max-h-[90vh]"
         style={{
-          width: '100%',
-          maxWidth: '560px',
-          background: 'var(--bg-2)',
-          borderRadius: '16px',
-          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
@@ -321,8 +315,7 @@ export function SettingsModal({ onClose }) {
             </div>
             <button
               onClick={onClose}
-              className="btn btn-ghost btn-icon"
-              style={{ borderRadius: '50%', padding: '6px' }}
+              className="p-1.5 rounded-full hover:bg-surface-2 text-text-secondary hover:text-text transition-colors"
             >
               ✕
             </button>
@@ -519,7 +512,7 @@ export function SettingsModal({ onClose }) {
                 Data & Backup
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <button onClick={handleExport} className="btn btn-secondary">
+                <button onClick={handleExport} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
                   📤 Export Backup
                 </button>
                 <input
@@ -529,7 +522,7 @@ export function SettingsModal({ onClose }) {
                   style={{ display: 'none' }}
                   onChange={handleImport}
                 />
-                <button onClick={() => importRef.current?.click()} className="btn btn-secondary">
+                <button onClick={() => importRef.current?.click()} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
                   📥 Import Backup
                 </button>
               </div>
@@ -555,13 +548,24 @@ export function SettingsModal({ onClose }) {
                 >
                   🔄 Reset General Settings
                 </button>
-                <button
-                  onClick={handleClearAllData}
-                  className="btn btn-ghost"
-                  style={{ width: '100%', color: 'var(--error)', fontWeight: 700 }}
-                >
-                  ⚠️ Clear All Data & Progress
-                </button>
+                <div style={{ marginTop: '24px' }}>
+                  <button
+                    onClick={async () => {
+                      const progress = localStorage.getItem('sql-practice-progress') || '{}';
+                      await navigator.clipboard.writeText(progress);
+                      alert('Progress copied to clipboard!');
+                    }}
+                    className="w-full px-4 py-2 hover:bg-surface-2 text-text rounded-lg text-sm font-semibold transition-colors mb-2"
+                  >
+                    Copy Raw Progress Data
+                  </button>
+                  <button
+                    onClick={handleClearAllData}
+                    className="w-full px-4 py-2 hover:bg-red-500/10 text-red-500 rounded-lg text-sm font-bold transition-colors"
+                  >
+                    ⚠️ Hard Reset All Progress
+                  </button>
+                </div>
               </div>
             </>
           ) : activeTab === 'ai' ? (
@@ -579,21 +583,26 @@ export function SettingsModal({ onClose }) {
                 AI Configuration
               </h3>
 
-              <div className="ai-settings-section">
+              <div className="p-5 bg-surface-2 border border-border rounded-xl mt-4">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <span style={{ fontSize: 20 }}>🤖</span>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
-                      Groq API Key
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                      Powers AI hints, solution review, safety guard, and question generation
-                    </div>
-                  </div>
+                  <span style={{ fontSize: 20 }}>🧠</span>
+                  <div style={{ fontWeight: 600 }}>Groq API Key</div>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                  DataDesk uses the ultra-fast Groq API for AI explanations. Get a free API key at{' '}
+                  <a
+                    href="https://console.groq.com/keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--primary)' }}
+                  >
+                    console.groq.com
+                  </a>
+                  .
                 </div>
 
                 <input
-                  className="ai-key-input"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   type="password"
                   placeholder="gsk_..."
                   value={groqKeyInput}
@@ -601,9 +610,13 @@ export function SettingsModal({ onClose }) {
                     setGroqKeyInput(e.target.value);
                     setKeySaved(false);
                   }}
+                  style={{
+                    boxSizing: 'border-box',
+                    marginBottom: 12,
+                  }}
                 />
 
-                <div className="ai-key-status">
+                <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold">
                   {groqKeyInput.startsWith('gsk_') ? (
                     <>
                       <span style={{ color: 'var(--success)' }}>✓</span>
@@ -624,78 +637,6 @@ export function SettingsModal({ onClose }) {
                   )}
                 </div>
               </div>
-
-              <div
-                style={{
-                  padding: '14px 16px',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 8,
-                  marginBottom: 8,
-                }}
-              >
-                <div
-                  style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}
-                >
-                  Model: llama-3.1-8b-instant
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: 8,
-                    fontSize: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '8px',
-                      background: 'var(--surface-2)',
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, color: 'var(--primary)' }}>30</div>
-                    <div style={{ color: 'var(--muted)' }}>Req/min</div>
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '8px',
-                      background: 'var(--surface-2)',
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, color: 'var(--success)' }}>14.4K</div>
-                    <div style={{ color: 'var(--muted)' }}>Req/day</div>
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: '8px',
-                      background: 'var(--surface-2)',
-                      borderRadius: 6,
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, color: 'var(--warning)' }}>Free</div>
-                    <div style={{ color: 'var(--muted)' }}>Tier</div>
-                  </div>
-                </div>
-              </div>
-
-              <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6, marginTop: 8 }}>
-                Get your free API key at{' '}
-                <a
-                  href="https://console.groq.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: 'var(--primary)' }}
-                >
-                  console.groq.com
-                </a>
-                . Your key is stored only in your browser's localStorage and is never sent anywhere
-                except directly to Groq.
-              </p>
             </>
           ) : (
             <>
@@ -750,31 +691,23 @@ export function SettingsModal({ onClose }) {
           style={{
             padding: '16px 24px',
             borderTop: '1px solid var(--border)',
-            background: 'var(--surface)',
             display: 'flex',
             justifyContent: 'flex-end',
-            gap: '12px',
+            gap: 12,
+            background: 'var(--surface)',
           }}
         >
           <button
             onClick={onClose}
-            className="btn btn-ghost"
-            style={{ padding: '10px 20px', borderRadius: '8px', fontWeight: 600 }}
+            className="px-4 py-2 hover:bg-surface-2 text-text rounded-lg text-sm font-semibold transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="btn btn-primary"
-            style={{
-              padding: '10px 24px',
-              borderRadius: '8px',
-              fontWeight: 600,
-              flex: 1,
-              justifyContent: 'center',
-            }}
+            className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold shadow-sm transition-all active:scale-95"
           >
-            Save Preferences
+            Save Changes
           </button>
         </div>
       </div>

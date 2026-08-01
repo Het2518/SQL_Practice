@@ -61,65 +61,29 @@ const getLayoutedElements = (nodes, edges, direction = 'LR') => {
 function CustomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
-  const btnStyle = {
-    width: 36,
-    height: 36,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    color: 'var(--text-secondary)',
-    borderRadius: 6,
-    transition: 'background 0.15s, color 0.15s',
-  };
-
-  const handleHover = (e, enter) => {
-    e.currentTarget.style.background = enter ? 'var(--surface-2)' : 'transparent';
-    e.currentTarget.style.color = enter ? 'var(--text)' : 'var(--text-secondary)';
-  };
+  const btnClass = "w-9 h-9 flex items-center justify-center bg-transparent border-none cursor-pointer text-text-secondary rounded-md transition-colors hover:bg-surface-2 hover:text-text";
 
   return (
-    <div style={{
-      position: 'absolute',
-      bottom: 24,
-      left: 16,
-      zIndex: 10,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 2,
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 10,
-      padding: 4,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-    }}>
+    <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-0.5 bg-surface border border-border rounded-xl p-1 shadow-lg">
       <button
         onClick={() => zoomIn({ duration: 300 })}
         title="Zoom In"
-        style={btnStyle}
-        onMouseEnter={e => handleHover(e, true)}
-        onMouseLeave={e => handleHover(e, false)}
+        className={btnClass}
       >
         <ZoomIn size={16} strokeWidth={2} />
       </button>
       <button
         onClick={() => zoomOut({ duration: 300 })}
         title="Zoom Out"
-        style={btnStyle}
-        onMouseEnter={e => handleHover(e, true)}
-        onMouseLeave={e => handleHover(e, false)}
+        className={btnClass}
       >
         <ZoomOut size={16} strokeWidth={2} />
       </button>
-      <div style={{ height: 1, background: 'var(--border)', margin: '2px 4px' }} />
+      <div className="h-px bg-border mx-1 my-0.5" />
       <button
         onClick={() => fitView({ padding: 0.2, duration: 600 })}
         title="Fit to Screen"
-        style={btnStyle}
-        onMouseEnter={e => handleHover(e, true)}
-        onMouseLeave={e => handleHover(e, false)}
+        className={btnClass}
       >
         <Maximize2 size={16} strokeWidth={2} />
       </button>
@@ -253,61 +217,51 @@ function ERDiagramFlow({ dbName, onClose }) {
   }, [activeFocus]); // Intentionally omitting edges/nodes from deps to avoid infinite loops
 
   return (
-    <div ref={trapRef} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--bg)', display: 'flex' }}>
+    <div ref={trapRef} className="fixed inset-0 z-[9999] bg-bg flex">
       
       {/* Left Sidebar */}
-      <div style={{ width: 380, borderRight: '1px solid var(--border)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', zIndex: 20, boxShadow: '4px 0 24px rgba(0,0,0,0.05)', flexShrink: 0 }}>
+      <div className="w-[380px] border-r border-border bg-surface flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.05)] shrink-0">
         {/* Header */}
-        <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="p-6 border-b border-border flex items-center justify-between">
            <div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 22 }}>{dbInfo.icon}</span>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>{dbInfo.label} Schema</h2>
+             <div className="flex items-center gap-2 mb-1">
+                <span className="text-[22px]">{dbInfo.icon}</span>
+                <h2 className="m-0 text-lg font-bold text-text">{dbInfo.label} Schema</h2>
              </div>
-             <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500 }}>{tables.length} Tables Available</div>
+             <div className="text-[13px] text-muted font-medium">{tables.length} Tables Available</div>
            </div>
-           <button onClick={onClose} style={{ background: 'var(--surface-2)', border: 'none', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}>✕</button>
+           <button onClick={onClose} className="bg-surface-2 border-none w-8 h-8 rounded-lg cursor-pointer flex items-center justify-center text-text hover:bg-surface-3 transition-colors">✕</button>
         </div>
 
         {/* Search */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+        <div className="py-4 px-6 border-b border-border">
+          <div className="relative">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
             <input 
               type="text" 
               placeholder="Search tables..." 
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: 14, outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
-              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              className="w-full py-2.5 pr-3.5 pl-9 rounded-lg border border-border bg-bg text-text text-sm outline-none transition-colors box-border focus:border-primary"
             />
           </div>
         </div>
 
         {/* Table List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        <div className="flex-1 overflow-y-auto py-4 px-5">
            {tables.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase())).map(t => {
              const isSelected = activeFocus === t.name;
              return (
                <div 
                   key={t.name}
                   onClick={() => setActiveFocus(isSelected ? null : t.name)}
-                  style={{ 
-                    marginBottom: 8,
-                    padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-                    background: isSelected ? 'var(--primary-muted)' : 'var(--surface)',
-                    border: `1px solid ${isSelected ? 'var(--primary-light)' : 'var(--border)'}`,
-                    boxShadow: isSelected ? '0 4px 12px rgba(139, 92, 246, 0.1)' : '0 2px 8px rgba(0,0,0,0.02)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    transition: 'all 0.2s'
-                  }}
+                  className={`mb-2 py-3 px-4 rounded-xl cursor-pointer flex justify-between items-center transition-all duration-200 border ${isSelected ? 'bg-primary-muted border-primary/30 shadow-[0_4px_12px_rgba(139,92,246,0.1)]' : 'bg-surface border-border shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-primary/50'}`}
                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                     <Database size={16} color={isSelected ? "var(--primary)" : "var(--muted)"} />
-                     <span style={{ fontWeight: 600, color: isSelected ? 'var(--primary)' : 'var(--text)', fontSize: 14 }}>{t.name}</span>
+                  <div className="flex items-center gap-2.5">
+                     <Database size={16} className={isSelected ? "text-primary" : "text-muted"} />
+                     <span className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-text'}`}>{t.name}</span>
                   </div>
-                  <span style={{ fontSize: 11, color: isSelected ? 'var(--primary)' : 'var(--muted)', background: isSelected ? 'var(--surface)' : 'var(--surface-2)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>{t.columns.length}</span>
+                  <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${isSelected ? 'text-primary bg-surface' : 'text-muted bg-surface-2'}`}>{t.columns.length}</span>
                </div>
              )
            })}
@@ -315,7 +269,7 @@ function ERDiagramFlow({ dbName, onClose }) {
       </div>
 
       {/* Right Canvas */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'var(--bg)' }}>
+      <div className="flex-1 relative overflow-hidden bg-bg">
         <ReactFlow
           nodes={nodes}
           edges={edges}
