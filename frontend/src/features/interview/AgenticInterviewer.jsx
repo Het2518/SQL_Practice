@@ -82,6 +82,42 @@ Rules:
     }
   };
 
+  const handleFinalSubmit = async () => {
+    if (!sql.trim() || sql === '-- Write your solution here once you understand the requirements...\n\n') {
+      toast({ title: 'No SQL provided', message: 'Please write your SQL solution in the editor before submitting.', type: 'error' });
+      return;
+    }
+    if (!hasGroqKey()) {
+      toast({ title: 'API Key Missing', message: 'Please add a Groq API Key in settings first.', type: 'error' });
+      return;
+    }
+
+    setIsLoading(true);
+    setMessages((prev) => [...prev, { role: 'user', content: 'I am ready to submit my SQL solution for evaluation.' }]);
+
+    try {
+      const systemPrompt = `You are an expert FAANG SQL interviewer.
+The candidate was asked to: "Find our most valuable customers." (defined as spending > $1000 in the current year).
+Schema:
+- users (user_id, name, join_date)
+- orders (order_id, user_id, order_total, order_date)
+
+Here is the candidate's SQL submission:
+\`\`\`sql
+${sql}
+\`\`\`
+
+Evaluate this query rigorously. Tell them if they passed or failed, and point out any edge cases they missed (e.g., date filtering, GROUP BY, aggregations). Keep your feedback under 100 words and be direct.`;
+      
+      const response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 500, false);
+      setMessages((prev) => [...prev, { role: 'assistant', content: `**Evaluation:**\n\n${response}` }]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Sorry, I could not evaluate your SQL due to a network error.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -150,11 +186,8 @@ Rules:
             />
           </div>
           <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2">
-            <span className="text-xs text-text-secondary font-mono">-- Write your query above, but you can't execute it until you're done!</span>
-            <Button className="hero-btn-primary" onClick={() => {
-              toast({ title: 'Interview Completed', message: 'In a full version, this would evaluate your SQL against hidden tests!', type: 'success' });
-              setTimeout(onClose, 2000);
-            }}>
+            <span className="text-xs text-text-secondary font-mono">-- Write your query above, then submit for AI evaluation!</span>
+            <Button className="hero-btn-primary" onClick={handleFinalSubmit} disabled={isLoading}>
               Submit Final Answer
             </Button>
           </div>

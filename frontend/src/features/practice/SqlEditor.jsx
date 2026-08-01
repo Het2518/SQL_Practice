@@ -151,7 +151,6 @@ export function SqlEditor({
     }
 
     const disposable = monacoInstance.languages.registerCompletionItemProvider('sql', {
-      triggerCharacters: ['.', ' ', '(', ','],
       provideCompletionItems: (model, position) => {
         if (!model) return { suggestions: [] };
         const lineContent = model.getLineContent(position.lineNumber) || '';
