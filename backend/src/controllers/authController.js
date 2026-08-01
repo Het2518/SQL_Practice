@@ -77,27 +77,37 @@ async function register(req, res, next) {
     const verificationCode = generateCode();
     const verificationCodeExpires = Date.now() + 15 * 60 * 1000; // 15 mins
 
+    // Render Free Tier SMTP Block Bypass: Auto-verify accounts
     const user = await User.create({ 
       email, 
       password, 
       displayName,
+      isVerified: true, // Auto verify to bypass email
       verificationCode,
       verificationCodeExpires
     });
 
-    // Create an empty progress record for the new user
-    await UserProgress.create({ userId: user._id, displayName: user.displayName });
+    // Skip sending email because Render blocks SMTP
+    // const emailResult = await sendVerificationEmail(user.email, verificationCode);
+    // if (!emailResult.success) {
+    //   return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
+    // }
 
-    // Send email asynchronously but await so it doesn't get killed
-    const emailResult = await sendVerificationEmail(user.email, verificationCode);
-    if (!emailResult.success) {
-      return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
-    }
+    // Log them in immediately since we bypassed verification
+    const token = generateToken(user._id);
 
     return sendSuccess(res, {
       statusCode: 201,
-      message: 'Account created. Please verify your email with the 6-digit code sent to you.',
-      data: { email: user.email }, // Do not return token yet
+      message: 'Account created successfully! Email verification is bypassed for now.',
+      data: { 
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          displayName: user.displayName,
+          role: user.role,
+        }
+      },
     });
   } catch (err) {
     next(err);
@@ -151,20 +161,10 @@ async function login(req, res, next) {
       return sendError(res, { statusCode: 401, message: 'Incorrect password.' });
     }
 
-    // Check if verified
+    // Render Free Tier Bypass: Treat all users as verified if they try to login
     if (!user.isVerified) {
-      user.verificationCode = generateCode();
-      user.verificationCodeExpires = Date.now() + 15 * 60 * 1000;
+      user.isVerified = true;
       await user.save();
-      const emailResult = await sendVerificationEmail(user.email, user.verificationCode);
-      if (!emailResult.success) {
-        return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
-      }
-      return sendError(res, { 
-        statusCode: 403, 
-        message: 'Account not verified. A new 6-digit code has been sent to your email.',
-        code: 'NOT_VERIFIED'
-      });
     }
 
     const token = signToken(user._id);

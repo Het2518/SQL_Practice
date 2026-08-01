@@ -54,10 +54,15 @@ export function AuthModal({ onClose }) {
         
       } else if (view === VIEWS.REGISTER) {
         if (!form.email || !form.password) return;
-        await register({ email: form.email, password: form.password, displayName: form.displayName });
-        setStatus('success');
-        setMessage('Account created! Please check your email for the 6-digit verification code.');
-        setView(VIEWS.VERIFY);
+        const result = await register({ email: form.email, password: form.password, displayName: form.displayName });
+        
+        if (result.verified) {
+          onClose(); // Automatically log in since Render bypass is active
+        } else {
+          setStatus('success');
+          setMessage('Account created! Please check your email for the 6-digit verification code.');
+          setView(VIEWS.VERIFY);
+        }
         
       } else if (view === VIEWS.VERIFY) {
         if (!form.email || !form.code) return;

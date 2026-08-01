@@ -51,7 +51,15 @@ export const useAuth = create((set, get) => ({
    */
   register: async ({ email, password, displayName }) => {
     const { data } = await api.auth.register({ email, password, displayName });
-    return data.data; // returns { email }
+    
+    // If backend returns a token (Render Free Tier bypass), log the user in instantly
+    if (data.data?.token) {
+      tokenStorage.set(data.data.token);
+      set({ user: data.data.user });
+      return { verified: true, user: data.data.user };
+    }
+    
+    return { verified: false, email: data.data.email };
   },
 
   /**
