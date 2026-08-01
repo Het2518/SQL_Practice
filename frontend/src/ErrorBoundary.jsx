@@ -71,7 +71,7 @@ export class ErrorBoundary extends React.Component {
       return (
         <div style={{ 
           padding: '40px 20px', 
-          fontFamily: 'system-ui, sans-serif', 
+          fontFamily: 'var(--font-sans)', 
           color: 'var(--text)', 
           background: 'var(--bg)', 
           minHeight: '100vh',
@@ -83,39 +83,57 @@ export class ErrorBoundary extends React.Component {
         }}>
           <div style={{ 
             background: 'var(--surface)', 
-            padding: '40px', 
-            borderRadius: '16px', 
+            padding: '48px 40px', 
+            borderRadius: 'var(--radius-xl)', 
             border: '1px solid var(--border)',
-            maxWidth: '600px',
+            maxWidth: '540px',
             width: '100%',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+            boxShadow: 'var(--shadow-lg)'
           }}>
-            <h1 style={{ color: 'var(--error)', fontSize: '28px', marginBottom: '16px', fontWeight: 800 }}>Oops, something went wrong.</h1>
-            <p style={{ color: 'var(--muted)', fontSize: '15px', marginBottom: '32px', lineHeight: 1.6 }}>
-              We encountered an unexpected issue while loading this page. This usually happens when an update was released while you were browsing.
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '16px',
+              background: 'var(--error-muted)',
+              color: 'var(--error)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 24px',
+              border: '1px solid rgba(239, 68, 68, 0.2)'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+            </div>
+            
+            <h1 style={{ color: 'var(--text)', fontSize: '24px', marginBottom: '12px', fontWeight: 800, letterSpacing: '-0.02em' }}>Application Error</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px', lineHeight: 1.6 }}>
+              We encountered an unexpected issue while loading this view. This is usually temporary or caused by a background update.
             </p>
             
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button 
                 onClick={() => window.location.assign('/?t=' + Date.now())}
-                style={{ padding: '12px 24px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: '0.2s', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                style={{ padding: '12px 24px', background: 'var(--text)', color: 'var(--bg)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.15s ease', boxShadow: 'var(--shadow-sm)' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.opacity = '0.9'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.opacity = '1'; }}
               >
                 Refresh Page
               </button>
               <button 
                 onClick={this.handleHardReset}
-                style={{ padding: '12px 24px', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, transition: '0.2s' }}
+                style={{ padding: '12px 24px', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', transition: 'all 0.15s ease' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-2)'}
               >
-                Clear Data & Restart
+                Clear Cache & Restart
               </button>
             </div>
 
             <details style={{ whiteSpace: 'pre-wrap', marginTop: '32px', textAlign: 'left', background: 'var(--bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-              <summary style={{ fontWeight: '600', cursor: 'pointer', color: 'var(--muted)', fontSize: '13px' }}>View Technical Details</summary>
+              <summary style={{ fontWeight: '600', cursor: 'pointer', color: 'var(--muted)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                View Technical Details
+              </summary>
               <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text)', fontFamily: 'monospace', overflowX: 'auto' }}>
                 <div style={{ color: 'var(--error)', fontWeight: 'bold' }}>{this.state.error && this.state.error.toString()}</div>
                 <div style={{ marginTop: '8px', color: 'var(--muted)' }}>{this.state.errorInfo && this.state.errorInfo.componentStack}</div>
