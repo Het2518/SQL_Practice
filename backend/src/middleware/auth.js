@@ -36,4 +36,18 @@ async function protect(req, res, next) {
   }
 }
 
-module.exports = { protect };
+async function attachUserIfPresent(req, res, next) {
+  try {
+    const token = req.cookies?.token;
+    if (!token) return next();
+
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.sub).select('-password');
+    if (user) req.user = user;
+    next();
+  } catch (err) {
+    next();
+  }
+}
+
+module.exports = { protect, attachUserIfPresent };
