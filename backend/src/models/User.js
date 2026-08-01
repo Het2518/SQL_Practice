@@ -64,6 +64,15 @@ const userSchema = new mongoose.Schema(
     lastLoginAt: {
       type: Date,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
 
     // --- Profile & Social ---
     bio: {
