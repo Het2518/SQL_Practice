@@ -1000,6 +1000,23 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                 <Button variant="ghost" size="sm" onClick={() => setSql(formatQuery(sql))}>
                   Format
                 </Button>
+                <div className="w-px h-4 bg-border mx-1" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCteModal(true)}
+                  style={{ fontSize: 11 }}
+                >
+                  🪄 CTE
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setJoinAnalysisData({ db: executeQuery, sql })}
+                  style={{ fontSize: 11 }}
+                >
+                  🔗 Joins
+                </Button>
               </div>
               <Button size="sm" onClick={runQuery} isLoading={isRunning}>
                 <Play size={13} fill="currentColor" /> Run Code (Ctrl+Enter)
