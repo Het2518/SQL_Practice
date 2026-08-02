@@ -33,15 +33,36 @@ export function InterviewArena() {
   const isSubmittedRef = useRef(false);
   const warningsRef = useRef(0);
 
-  // Dynamic Prompt Logic
-  const getInitialTask = () => {
-    if (difficulty === 'easy') return "Find our top 3 most valuable customers who joined this year.";
-    if (difficulty === 'medium') return "Calculate the week-over-week retention rate of active users.";
-    if (difficulty === 'hard') return "Write a recursive CTE to find the shortest path between two nodes in a graph table.";
-    return "Identify the second highest salary in each department.";
-  };
+  // Dynamic FAANG-Level Prompt Logic
+  const [initialTask] = useState(() => {
+    const easyTasks = [
+      "Identify the top 3 users by total transaction volume in the last 30 days.",
+      "Find the percentage of users who logged in consecutively on their first and second day after signing up.",
+      "Retrieve all employees who earn more than their direct manager.",
+      "Calculate the average click-through rate for each ad campaign in Q3."
+    ];
+    const mediumTasks = [
+      "Calculate the 7-day rolling average of daily active users for the past month.",
+      "Write a query to find the top 2 highest-grossing products within each category.",
+      "Determine the week-over-week user retention rate for our main subscription product.",
+      "Group user events into sessions where gaps between events are less than 30 minutes, and calculate the duration of each session.",
+      "Identify users who have purchased items from all available product categories."
+    ];
+    const hardTasks = [
+      "Solve the 'Gaps and Islands' problem: find all contiguous periods of activity for each user from a log of active days.",
+      "Calculate the median response time for customer support tickets grouped by priority level without using built-in percentile functions.",
+      "Given a table of friend connections, recommend new friends based on mutual connections, ranked by the number of mutuals.",
+      "Write a recursive CTE to calculate the total hierarchical cost of a multi-level bill of materials assembly."
+    ];
 
-  const initialTask = getInitialTask();
+    let tasks = [];
+    if (difficulty === 'easy') tasks = easyTasks;
+    else if (difficulty === 'medium') tasks = mediumTasks;
+    else if (difficulty === 'hard') tasks = hardTasks;
+    else tasks = [...easyTasks, ...mediumTasks, ...hardTasks];
+
+    return tasks[Math.floor(Math.random() * tasks.length)];
+  });
 
   // Timer
   useEffect(() => {
