@@ -252,6 +252,7 @@ export default function App() {
             />
           }
         />
+        <Route path="/interview/permissions" element={<InterviewPermissions />} />
         <Route path="/interview/preflight" element={<InterviewPreFlight />} />
         <Route path="/interview/arena" element={<InterviewArena />} />
         <Route path="/interview/report" element={<InterviewReport />} />

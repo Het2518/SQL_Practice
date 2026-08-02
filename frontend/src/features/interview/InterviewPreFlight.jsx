@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { hasGroqKey } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
+import { useProctorStore } from './useProctorStore';
 
 export function InterviewPreFlight() {
   const [searchParams] = useSearchParams();
@@ -12,10 +13,13 @@ export function InterviewPreFlight() {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { cameraStream, screenStream } = useProctorStore();
+
   const [checks, setChecks] = useState({
     network: false,
     apiKey: false,
     browser: false,
+    media: false,
   });
   const [checking, setChecking] = useState(true);
 
@@ -34,12 +38,15 @@ export function InterviewPreFlight() {
       const canFullscreen = !!document.documentElement.requestFullscreen;
       setChecks(prev => ({ ...prev, browser: canFullscreen }));
 
+      // Check Media Streams
+      setChecks(prev => ({ ...prev, media: !!cameraStream && !!screenStream }));
+
       setChecking(false);
     };
     runChecks();
-  }, []);
+  }, [cameraStream, screenStream]);
 
-  const allClear = checks.network && checks.apiKey && checks.browser;
+  const allClear = checks.network && checks.apiKey && checks.browser && checks.media;
 
   const handleStart = async () => {
     if (!allClear) {
@@ -49,9 +56,12 @@ export function InterviewPreFlight() {
     try {
       if (document.documentElement.requestFullscreen) {
         await document.documentElement.requestFullscreen();
+        if (navigator.keyboard && navigator.keyboard.lock) {
+          await navigator.keyboard.lock(['Escape']);
+        }
       }
     } catch (err) {
-      console.warn('Fullscreen failed:', err);
+      console.warn('Fullscreen/KeyboardLock failed:', err);
     }
     navigate(`/interview/arena?duration=${duration}&difficulty=${difficulty}`);
   };
@@ -106,7 +116,32 @@ export function InterviewPreFlight() {
                   label="Groq API Key" 
                   status={checking && !checks.apiKey ? 'loading' : checks.apiKey ? 'pass' : 'fail'} 
                 />
+                <CheckItem 
+                  icon={<Camera size={16} />} 
+                  label="Media Streams Active" 
+                  status={checking && !checks.media ? 'loading' : checks.media ? 'pass' : 'fail'} 
+                />
               </div>
+            </div>
+          </div>
+
+          {/* Video Previews */}
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="bg-black rounded-lg overflow-hidden border border-border aspect-video relative">
+              <span className="absolute top-2 left-2 text-[10px] uppercase font-bold text-white bg-black/50 px-2 py-1 rounded">Camera Preview</span>
+              {cameraStream ? (
+                <VideoPreview stream={cameraStream} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-error text-sm font-semibold">Missing Stream</div>
+              )}
+            </div>
+            <div className="bg-black rounded-lg overflow-hidden border border-border aspect-video relative">
+              <span className="absolute top-2 left-2 text-[10px] uppercase font-bold text-white bg-black/50 px-2 py-1 rounded">Screen Preview</span>
+              {screenStream ? (
+                <VideoPreview stream={screenStream} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-error text-sm font-semibold">Missing Stream</div>
+              )}
             </div>
           </div>
 
@@ -159,4 +194,14 @@ function XIcon() {
       <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
   );
+}
+
+function VideoPreview({ stream }) {
+  const videoRef = React.useRef(null);
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+  return <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100" />;
 }

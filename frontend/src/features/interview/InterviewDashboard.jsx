@@ -24,7 +24,7 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
   const [difficulty, setDifficulty] = useState('mixed');
 
   const handleStart = () => {
-    navigate(`/interview/preflight?duration=${duration}&difficulty=${difficulty}`);
+    navigate(`/interview/permissions?duration=${duration}&difficulty=${difficulty}`);
   };
 
   return (

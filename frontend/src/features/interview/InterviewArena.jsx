@@ -8,6 +8,7 @@ import { useToast } from '@/shared/ui/ToastSystem';
 import { api } from '@/lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useProctorStore } from './useProctorStore';
 
 const INTERVIEW_DURATION_MINUTES = 45;
 
@@ -19,6 +20,7 @@ export function InterviewArena() {
   const duration = parseInt(searchParams.get('duration') || '30', 10);
   const difficulty = searchParams.get('difficulty') || 'mixed';
   const companyName = 'Generic Tech';
+  const { cameraStream, screenStream } = useProctorStore();
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -122,6 +124,21 @@ export function InterviewArena() {
       }
     };
 
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = ''; // Required for Chrome
+    };
+
+    const handleStreamEnd = () => {
+      if (!isSubmittedRef.current) {
+        handleAntiCheat('stream_ended');
+      }
+    };
+
+    if (navigator.keyboard && navigator.keyboard.lock) {
+      navigator.keyboard.lock(['Escape']).catch(() => {});
+    }
+
     document.addEventListener('visibilitychange', onVisibilityChange);
     document.addEventListener('fullscreenchange', onFullscreenChange);
     window.addEventListener('blur', onWindowBlur);
@@ -130,6 +147,10 @@ export function InterviewArena() {
     document.addEventListener('cut', disableCopyPaste);
     document.addEventListener('contextmenu', disableContextMenu);
     document.addEventListener('keydown', disableKeyboard);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    if (cameraStream) cameraStream.getTracks().forEach(t => t.addEventListener('ended', handleStreamEnd));
+    if (screenStream) screenStream.getTracks().forEach(t => t.addEventListener('ended', handleStreamEnd));
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -140,8 +161,11 @@ export function InterviewArena() {
       document.removeEventListener('cut', disableCopyPaste);
       document.removeEventListener('contextmenu', disableContextMenu);
       document.removeEventListener('keydown', disableKeyboard);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (cameraStream) cameraStream.getTracks().forEach(t => t.removeEventListener('ended', handleStreamEnd));
+      if (screenStream) screenStream.getTracks().forEach(t => t.removeEventListener('ended', handleStreamEnd));
     };
-  }, [navigate, duration, timeLeft, toast]);
+  }, [navigate, duration, timeLeft, toast, cameraStream, screenStream]);
 
   // Initial Message
   useEffect(() => {
@@ -234,9 +258,16 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
           durationMinutes: Math.round((INTERVIEW_DURATION_MINUTES * 60 - timeLeft) / 60)
         });
         
-        if (document.fullscreenElement) {
-          await document.exitFullscreen().catch(e => console.log(e));
-        }
+        try {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen().catch(() => {});
+          }
+        } catch (e) {}
+
+        try {
+          const { stopAllStreams } = useProctorStore.getState();
+          stopAllStreams();
+        } catch(e) {}
         
         navigate('/interview/report', { state: { session: res.data.data.session } });
       } catch (saveErr) {
@@ -337,14 +368,25 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
 
           {/* Right: SQL Editor */}
           <div className="flex-1 flex flex-col bg-bg">
-            <div className="flex-1 relative">
-              <SqlEditor
-                value={sql}
-                onChange={setSql}
-                dbName="interview_sandbox"
-                fontSize={14}
-              />
-            </div>
+            <div className="flex-1 w-full relative">
+            <SqlEditor
+              value={sql}
+              onChange={setSql}
+              onRun={handleSubmitMsg}
+              disabled={isLoading}
+              height="100%"
+            />
+
+            {/* Webcam PIP */}
+            {cameraStream && (
+              <div className="absolute bottom-4 right-4 w-32 aspect-video bg-black rounded-lg border border-border shadow-2xl overflow-hidden z-50">
+                <VideoPreview stream={cameraStream} />
+                <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-error">
+                  <div className="w-1.5 h-1.5 rounded-full bg-error animate-pulse" /> REC
+                </div>
+              </div>
+            )}
+          </div>
             <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2">
               <span className="text-xs text-text-secondary font-mono">-- Write your query above, then submit for AI evaluation!</span>
               <Button className="hero-btn-primary px-8" onClick={() => handleFinalSubmit(false)} disabled={isLoading}>
