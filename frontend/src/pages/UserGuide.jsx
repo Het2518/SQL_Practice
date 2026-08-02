@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
+import { BookOpen, Code2, Database, ShieldAlert, Target, PlayCircle, Trophy, Bot, Star, TerminalSquare } from 'lucide-react';
+import { Button } from '@/shared/ui/Button';
 
 export function UserGuide({ user, onShowAuth, onShowSettings }) {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('getting-started');
 
   const sections = [
-    { id: 'getting-started', label: 'Getting Started' },
-    { id: 'editor-features', label: 'SQL Editor & Hotkeys' },
-    { id: 'schema-data', label: 'Schema & Data Explorer' },
-    { id: 'execution-results', label: 'Results & Visualizations' },
-    { id: 'practice-mode', label: 'Practice Mode & AI Tools' },
-    { id: 'interview-prep', label: 'Interview Preparation' },
-    { id: 'custom-datasets', label: 'Custom Datasets' },
-    { id: 'profile-settings', label: 'Profile & Gamification' },
-    { id: 'faq', label: 'FAQ & Troubleshooting' },
+    { id: 'getting-started', label: '1. Getting Started', icon: <PlayCircle size={16} /> },
+    { id: 'editor-features', label: '2. SQL Editor & Hotkeys', icon: <TerminalSquare size={16} /> },
+    { id: 'schema-data', label: '3. Schema & Data Explorer', icon: <Database size={16} /> },
+    { id: 'execution-results', label: '4. Visualizers & execution', icon: <Code2 size={16} /> },
+    { id: 'practice-mode', label: '5. Practice Mode & AI Tutor', icon: <Bot size={16} /> },
+    { id: 'interview-prep', label: '6. FAANG Mock Interviews', icon: <ShieldAlert size={16} /> },
+    { id: 'custom-datasets', label: '7. Custom Datasets Sandbox', icon: <Target size={16} /> },
+    { id: 'profile-settings', label: '8. Profile & Gamification', icon: <Trophy size={16} /> },
+    { id: 'faq', label: '9. FAQ & Troubleshooting', icon: <Star size={16} /> },
   ];
 
   return (
@@ -34,24 +36,25 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
 
       <div className="flex flex-1 max-w-[1400px] mx-auto w-full">
         {/* Table of Contents Sidebar */}
-        <aside className="w-[280px] border-r border-border px-5 py-8 sticky top-[65px] h-[calc(100vh-65px)] overflow-y-auto">
-          <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-bold">
-            Documentation
+        <aside className="w-[300px] border-r border-border px-5 py-8 sticky top-[65px] h-[calc(100vh-65px)] overflow-y-auto hidden md:block bg-surface/50">
+          <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-6 font-black flex items-center gap-2">
+            <BookOpen size={14} /> Official Documentation
           </h3>
-          <nav className="flex flex-col gap-1">
+          <nav className="flex flex-col gap-1.5">
             {sections.map((s) => (
               <button
                 key={s.id}
                 onClick={() => {
                   setActiveSection(s.id);
-                  document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth' });
+                  document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`text-left px-3 py-2 rounded-md border-none cursor-pointer text-sm transition-all duration-200 ${
+                className={`text-left px-3 py-2.5 rounded-lg border-none cursor-pointer text-sm transition-all duration-200 flex items-center gap-3 ${
                   activeSection === s.id
-                    ? 'bg-primary-muted text-primary font-semibold'
-                    : 'bg-transparent text-text font-normal hover:bg-surface-2'
+                    ? 'bg-primary/10 text-primary font-bold shadow-sm'
+                    : 'bg-transparent text-text-secondary hover:text-text hover:bg-surface-2'
                 }`}
               >
+                <span className={activeSection === s.id ? 'text-primary' : 'opacity-60'}>{s.icon}</span>
                 {s.label}
               </button>
             ))}
@@ -59,353 +62,286 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 px-[60px] py-[40px] max-w-[900px] flex flex-col gap-[60px]">
-          <section id="getting-started">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Getting Started
-            </h2>
-            <p className="leading-[1.7] text-text-secondary text-base m-0">
-              Welcome to DataDesk! Whether you're preparing for technical interviews, learning SQL
-              from scratch, or refining advanced performance-tuning skills, this platform provides a
-              100% local, ultra-fast environment coupled with powerful AI tools.
+        <main className="flex-1 px-8 py-10 md:px-12 md:py-12 max-w-[900px] flex flex-col gap-16">
+          <section id="getting-started" className="scroll-mt-24">
+            <h1 className="text-4xl mb-6 text-text font-black tracking-tight">
+              Welcome to DataDesk
+            </h1>
+            <p className="leading-loose text-text-secondary text-lg m-0">
+              DataDesk is an enterprise-grade SQL practice and interview preparation platform built natively for the web. Whether you are preparing for a brutal FAANG technical screen, learning SQL from scratch, or refining advanced performance-tuning skills, DataDesk provides a 100% local, ultra-fast environment coupled with powerful AI tools.
             </p>
-            <div className="bg-surface-2 p-5 rounded-lg border border-border mt-5">
-              <h4 className="m-0 mb-2 text-text text-base">Core Architecture</h4>
-              <p className="m-0 text-text-secondary text-sm leading-relaxed">
-                This application is powered by <strong>WASM SQLite</strong>. All pre-loaded
-                databases execute entirely inside your browser's memory. This guarantees zero
-                latency, complete privacy, and offline execution capabilities. Your personal
-                progress, however, is securely backed by Supabase in the cloud so you never lose
-                your data across devices.
+            <div className="bg-surface-2 p-6 rounded-2xl border border-border mt-8 shadow-inner">
+              <h4 className="m-0 mb-3 text-text text-lg font-bold flex items-center gap-2">
+                <Database className="text-primary" /> Core Architecture: WASM SQLite
+              </h4>
+              <p className="m-0 text-text-secondary text-base leading-relaxed">
+                This platform is powered by <strong>WASM SQLite</strong>. All queries you write execute entirely inside your browser's local memory. This guarantees zero latency, complete privacy, and full offline execution capabilities. Your gamification progress and solved questions are securely backed by Supabase in the cloud.
               </p>
             </div>
           </section>
 
-          <section id="editor-features">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              SQL Editor & Hotkeys
+          <section id="editor-features" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <TerminalSquare className="text-primary" /> SQL Editor & Hotkeys
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base mb-5 m-0">
-              The core of the platform is the embedded Monaco Editor (the same engine powering VS
-              Code). It supports deep syntax highlighting, smart autocomplete (incorporating the
-              live schema of your selected database), and intelligent formatting.
+            <p className="leading-loose text-text-secondary text-base mb-6 m-0">
+              The core of the platform is the embedded Monaco Editor (the same engine powering VS Code). It supports deep syntax highlighting, smart autocomplete (incorporating the live schema of your selected database), and intelligent formatting.
             </p>
 
-            <h3 className="text-lg my-6 mb-3 text-text font-bold">Essential Buttons</h3>
-            <ul className="pl-5 text-text-secondary leading-[1.7] m-0">
-              <li>
-                <strong>Run (▶)</strong>: Executes your query. Automatically protects against
-                massive DOM payloads via pagination.
-              </li>
-              <li>
-                <strong>Format (🪄)</strong>: Cleans up your messy SQL into a highly readable,
-                standardized format.
-              </li>
-              <li>
-                <strong>CTE Converter</strong>: Automatically converts nested subqueries in your
-                code into clean, modern Common Table Expressions (<code>WITH</code> clauses).
-              </li>
-            </ul>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-surface border border-border p-5 rounded-xl">
+                <strong className="block mb-2 text-text">Run (▶)</strong>
+                <span className="text-sm text-text-secondary">Executes your query instantly. Handles massive DOM payloads natively via virtual pagination.</span>
+              </div>
+              <div className="bg-surface border border-border p-5 rounded-xl">
+                <strong className="block mb-2 text-text">Format (🪄)</strong>
+                <span className="text-sm text-text-secondary">Cleans up your messy SQL into a highly readable, standardized layout using SQL-Formatter.</span>
+              </div>
+              <div className="bg-surface border border-border p-5 rounded-xl">
+                <strong className="block mb-2 text-text">CTE Converter</strong>
+                <span className="text-sm text-text-secondary">Automatically converts nasty nested subqueries in your code into clean, modern Common Table Expressions (WITH clauses).</span>
+              </div>
+            </div>
 
-            <h3 className="text-lg my-6 mb-3 text-text font-bold">Global Keyboard Shortcuts</h3>
-            <table className="w-full border-collapse text-left text-sm text-text-secondary">
-              <thead>
-                <tr className="border-b-2 border-border text-text">
-                  <th className="p-3 font-semibold">Action</th>
-                  <th className="p-3 font-semibold">Windows/Linux</th>
-                  <th className="p-3 font-semibold">Mac</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-border">
-                  <td className="p-3">Execute Query</td>
-                  <td className="p-3">
-                    <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
-                  </td>
-                  <td className="p-3">
-                    <kbd>Cmd</kbd> + <kbd>Enter</kbd>
-                  </td>
-                </tr>
-                <tr className="border-b border-border">
-                  <td className="p-3">Format Code</td>
-                  <td className="p-3">
-                    <kbd>Ctrl</kbd> + <kbd>Q</kbd>
-                  </td>
-                  <td className="p-3">
-                    <kbd>Cmd</kbd> + <kbd>Q</kbd>
-                  </td>
-                </tr>
-                <tr className="border-b border-border">
-                  <td className="p-3">Explain Query</td>
-                  <td className="p-3">
-                    <kbd>Ctrl</kbd> + <kbd>E</kbd>
-                  </td>
-                  <td className="p-3">
-                    <kbd>Cmd</kbd> + <kbd>E</kbd>
-                  </td>
-                </tr>
-                <tr className="border-b border-border">
-                  <td className="p-3">Toggle Sidebars</td>
-                  <td className="p-3">
-                    <kbd>Ctrl</kbd> + <kbd>B</kbd> / <kbd>`</kbd>
-                  </td>
-                  <td className="p-3">
-                    <kbd>Cmd</kbd> + <kbd>B</kbd> / <kbd>`</kbd>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <h3 className="text-xl my-6 mb-4 text-text font-bold">Global Keyboard Shortcuts</h3>
+            <div className="overflow-hidden rounded-xl border border-border">
+              <table className="w-full border-collapse text-left text-sm text-text-secondary bg-surface">
+                <thead>
+                  <tr className="border-b-2 border-border text-text bg-surface-2">
+                    <th className="p-4 font-semibold">Action</th>
+                    <th className="p-4 font-semibold">Windows / Linux</th>
+                    <th className="p-4 font-semibold">Mac</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr className="hover:bg-surface-2/50 transition-colors">
+                    <td className="p-4">Execute Query</td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Ctrl + Enter</kbd></td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Cmd + Enter</kbd></td>
+                  </tr>
+                  <tr className="hover:bg-surface-2/50 transition-colors">
+                    <td className="p-4">Format Code</td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Shift + Alt + F</kbd></td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Shift + Option + F</kbd></td>
+                  </tr>
+                  <tr className="hover:bg-surface-2/50 transition-colors">
+                    <td className="p-4">Explain Query</td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Ctrl + E</kbd></td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Cmd + E</kbd></td>
+                  </tr>
+                  <tr className="hover:bg-surface-2/50 transition-colors">
+                    <td className="p-4">Toggle Sidebars</td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Ctrl + B</kbd></td>
+                    <td className="p-4"><kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Cmd + B</kbd></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
 
-          <section id="schema-data">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Schema & Data Explorer
+          <section id="schema-data" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <Database className="text-primary" /> Schema & Data Explorer
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base mb-3">
-              The Schema Sidebar is your database explorer. It intelligently parses the live
-              database to show you tables, columns, data types, and primary/foreign key
-              relationships.
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              The Schema Sidebar is your database explorer. It intelligently parses the live database to show you tables, columns, data types, and primary/foreign key relationships.
             </p>
-            <ul className="pl-5 text-text-secondary leading-[1.7] mt-3 m-0">
-              <li>
-                <strong>Interactive ER Diagram:</strong> Click the "View ER Diagram" button at the
-                bottom of the sidebar to see a visual, node-based graph of how all tables in the
-                current database connect to each other. It features an automatic layout with fully
-                interactive zoom and pan functionality!
-              </li>
-              <li>
-                <strong>Table Preview:</strong> Hover over any table name in the sidebar and click
-                the <strong>Eye Icon (👁️)</strong>. This opens a massive, full-screen Data Preview
-                modal. It shows the exact schema definitions, column constraints (like{' '}
-                <code>Nullable</code>), and a paginated view of up to 50,000 real records.
-              </li>
-            </ul>
+            <div className="space-y-4 text-text-secondary leading-loose">
+              <div className="p-5 bg-surface rounded-xl border border-border flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">1</div>
+                <div>
+                  <strong className="text-text block mb-1">Interactive ER Diagram</strong>
+                  Click the "View ER Diagram" button at the bottom of the sidebar to see a visual, node-based graph of how all tables connect. It features fully interactive zoom and pan functionality, helping you understand complex schemas instantly.
+                </div>
+              </div>
+              <div className="p-5 bg-surface rounded-xl border border-border flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">2</div>
+                <div>
+                  <strong className="text-text block mb-1">Live Table Preview</strong>
+                  Hover over any table name in the sidebar and click the <strong>Eye Icon (👁️)</strong>. This opens a full-screen Data Preview modal showing schema definitions, constraints, and a paginated view of up to 50,000 real records.
+                </div>
+              </div>
+            </div>
           </section>
 
-          <section id="execution-results">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Results & Visualizations
+          <section id="execution-results" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <Code2 className="text-primary" /> Results & Visualizations
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base mb-3">
-              When you hit Run, the Results Panel springs to life. It handles massive result sets
-              flawlessly using built-in pagination. This platform isn't just an executor; it's a
-              teacher with advanced visualizers.
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              When you hit Run, the Results Panel springs to life. This platform isn't just an executor; it's a teacher equipped with advanced analytical visualizers.
             </p>
-            <ul className="pl-5 text-text-secondary leading-[1.7] mt-3 m-0">
-              <li>
-                <strong>Sleek Pagination:</strong> Pinned to the bottom of the results table, you'll
-                find navigation arrows and a metric showing exactly what slice of data you're
-                viewing.
-              </li>
-              <li>
-                <strong>Null Highlighting:</strong> Any <code>NULL</code> values returned by your
-                query are explicitly styled in italics with a faded background, preventing confusion
-                between empty strings and nulls.
-              </li>
-            </ul>
-
-            <div className="grid gap-4 mt-5">
-              <div className="p-4 bg-surface-2 border border-border rounded-lg">
-                <h4 className="m-0 mb-2 text-text flex items-center gap-2">
+            
+            <div className="grid gap-6 mt-6">
+              <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
+                <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
                   🔍 Execution Explainer (Ctrl+E)
                 </h4>
-                <p className="m-0 text-sm text-text-secondary leading-relaxed">
-                  Generates a step-by-step breakdown of how the database engine parses your query
-                  (FROM → WHERE → GROUP BY → SELECT). It also hooks into SQLite's native{' '}
-                  <code>EXPLAIN QUERY PLAN</code>.
+                <p className="m-0 text-base text-text-secondary leading-relaxed">
+                  Generates a step-by-step breakdown of how the database engine parses your query (FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY). It also automatically hooks into SQLite's native <code>EXPLAIN QUERY PLAN</code> to show you B-Tree usage and table scans.
                 </p>
               </div>
-              <div className="p-4 bg-surface-2 border border-border rounded-lg">
-                <h4 className="m-0 mb-2 text-text flex items-center gap-2">
+              <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
+                <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
                   🔗 Animated Join Visualizer
                 </h4>
-                <p className="m-0 text-sm text-text-secondary leading-relaxed">
-                  If your query contains JOINs, clicking this tool in the results panel will draw an
-                  animated visualization showing exactly how INNER, LEFT, or FULL joins operated on
-                  your specific tables.
+                <p className="m-0 text-base text-text-secondary leading-relaxed">
+                  If your query contains JOINs, clicking the Visualizer tool in the results panel will draw an animated Venn-diagram style visualization showing exactly how INNER, LEFT, or FULL joins operated on your specific tables.
                 </p>
               </div>
-              <div className="p-4 bg-surface-2 border border-border rounded-lg">
-                <h4 className="m-0 mb-2 text-text flex items-center gap-2">
+              <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
+                <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
                   ⚡ Index Advisor
                 </h4>
-                <p className="m-0 text-sm text-text-secondary leading-relaxed">
-                  Analyzes your <code>WHERE</code> and <code>JOIN</code> clauses and recommends
-                  specific <code>CREATE INDEX</code> statements to speed up your query on massive
-                  datasets.
+                <p className="m-0 text-base text-text-secondary leading-relaxed">
+                  Analyzes your <code>WHERE</code> and <code>JOIN</code> clauses and proactively recommends specific <code>CREATE INDEX</code> statements to speed up your query on massive datasets.
                 </p>
               </div>
             </div>
           </section>
 
-          <section id="practice-mode">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Practice Mode & AI Tools
+          <section id="practice-mode" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <Bot className="text-primary" /> Practice Mode & AI Tutor
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base m-0">
-              Our practice environment offers hundreds of questions spanning various difficulty
-              levels and schemas, supercharged with new AI capabilities.
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              Our practice environment offers hundreds of questions spanning various difficulty levels and schemas, supercharged with cutting-edge AI capabilities.
             </p>
-            <ul className="pl-5 text-text-secondary leading-[1.7] mt-3 m-0">
-              <li>
-                <strong>Advanced Question Browser:</strong> Filter tasks by difficulty, topic
-                (Joins, CTEs, Window Functions), and schema. Completing tasks automatically marks
-                them as solved in your profile.
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <CheckCircle size={20} className="text-success mt-1 shrink-0" />
+                <div>
+                  <strong className="text-text block mb-1">Proactive Background Tutor (Agent 3)</strong>
+                  <span className="text-text-secondary">If you are stuck on a query for 30 seconds of inactivity, a background AI silently analyzes your code. If you make a critical syntax or logic mistake, it slides a gentle, non-obtrusive hint onto your screen automatically.</span>
+                </div>
               </li>
-              <li>
-                <strong>AI Hint Panel:</strong> Stuck on a hard query? Click the{' '}
-                <strong>Get Hint</strong> button. Our new AI-powered Hint Panel provides
-                personalized, progressive conceptual feedback without giving away the answer.
+              <li className="flex items-start gap-3">
+                <CheckCircle size={20} className="text-success mt-1 shrink-0" />
+                <div>
+                  <strong className="text-text block mb-1">Diff Table Validation</strong>
+                  <span className="text-text-secondary">When you submit an answer, the platform runs your query alongside a hidden Master Solution, generating a <strong>Diff Table</strong> highlighting missing rows, extra rows, or mismatched columns in red/green to help you debug instantly.</span>
+                </div>
               </li>
-              <li>
-                <strong>AI Solution Review:</strong> After you solve a problem, our AI will review
-                your code and suggest more optimal, cleaner, or more standard approaches.
-              </li>
-              <li>
-                <strong>Diff Table Validation:</strong> When you submit an answer, the platform runs
-                your query alongside a hidden Master Solution, generating a{' '}
-                <strong>Diff Table</strong> highlighting missing rows, extra rows, or mismatched
-                columns.
+              <li className="flex items-start gap-3">
+                <CheckCircle size={20} className="text-success mt-1 shrink-0" />
+                <div>
+                  <strong className="text-text block mb-1">AI Solution Review & Hint Panel</strong>
+                  <span className="text-text-secondary">Stuck? Click "Get Hint" for progressive conceptual feedback. Finished? The AI will review your code and suggest more optimal, cleaner, or standard approaches.</span>
+                </div>
               </li>
             </ul>
           </section>
 
-          <section id="interview-prep">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Interview Preparation
+          <section id="interview-prep" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <ShieldAlert className="text-primary" /> FAANG Mock Interviews
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base m-0">
-              DataDesk now features a dedicated Premium Interview Dashboard specifically tailored to
-              get you hired.
+            <div className="bg-error/10 border border-error/20 p-6 rounded-2xl mb-8">
+              <h3 className="text-error font-black text-xl mb-2 flex items-center gap-2">
+                <AlertTriangle /> Zero-Tolerance Proctoring
+              </h3>
+              <p className="text-error/90 leading-relaxed mb-4">
+                The Interview Arena is designed to perfectly simulate a high-stress FAANG technical screen. It utilizes a strict zero-tolerance integrity policy.
+              </p>
+              <ul className="list-disc pl-5 text-error/80 space-y-1 text-sm">
+                <li>Pre-flight verification mandates a Camera, Microphone, and Screen-share check.</li>
+                <li>Exiting Fullscreen instantly terminates the interview.</li>
+                <li>Switching Tabs or Window Blurring (Alt-Tab) triggers an instant failure.</li>
+                <li>Copy/Paste and Developer Tools are strictly disabled.</li>
+              </ul>
+            </div>
+            
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              During the interview, an elite AI Principal Engineer administers a dynamic problem. You have a Scratchpad tab for notes, and the editor tracks your history. 
+              The session automatically saves to local storage every 5 seconds—if your browser crashes, simply return to the arena to instantly resume your session.
             </p>
-            <ul
-              style={{
-                paddingLeft: 20,
-                color: 'var(--text-secondary)',
-                lineHeight: 1.7,
-                marginTop: 12,
-              }}
-            >
-              <li>
-                <strong>Company-Specific Prep:</strong> View specialized pages for companies (like
-                Amazon, Meta, Stripe) which contain difficulty distributions, frequent topics, and
-                real interview experiences reported by candidates.
-              </li>
-              <li>
-                <strong>Learning Paths:</strong> Each company has a custom roadmap to master exactly
-                what they test for in their SQL interviews.
-              </li>
-              <li>
-                <strong>Mock Interviews:</strong> Jump into a timed mock interview containing the
-                most frequent questions from your selected company.
-              </li>
-            </ul>
+
+            <div className="flex gap-4">
+              <Button onClick={() => navigate('/interview')} variant="primary">
+                Enter Interview Lobby
+              </Button>
+            </div>
           </section>
 
-          <section id="custom-datasets">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Custom Datasets
+          <section id="custom-datasets" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <Target className="text-primary" /> Custom Datasets Sandbox
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base m-0">
-              Want to practice on your own data? Head to the Custom Dataset page.
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              Want to practice on your own data? Head to the Custom Dataset page to instantiate an ephemeral local sandbox.
             </p>
-            <ul
-              style={{
-                paddingLeft: 20,
-                color: 'var(--text-secondary)',
-                lineHeight: 1.7,
-                marginTop: 12,
-              }}
-            >
-              <li>Upload one or more CSV files simultaneously.</li>
-              <li>
-                The platform will automatically parse the headers, infer data types (Integer, Text,
-                Real), and spawn a brand new ephemeral SQLite database in memory.
-              </li>
-              <li>You can immediately write complex SQL against your own spreadsheets.</li>
-            </ul>
+            <div className="bg-surface p-6 rounded-xl border border-border">
+              <ol className="list-decimal pl-5 text-text-secondary leading-loose space-y-2">
+                <li>Upload one or more CSV files simultaneously.</li>
+                <li>The platform will automatically parse the headers, deeply infer data types (Integer, Text, Real), and spawn a brand new SQLite database in memory.</li>
+                <li>You can immediately write complex SQL against your own spreadsheets without uploading any data to a remote server.</li>
+              </ol>
+              <div className="mt-6">
+                <Button onClick={() => navigate('/sandbox')} variant="outline" size="sm">
+                  Try Custom Sandbox
+                </Button>
+              </div>
+            </div>
           </section>
 
-          <section id="profile-settings">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              Profile & Gamification
+          <section id="profile-settings" className="scroll-mt-24">
+            <h2 className="text-3xl mb-6 text-text font-extrabold flex items-center gap-3">
+              <Trophy className="text-primary" /> Profile & Gamification
             </h2>
-            <p className="leading-[1.7] text-text-secondary text-base m-0">
-              The platform tracks your growth as a SQL developer and rewards your consistency.
+            <p className="leading-loose text-text-secondary text-base mb-6">
+              The platform tracks your growth as a SQL developer and rewards your consistency through an extensive Gamification Engine.
             </p>
-            <ul
-              style={{
-                paddingLeft: 20,
-                color: 'var(--text-secondary)',
-                lineHeight: 1.7,
-                marginTop: 12,
-              }}
-            >
-              <li>
-                <strong>Developer Profile:</strong> Accessible via the top navigation, this
-                dashboard tracks your total queries executed, questions solved, and current streak.
-                It visualizes your progress via a GitHub-style contribution heatmap and a radar
-                chart of your skills.
-              </li>
-              <li>
-                <strong>Gamification & Badges:</strong> Earn badges for hitting milestones (like 50
-                questions solved, 7-day streak) and level up your global rank. All progress is
-                persisted securely to the cloud via Supabase.
-              </li>
-              <li>
-                <strong>Settings Modal (⚙️):</strong> Customize your experience. Change the editor
-                theme (Dark/Light), adjust font sizes, change pagination limits, and manage your AI
-                API keys.
-              </li>
-            </ul>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+              <div className="border border-border p-5 rounded-xl bg-surface-2">
+                <h4 className="font-bold text-text mb-2">Developer Profile</h4>
+                <p className="text-sm text-text-secondary">Visualizes your progress via a GitHub-style contribution heatmap and a dynamic radar chart of your SQL competencies (Joins, Aggregations, CTEs).</p>
+              </div>
+              <div className="border border-border p-5 rounded-xl bg-surface-2">
+                <h4 className="font-bold text-text mb-2">Global Leaderboard</h4>
+                <p className="text-sm text-text-secondary">Compete globally! Earn XP for solving challenges and maintaining a daily streak. Track your rank in real-time.</p>
+              </div>
+            </div>
           </section>
 
-          <section id="faq">
-            <h2 className="text-[28px] mb-4 text-text font-extrabold">
-              FAQ & Troubleshooting
+          <section id="faq" className="scroll-mt-24">
+            <h2 className="text-3xl mb-8 text-text font-extrabold flex items-center gap-3">
+              <Star className="text-primary" /> FAQ & Troubleshooting
             </h2>
 
-            <div className="flex flex-col gap-6 mt-5">
-              <div className="pb-5 border-b border-border">
-                <h4 className="m-0 mb-2 text-base text-text">
+            <div className="flex flex-col gap-8">
+              <div className="pb-6 border-b border-border">
+                <h4 className="m-0 mb-3 text-lg font-bold text-text">
                   Why did my browser freeze on a massive query?
                 </h4>
-                <p className="m-0 text-text-secondary text-[15px] leading-[1.6]">
-                  If you write <code>SELECT * FROM huge_table</code> without a limit, returning
-                  50,000+ rows used to crash the DOM. However, our new pagination engine safely
-                  captures these massive arrays and strictly renders only 50 rows at a time, keeping
-                  your browser lightning fast!
+                <p className="m-0 text-text-secondary text-base leading-loose">
+                  If you write <code>SELECT * FROM huge_table</code> without a limit, returning 50,000+ rows used to crash the DOM. However, our new Virtual Pagination engine safely captures these massive arrays and strictly renders only 50 rows at a time, keeping your browser lightning fast regardless of the result size!
                 </p>
               </div>
 
-              <div className="pb-5 border-b border-border">
-                <h4 className="m-0 mb-2 text-base text-text">
+              <div className="pb-6 border-b border-border">
+                <h4 className="m-0 mb-3 text-lg font-bold text-text">
                   Does this platform support stored procedures or triggers?
                 </h4>
-                <p className="m-0 text-text-secondary text-[15px] leading-[1.6]">
-                  Because the backend runs on SQLite, it fully supports Triggers, Views, and CTEs.
-                  However, SQLite does not natively support complex Stored Procedures (T-SQL or
-                  PL/pgSQL). Stick to standard ANSI SQL.
+                <p className="m-0 text-text-secondary text-base leading-loose">
+                  Because the backend runs natively on SQLite, it fully supports Triggers, Views, and CTEs. However, SQLite does not natively support complex Stored Procedures (like T-SQL or PL/pgSQL). Please stick to standard ANSI SQL.
                 </p>
               </div>
 
-              <div className="pb-5 border-b border-border">
-                <h4 className="m-0 mb-2 text-base text-text">
-                  How is my progress saved?
+              <div className="pb-6 border-b border-border">
+                <h4 className="m-0 mb-3 text-lg font-bold text-text">
+                  How is my data securely saved?
                 </h4>
-                <p className="m-0 text-text-secondary text-[15px] leading-[1.6]">
-                  Your user profile, solved questions, and settings are safely backed by Supabase
-                  cloud storage, allowing for seamless progress persistence across devices.
+                <p className="m-0 text-text-secondary text-base leading-loose">
+                  Your execution runs locally, but your user profile, solved questions, and XP are safely backed by Supabase cloud storage, allowing for seamless progress persistence across any device. Interview sessions use LocalStorage for instant crash recovery.
                 </p>
               </div>
 
-              <div className="pb-5 border-b border-border">
-                <h4 className="m-0 mb-2 text-base text-text">
-                  How do the new AI features work?
+              <div className="pb-6">
+                <h4 className="m-0 mb-3 text-lg font-bold text-text">
+                  How do the new AI features work without a backend?
                 </h4>
-                <p className="m-0 text-text-secondary text-[15px] leading-[1.6]">
-                  The AI Hint Panel and Solution Review utilize the Groq API for lightning-fast
-                  inference. You can configure your Groq API key securely within the Settings Modal.
+                <p className="m-0 text-text-secondary text-base leading-loose">
+                  The AI Hint Panel, Interviewer, and Proactive Tutor utilize the Groq API for lightning-fast inference directly from the client. You can configure your Groq API key securely within the Settings Modal (it is stored in Ephemeral Session Storage to prevent XSS leaks).
                 </p>
               </div>
             </div>

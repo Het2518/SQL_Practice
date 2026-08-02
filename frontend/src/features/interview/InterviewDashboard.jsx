@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Briefcase, FileText } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';
 
@@ -41,6 +42,26 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
 
   return (
     <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text flex flex-col page-enter">
+      <Helmet>
+        <title>FAANG SQL Mock Interview | Proctored SQL Simulator</title>
+        <meta name="description" content="Simulate a real FAANG SQL technical interview. Features strict zero-tolerance proctoring, AI Principal Engineer evaluation, and a full Hiring Committee PDF report." />
+        <meta name="keywords" content="FAANG SQL interview, SQL mock interview, Databricks SQL interview, Meta SQL practice, AI SQL proctoring, tech interview simulator" />
+        
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "FAANG SQL Interview Arena",
+            "applicationCategory": "EducationalApplication",
+            "description": "An enterprise-grade, zero-tolerance proctored SQL interview simulator featuring real-time AI evaluation from FAANG-calibre virtual engineers.",
+            "provider": {
+              "@type": "Organization",
+              "name": "DataDesk",
+              "sameAs": "https://sql-practice-sepia.vercel.app"
+            }
+          })}
+        </script>
+      </Helmet>
       <Header
         user={user}
         onShowAuth={onShowAuth}

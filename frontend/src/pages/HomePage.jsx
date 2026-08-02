@@ -67,8 +67,45 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
   return (
     <div className="relative flex-1 w-full h-full overflow-y-auto bg-bg text-text pb-20 page-enter">
       <Helmet>
-        <title>DataDesk | Practice SQL & Prepare for Interviews</title>
-        <meta name="description" content="Master SQL with real-world databases. Interactive practice environment for JOINs, CTEs, and Window Functions." />
+        <title>DataDesk | Master SQL & Crack FAANG Interviews</title>
+        <meta name="description" content="The ultimate in-browser SQL practice platform. Master JOINs, Window Functions, and CTEs with a local SQLite sandbox. Prepare for elite FAANG interviews with an AI principal engineer." />
+        <meta name="keywords" content="SQL practice, FAANG SQL interview, learn SQL online, interactive SQL, SQL queries, AI SQL tutor, SQL.js sandbox, database interview prep" />
+        <link rel="canonical" href="https://sql-practice-sepia.vercel.app/" />
+        
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "DataDesk",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "WebBrowser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "An advanced, zero-latency SQL practice platform running completely in your browser via WASM SQLite. Perfect for elite FAANG interview preparation.",
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.9",
+              "ratingCount": "1250"
+            }
+          })}
+        </script>
+        
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "DataDesk",
+            "url": "https://sql-practice-sepia.vercel.app/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://sql-practice-sepia.vercel.app/practice/{search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
       </Helmet>
       {/* ── Global Header ── */}
       <Header

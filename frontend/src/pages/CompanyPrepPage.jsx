@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { api } from '@/lib/api';
 import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeBase';
 import { Button } from '@/shared/ui/Button';
@@ -119,6 +120,25 @@ export default function CompanyPrepPage(props) {
 
   return (
     <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text page-enter">
+      <Helmet>
+        <title>{companyName} SQL Interview Prep | Questions & Guides</title>
+        <meta name="description" content={`Prepare for your ${companyName} SQL interview. Practice actual ${companyName} SQL questions, learn the required schema patterns, and review past interview experiences.`} />
+        <meta name="keywords" content={`${companyName} SQL interview, ${companyName} data science interview, ${companyName} data engineer interview questions, SQL practice`} />
+        
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Course",
+            "name": `${companyName} SQL Interview Preparation`,
+            "description": `Comprehensive study guide and practice environment for passing the ${companyName} technical SQL interview.`,
+            "provider": {
+              "@type": "Organization",
+              "name": "DataDesk",
+              "sameAs": "https://sql-practice-sepia.vercel.app"
+            }
+          })}
+        </script>
+      </Helmet>
       {/* ── Global Header ── */}
       <Header
         onShowAuth={props.onShowAuth}

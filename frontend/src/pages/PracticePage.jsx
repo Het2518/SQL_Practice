@@ -590,8 +590,23 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       data-font-size={fontSizeClass}
     >
       <Helmet>
-        <title>{dbInfo?.label ? `Practice ${dbInfo.label} | DataDesk` : 'SQL Practice | DataDesk'}</title>
-        <meta name="description" content={dbInfo?.description || 'Interactive SQL practice environment.'} />
+        <title>{dbInfo?.label ? `Practice ${dbInfo.label} SQL | DataDesk` : 'SQL Practice Environment | DataDesk'}</title>
+        <meta name="description" content={dbInfo?.description ? `Master SQL on the ${dbInfo.label} database: ${dbInfo.description}` : 'Interactive SQL practice environment with real-world databases and instant AI feedback.'} />
+        <meta name="keywords" content={`SQL practice, learn ${dbInfo?.label || ''} SQL, interactive SQL, database schema, AI SQL tutor`} />
+        
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Course",
+            "name": dbInfo?.label ? `${dbInfo.label} SQL Mastery` : "Interactive SQL Mastery",
+            "description": dbInfo?.description || "Practice standard SQL queries using real-world sandbox environments.",
+            "provider": {
+              "@type": "Organization",
+              "name": "DataDesk",
+              "sameAs": "https://sql-practice-sepia.vercel.app"
+            }
+          })}
+        </script>
       </Helmet>
       
       {/* ══ MOBILE WARNING OVERLAY ══ */}
