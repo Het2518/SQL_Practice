@@ -438,7 +438,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
           {/* Progress Bar (Time) */}
           <div className="flex-1 max-w-[300px] mx-8 hidden lg:block">
              <div className="w-full h-1.5 bg-surface-3 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${timeLeft < 300 ? 'bg-error' : 'bg-primary'}`} style={{ width: \`\${(timeLeft / (duration * 60)) * 100}%\` }} />
+               <div className={`h-full transition-all duration-1000 ${timeLeft < 300 ? 'bg-error' : 'bg-primary'}`} style={{ width: `${(timeLeft / (duration * 60)) * 100}%` }} />
              </div>
           </div>
 

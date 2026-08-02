@@ -169,14 +169,14 @@ ${payload.sql}
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: \`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print { 
           body { background: white; color: black; }
           .no-print { display: none !important; }
           .print-break-inside { break-inside: avoid; }
           .print-border { border: 1px solid #ddd !important; }
         }
-      \`}} />
+      `}} />
 
       <div className="min-h-screen bg-bg text-text p-6 md:p-12 overflow-y-auto page-enter">
         <div className="max-w-[900px] mx-auto print:max-w-full">
