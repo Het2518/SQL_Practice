@@ -25,8 +25,8 @@ const HeroSection = ({ onShowInterview, navigate }) => (
   <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center overflow-hidden px-6 pt-32 pb-16 bg-bg border-b border-border">
     {/* Background gradients */}
     <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
-      <div className="absolute w-[800px] h-[600px] bg-primary/20 rounded-full blur-[120px] opacity-50 animate-pulse" style={{ animationDuration: '4s' }} />
-      <div className="absolute w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] translate-y-20 translate-x-32" />
+      <div className="absolute w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
+      <div className="absolute w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] translate-y-20 translate-x-32 opacity-60" />
     </div>
 
     <div className="relative z-10 max-w-5xl mx-auto flex flex-col items-center">
@@ -43,7 +43,7 @@ const HeroSection = ({ onShowInterview, navigate }) => (
         Practice on real-world datasets with a zero-latency WASM SQLite engine. Get instant AI feedback, visualize execution plans, and ace your next data engineering interview.
       </p>
       <div className="flex flex-col sm:flex-row items-center gap-4 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
-        <Button className="h-14 px-8 text-lg rounded-2xl hero-btn-primary shadow-xl shadow-primary/20 hover:shadow-primary/40 hover:-translate-y-1 transition-all" onClick={() => navigate('/practice/airlines')}>
+        <Button className="h-14 px-8 text-lg rounded-2xl hero-btn-primary shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all" onClick={() => navigate('/practice/airlines')}>
           <Play size={18} fill="currentColor" className="mr-2" /> Start Practicing
         </Button>
         <Button variant="outline" className="h-14 px-8 text-lg rounded-2xl bg-surface/50 backdrop-blur border-border hover:bg-surface-2 transition-all group" onClick={onShowInterview}>
@@ -53,7 +53,7 @@ const HeroSection = ({ onShowInterview, navigate }) => (
     </div>
 
     {/* App Preview Mockup */}
-    <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+    <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up drop-shadow-2xl" style={{ animationDelay: '400ms' }}>
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-10 pointer-events-none" />
       <div className="rounded-t-3xl border border-border border-b-0 bg-surface shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
         <div className="h-10 bg-surface-2 border-b border-border flex items-center px-4 gap-2">
@@ -130,8 +130,8 @@ const FeatureBentoGrid = () => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[320px]">
       
       {/* Bento 1: Zero Latency WASM */}
-      <div className="md:col-span-2 relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-primary/50 transition-colors shadow-sm hover:shadow-lg">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-colors duration-500" />
+      <div className="md:col-span-2 relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-blue-400/50 transition-colors shadow-sm hover:shadow-md">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-colors duration-500" />
         <div className="relative z-10 flex flex-col h-full justify-between">
           <div>
             <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6">
@@ -149,11 +149,11 @@ const FeatureBentoGrid = () => (
       </div>
 
       {/* Bento 2: AI Tutor */}
-      <div className="relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-blue-500/50 transition-colors shadow-sm hover:shadow-lg">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent" />
+      <div className="relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-purple-400/50 transition-colors shadow-sm hover:shadow-md">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent" />
         <div className="relative z-10 flex flex-col h-full justify-between">
           <div>
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-6">
+            <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-6">
               <Bot size={24} />
             </div>
             <h3 className="text-2xl font-bold mb-2">AI Principal Engineer</h3>
@@ -167,7 +167,7 @@ const FeatureBentoGrid = () => (
       </div>
 
       {/* Bento 3: Visualizer */}
-      <div className="relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-warning/50 transition-colors shadow-sm hover:shadow-lg">
+      <div className="relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-warning/50 transition-colors shadow-sm hover:shadow-md">
         <div className="absolute bottom-0 right-0 w-48 h-48 bg-warning/10 rounded-full blur-[60px] translate-y-1/2 translate-x-1/4 group-hover:bg-warning/20 transition-colors duration-500" />
         <div className="relative z-10 flex flex-col h-full justify-between">
           <div>
@@ -186,7 +186,7 @@ const FeatureBentoGrid = () => (
       </div>
 
       {/* Bento 4: Datasets */}
-      <div className="md:col-span-2 relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-success/50 transition-colors shadow-sm hover:shadow-lg">
+      <div className="md:col-span-2 relative rounded-3xl bg-surface border border-border p-8 overflow-hidden group hover:border-success/50 transition-colors shadow-sm hover:shadow-md">
         <div className="absolute right-0 bottom-0 opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
           <Database size={240} className="text-success translate-x-1/4 translate-y-1/4" />
         </div>
@@ -262,7 +262,7 @@ const InterviewShowcase = ({ onShowInterview }) => (
 
 const GamificationPreview = () => (
   <section className="py-24 px-6 max-w-7xl mx-auto">
-    <div className="flex flex-col md:flex-row items-center gap-12 bg-gradient-to-br from-surface to-surface-2 border border-border rounded-3xl p-8 md:p-12 shadow-xl hover:shadow-2xl hover:border-primary/30 transition-all">
+    <div className="flex flex-col md:flex-row items-center gap-12 bg-gradient-to-br from-surface to-surface-2 border border-border rounded-3xl p-8 md:p-12 shadow-lg hover:shadow-xl hover:border-blue-400/30 transition-all">
        <div className="flex-1">
          <h2 className="text-3xl md:text-4xl font-black mb-4 text-text">Learn. Earn. Level Up.</h2>
          <p className="text-text-secondary text-lg mb-8 leading-relaxed">
@@ -326,9 +326,9 @@ const DatabaseGrid = ({ navigate, progress, totalComplete }) => (
             <div
               key={db}
               onClick={() => navigate('/practice/' + db)}
-              className="group cursor-pointer bg-bg border border-border rounded-3xl p-6 hover:border-primary/50 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col h-full"
+              className="group cursor-pointer bg-bg border border-border rounded-3xl p-6 hover:border-blue-400/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden flex flex-col h-full"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full group-hover:bg-primary/10 transition-colors" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full group-hover:bg-blue-500/10 transition-colors" />
               
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="w-14 h-14 rounded-2xl bg-surface-2 border border-border flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -356,10 +356,10 @@ const DatabaseGrid = ({ navigate, progress, totalComplete }) => (
       {/* Custom Dataset CTA */}
       <div 
         onClick={() => navigate('/sandbox')}
-        className="mt-12 group cursor-pointer bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between hover:border-primary/50 transition-colors"
+        className="mt-12 group cursor-pointer bg-gradient-to-r from-blue-500/5 to-transparent border border-blue-500/20 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between hover:border-blue-500/50 transition-colors shadow-sm hover:shadow-md"
       >
         <div className="flex items-center gap-6 mb-6 md:mb-0">
-          <div className="w-16 h-16 rounded-2xl bg-primary text-bg flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
+          <div className="w-16 h-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg flex-shrink-0">
             <Upload size={28} />
           </div>
           <div>
