@@ -29,7 +29,7 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
   const { gameState } = useGamificationStore();
 
   return (
-    <header className="relative z-50 h-[52px] px-5 flex items-center justify-between bg-surface border-b border-border shadow-sm shrink-0">
+    <header className="sticky top-0 z-50 h-[56px] px-6 flex items-center justify-between bg-surface/80 backdrop-blur-xl border-b border-border/50 shadow-sm shrink-0">
       {/* ── LEFT: Logo & Context ── */}
       <div className="flex items-center gap-4 justify-start">
         <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80 select-none" onClick={() => navigate('/')}>
@@ -73,11 +73,11 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
 
         {/* Global Mock Interviews Button */}
         <button
-          className="flex items-center gap-1.5 px-3 py-1.5 mx-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-xs border border-primary/20"
+          className="flex items-center gap-1.5 px-3 py-1.5 mx-1 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 text-primary transition-all font-semibold text-sm border border-blue-500/20 hover:border-blue-500/40 shadow-sm hover:shadow"
           onClick={() => navigate('/interview')}
           title="Mock Interviews"
         >
-          <Briefcase size={14} /> <span className="hidden sm:inline">Mock Interviews</span>
+          <Briefcase size={14} className="text-blue-500" /> <span className="hidden sm:inline">Mock Interviews</span>
         </button>
 
         <button

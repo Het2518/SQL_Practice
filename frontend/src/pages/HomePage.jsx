@@ -453,8 +453,8 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         onShowAuth={onShowAuth}
         onShowSettings={onShowSettings}
         navLinks={[
-          { label: 'Docs', onClick: () => navigate('/guide') },
-          { label: 'Interviews', onClick: () => onShowInterview(), primary: true },
+          { label: 'Documentation', onClick: () => navigate('/guide') },
+          { label: 'Sandbox', onClick: () => navigate('/sandbox'), primary: true },
         ]}
       />
 

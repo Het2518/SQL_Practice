@@ -132,11 +132,11 @@ export function InterviewPreFlight() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text flex items-center justify-center p-6 page-enter">
-      <div className="max-w-[900px] w-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
+    <div className="h-screen bg-bg text-text flex items-center justify-center p-6 page-enter overflow-hidden">
+      <div className="max-w-[900px] w-full max-h-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="bg-surface-2 px-8 py-6 border-b border-border text-center">
+        <div className="bg-surface-2 px-8 py-6 border-b border-border text-center shrink-0">
           <div className="mx-auto w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mb-4">
             <ShieldAlert size={32} />
           </div>
@@ -146,7 +146,7 @@ export function InterviewPreFlight() {
           </p>
         </div>
 
-        <div className="p-8 flex flex-col gap-8">
+        <div className="p-8 flex flex-col gap-8 overflow-y-auto flex-1">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* System Checks */}
@@ -222,7 +222,7 @@ export function InterviewPreFlight() {
 
         </div>
 
-        <div className="p-6 border-t border-border bg-surface-2 flex items-center justify-between">
+        <div className="p-6 border-t border-border bg-surface-2 flex items-center justify-between shrink-0">
           <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary">
             Cancel
           </Button>
