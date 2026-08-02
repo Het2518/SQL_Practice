@@ -54,7 +54,7 @@ const HeroSection = ({ onShowInterview, navigate }) => (
 
     {/* App Preview Mockup */}
     <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up drop-shadow-2xl" style={{ animationDelay: '400ms' }}>
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-10 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-bg to-transparent z-10 pointer-events-none" />
       <div className="rounded-t-3xl border border-border border-b-0 bg-slate-50 dark:bg-surface shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
         <div className="h-10 bg-surface-2 border-b border-border flex items-center px-4 gap-2">
           <div className="w-3 h-3 rounded-full bg-error/80" />
@@ -86,21 +86,21 @@ const HeroSection = ({ onShowInterview, navigate }) => (
 );
 
 const TablePlaceholder = () => (
-  <div className="w-full flex flex-col gap-2 opacity-70">
+  <div className="w-full flex flex-col gap-2">
     <div className="flex gap-2 border-b border-border pb-2">
-      <div className="h-3 w-1/4 bg-border rounded" />
-      <div className="h-3 w-1/4 bg-border rounded" />
-      <div className="h-3 w-1/4 bg-border rounded" />
+      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
+      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
+      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
     </div>
-    <div className="flex gap-2">
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
+    <div className="flex gap-2 opacity-80">
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
     </div>
-    <div className="flex gap-2">
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-border/50 rounded" />
+    <div className="flex gap-2 opacity-60">
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
     </div>
   </div>
 );

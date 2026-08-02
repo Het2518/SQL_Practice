@@ -100,13 +100,20 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 page-enter">
-      <div className="max-w-md w-full space-y-8 bg-surface p-8 sm:p-10 rounded-2xl shadow-xl border border-border">
+    <div className="flex-1 w-full h-full overflow-y-auto flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 page-enter relative overflow-hidden">
+      
+      {/* Background gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
+        <div className="absolute w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[80px] translate-y-20 translate-x-32 opacity-60" />
+      </div>
+
+      <div className="max-w-md w-full space-y-8 bg-surface/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-border/50 relative z-10">
         
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-primary/10 text-primary flex items-center justify-center rounded-xl mb-4">
-            <Terminal size={24} strokeWidth={2.5} />
+          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-500/10 to-purple-500/10 text-primary flex items-center justify-center rounded-2xl mb-6 shadow-sm border border-border/50">
+            <Terminal size={28} strokeWidth={2.5} />
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-text">
             {view === VIEWS.LOGIN && 'Welcome Back'}
@@ -140,7 +147,7 @@ export default function AuthPage() {
                     placeholder="John Doe"
                     value={form.displayName}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -158,7 +165,7 @@ export default function AuthPage() {
                     placeholder="johndoe"
                     value={form.username}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -176,7 +183,7 @@ export default function AuthPage() {
                     placeholder="you@example.com"
                     value={form.email}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -195,7 +202,7 @@ export default function AuthPage() {
                     placeholder="Min. 6 characters"
                     value={form.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -214,7 +221,7 @@ export default function AuthPage() {
                     placeholder="Confirm your password"
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -237,7 +244,7 @@ export default function AuthPage() {
                     placeholder="johndoe or you@example.com"
                     value={form.identifier}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -264,7 +271,7 @@ export default function AuthPage() {
                     placeholder="••••••••"
                     value={form.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -305,7 +312,7 @@ export default function AuthPage() {
                   placeholder="------"
                   value={form.code}
                   onChange={handleChange}
-                  className="block w-full py-3 bg-surface-2 border border-border rounded-lg text-center text-xl tracking-[0.5em] font-mono font-bold text-text focus:ring-primary focus:border-primary transition-colors"
+                  className="block w-full py-3 bg-surface-2 border border-border/50 rounded-xl text-center text-xl tracking-[0.5em] font-mono font-bold text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
                 />
               </div>
               <div>
@@ -322,7 +329,7 @@ export default function AuthPage() {
                     placeholder="Min. 6 characters"
                     value={form.newPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
+                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -342,7 +349,7 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-bg disabled:opacity-70 transition-colors"
+            className="w-full flex justify-center items-center h-12 hero-btn-primary rounded-xl text-sm font-bold text-primary-foreground shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-bg disabled:opacity-70 transition-all"
           >
             {status === 'loading' ? (
               <Loader2 size={18} className="animate-spin" />
