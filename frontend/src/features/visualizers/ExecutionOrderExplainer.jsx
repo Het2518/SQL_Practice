@@ -117,77 +117,40 @@ export function ExecutionOrderExplainer({ sql, executeQuery }) {
   if (!sql) return null;
 
   return (
-    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>
-        <span style={{ fontSize: 16 }}>⏱️</span>
+    <div className="py-4 px-5 border-b border-border">
+      <div className="flex items-center gap-2 mb-3 font-semibold text-[13px] text-text">
+        <span className="text-base">⏱️</span>
         Logical Execution Order
-        {loading && <span className="animate-pulse-glow" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', marginLeft: 8 }} />}
+        {loading && <span className="animate-pulse-glow w-2 h-2 rounded-full bg-accent ml-2" />}
       </div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 16 }}>
+      <div className="text-xs text-text-secondary mb-4">
         SQL is written logically, but executed in a specific sequence. Here is how the database engine processes your query:
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
-        <div style={{
-          position: 'absolute',
-          left: 11,
-          top: 10,
-          bottom: 10,
-          width: 2,
-          background: 'var(--border)',
-          zIndex: 0
-        }} />
+      <div className="flex flex-col gap-1.5 relative">
+        <div className="absolute left-[11px] top-2.5 bottom-2.5 w-0.5 bg-border z-0" />
         {steps.map((step, idx) => (
-          <div key={step.id} style={{ 
-            display: 'flex', 
-            gap: 12, 
-            position: 'relative', 
-            zIndex: 1,
-            opacity: step.active ? 1 : 0.4
-          }}>
-            <div style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              background: step.active ? 'var(--primary)' : 'var(--surface-3)',
-              color: step.active ? 'white' : 'var(--muted)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              fontWeight: 700,
-              boxShadow: step.active ? '0 0 0 4px var(--surface-2)' : '0 0 0 4px var(--surface)'
-            }}>
+          <div key={step.id} className={`flex gap-3 relative z-10 ${step.active ? 'opacity-100' : 'opacity-40'}`}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+              step.active 
+                ? 'bg-primary text-white shadow-[0_0_0_4px_var(--surface-2)]' 
+                : 'bg-surface-3 text-muted shadow-[0_0_0_4px_var(--surface)]'
+            }`}>
               {idx + 1}
             </div>
-            <div style={{
-              flex: 1,
-              background: step.active ? 'var(--surface)' : 'transparent',
-              border: `1px solid ${step.active ? 'var(--border)' : 'transparent'}`,
-              borderRadius: 6,
-              padding: '8px 12px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
+            <div className={`flex-1 rounded-md px-3 py-2 flex justify-between items-center ${
+              step.active ? 'bg-surface border border-border' : 'bg-transparent border border-transparent'
+            }`}>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: step.active ? 'var(--primary-hover)' : 'inherit', marginBottom: 2 }}>
+                <div className={`font-mono font-semibold text-xs mb-0.5 ${step.active ? 'text-primary-hover' : 'text-inherit'}`}>
                   {step.clause}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                <div className="text-[11px] text-text-secondary">
                   {step.description}
                 </div>
               </div>
               {step.rowCount !== undefined && (
-                <div style={{ 
-                  fontSize: 10, 
-                  background: 'var(--surface-2)', 
-                  padding: '2px 6px', 
-                  borderRadius: 4,
-                  color: 'var(--muted)',
-                  border: '1px solid var(--border)',
-                  whiteSpace: 'nowrap'
-                }}>
+                <div className="text-[10px] bg-surface-2 px-1.5 py-0.5 rounded text-muted border border-border whitespace-nowrap">
                   {step.rowCount} row{step.rowCount !== 1 ? 's' : ''}
                 </div>
               )}

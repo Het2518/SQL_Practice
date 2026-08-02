@@ -102,71 +102,67 @@ export const IndexAdvisor = ({ executeQuery, sql, refreshTrigger = 0 }) => {
     return () => { mounted = false; };
   }, [executeQuery, sql, refreshTrigger, localTrigger]);
 
-  if (loading) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--muted)' }}>Analyzing Execution Plan...</div>;
+  if (loading) return <div className="p-6 text-center text-muted">Analyzing Execution Plan...</div>;
   if (!analysis) return null;
 
   const hasScans = analysis.fullScans.length > 0;
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="p-6">
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', padding: 10, borderRadius: 10 }}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-gradient-to-br from-amber-500 to-red-500 p-2.5 rounded-xl">
           <Zap size={20} color="#fff" />
         </div>
         <div>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>AI Index Advisor</h3>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Analyzes full table scans to recommend indexes.</div>
+          <h3 className="m-0 text-base font-bold">AI Index Advisor</h3>
+          <div className="text-xs text-muted mt-0.5">Analyzes full table scans to recommend indexes.</div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: '1fr 1fr' }}>
+      <div className="grid gap-5 grid-cols-2">
         
         {/* Performance Diagnostics */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h4 style={{ margin: 0, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Diagnostic Results</h4>
+        <div className="flex flex-col gap-4">
+          <h4 className="m-0 text-[13px] uppercase tracking-[0.05em] text-text-secondary">Diagnostic Results</h4>
           
           {hasScans ? (
-            <div style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '16px', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#3b82f6', fontWeight: 700, marginBottom: '8px' }}>
+            <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl">
+              <div className="flex items-center gap-2 text-blue-500 font-bold mb-2">
                 <Zap size={18} /> Optimization Opportunity
               </div>
-              <div style={{ marginBottom: '12px', fontSize: 13, color: 'var(--text)' }}>
-                Tables Scanned: <strong style={{ color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)', padding: '2px 6px', borderRadius: 4 }}>{analysis.fullScans.join(', ')}</strong>
+              <div className="mb-3 text-[13px] text-text">
+                Tables Scanned: <strong className="text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">{analysis.fullScans.join(', ')}</strong>
               </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+              <div className="text-text-secondary text-[13px] leading-relaxed">
                 Your query is perfectly correct! However, SQLite performed a <strong>Full Table Scan</strong> because the columns you are filtering or sorting by don't have an index. As tables grow large, applying an index to these columns will drastically speed up execution.
               </div>
             </div>
           ) : (
-            <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '16px', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 700, marginBottom: '8px' }}>
+            <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-xl">
+              <div className="flex items-center gap-2 text-emerald-500 font-bold mb-2">
                 <CheckCircle2 size={18} /> Efficient Query
               </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.5 }}>
+              <div className="text-text-secondary text-[13px] leading-relaxed">
                 No full table scans were detected. The query planner efficiently utilized available indexes.
               </div>
             </div>
           )}
 
           {/* Current Indexes */}
-          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', padding: '16px', borderRadius: '12px' }}>
-             <div style={{ fontWeight: 600, marginBottom: '12px', fontSize: 13, color: 'var(--text)' }}>Existing Indexes on Queried Tables</div>
-             {analysis.availableIndexes.length === 0 && <div style={{ color: 'var(--muted)', fontSize: 13 }}>No indexes exist on these tables.</div>}
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="bg-surface-2 border border-border p-4 rounded-xl">
+             <div className="font-semibold mb-3 text-[13px] text-text">Existing Indexes on Queried Tables</div>
+             {analysis.availableIndexes.length === 0 && <div className="text-muted text-[13px]">No indexes exist on these tables.</div>}
+             <div className="flex flex-col gap-2">
                {analysis.availableIndexes.map(idx => {
                  const isUsed = analysis.usedIndexes.includes(idx.indexName);
                  return (
-                   <div key={idx.indexName} style={{
-                     display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', 
-                     background: isUsed ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface)',
-                     border: `1px solid ${isUsed ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)'}`,
-                     borderRadius: '8px',
-                     opacity: isUsed ? 1 : 0.6
-                   }}>
-                     <span style={{ fontSize: '14px' }}>{idx.isUnique ? '🔑' : '📇'}</span>
-                     <span style={{ fontWeight: 600, fontSize: 13, flex: 1, color: 'var(--text)' }}>{idx.tableName}.{idx.indexName}</span>
-                     {isUsed && <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 700 }}>✓ Used in Query</span>}
+                   <div key={idx.indexName} className={`flex items-center gap-2.5 p-2 px-3 rounded-lg border ${
+                     isUsed ? 'bg-emerald-500/10 border-emerald-500/30 opacity-100' : 'bg-surface border-border opacity-60'
+                   }`}>
+                     <span className="text-sm">{idx.isUnique ? '🔑' : '📇'}</span>
+                     <span className="font-semibold text-[13px] flex-1 text-text">{idx.tableName}.{idx.indexName}</span>
+                     {isUsed && <span className="text-emerald-500 text-[11px] font-bold">✓ Used in Query</span>}
                    </div>
                  );
                })}
@@ -175,22 +171,22 @@ export const IndexAdvisor = ({ executeQuery, sql, refreshTrigger = 0 }) => {
         </div>
 
         {/* Recommendations */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h4 style={{ margin: 0, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>1-Click Solutions</h4>
+        <div className="flex flex-col gap-4">
+          <h4 className="m-0 text-[13px] uppercase tracking-[0.05em] text-text-secondary">1-Click Solutions</h4>
           
           {hasScans && analysis.recommendations.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="flex flex-col gap-3">
               {analysis.recommendations.map((rec, i) => (
-                <div key={i} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-                  <div style={{ padding: '12px 16px', background: 'rgba(59, 130, 246, 0.1)', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div key={i} className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
+                  <div className="px-4 py-3 bg-blue-500/10 border-b border-slate-700 flex items-center gap-2">
                     <FileCode2 size={16} color="#3b82f6" />
-                    <span style={{ fontWeight: 600, fontSize: 13, color: '#e2e8f0' }}>Recommended Fix for {rec.table}</span>
+                    <span className="font-semibold text-[13px] text-slate-200">Recommended Fix for {rec.table}</span>
                   </div>
-                  <div style={{ padding: '16px' }}>
-                    <pre style={{ margin: 0, color: '#a78bfa', fontFamily: 'var(--font-mono)', fontSize: 13, whiteSpace: 'pre-wrap' }}>
+                  <div className="p-4">
+                    <pre className="m-0 text-purple-400 font-mono text-[13px] whitespace-pre-wrap">
                       {rec.sql}
                     </pre>
-                    <div style={{ marginTop: '16px', fontSize: 12, color: '#94a3b8', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="mt-4 text-xs text-slate-400 flex justify-between items-center">
                       <span>Run this to index `{rec.column}`</span>
                       <button 
                         onClick={() => {
@@ -199,9 +195,7 @@ export const IndexAdvisor = ({ executeQuery, sql, refreshTrigger = 0 }) => {
                             setLocalTrigger(t => t + 1);
                           }).catch(e => alert("Error: " + e.message));
                         }}
-                        style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'background 0.2s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#2563eb'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#3b82f6'}
+                        className="bg-blue-500 hover:bg-blue-600 text-white border-none px-3 py-1.5 rounded-md cursor-pointer font-semibold transition-colors"
                       >
                         Apply Index
                       </button>
@@ -211,7 +205,7 @@ export const IndexAdvisor = ({ executeQuery, sql, refreshTrigger = 0 }) => {
               ))}
             </div>
           ) : (
-            <div style={{ padding: '32px', textAlign: 'center', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--muted)', fontSize: 13 }}>
+            <div className="p-8 text-center bg-surface-2 border border-border rounded-xl text-muted text-[13px]">
               No optimizations needed.
             </div>
           )}

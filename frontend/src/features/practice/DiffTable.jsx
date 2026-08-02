@@ -34,35 +34,35 @@ export const DiffTable = ({ diff, expectedColumns }) => {
   const currentActual = actualItems.slice(startIndex, endIndex);
 
   return (
-    <div className="diff-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="diff-container flex flex-col h-full">
       {/* Summary Banner */}
-      <div style={{ padding: '12px 16px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px', fontSize: '13px', fontWeight: 600 }}>
-        {diff.missingRows.length > 0 && <span style={{ color: 'var(--error)' }}>❌ {diff.missingRows.length} rows missing</span>}
-        {diff.extraRows.length > 0 && <span style={{ color: 'var(--error)' }}>✗ {diff.extraRows.length} extra rows</span>}
-        {diff.mismatchedRows.length > 0 && <span style={{ color: '#e67e22' }}>⚠️ {diff.mismatchedRows.length} rows with wrong values</span>}
-        <span style={{ color: 'var(--success)' }}>✓ {diff.matchedRows.length} rows correct</span>
-        <div style={{ flex: 1 }} />
-        <button onClick={() => { setShowFullActual(!showFullActual); setPage(1); }} className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }}>
+      <div className="px-4 py-3 bg-surface-2 border-b border-border flex gap-4 text-[13px] font-semibold">
+        {diff.missingRows.length > 0 && <span className="text-error">❌ {diff.missingRows.length} rows missing</span>}
+        {diff.extraRows.length > 0 && <span className="text-error">✗ {diff.extraRows.length} extra rows</span>}
+        {diff.mismatchedRows.length > 0 && <span className="text-orange-500">⚠️ {diff.mismatchedRows.length} rows with wrong values</span>}
+        <span className="text-success">✓ {diff.matchedRows.length} rows correct</span>
+        <div className="flex-1" />
+        <button onClick={() => { setShowFullActual(!showFullActual); setPage(1); }} className="btn btn-ghost btn-sm px-2 py-1">
           {showFullActual ? 'Show Diff' : 'View Full Output'}
         </button>
       </div>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="flex flex-1 overflow-hidden">
         {/* Expected Side */}
-        <div style={{ flex: 1, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ padding: '8px 16px', background: 'var(--surface)', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid var(--border)', color: 'var(--success)' }}>
+        <div className="flex-1 border-r border-border flex flex-col min-w-0">
+          <div className="px-4 py-2 bg-surface font-semibold text-[13px] border-b border-border text-success">
             ✓ Expected Output
           </div>
-          <div style={{ flex: 1, overflow: 'auto' }}>
+          <div className="flex-1 overflow-auto">
             <table className="results-table diff-table">
               <thead>
-                <tr>{expectedColumns.map((col, i) => <th key={i} style={{ position: 'sticky', top: 0 }}>{col}</th>)}</tr>
+                <tr>{expectedColumns.map((col, i) => <th key={i} className="sticky top-0">{col}</th>)}</tr>
               </thead>
               <tbody>
                 {currentExpected.map((item, i) => {
                   if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   if (item.type === 'mismatch') return <tr key={i} className="diff-mismatch-row">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
-                  if (item.type === 'missing') return <tr key={i} className="diff-missing" style={{background: 'rgba(239,68,68,0.1)'}}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'missing') return <tr key={i} className="diff-missing bg-red-500/10">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   return null;
                 })}
               </tbody>
@@ -71,23 +71,23 @@ export const DiffTable = ({ diff, expectedColumns }) => {
         </div>
 
         {/* Actual Side */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ padding: '8px 16px', background: 'var(--surface)', fontWeight: 600, fontSize: '13px', borderBottom: '1px solid var(--border)' }}>
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="px-4 py-2 bg-surface font-semibold text-[13px] border-b border-border">
             Your Output
           </div>
-          <div style={{ flex: 1, overflow: 'auto' }}>
+          <div className="flex-1 overflow-auto">
             <table className="results-table diff-table">
               <thead>
-                <tr>{expectedColumns.map((col, i) => <th key={i} style={{ position: 'sticky', top: 0 }}>{col}</th>)}</tr>
+                <tr>{expectedColumns.map((col, i) => <th key={i} className="sticky top-0">{col}</th>)}</tr>
               </thead>
               <tbody>
                 {currentActual.map((item, i) => {
                   if (item.type === 'match') return <tr key={i} className="diff-match">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   if (item.type === 'full') return <tr key={i}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
-                  if (item.type === 'extra') return <tr key={i} className="diff-extra" style={{background: 'rgba(239,68,68,0.1)', textDecoration: 'line-through', opacity: 0.7}}>{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
+                  if (item.type === 'extra') return <tr key={i} className="diff-extra bg-red-500/10 line-through opacity-70">{item.row.map((c, j) => <td key={j}><TableCell value={c} /></td>)}</tr>;
                   if (item.type === 'mismatch') return <tr key={i}>{item.row.map((c, j) => {
                     const isWrongValue = String(c).trim() !== String(item.original.expected[j]).trim();
-                    return <td key={j} style={isWrongValue ? { background: 'rgba(230,126,34,0.15)', color: '#e67e22', fontWeight: 600 } : {}}><TableCell value={c} /></td>;
+                    return <td key={j} className={isWrongValue ? "bg-orange-500/15 text-orange-500 font-semibold" : ""}><TableCell value={c} /></td>;
                   })}</tr>;
                   return null;
                 })}
@@ -96,16 +96,11 @@ export const DiffTable = ({ diff, expectedColumns }) => {
           </div>
         </div>
       </div>
-
       {/* Pagination Controls */}
       {totalRows > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 16px', borderTop: '1px solid var(--border)', background: 'var(--surface-2)',
-          flexShrink: 0, fontSize: 13
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-surface-2 shrink-0 text-[13px]">
+          <div className="flex items-center gap-3">
+            <span className="text-text-secondary">
               Showing {startIndex + 1}-{Math.min(endIndex, totalRows)} of {totalRows}
             </span>
             <select
@@ -115,10 +110,7 @@ export const DiffTable = ({ diff, expectedColumns }) => {
                 setPageSize(val);
                 setPage(1);
               }}
-              style={{
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                color: 'var(--text)', padding: '4px 8px', borderRadius: 4, cursor: 'pointer'
-              }}
+              className="bg-surface border border-border text-text px-2 py-1 rounded cursor-pointer"
             >
               <option value={50}>50 / page</option>
               <option value={100}>100 / page</option>
@@ -128,29 +120,27 @@ export const DiffTable = ({ diff, expectedColumns }) => {
           </div>
 
           {pageSize !== 'All' && totalPages > 1 && (
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex gap-1">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={safePage === 1}
-                style={{
-                  background: safePage === 1 ? 'var(--surface)' : 'var(--primary)',
-                  color: safePage === 1 ? 'var(--muted)' : 'white',
-                  border: 'none', padding: '4px 12px', borderRadius: 4,
-                  cursor: safePage === 1 ? 'not-allowed' : 'pointer'
-                }}
+                className={`border-none px-3 py-1 rounded ${
+                  safePage === 1
+                    ? 'bg-surface text-muted cursor-not-allowed'
+                    : 'bg-primary text-white cursor-pointer'
+                }`}
               >Prev</button>
-              <span style={{ padding: '4px 12px', color: 'var(--text)' }}>
+              <span className="px-3 py-1 text-text">
                 {safePage} / {totalPages}
               </span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={safePage === totalPages}
-                style={{
-                  background: safePage === totalPages ? 'var(--surface)' : 'var(--primary)',
-                  color: safePage === totalPages ? 'var(--muted)' : 'white',
-                  border: 'none', padding: '4px 12px', borderRadius: 4,
-                  cursor: safePage === totalPages ? 'not-allowed' : 'pointer'
-                }}
+                className={`border-none px-3 py-1 rounded ${
+                  safePage === totalPages
+                    ? 'bg-surface text-muted cursor-not-allowed'
+                    : 'bg-primary text-white cursor-pointer'
+                }`}
               >Next</button>
             </div>
           )}

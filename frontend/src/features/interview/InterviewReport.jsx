@@ -158,7 +158,7 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
               {safeSession.verdict || 'Evaluation Complete'}
             </h2>
             <div className="flex flex-col items-center gap-2">
-              <div className="text-7xl font-black tracking-tighter" style={{ color: isHire ? 'var(--success)' : isNoHire ? 'var(--error)' : 'var(--warning)' }}>
+              <div className={`text-7xl font-black tracking-tighter ${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}`}>
                 {safeSession.score || 0}<span className="text-3xl text-text-secondary">/100</span>
               </div>
             </div>

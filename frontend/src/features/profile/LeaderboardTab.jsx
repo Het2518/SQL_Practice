@@ -39,112 +39,61 @@ export function LeaderboardTab({ currentUser, currentScore }) {
   }, [currentUser, currentScore]);
 
   return (
-    <div
-      style={{
-        animation: 'smoothFadeIn 0.3s ease-out forwards',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-      }}
-    >
-      <div
-        style={{
-          padding: '32px',
-          background: 'var(--surface)',
-          borderRadius: 16,
-          border: '1px solid var(--border)',
-        }}
-      >
-        <h2 style={{ margin: '0 0 24px', fontSize: 24, fontWeight: 700, color: 'var(--text)' }}>
+    <div className="flex flex-col gap-6 animate-[smoothFadeIn_0.3s_ease-out_forwards]">
+      <div className="p-8 bg-surface rounded-2xl border border-border">
+        <h2 className="m-0 mb-6 text-2xl font-bold text-text">
           Global Leaderboard
         </h2>
 
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+          <div className="p-10 text-center text-muted">
             Loading rankings...
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {/* Header row */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '60px 1fr 100px',
-                padding: '0 16px 12px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--muted)',
-                textTransform: 'uppercase',
-                borderBottom: '1px solid var(--border)',
-                marginBottom: 8,
-              }}
-            >
+            <div className="grid grid-cols-[60px_1fr_100px] px-4 pb-3 text-xs font-semibold text-muted uppercase border-b border-border mb-2">
               <div>Rank</div>
               <div>User</div>
-              <div style={{ textAlign: 'right' }}>XP</div>
+              <div className="text-right">XP</div>
             </div>
 
             {entries.slice(0, 100).map((entry) => (
               <div
                 key={entry.userId || entry.rank}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '60px 1fr 100px',
-                  alignItems: 'center',
-                  padding: '12px 16px',
-                  background: entry.isCurrentUser ? 'var(--primary-muted)' : 'var(--surface-2)',
-                  borderRadius: 8,
-                  border: `1px solid ${entry.isCurrentUser ? 'var(--primary)' : 'transparent'}`,
-                }}
+                className={`grid grid-cols-[60px_1fr_100px] items-center px-4 py-3 rounded-lg border ${
+                  entry.isCurrentUser
+                    ? 'bg-primary-muted border-primary'
+                    : 'bg-surface-2 border-transparent'
+                }`}
               >
                 <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: entry.rank <= 3 ? 'var(--primary)' : 'var(--text-secondary)',
-                  }}
+                  className={`text-[15px] font-bold ${
+                    entry.rank <= 3 ? 'text-primary' : 'text-text-secondary'
+                  }`}
                 >
                   #{entry.rank}
                 </div>
                 <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: entry.isCurrentUser ? 700 : 500,
-                    color: entry.isCurrentUser ? 'var(--primary)' : 'var(--text)',
-                  }}
+                  className={`text-sm ${
+                    entry.isCurrentUser ? 'font-bold text-primary' : 'font-medium text-text'
+                  }`}
                 >
                   {entry.displayName || (entry.isCurrentUser ? 'You' : 'Anonymous User')}
                   {entry.isCurrentUser && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 10,
-                        padding: '2px 6px',
-                        background: 'var(--primary)',
-                        color: '#fff',
-                        borderRadius: 99,
-                      }}
-                    >
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-primary text-white rounded-full">
                       YOU
                     </span>
                   )}
                 </div>
-                <div
-                  style={{
-                    textAlign: 'right',
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: 'var(--text)',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
+                <div className="text-right text-[15px] font-bold text-text tabular-nums">
                   {(entry.score || 0).toLocaleString()}
                 </div>
               </div>
             ))}
 
             {entries.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>
+              <div className="text-center p-10 text-muted">
                 No users found.
               </div>
             )}

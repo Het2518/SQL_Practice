@@ -329,6 +329,20 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: '@media print { body { display: none !important; } }' }} />
+
+      {/* ══ MOBILE WARNING OVERLAY ══ */}
+      <div className="md:hidden fixed inset-0 z-[100] bg-bg flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
+          <MonitorOff size={32} />
+        </div>
+        <h2 className="text-2xl font-extrabold text-text mb-3 tracking-tight">Desktop Required</h2>
+        <p className="text-text-secondary mb-8 leading-relaxed max-w-sm">
+          DataDesk's Proctored Interview Arena requires a desktop or tablet for camera access, coding, and screen real estate.
+        </p>
+        <Button onClick={() => navigate('/')} variant="outline" size="lg">
+          Back to Home
+        </Button>
+      </div>
       <div className="w-full h-screen bg-bg flex flex-col select-none overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-surface shadow-sm">

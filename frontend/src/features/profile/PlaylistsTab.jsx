@@ -23,19 +23,11 @@ const MOCK_PLAYLISTS = [
 
 export function PlaylistsTab() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'var(--surface)',
-        padding: '20px 24px',
-        borderRadius: 16,
-        border: '1px solid var(--border)'
-      }}>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between bg-surface px-6 py-5 rounded-2xl border border-border">
         <div>
-          <h2 style={{ margin: '0 0 4px', fontSize: 20, color: 'var(--text)' }}>My Playlists</h2>
-          <p style={{ margin: 0, color: 'var(--muted)', fontSize: 14 }}>
+          <h2 className="m-0 mb-1 text-xl text-text">My Playlists</h2>
+          <p className="m-0 text-muted text-sm">
             Curate custom collections of SQL problems to practice or share.
           </p>
         </div>
@@ -44,60 +36,33 @@ export function PlaylistsTab() {
         </Button>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: 20
-      }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-5">
         {MOCK_PLAYLISTS.map(playlist => (
-          <div key={playlist.id} style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            padding: 20,
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <div style={{
-                background: 'var(--primary-muted)',
-                color: 'var(--primary)',
-                padding: 10,
-                borderRadius: 10
-              }}>
+          <div key={playlist.id} className="bg-surface border border-border rounded-xl p-5 flex flex-col cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+            <div className="flex justify-between items-start mb-3">
+              <div className="bg-primary-muted text-primary p-2.5 rounded-lg">
                 <Folder size={20} />
               </div>
               {playlist.isPublic && (
-                <span style={{ fontSize: 11, background: 'var(--surface-2)', padding: '4px 8px', borderRadius: 4, color: 'var(--muted)' }}>
+                <span className="text-[11px] bg-surface-2 px-2 py-1 rounded text-muted">
                   Public
                 </span>
               )}
             </div>
             
-            <h3 style={{ margin: '0 0 8px', fontSize: 16, color: 'var(--text)' }}>
+            <h3 className="m-0 mb-2 text-base text-text">
               {playlist.title}
             </h3>
-            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, flex: 1 }}>
+            <p className="m-0 mb-4 text-[13px] text-text-secondary leading-relaxed flex-1">
               {playlist.description}
             </p>
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 'auto' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--muted)', fontSize: 12 }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Play size={12} /> {playlist.count} Qs</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> {playlist.lastUpdated}</span>
+            <div className="flex items-center justify-between border-t border-border pt-4 mt-auto">
+              <div className="flex items-center gap-3 text-muted text-xs">
+                <span className="flex items-center gap-1"><Play size={12} /> {playlist.count} Qs</span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {playlist.lastUpdated}</span>
               </div>
-              <button style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }} title="Share">
+              <button className="bg-transparent border-none text-text-secondary cursor-pointer hover:text-primary transition-colors" title="Share">
                 <Share2 size={16} />
               </button>
             </div>

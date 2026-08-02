@@ -8,82 +8,46 @@ export const TableNode = ({ data }) => {
 
   return (
     <div
-      style={{
-        width: 300,
-        background: 'var(--surface)',
-        border: `1px solid ${isFocus ? 'var(--primary)' : 'var(--border)'}`,
-        borderRadius: 12,
-        boxShadow: isFocus 
-          ? '0 0 0 3px rgba(139, 92, 246, 0.15), 0 12px 32px rgba(0,0,0,0.1)' 
-          : '0 8px 24px rgba(0,0,0,0.04)',
-        opacity: isFaded ? 0.2 : 1,
-        transition: 'opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
-        overflow: 'hidden',
-        fontFamily: 'var(--font-sans)',
-      }}
+      className={`w-[300px] bg-surface rounded-xl overflow-hidden font-sans transition-all duration-200 ease-in-out ${
+        isFocus 
+          ? 'border-2 border-primary shadow-[0_0_0_3px_rgba(139,92,246,0.15),0_12px_32px_rgba(0,0,0,0.1)]' 
+          : 'border border-border shadow-[0_8px_24px_rgba(0,0,0,0.04)]'
+      } ${isFaded ? 'opacity-20' : 'opacity-100'}`}
     >
-      <div 
-        style={{ 
-          height: 46, 
-          background: 'var(--surface-2)', 
-          borderBottom: `1px solid ${isFocus ? 'var(--primary-light)' : 'var(--border)'}`, 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: '0 16px', 
-          justifyContent: 'space-between' 
-        }}
-      >
-        <span style={{ fontWeight: 700, fontSize: 14, color: isFocus ? 'var(--primary)' : 'var(--text)' }}>
+      <div className={`h-[46px] bg-surface-2 flex items-center justify-between px-4 border-b ${isFocus ? 'border-primary-light' : 'border-border'}`}>
+        <span className={`font-bold text-sm ${isFocus ? 'text-primary' : 'text-text'}`}>
           {table.name}
         </span>
-        <span style={{ 
-          fontSize: 10, 
-          color: isFocus ? 'var(--primary)' : 'var(--muted)', 
-          fontWeight: 700, 
-          background: isFocus ? 'var(--primary-muted)' : 'var(--bg)', 
-          padding: '2px 6px', 
-          borderRadius: 4 
-        }}>
+        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isFocus ? 'text-primary bg-primary-muted' : 'text-muted bg-bg'}`}>
           {table.columns.length} COLS
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', padding: '4px 0' }}>
+      <div className="flex flex-col py-1">
         {table.columns.map((c, i) => (
           <div 
             key={c.name} 
-            style={{ 
-              position: 'relative',
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              height: 32, 
-              padding: '0 16px', 
-              fontSize: 13, 
-              background: (c.isPrimaryKey || c.isForeignKey) ? 'var(--surface-2)' : 'transparent',
-              opacity: (c.isPrimaryKey || c.isForeignKey) ? 1 : 0.85
-            }}
+            className={`relative flex items-center justify-between h-8 px-4 text-[13px] ${
+              (c.isPrimaryKey || c.isForeignKey) ? 'bg-surface-2 opacity-100' : 'bg-transparent opacity-85'
+            }`}
           >
             {/* Left handle for incoming connections (Foreign Keys) */}
             <Handle 
               type="target" 
               position={Position.Left} 
               id={`${table.name}-${c.name}-target`} 
-              style={{ opacity: 0, left: -6 }} 
+              className="opacity-0 -left-[6px]"
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="flex items-center gap-2">
               {c.isPrimaryKey && <Key size={14} color="#f59e0b" title="Primary Key" />}
               {c.isForeignKey && <LinkIcon size={14} color="var(--primary)" title={`Foreign Key to ${c.references}`} />}
-              {!c.isPrimaryKey && !c.isForeignKey && <span style={{ width: 14 }} />}
-              <span style={{ 
-                fontWeight: (c.isPrimaryKey || c.isForeignKey) ? 600 : 500, 
-                color: (c.isPrimaryKey || c.isForeignKey) ? 'var(--text)' : 'var(--text-secondary)' 
-              }}>
+              {!c.isPrimaryKey && !c.isForeignKey && <span className="w-[14px]" />}
+              <span className={(c.isPrimaryKey || c.isForeignKey) ? 'font-semibold text-text' : 'font-medium text-text-secondary'}>
                 {c.name}
               </span>
             </div>
-            <span style={{ color: 'var(--muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+            <span className="text-muted text-[11px] font-mono">
               {c.type}
             </span>
 
@@ -92,7 +56,7 @@ export const TableNode = ({ data }) => {
               type="source" 
               position={Position.Right} 
               id={`${table.name}-${c.name}-source`} 
-              style={{ opacity: 0, right: -6 }} 
+              className="opacity-0 -right-[6px]"
             />
           </div>
         ))}

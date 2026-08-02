@@ -8,44 +8,22 @@ import { Loader2 } from 'lucide-react';
 function ProfileToggleRow({ label, description, checked, onChange }) {
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px',
-        background: 'var(--surface-2)',
-        borderRadius: 12,
-        cursor: 'pointer',
-      }}
+      className="flex items-center justify-between p-4 bg-surface-2 rounded-xl cursor-pointer"
       onClick={() => onChange(!checked)}
     >
       <div>
-        <div style={{ fontWeight: 600, color: 'var(--text)' }}>{label}</div>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>{description}</div>
+        <div className="font-semibold text-text">{label}</div>
+        <div className="text-[13px] text-muted">{description}</div>
       </div>
       <div
-        style={{
-          position: 'relative',
-          width: 40,
-          height: 22,
-          borderRadius: 11,
-          background: checked ? 'var(--primary)' : 'var(--border)',
-          transition: 'background 0.3s',
-          flexShrink: 0,
-        }}
+        className={`relative w-10 h-[22px] rounded-full shrink-0 transition-colors duration-300 ${
+          checked ? 'bg-primary' : 'bg-border'
+        }`}
       >
         <div
-          style={{
-            position: 'absolute',
-            top: 2,
-            left: checked ? 20 : 2,
-            width: 18,
-            height: 18,
-            borderRadius: '50%',
-            background: '#fff',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            transition: 'left 0.3s',
-          }}
+          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-md transition-all duration-300 ${
+            checked ? 'left-[20px]' : 'left-[2px]'
+          }`}
         />
       </div>
     </div>
@@ -60,22 +38,9 @@ export function SettingsTab() {
   };
 
   return (
-    <div
-      className="glass-panel page-enter"
-      style={{ padding: 40, display: 'flex', flexDirection: 'column', gap: 24 }}
-    >
-      <h2
-        style={{
-          fontSize: 24,
-          fontWeight: 800,
-          marginBottom: 8,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          color: 'var(--text)',
-        }}
-      >
-        <SettingsIcon color="var(--primary)" /> Application Settings
+    <div className="glass-panel page-enter p-10 flex flex-col gap-6">
+      <h2 className="text-2xl font-extrabold mb-2 flex items-center gap-3 text-text m-0">
+        <SettingsIcon className="text-primary" /> Application Settings
       </h2>
 
       <ProfileToggleRow
@@ -120,23 +85,14 @@ export function SettingsTab() {
         <ChangePasswordSection />
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px',
-          background: 'var(--surface-2)',
-          borderRadius: 12,
-        }}
-      >
+      <div className="flex items-center justify-between p-4 bg-surface-2 rounded-xl">
         <div>
-          <div style={{ fontWeight: 600, color: 'var(--text)' }}>Editor Font Size</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+          <div className="font-semibold text-text">Editor Font Size</div>
+          <div className="text-[13px] text-muted">
             Adjust the size of the SQL editor font
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex gap-2 items-center">
           <button
             className="btn btn-ghost"
             onClick={() =>
@@ -145,7 +101,7 @@ export function SettingsTab() {
           >
             -
           </button>
-          <span style={{ width: 30, textAlign: 'center', fontWeight: 600, color: 'var(--text)' }}>
+          <span className="w-[30px] text-center font-semibold text-text">
             {settings?.editorFontSize || 14}px
           </span>
           <button
@@ -196,45 +152,45 @@ function ChangePasswordSection() {
   };
 
   return (
-    <div style={{ background: 'var(--surface-2)', padding: '24px', borderRadius: '12px' }}>
-      <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>Change Password</h3>
+    <div className="bg-surface-2 p-6 rounded-xl">
+      <h3 className="text-lg font-bold mb-4 text-text m-0">Change Password</h3>
       
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>Current Password</label>
+          <label className="block text-[13px] mb-1 text-text-secondary">Current Password</label>
           <input 
             type="password" 
             required
             value={currentPassword}
             onChange={e => setCurrentPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+            className="w-full px-3 py-2 rounded-md border border-border bg-bg text-text"
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>New Password</label>
+          <label className="block text-[13px] mb-1 text-text-secondary">New Password</label>
           <input 
             type="password" 
             required
             minLength={6}
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+            className="w-full px-3 py-2 rounded-md border border-border bg-bg text-text"
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 4, color: 'var(--text-secondary)' }}>Confirm New Password</label>
+          <label className="block text-[13px] mb-1 text-text-secondary">Confirm New Password</label>
           <input 
             type="password" 
             required
             minLength={6}
             value={confirmPassword}
             onChange={e => setConfirmPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+            className="w-full px-3 py-2 rounded-md border border-border bg-bg text-text"
           />
         </div>
 
         {message && (
-          <div style={{ padding: '8px', borderRadius: 6, fontSize: 13, background: status === 'error' ? 'var(--error-muted, rgba(239,68,68,0.1))' : 'var(--success-muted, rgba(34,197,94,0.1))', color: status === 'error' ? 'var(--error)' : 'var(--success)' }}>
+          <div className={`p-2 rounded-md text-[13px] ${status === 'error' ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>
             {message}
           </div>
         )}
@@ -242,7 +198,7 @@ function ChangePasswordSection() {
         <button 
           type="submit" 
           disabled={status === 'loading'}
-          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
+          className="self-start flex items-center gap-2 px-4 py-2 bg-primary text-white border-none rounded-md cursor-pointer font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {status === 'loading' ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
         </button>

@@ -8,7 +8,7 @@ export const JoinVennDiagram = ({ joinType }) => {
   const isInner = type.includes('INNER') || type === 'JOIN';
   
   return (
-    <svg width="64" height="40" viewBox="0 0 64 40" style={{ display: 'block', flexShrink: 0 }}>
+    <svg width="64" height="40" viewBox="0 0 64 40" className="block shrink-0">
       <defs>
         <clipPath id={`clip-right-${type.replace(/\s+/g, '-')}`}>
           <circle cx="40" cy="20" r="16" />

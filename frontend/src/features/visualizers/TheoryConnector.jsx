@@ -195,44 +195,44 @@ export const TheoryConnector = ({ sql, question }) => {
 
   if (!activeConcept) {
     return (
-      <div style={{ padding: '48px 32px', textAlign: 'center', color: 'var(--muted)', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)' }}>
-        <TerminalSquare size={48} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
-        <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>No active learning track detected.</div>
-        <div style={{ marginTop: 8, fontSize: 14 }}>Write SQL keywords or open a specific question to load relevant curriculum.</div>
+      <div className="py-12 px-8 text-center text-muted bg-surface rounded-xl border border-border">
+        <TerminalSquare size={48} className="opacity-20 mx-auto mb-4" />
+        <div className="text-base font-medium text-text">No active learning track detected.</div>
+        <div className="mt-2 text-sm">Write SQL keywords or open a specific question to load relevant curriculum.</div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)' }}>
+    <div className="p-6 bg-surface rounded-xl border border-border">
       
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 32 }}>
-        <div style={{ background: 'var(--primary)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px var(--primary-muted)' }}>
+      <div className="flex items-start gap-4 mb-8">
+        <div className="bg-primary p-3 rounded-xl shadow-[0_4px_12px_var(--primary-muted)]">
           <GraduationCap size={24} color="#fff" />
         </div>
         <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>
+          <h2 className="m-0 text-[22px] font-bold text-text">
             {activeConcept.title}
           </h2>
-          <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: 800 }}>
+          <p className="mt-2 mb-0 text-sm text-text-secondary leading-relaxed max-w-[800px]">
             {activeConcept.tldr}
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
         {activeConcept.sections.map((section, idx) => {
           const IconComponent = section.icon;
           return (
-            <div key={idx} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 12, padding: 20 }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 16px', fontSize: 14, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
-                <IconComponent size={18} color="var(--primary)" /> {section.title}
+            <div key={idx} className="bg-surface-2 border border-border rounded-xl p-5">
+              <h3 className="flex items-center gap-2.5 m-0 mb-4 text-sm text-text uppercase tracking-[0.05em] font-bold">
+                <IconComponent size={18} className="text-primary" /> {section.title}
               </h3>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <ul className="m-0 p-0 list-none flex flex-col gap-3">
                 {section.points.map((pt, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 12, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)', marginTop: 6, flexShrink: 0 }} />
+                  <li key={i} className="flex gap-3 text-[13px] text-text-secondary leading-relaxed">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
                     <span>{pt}</span>
                   </li>
                 ))}
@@ -244,15 +244,15 @@ export const TheoryConnector = ({ sql, question }) => {
 
       {/* Interview Prep */}
       {activeConcept.interviewQuestion && (
-        <div style={{ marginTop: 24, background: 'var(--primary-muted)', border: '1px solid var(--primary-light)', borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{ background: 'var(--primary)', borderRadius: '50%', padding: 8, display: 'flex' }}>
+        <div className="mt-6 bg-primary/10 border border-primary/20 rounded-xl p-5 flex gap-4 items-start">
+          <div className="bg-primary rounded-full p-2 flex">
             <Lightbulb size={18} color="#fff" />
           </div>
           <div>
-            <h4 style={{ margin: '0 0 8px', fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)', fontWeight: 700 }}>
+            <h4 className="m-0 mb-2 text-[13px] uppercase tracking-[0.05em] text-primary font-bold">
               Interview Question
             </h4>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--text)', lineHeight: 1.5 }}>
+            <p className="m-0 text-sm font-semibold text-text leading-relaxed">
               {activeConcept.interviewQuestion}
             </p>
           </div>

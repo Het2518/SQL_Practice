@@ -172,7 +172,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         </div>
       </section>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
+      <div className="max-w-[900px] mx-auto px-6">
         <DailyChallengeWidget progress={progress} />
       </div>
 

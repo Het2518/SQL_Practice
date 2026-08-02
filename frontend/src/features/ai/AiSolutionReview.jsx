@@ -55,7 +55,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
   }, [question, studentSQL, solutionSQL]);
 
   return (
-    <div className="ai-panel" style={{ marginTop: 8 }}>
+    <div className="ai-panel mt-2">
       <div className="ai-panel-header" onClick={!review && !loading ? generateReview : undefined}>
         <div className="ai-panel-title">
           <Search size={14} strokeWidth={2} />

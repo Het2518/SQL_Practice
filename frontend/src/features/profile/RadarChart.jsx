@@ -33,8 +33,8 @@ export function RadarChart({ data, size = 280 }) {
   });
 
   return (
-    <div style={{ width: size, height: size, position: 'relative', margin: '0 auto' }}>
-      <svg width={size} height={size} style={{ overflow: 'visible' }}>
+    <div className="relative mx-auto" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="overflow-visible">
         <defs>
           <linearGradient id="radarFill" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.6" />
@@ -60,11 +60,11 @@ export function RadarChart({ data, size = 280 }) {
         })}
 
         {/* Data Polygon */}
-        <path d={polygonPath} fill="url(#radarFill)" stroke="var(--primary)" strokeWidth="2.5" filter="url(#glow)" style={{ transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+        <path d={polygonPath} fill="url(#radarFill)" stroke="var(--primary)" strokeWidth="2.5" filter="url(#glow)" className="transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" />
         
         {/* Data Points */}
         {points.map((p, i) => (
-          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="5" fill="var(--bg)" stroke="var(--primary)" strokeWidth="2" style={{ transition: 'all 1s ease' }} />
+          <circle key={`pt-${i}`} cx={p.x} cy={p.y} r="5" fill="var(--bg)" stroke="var(--primary)" strokeWidth="2" className="transition-all duration-1000 ease-in-out" />
         ))}
 
         {/* Labels */}

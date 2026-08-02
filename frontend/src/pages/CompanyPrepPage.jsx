@@ -34,38 +34,14 @@ function extractTopics(sql) {
 
 function StatCard({ value, label, color }) {
   return (
-    <div
-      style={{
-        flex: 1,
-        padding: '16px 20px',
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 10,
-        textAlign: 'center',
-        minWidth: 96,
-      }}
-    >
+    <div className="flex-1 px-5 py-4 bg-surface border border-border rounded-lg text-center min-w-[96px]">
       <div
-        style={{
-          fontSize: 22,
-          fontWeight: 900,
-          color: color || 'var(--text)',
-          lineHeight: 1.1,
-          marginBottom: 4,
-          fontVariantNumeric: 'tabular-nums',
-        }}
+        className="text-[22px] font-black leading-[1.1] mb-1 tabular-nums"
+        style={{ color: color || 'var(--text)' }}
       >
         {value}
       </div>
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          color: 'var(--muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.07em',
-        }}
-      >
+      <div className="text-[10px] font-bold text-muted uppercase tracking-widest">
         {label}
       </div>
     </div>
@@ -74,40 +50,26 @@ function StatCard({ value, label, color }) {
 
 function DiffBar({ easy, medium, hard }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: 8,
-        borderRadius: 8,
-        overflow: 'hidden',
-        width: '100%',
-        gap: 2,
-      }}
-    >
+    <div className="flex h-2 rounded-lg overflow-hidden w-full gap-[2px]">
       <div
+        className="bg-success rounded-l-lg transition-[flex] duration-800"
         style={{
           flex: easy,
-          background: 'var(--success)',
-          borderRadius: '8px 0 0 8px',
           opacity: easy > 0 ? 1 : 0,
-          transition: 'flex 0.8s',
         }}
       />
       <div
+        className="bg-warning transition-[flex] duration-800"
         style={{
           flex: medium,
-          background: 'var(--warning)',
           opacity: medium > 0 ? 1 : 0,
-          transition: 'flex 0.8s',
         }}
       />
       <div
+        className="bg-error rounded-r-lg transition-[flex] duration-800"
         style={{
           flex: hard,
-          background: 'var(--error)',
-          borderRadius: '0 8px 8px 0',
           opacity: hard > 0 ? 1 : 0,
-          transition: 'flex 0.8s',
         }}
       />
     </div>
@@ -172,56 +134,21 @@ export default function CompanyPrepPage(props) {
       />
 
       {/* ── Premium Company Hero ── */}
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 0' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 20,
-              marginBottom: 32,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+      <div className="bg-gradient-to-b from-surface to-bg border-b border-border">
+        <div className="max-w-[1100px] mx-auto px-8 pt-12 pb-0">
+          <div className="flex items-start justify-between gap-5 mb-8 flex-wrap">
+            <div className="flex gap-6 items-center">
               {/* Logo mark */}
               <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 18,
-                  flexShrink: 0,
-                  background:
-                    'linear-gradient(135deg, var(--primary) 0%, var(--primary-muted) 100%)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 32,
-                  fontWeight: 900,
-                  color: '#fff',
-                  fontFamily: 'var(--font-mono)',
-                }}
+                className="w-[72px] h-[72px] rounded-[18px] shrink-0 flex items-center justify-center text-[32px] font-black text-white font-mono shadow-[0_8px_24px_rgba(0,0,0,0.1)] bg-gradient-to-br from-primary to-primary-muted"
               >
                 {companyName.charAt(0).toUpperCase()}
               </div>
 
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <div className="flex items-center gap-3 mb-2">
                   <h1
-                    style={{
-                      fontSize: 32,
-                      fontWeight: 900,
-                      color: 'var(--text)',
-                      margin: 0,
-                      letterSpacing: '-0.5px',
-                    }}
+                    className="text-[32px] font-black text-text m-0 tracking-[-0.5px]"
                   >
                     {companyName}
                   </h1>
@@ -231,13 +158,7 @@ export default function CompanyPrepPage(props) {
                   )}
                 </div>
                 <p
-                  style={{
-                    fontSize: 15,
-                    color: 'var(--text-secondary)',
-                    lineHeight: 1.6,
-                    margin: 0,
-                    maxWidth: 600,
-                  }}
+                  className="text-[15px] text-text-secondary leading-[1.6] m-0 max-w-[600px]"
                 >
                   {kb?.style?.slice(0, 180) ||
                     `Comprehensive SQL interview preparation guide for ${companyName}`}
@@ -247,7 +168,7 @@ export default function CompanyPrepPage(props) {
           </div>
 
           {/* Stats strip */}
-          <div style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>
+          <div className="flex gap-4 mb-8 flex-wrap">
             <StatCard value={questions.length || '—'} label="Questions" />
             <StatCard value={kb?.interviewRounds || '3–5'} label="Rounds" />
             <StatCard value={kb?.topics?.length || '—'} label="SQL Topics" />
@@ -255,29 +176,16 @@ export default function CompanyPrepPage(props) {
           </div>
 
           {/* Segmented Tabs */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: -1 }}>
+          <div className="flex gap-2 -mb-[1px]">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
-                style={{
-                  padding: '12px 24px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                  fontWeight: activeTab === t.id ? 700 : 500,
-                  fontSize: 14,
-                  background: activeTab === t.id ? 'var(--surface-2)' : 'transparent',
-                  transition: 'all 0.15s ease',
-                  color: activeTab === t.id ? 'var(--text)' : 'var(--text-secondary)',
-                  borderTop:
-                    activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                  borderLeft:
-                    activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
-                  borderRight:
-                    activeTab === t.id ? '1px solid var(--border)' : '1px solid transparent',
-                  borderRadius: '8px 8px 0 0',
-                }}
+                className={`px-6 py-3 border-none cursor-pointer font-sans text-sm transition-all duration-150 rounded-t-lg border-t-2 border-l border-r ${
+                  activeTab === t.id
+                    ? 'font-bold bg-surface-2 text-text border-t-primary border-l-border border-r-border'
+                    : 'font-medium bg-transparent text-text-secondary border-transparent border-t-transparent'
+                }`}
               >
                 {t.label}
               </button>
@@ -287,17 +195,17 @@ export default function CompanyPrepPage(props) {
       </div>
 
       {/* ── Tab Content ── */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 32px 64px' }}>
+      <div className="max-w-[1100px] mx-auto px-8 pt-7 pb-16">
         {/* ━━ OVERVIEW ━━ */}
         {activeTab === 'overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>Difficulty Distribution</CardTitle>
               </CardHeader>
               <CardContent>
               <DiffBar easy={diffDist.easy} medium={diffDist.medium} hard={diffDist.hard} />
-              <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
+              <div className="flex gap-4 mt-3.5">
                 {[
                   { label: 'Easy', pct: diffDist.easy, color: 'var(--success)' },
                   { label: 'Medium', pct: diffDist.medium, color: 'var(--warning)' },
@@ -305,23 +213,12 @@ export default function CompanyPrepPage(props) {
                 ].map((d) => (
                   <span
                     key={d.label}
-                    style={{
-                      fontSize: 12,
-                      color: d.color,
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
+                    className="text-xs font-semibold flex items-center gap-1.5"
+                    style={{ color: d.color }}
                   >
                     <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: d.color,
-                        display: 'inline-block',
-                      }}
+                      className="w-2 h-2 rounded-full inline-block"
+                      style={{ background: d.color }}
                     />
                     {d.label} {d.pct}%
                   </span>
@@ -335,21 +232,13 @@ export default function CompanyPrepPage(props) {
                 <CardTitle>Frequently Asked Topics</CardTitle>
               </CardHeader>
               <CardContent>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              <div className="flex flex-wrap gap-2">
                 {(
                   kb?.topics || ['Joins', 'Window Functions', 'Aggregations', 'Subqueries', 'CTEs']
                 ).map((t) => (
                   <span
                     key={t}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      background: 'var(--surface-2)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text-secondary)',
-                    }}
+                    className="px-3 py-1 rounded-md text-xs font-semibold bg-surface-2 border border-border text-text-secondary"
                   >
                     {t}
                   </span>
@@ -365,35 +254,15 @@ export default function CompanyPrepPage(props) {
                 </CardHeader>
                 <CardContent>
                 <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                    gap: 12,
-                  }}
+                  className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]"
                 >
                   {kb.patterns.slice(0, 3).map((p, i) => (
                     <div
                       key={i}
-                      style={{
-                        padding: '12px 16px',
-                        borderRadius: 8,
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border)',
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.55,
-                        display: 'flex',
-                        gap: 10,
-                        alignItems: 'flex-start',
-                      }}
+                      className="px-4 py-3 rounded-lg bg-surface-2 border border-border text-[13px] text-text-secondary leading-relaxed flex gap-2.5 items-start"
                     >
                       <span
-                        style={{
-                          fontSize: 13,
-                          color: 'var(--primary)',
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}
+                        className="text-[13px] text-primary font-bold shrink-0"
                       >
                         {i + 1}.
                       </span>
@@ -410,12 +279,12 @@ export default function CompanyPrepPage(props) {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="flex gap-2.5 flex-wrap">
                 <Button
                   variant="secondary"
                   size="md"
                   onClick={() => setActiveTab('questions')}
-                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
+                  className="flex-1 min-w-[160px] justify-center"
                 >
                   Browse {questions.length} Questions
                 </Button>
@@ -423,7 +292,7 @@ export default function CompanyPrepPage(props) {
                   variant="primary"
                   size="md"
                   onClick={() => navigate('/practice/ecommerce')}
-                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
+                  className="flex-1 min-w-[160px] justify-center"
                 >
                   Start Mock Interview
                 </Button>
@@ -431,7 +300,7 @@ export default function CompanyPrepPage(props) {
                   variant="secondary"
                   size="md"
                   onClick={() => setActiveTab('roadmap')}
-                  style={{ flex: 1, minWidth: 160, justifyContent: 'center' }}
+                  className="flex-1 min-w-[160px] justify-center"
                 >
                   View Learning Path
                 </Button>
@@ -445,69 +314,41 @@ export default function CompanyPrepPage(props) {
         {activeTab === 'questions' && (
           <div>
             {loadingQ ? (
-              <div
-                style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}
-              >
+              <div className="py-[60px] text-center text-muted text-sm">
                 Loading questions...
               </div>
             ) : questions.length === 0 ? (
-              <div style={{ padding: 60, textAlign: 'center' }}>
+              <div className="p-[60px] text-center">
                 <div
-                  style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}
+                  className="text-[15px] font-bold text-text mb-2"
                 >
                   No questions mapped yet
                 </div>
-                <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 auto', maxWidth: 400 }}>
+                <p className="text-muted text-[13px] mx-auto max-w-[400px]">
                   We are working on adding more questions for this company. Check back soon!
                 </p>
               </div>
             ) : (
               <div
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                }}
+                className="bg-surface border border-border rounded-xl overflow-hidden"
               >
                 <div
-                  style={{
-                    padding: '14px 20px',
-                    borderBottom: '1px solid var(--border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                  }}
+                  className="py-3.5 px-5 border-b border-border flex items-center gap-2.5"
                 >
-                  <span style={{ fontWeight: 700, fontSize: 14 }}>Question Bank</span>
+                  <span className="font-bold text-sm">Question Bank</span>
                   <span
-                    style={{
-                      padding: '2px 8px',
-                      borderRadius: 99,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      background: 'var(--primary-muted)',
-                      color: 'var(--primary)',
-                    }}
+                    className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary-muted text-primary"
                   >
                     {questions.length}
                   </span>
                 </div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="w-full border-collapse text-[13px]">
                   <thead>
-                    <tr style={{ background: 'var(--surface-2)' }}>
+                    <tr className="bg-surface-2">
                       {['Title', 'Topics', 'Difficulty', 'Time', 'Practice'].map((h, i) => (
                         <th
                           key={h}
-                          style={{
-                            padding: '10px 16px',
-                            textAlign: i === 4 ? 'right' : 'left',
-                            fontWeight: 700,
-                            color: 'var(--muted)',
-                            fontSize: 10,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.06em',
-                          }}
+                          className={`p-2.5 px-4 font-bold text-muted text-[10px] uppercase tracking-widest ${i === 4 ? 'text-right' : 'text-left'}`}
                         >
                           {h}
                         </th>
@@ -520,66 +361,33 @@ export default function CompanyPrepPage(props) {
                       return (
                         <tr
                           key={q.id}
-                          style={{
-                            borderTop: '1px solid var(--border)',
-                            cursor: 'pointer',
-                            transition: 'background 0.12s',
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background = 'var(--surface-2)')
-                          }
-                          onMouseLeave={(e) => (e.currentTarget.style.background = '')}
+                          className="border-t border-border cursor-pointer transition-colors duration-150 hover:bg-surface-2"
                         >
-                          <td
-                            style={{
-                              padding: '13px 16px',
-                              fontWeight: 600,
-                              color: 'var(--text)',
-                              maxWidth: 280,
-                            }}
-                          >
+                          <td className="p-3 px-4 font-semibold text-text max-w-[280px]">
                             {q.title}
                           </td>
-                          <td style={{ padding: '13px 16px' }}>
-                            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          <td className="p-3 px-4">
+                            <div className="flex gap-1 flex-wrap">
                               {topics.slice(0, 2).map((t) => (
                                 <span
                                   key={t}
-                                  style={{
-                                    padding: '2px 7px',
-                                    borderRadius: 5,
-                                    fontSize: 10,
-                                    fontWeight: 600,
-                                    background: 'var(--primary-muted)',
-                                    color: 'var(--primary)',
-                                  }}
+                                  className="px-[7px] py-[2px] rounded-md text-[10px] font-semibold bg-primary-muted text-primary"
                                 >
                                   {t}
                                 </span>
                               ))}
                             </div>
                           </td>
-                          <td style={{ padding: '13px 16px' }}>
+                          <td className="p-3 px-4">
                             <Badge variant={q.difficulty}>{q.difficulty}</Badge>
                           </td>
-                          <td style={{ padding: '13px 16px', color: 'var(--muted)', fontSize: 12 }}>
+                          <td className="p-3 px-4 text-muted text-xs">
                             {q.estimated_time_minutes || 15}m
                           </td>
-                          <td style={{ padding: '13px 16px', textAlign: 'right' }}>
+                          <td className="p-3 px-4 text-right">
                             <Link
                               to={`/practice/${(q.schema_name || 'ecommerce').toLowerCase()}`}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 5,
-                                padding: '6px 12px',
-                                borderRadius: 7,
-                                textDecoration: 'none',
-                                background: 'var(--primary)',
-                                color: '#fff',
-                                fontWeight: 700,
-                                fontSize: 12,
-                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md no-underline bg-primary text-white font-bold text-xs"
                             >
                               Practice
                             </Link>
@@ -597,53 +405,36 @@ export default function CompanyPrepPage(props) {
         {/* ━━ EXPERIENCES ━━ */}
         {activeTab === 'experiences' && (
           <div>
-            <div style={{ marginBottom: 24 }}>
-              <h2
-                style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}
-              >
+            <div className="mb-6">
+              <h2 className="text-lg font-extrabold m-0 mb-1.5 text-text">
                 Real Interview Experiences
               </h2>
-              <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
+              <p className="text-muted text-[13px] m-0">
                 Reported by SQL candidates at {companyName}.
               </p>
             </div>
             {kb?.experiences && kb.experiences.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="flex flex-col gap-3.5">
                 {kb.experiences.map((exp, i) => (
                   <div
                     key={i}
-                    style={{
-                      padding: '20px 24px',
-                      borderRadius: 10,
-                      background: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                      borderLeft: '3px solid var(--primary)',
-                    }}
+                    className="p-5 px-6 rounded-lg bg-surface border border-border border-l-[3px] border-l-primary"
                   >
-                    <p
-                      style={{
-                        fontSize: 14,
-                        lineHeight: 1.75,
-                        color: 'var(--text)',
-                        margin: '0 0 10px',
-                      }}
-                    >
+                    <p className="text-sm leading-[1.75] text-text m-0 mb-2.5">
                       {exp}
                     </p>
-                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                    <div className="text-xs text-muted">
                       — {companyName} Interview Candidate
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-                <div
-                  style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}
-                >
+              <div className="p-[60px] text-center text-muted">
+                <div className="text-[15px] font-bold mb-2 text-text">
                   No experiences yet
                 </div>
-                <div style={{ fontSize: 13 }}>No experiences available for this company yet.</div>
+                <div className="text-[13px]">No experiences available for this company yet.</div>
               </div>
             )}
           </div>
@@ -652,76 +443,32 @@ export default function CompanyPrepPage(props) {
         {/* ━━ ROADMAP ━━ */}
         {activeTab === 'roadmap' && (
           <div>
-            <div style={{ marginBottom: 28 }}>
-              <h2
-                style={{ fontSize: 18, fontWeight: 800, margin: '0 0 6px', color: 'var(--text)' }}
-              >
+            <div className="mb-7">
+              <h2 className="text-lg font-extrabold m-0 mb-1.5 text-text">
                 Learning Path for {companyName}
               </h2>
-              <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
+              <p className="text-muted text-[13px] m-0">
                 Master these topics in order to be ready for {companyName} SQL interviews.
               </p>
             </div>
             {kb?.recommendedTopics && kb.recommendedTopics.length > 0 ? (
-              <div style={{ position: 'relative' }}>
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: 27,
-                    top: 0,
-                    bottom: 0,
-                    width: 2,
-                    background: 'var(--border)',
-                  }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="relative">
+                <div className="absolute left-[27px] top-0 bottom-0 w-0.5 bg-border" />
+                <div className="flex flex-col gap-3.5">
                   {kb.recommendedTopics.map((topic, i) => (
                     <div
                       key={i}
-                      style={{ display: 'flex', gap: 16, alignItems: 'flex-start', paddingLeft: 8 }}
+                      className="flex gap-4 items-start pl-2"
                     >
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          flexShrink: 0,
-                          background: 'var(--primary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#fff',
-                          fontWeight: 800,
-                          fontSize: 14,
-                          zIndex: 1,
-                        }}
-                      >
+                      <div className="w-10 h-10 rounded-full shrink-0 bg-primary flex items-center justify-center text-white font-extrabold text-sm z-[1]">
                         {i + 1}
                       </div>
-                      <div
-                        style={{
-                          flex: 1,
-                          padding: '14px 18px',
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 10,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 16,
-                        }}
-                      >
-                        <div style={{ flex: 1 }}>
-                          <div
-                            style={{
-                              fontWeight: 700,
-                              fontSize: 14,
-                              color: 'var(--text)',
-                              marginBottom: 3,
-                            }}
-                          >
+                      <div className="flex-1 p-3.5 px-4.5 bg-surface border border-border rounded-lg flex items-center gap-4">
+                        <div className="flex-1">
+                          <div className="font-bold text-sm text-text mb-1">
                             {topic}
                           </div>
-                          <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+                          <div className="text-xs text-muted">
                             {
                               [
                                 'Master the basics',
@@ -735,20 +482,7 @@ export default function CompanyPrepPage(props) {
                         </div>
                         <Link
                           to="/practice/ecommerce"
-                          style={{
-                            flexShrink: 0,
-                            padding: '7px 14px',
-                            borderRadius: 7,
-                            textDecoration: 'none',
-                            background: 'var(--primary-muted)',
-                            color: 'var(--primary)',
-                            border: '1px solid var(--primary-light)',
-                            fontWeight: 700,
-                            fontSize: 12,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                          }}
+                          className="shrink-0 px-3.5 py-1.5 rounded-md no-underline bg-primary-muted text-primary border border-primary-light font-bold text-xs flex items-center gap-1"
                         >
                           Practice <ChevronRight size={12} />
                         </Link>
@@ -758,13 +492,11 @@ export default function CompanyPrepPage(props) {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-                <div
-                  style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}
-                >
+              <div className="p-[60px] text-center text-muted">
+                <div className="text-[15px] font-bold mb-2 text-text">
                   Learning path not available
                 </div>
-                <div style={{ fontSize: 13 }}>
+                <div className="text-[13px]">
                   No recommended learning path for this company yet.
                 </div>
               </div>

@@ -77,12 +77,12 @@ export function CompanyFilterPanel({ company, onBack, onClose }) {
           <div className="loading-state">Loading questions...</div>
         ) : error ? (
           <div className="error-state">
-            <Database size={32} style={{ marginBottom: 16, opacity: 0.5 }} />
-            <p style={{ color: 'var(--error)' }}>{error}</p>
+            <Database size={32} className="mb-4 opacity-50" />
+            <p className="text-error">{error}</p>
           </div>
         ) : questions.length === 0 ? (
           <div className="empty-state">
-            <BarChart size={48} style={{ marginBottom: 16, opacity: 0.2 }} />
+            <BarChart size={48} className="mb-4 opacity-20" />
             <h3>No data available</h3>
             <p>We are currently updating our database with {company.name} questions.</p>
           </div>
@@ -91,11 +91,11 @@ export function CompanyFilterPanel({ company, onBack, onClose }) {
             <table className="question-table">
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Title</th>
+                  <th className="w-[40%]">Title</th>
                   <th>Key Topics</th>
                   <th>Difficulty</th>
                   <th>Time</th>
-                  <th style={{ textAlign: 'right' }}>Action</th>
+                  <th className="text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -107,9 +107,9 @@ export function CompanyFilterPanel({ company, onBack, onClose }) {
                         <span className="table-title">{q.title}</span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        <div className="flex gap-1 flex-wrap">
                           {topics.slice(0, 2).map(t => (
-                            <span key={t} className="company-category-badge" style={{ padding: '2px 6px', fontSize: '10px' }}>
+                            <span key={t} className="company-category-badge px-1.5 py-0.5 text-[10px]">
                               {t}
                             </span>
                           ))}
@@ -121,7 +121,7 @@ export function CompanyFilterPanel({ company, onBack, onClose }) {
                       <td>
                         <span className="meta-item"><Clock size={14} /> {q.estimated_time_minutes}m</span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="text-right">
                         <a 
                           className="solve-link"
                           onClick={() => {

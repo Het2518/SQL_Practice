@@ -14,53 +14,26 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 function ToggleRow({ label, description, checked, onChange }) {
   return (
     <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 16px',
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
-        borderRadius: '8px',
-        marginBottom: '8px',
-        cursor: 'pointer',
-        transition: 'border-color 0.2s',
-      }}
+      className="flex items-center justify-between p-3 bg-surface border border-border rounded-lg mb-2 cursor-pointer transition-colors duration-200 hover:border-primary"
       onClick={() => onChange(!checked)}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary)')}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingRight: '16px' }}>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{label}</span>
+      <div className="flex flex-col gap-0.5 pr-4">
+        <span className="text-sm font-semibold text-text">{label}</span>
         {description && (
-          <span style={{ fontSize: '12px', color: 'var(--muted)', lineHeight: 1.4 }}>
+          <span className="text-xs text-muted leading-relaxed">
             {description}
           </span>
         )}
       </div>
       <div
-        style={{
-          position: 'relative',
-          width: '40px',
-          height: '22px',
-          borderRadius: '11px',
-          background: checked ? 'var(--primary)' : 'var(--border)',
-          transition: 'background 0.3s',
-          flexShrink: 0,
-        }}
+        className={`relative w-10 h-[22px] rounded-full shrink-0 transition-colors duration-300 ${
+          checked ? 'bg-primary' : 'bg-border'
+        }`}
       >
         <div
-          style={{
-            position: 'absolute',
-            top: '2px',
-            left: checked ? '20px' : '2px',
-            width: '18px',
-            height: '18px',
-            borderRadius: '50%',
-            background: 'var(--surface)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            transition: 'left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-          }}
+          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-surface shadow-sm transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
+            checked ? 'left-[20px]' : 'left-[2px]'
+          }`}
         />
       </div>
     </div>
@@ -85,21 +58,14 @@ function ShortcutRow({ commandId, shortcut, onReassign, conflictWith }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '8px' }}>
+    <div className="flex flex-col mb-2">
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 12px',
-          background: 'var(--surface)',
-          border: `1px solid ${conflictWith ? 'var(--error)' : isEditing ? 'var(--primary)' : 'var(--border)'}`,
-          borderRadius: '8px',
-          cursor: 'pointer',
-        }}
+        className={`flex items-center justify-between px-3 py-2 bg-surface rounded-lg cursor-pointer border ${
+          conflictWith ? 'border-error' : isEditing ? 'border-primary' : 'border-border'
+        }`}
         onClick={() => setIsEditing(true)}
       >
-        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>
+        <span className="text-sm font-semibold text-text">
           {shortcut.label}
         </span>
 
@@ -110,38 +76,16 @@ function ShortcutRow({ commandId, shortcut, onReassign, conflictWith }) {
             onKeyDown={handleKeyDown}
             readOnly
             value="Press desired keys... (Esc to cancel)"
-            style={{
-              background: 'var(--bg)',
-              border: 'none',
-              color: 'var(--primary)',
-              fontSize: '12px',
-              padding: '4px 8px',
-              borderRadius: '4px',
-              width: '200px',
-              textAlign: 'center',
-            }}
+            className="bg-bg border-none text-primary text-xs px-2 py-1 rounded w-[200px] text-center outline-none"
           />
         ) : (
-          <kbd
-            style={{
-              background: 'var(--bg)',
-              border: '1px solid var(--border)',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '12px',
-              color: 'var(--primary)',
-              minWidth: '60px',
-              textAlign: 'center',
-            }}
-          >
+          <kbd className="bg-bg border border-border rounded px-2 py-1 text-xs text-primary min-w-[60px] text-center font-mono">
             {shortcut.combo}
           </kbd>
         )}
       </div>
       {conflictWith && !isEditing && (
-        <span
-          style={{ color: 'var(--error)', fontSize: '11px', marginTop: '4px', marginLeft: '4px' }}
-        >
+        <span className="text-error text-[11px] mt-1 ml-1">
           ⚠️ Conflicts with "{conflictWith}"
         </span>
       )}
@@ -289,28 +233,13 @@ export function SettingsModal({ onClose }) {
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
-        className="w-full max-w-[560px] bg-surface rounded-2xl overflow-hidden flex flex-col shadow-xl border border-border mx-4 max-h-[90vh]"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-          maxHeight: '90vh',
-        }}
-      >
+      <div className="w-full max-w-[560px] bg-surface rounded-2xl overflow-hidden flex flex-col shadow-xl border border-border mx-4 max-h-[90vh]">
         {/* Header */}
-        <div style={{ padding: '20px 24px 0', background: 'var(--surface)' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '20px' }}>⚙️</span>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+        <div className="pt-5 px-6 pb-0 bg-surface">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="text-[20px]">⚙️</span>
+              <h2 className="text-[18px] font-bold m-0 text-text">
                 Preferences
               </h2>
             </div>
@@ -322,48 +251,34 @@ export function SettingsModal({ onClose }) {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid var(--border)' }}>
+          <div className="flex gap-4 border-b border-border">
             <button
               onClick={() => setActiveTab('general')}
-              style={{
-                padding: '12px 16px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                borderBottom:
-                  activeTab === 'general' ? '2px solid var(--primary)' : '2px solid transparent',
-                color: activeTab === 'general' ? 'var(--primary)' : 'var(--muted)',
-                fontWeight: 600,
-              }}
+              className={`px-4 py-3 border-none bg-transparent cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'general'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted'
+              }`}
             >
               General Settings
             </button>
             <button
               onClick={() => setActiveTab('shortcuts')}
-              style={{
-                padding: '12px 16px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                borderBottom:
-                  activeTab === 'shortcuts' ? '2px solid var(--primary)' : '2px solid transparent',
-                color: activeTab === 'shortcuts' ? 'var(--primary)' : 'var(--muted)',
-                fontWeight: 600,
-              }}
+              className={`px-4 py-3 border-none bg-transparent cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'shortcuts'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted'
+              }`}
             >
               Keyboard Shortcuts
             </button>
             <button
               onClick={() => setActiveTab('ai')}
-              style={{
-                padding: '12px 16px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                borderBottom: activeTab === 'ai' ? '2px solid #8b5cf6' : '2px solid transparent',
-                color: activeTab === 'ai' ? '#8b5cf6' : 'var(--muted)',
-                fontWeight: 600,
-              }}
+              className={`flex-1 bg-transparent border-none py-3 cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === 'ai'
+                  ? 'border-purple-500 text-purple-500'
+                  : 'border-transparent text-muted'
+              }`}
             >
               AI Config
             </button>
@@ -371,19 +286,10 @@ export function SettingsModal({ onClose }) {
         </div>
 
         {/* Scrollable Body */}
-        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+        <div className="p-6 overflow-y-auto flex-1">
           {activeTab === 'general' ? (
             <>
-              <h3
-                style={{
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '1px',
-                  marginBottom: '12px',
-                  fontWeight: 600,
-                }}
-              >
+              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0">
                 Editor & Workspace
               </h3>
               <ToggleRow
@@ -411,85 +317,35 @@ export function SettingsModal({ onClose }) {
                 onChange={(v) => set('persistEditorText', v)}
               />
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  marginTop: '8px',
-                  marginBottom: '24px',
-                }}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>
+              <div className="flex items-center justify-between p-3 bg-surface border border-border rounded-lg mt-2 mb-6">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-text">
                     Editor Font Size
                   </span>
-                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                  <span className="text-xs text-muted">
                     Adjust the size of the code text
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => set('editorFontSize', Math.max(10, local.editorFontSize - 1))}
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border)',
-                      background: 'var(--surface-2)',
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                    className="w-7 h-7 rounded-md border border-border bg-surface-2 text-text cursor-pointer flex items-center justify-center hover:bg-surface-3 transition-colors"
                   >
                     -
                   </button>
-                  <span
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      width: '24px',
-                      textAlign: 'center',
-                    }}
-                  >
+                  <span className="text-[15px] font-semibold w-6 text-center text-text">
                     {local.editorFontSize}
                   </span>
                   <button
                     onClick={() => set('editorFontSize', Math.min(28, local.editorFontSize + 1))}
-                    style={{
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border)',
-                      background: 'var(--surface-2)',
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                    className="w-7 h-7 rounded-md border border-border bg-surface-2 text-text cursor-pointer flex items-center justify-center hover:bg-surface-3 transition-colors"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <h3
-                style={{
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '1px',
-                  marginBottom: '12px',
-                  fontWeight: 600,
-                }}
-              >
+              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
                 Experience
               </h3>
               <ToggleRow
@@ -499,20 +355,10 @@ export function SettingsModal({ onClose }) {
                 onChange={(v) => set('timedChallenges', v)}
               />
 
-              <h3
-                style={{
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '1px',
-                  marginTop: '24px',
-                  marginBottom: '12px',
-                  fontWeight: 600,
-                }}
-              >
+              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
                 Data & Backup
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="grid grid-cols-2 gap-3">
                 <button onClick={handleExport} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
                   📤 Export Backup
                 </button>
@@ -520,7 +366,7 @@ export function SettingsModal({ onClose }) {
                   ref={importRef}
                   type="file"
                   accept=".json"
-                  style={{ display: 'none' }}
+                  className="hidden"
                   onChange={handleImport}
                 />
                 <button onClick={() => importRef.current?.click()} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
@@ -528,28 +374,17 @@ export function SettingsModal({ onClose }) {
                 </button>
               </div>
 
-              <h3
-                style={{
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '1px',
-                  marginTop: '24px',
-                  marginBottom: '12px',
-                  fontWeight: 600,
-                }}
-              >
+              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
                 Storage Management ({storageSize})
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={handleResetGeneral}
-                  className="btn btn-ghost"
-                  style={{ width: '100%', color: 'var(--text)' }}
+                  className="btn btn-ghost w-full text-text"
                 >
                   🔄 Reset General Settings
                 </button>
-                <div style={{ marginTop: '24px' }}>
+                <div className="mt-6">
                   <button
                     onClick={async () => {
                       const progress = localStorage.getItem('sql-practice-progress') || '{}';
@@ -571,31 +406,22 @@ export function SettingsModal({ onClose }) {
             </>
           ) : activeTab === 'ai' ? (
             <>
-              <h3
-                style={{
-                  fontSize: '12px',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '1px',
-                  marginBottom: '12px',
-                  fontWeight: 600,
-                }}
-              >
+              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold">
                 AI Configuration
               </h3>
 
               <div className="p-5 bg-surface-2 border border-border rounded-xl mt-4">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <span style={{ fontSize: 20 }}>🧠</span>
-                  <div style={{ fontWeight: 600 }}>Groq API Key</div>
+                <div className="flex items-center gap-2 mb-3.5">
+                  <span className="text-[20px]">🧠</span>
+                  <div className="font-semibold">Groq API Key</div>
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                <div className="text-[13px] text-text-secondary mb-4">
                   DataDesk uses the ultra-fast Groq API for AI explanations. Get a free API key at{' '}
                   <a
                     href="https://console.groq.com/keys"
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: 'var(--primary)' }}
+                    className="text-primary"
                   >
                     console.groq.com
                   </a>
@@ -603,7 +429,7 @@ export function SettingsModal({ onClose }) {
                 </div>
 
                 <input
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary mb-3"
                   type="password"
                   placeholder="gsk_..."
                   value={groqKeyInput}
@@ -611,27 +437,23 @@ export function SettingsModal({ onClose }) {
                     setGroqKeyInput(e.target.value);
                     setKeySaved(false);
                   }}
-                  style={{
-                    boxSizing: 'border-box',
-                    marginBottom: 12,
-                  }}
                 />
 
                 <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold">
                   {groqKeyInput.startsWith('gsk_') ? (
                     <>
-                      <span style={{ color: 'var(--success)' }}>✓</span>
-                      <span style={{ color: 'var(--success)' }}>Valid key format</span>
+                      <span className="text-success">✓</span>
+                      <span className="text-success">Valid key format</span>
                     </>
                   ) : groqKeyInput.length > 0 ? (
                     <>
-                      <span style={{ color: 'var(--error)' }}>✗</span>
-                      <span style={{ color: 'var(--error)' }}>Key should start with gsk_</span>
+                      <span className="text-error">✗</span>
+                      <span className="text-error">Key should start with gsk_</span>
                     </>
                   ) : (
                     <>
-                      <span style={{ color: 'var(--muted)' }}>○</span>
-                      <span style={{ color: 'var(--muted)' }}>
+                      <span className="text-muted">○</span>
+                      <span className="text-muted">
                         No key entered — using .env fallback
                       </span>
                     </>
@@ -641,25 +463,17 @@ export function SettingsModal({ onClose }) {
             </>
           ) : (
             <>
-              <div style={{ marginBottom: '16px' }}>
+              <div className="mb-4">
                 <input
                   type="text"
                   placeholder="Type to search keybindings..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border)',
-                    background: 'var(--surface)',
-                    color: 'var(--text)',
-                    fontSize: '14px',
-                  }}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-surface text-text text-sm"
                 />
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="flex flex-col gap-1">
                 {filteredShortcuts.map((s) => (
                   <ShortcutRow
                     key={s.id}
@@ -670,7 +484,7 @@ export function SettingsModal({ onClose }) {
                   />
                 ))}
                 {filteredShortcuts.length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '20px' }}>
+                  <div className="text-center text-muted p-5">
                     No shortcuts found matching "{searchQuery}"
                   </div>
                 )}
@@ -678,8 +492,7 @@ export function SettingsModal({ onClose }) {
 
               <button
                 onClick={handleResetShortcuts}
-                className="btn btn-ghost"
-                style={{ marginTop: '24px', width: '100%', color: 'var(--error)' }}
+                className="btn btn-ghost w-full mt-6 text-error"
               >
                 🔄 Restore Default Keybindings
               </button>
@@ -688,16 +501,7 @@ export function SettingsModal({ onClose }) {
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            padding: '16px 24px',
-            borderTop: '1px solid var(--border)',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 12,
-            background: 'var(--surface)',
-          }}
-        >
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-surface">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>

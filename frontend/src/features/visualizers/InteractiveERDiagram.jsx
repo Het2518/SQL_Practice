@@ -291,12 +291,7 @@ function ERDiagramFlow({ dbName, onClose }) {
           <MiniMap 
             nodeColor={(node) => node.id === activeFocus ? 'var(--primary)' : 'var(--surface-2)'}
             maskColor="var(--bg)"
-            style={{ 
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}
+            className="bg-surface border border-border rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.1)]"
           />
         </ReactFlow>
       </div>

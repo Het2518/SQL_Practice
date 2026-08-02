@@ -304,14 +304,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                     <h4 className="m-0 mb-1.5 text-[13px] text-warning font-bold flex items-center gap-1.5">
                       🔍 Smart Analysis
                     </h4>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                      }}
-                    >
+                    <p className="m-0 text-[13px] text-text-secondary leading-[1.5]">
                       {autoHint}
                     </p>
                   </div>
@@ -394,73 +387,39 @@ export const QuestionCard = React.memo(function QuestionCard({
                 );
                 if (hasAttempted) setShowSolution(!showSolution);
               }}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '13px 16px',
-                background: showSolution
+              className={`w-full flex items-center justify-between px-4 py-3 border-none font-semibold text-[13px] transition-all duration-150 ease-in-out ${
+                Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete')
+                  ? 'cursor-pointer opacity-100'
+                  : 'cursor-not-allowed opacity-50'
+              } ${
+                showSolution
                   ? question.isAiGenerated
-                    ? 'rgba(139,92,246,0.06)'
-                    : 'rgba(16,185,129,0.06)'
-                  : 'transparent',
-                border: 'none',
-                cursor: Boolean(
-                  currentSql?.trim() || status === 'attempted' || status === 'complete'
-                )
-                  ? 'pointer'
-                  : 'not-allowed',
-                color: showSolution
-                  ? question.isAiGenerated
-                    ? 'var(--primary)'
-                    : 'var(--success)'
+                    ? 'bg-purple-500/10 text-primary'
+                    : 'bg-emerald-500/10 text-success'
                   : Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete')
-                    ? 'var(--text-secondary)'
-                    : 'var(--muted)',
-                fontWeight: 600,
-                fontSize: 13,
-                transition: 'all 0.15s ease',
-                opacity: Boolean(
-                  currentSql?.trim() || status === 'attempted' || status === 'complete'
-                )
-                  ? 1
-                  : 0.5,
-              }}
-              onMouseEnter={(e) => {
-                if (
-                  !showSolution &&
-                  Boolean(currentSql?.trim() || status === 'attempted' || status === 'complete')
-                )
-                  e.currentTarget.style.background = 'var(--surface)';
-              }}
-              onMouseLeave={(e) => {
-                if (!showSolution) e.currentTarget.style.background = 'transparent';
-              }}
+                    ? 'bg-transparent text-text-secondary hover:bg-surface'
+                    : 'bg-transparent text-muted'
+              }`}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div className="flex items-center gap-2">
                 <Code size={15} strokeWidth={2} />
                 <span>Solution & AI Review</span>
                 {question.isAiGenerated && (
-                  <span className="ai-badge" style={{ fontSize: 10, padding: '1px 6px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span className="ai-badge text-[10px] px-1.5 py-[1px] flex items-center gap-1">
                     <Cpu size={9} /> AI
                   </span>
                 )}
               </div>
               <ChevronDown
                 size={15}
-                style={{
-                  transform: showSolution ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.25s',
-                  opacity: 0.6,
-                }}
+                className={`transition-transform duration-250 opacity-60 ${showSolution ? 'rotate-180' : 'rotate-0'}`}
               />
             </button>
             <div
               className={`overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${showSolution ? 'max-h-[1000px]' : 'max-h-0'}`}
             >
               <div className="px-4 pb-4">
-                <div style={{ marginTop: 16 }}>
+                <div className="mt-4">
                   {question.isAiGenerated ? (
                     /* AI Question: Validate user's SQL with AI grader */
                     <div>

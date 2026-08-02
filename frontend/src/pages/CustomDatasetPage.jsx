@@ -115,30 +115,13 @@ function SchemaSidebar({ schema, onInsert }) {
       {/* Tables */}
       <div className="sb-schema-body">
         {!schema?.length && (
-          <div
-            style={{
-              padding: '24px 16px',
-              textAlign: 'center',
-              color: 'var(--muted)',
-              fontSize: 12,
-              lineHeight: 1.6,
-            }}
-          >
+          <div className="px-4 py-6 text-center text-muted text-xs leading-relaxed">
             Upload a CSV or SQLite file to explore schema here.
           </div>
         )}
 
         {schema?.length > 0 && (
-          <div
-            style={{
-              padding: '8px 12px 4px',
-              fontSize: 10,
-              fontWeight: 700,
-              color: 'var(--muted)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
+          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-muted tracking-widest uppercase">
             Tables
           </div>
         )}
@@ -288,7 +271,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
           {/* Prompt */}
           <div className="qp-detail-text">
             {(selected.prompt || '').split('\n').map((line, i) => (
-              <p key={i} style={{ margin: '0 0 10px' }}>
+              <p key={i} className="m-0 mb-2.5">
                 {line}
               </p>
             ))}
@@ -305,7 +288,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
             <div className="qp-hint-label">
               <Sparkles
                 size={12}
-                style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }}
+                className="inline align-middle mr-1"
               />{' '}
               Hint
             </div>
@@ -345,7 +328,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
           <Sparkles size={12} color="var(--accent-1)" /> AI Questions
           <span className="qp-header-badge">MAANG</span>
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="flex items-center gap-1.5">
           {!loading && questions.length > 0 && (
             <button className="qp-more-btn" onClick={() => generate(batch)}>
               <RefreshCw size={10} /> Next 5
@@ -354,7 +337,7 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
           {loading && (
             <RotateCcw
               size={12}
-              style={{ animation: 'spin 0.8s linear infinite', color: 'var(--muted)' }}
+              className="animate-[spin_0.8s_linear_infinite] text-muted"
             />
           )}
           <button className="qp-toggle" onClick={onToggle} title="Hide panel">
@@ -379,26 +362,19 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
         {hasKey &&
           loading &&
           Array.from({ length: 5 }, (_, i) => (
-            <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+            <div key={i} className="px-4 py-3.5 border-b border-border">
               <div
+                className="h-[9px] rounded w-[30%] mb-2"
                 style={{
-                  height: 9,
-                  borderRadius: 4,
-                  width: '30%',
-                  marginBottom: 8,
-                  background:
-                    'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
+                  background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
                   backgroundSize: '200%',
                   animation: `shimmer 1.4s infinite ${i * 0.07}s`,
                 }}
               />
               <div
+                className="h-[13px] rounded w-[80%]"
                 style={{
-                  height: 13,
-                  borderRadius: 4,
-                  width: '80%',
-                  background:
-                    'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
+                  background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
                   backgroundSize: '200%',
                   animation: `shimmer 1.4s infinite ${i * 0.1}s`,
                 }}
@@ -428,15 +404,15 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
         {hasKey && !loading && !error && questions.length === 0 && (
           <div className="qp-empty">
             <Sparkles size={20} color="var(--accent-1)" />
-            <div style={{ fontWeight: 600 }}>No questions yet</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            <div className="font-semibold">No questions yet</div>
+            <div className="text-xs text-text-secondary">
               Generate 5 MAANG-style SQL questions for your dataset.
             </div>
             <Button
               variant="primary"
               size="md"
               onClick={() => generate(0)}
-              style={{ marginTop: '16px' }}
+              className="mt-4"
             >
               Generate Questions
             </Button>
@@ -513,12 +489,12 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
   if (schema?.length) {
     return (
       <div className="sb-topbar">
-        <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="flex gap-1.5 flex-1 flex-wrap items-center">
           {schema.map((t) => (
             <span key={t.name} className="schema-table-chip">
               <Database
                 size={12}
-                style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'text-bottom' }}
+                className="inline-block align-text-bottom mr-1"
               />{' '}
               {t.name}
               <span className="schema-table-chip-count">
@@ -527,31 +503,20 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
             </span>
           ))}
           {uploadStatus?.type === 'success' && (
-            <span
-              style={{
-                fontSize: 11,
-                color: 'var(--success)',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
+            <span className="text-[11px] text-success font-semibold flex items-center gap-1">
               <CheckCircle2 size={12} /> Loaded
             </span>
           )}
         </div>
         <button
-          className="btn btn-ghost"
+          className="btn btn-ghost gap-1.5 text-[11px]"
           onClick={() => inputRef.current?.click()}
-          style={{ gap: 5, fontSize: 11 }}
         >
           <Upload size={11} /> Add
         </button>
         <button
-          className="btn btn-ghost"
+          className="btn btn-ghost gap-1.5 text-[11px] text-error"
           onClick={onReset}
-          style={{ gap: 5, color: 'var(--error)', fontSize: 11 }}
         >
           <Trash2 size={11} /> Clear
         </button>
@@ -560,7 +525,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
           type="file"
           accept=".csv,.sqlite,.db"
           multiple
-          style={{ display: 'none' }}
+          className="hidden"
           onChange={onChange}
         />
       </div>
@@ -570,21 +535,13 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
   // Full upload screen
   return (
     <div className="sandbox-upload-overlay">
-      <div style={{ textAlign: 'center' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', marginBottom: 8 }}>
+      <div className="text-center">
+        <h1 className="text-[26px] font-bold text-text mb-2">
           Custom Dataset Practice
         </h1>
-        <p
-          style={{
-            color: 'var(--text-secondary)',
-            fontSize: 14,
-            lineHeight: 1.7,
-            maxWidth: 460,
-            margin: '0 auto',
-          }}
-        >
+        <p className="text-text-secondary text-sm leading-[1.7] max-w-[460px] mx-auto">
           Upload CSV or SQLite files. Practice SQL with{' '}
-          <span style={{ color: 'var(--accent-1)', fontWeight: 700 }}>
+          <span className="text-accent-1 font-bold">
             AI-generated MAANG interview questions
           </span>
           .
@@ -602,7 +559,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
           type="file"
           accept=".csv,.sqlite,.db"
           multiple
-          style={{ display: 'none' }}
+          className="hidden"
           onChange={onChange}
         />
         <div className="upload-icon">
@@ -610,7 +567,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
             <RotateCcw
               size={26}
               color="var(--primary)"
-              style={{ animation: 'spin 0.8s linear infinite' }}
+              className="animate-[spin_0.8s_linear_infinite]"
             />
           ) : (
             <Upload size={26} color="var(--primary)" />
@@ -626,16 +583,13 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
           <div className="upload-cta">Multiple CSVs = multiple tables you can JOIN</div>
         )}
         {uploading && (
-          <div className="upload-progress-bar" style={{ width: '80%' }}>
-            <div className="upload-progress-fill" style={{ width: '100%' }} />
+          <div className="upload-progress-bar w-[80%]">
+            <div className="upload-progress-fill w-full" />
           </div>
         )}
       </div>
       {uploadStatus && (
-        <div
-          className={`upload-status ${uploadStatus.type}`}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}
-        >
+        <div className={`upload-status ${uploadStatus.type} flex items-center justify-center gap-1.5`}>
           {uploadStatus.type === 'error' ? (
             <AlertCircle size={14} />
           ) : (
@@ -644,40 +598,26 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
           {uploadStatus.message}
         </div>
       )}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '10px 18px',
-          background: 'var(--primary-muted)',
-          border: '1px solid var(--primary-light)',
-          borderRadius: 10,
-          maxWidth: 400,
-          fontSize: 12,
-          color: 'var(--text-secondary)',
-          margin: '0 auto',
-        }}
-      >
-        <Sparkles size={14} color="var(--primary)" style={{ flexShrink: 0 }} />
+      <div className="flex items-center justify-center gap-2.5 px-4.5 py-2.5 bg-primary-muted border border-primary-light rounded-xl max-w-[400px] text-xs text-text-secondary mx-auto mt-4">
+        <Sparkles size={14} color="var(--primary)" className="shrink-0" />
         <span>
           After upload, AI generates{' '}
-          <strong style={{ color: 'var(--text)' }}>5 MAANG-style questions</strong> for your schema.
+          <strong className="text-text">5 MAANG-style questions</strong> for your schema.
         </span>
       </div>
 
       {/* AI Generate Box */}
-      <div style={{ marginTop: 32, width: '100%', maxWidth: 520, margin: '32px auto 0' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+      <div className="mt-8 w-full max-w-[520px] mx-auto">
+        <div className="text-[13px] font-semibold text-text mb-3 flex items-center gap-2 justify-center">
           <Sparkles size={16} color="var(--primary)" /> Generate Schema with AI
         </div>
-        <div style={{ display: 'flex', gap: 10, background: 'var(--surface-2)', padding: '6px', borderRadius: 12, border: '1px solid var(--border)' }}>
+        <div className="flex gap-2.5 bg-surface-2 p-1.5 rounded-xl border border-border">
            <input 
              type="text" 
              value={aiPrompt}
              onChange={e => setAiPrompt(e.target.value)}
              placeholder="e.g. A hospital with patients and doctors" 
-             style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--text)', fontSize: 14, outline: 'none' }}
+             className="flex-1 px-4 py-2.5 rounded-lg border-none bg-transparent text-text text-sm outline-none"
              onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
              disabled={generatingSchema || uploading}
            />
@@ -686,7 +626,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
              disabled={!aiPrompt.trim() || generatingSchema || uploading} 
              variant="primary"
              size="md"
-             style={{ borderRadius: 8, padding: '0 24px', fontWeight: 600 }}
+             className="rounded-lg px-6 font-semibold"
            >
              {generatingSchema ? 'Building...' : 'Generate'}
            </Button>
@@ -891,46 +831,35 @@ export function CustomDatasetPage() {
       {/* ── Nav ── */}
       <nav className="sandbox-nav">
         <button
-          className="btn btn-ghost"
+          className="btn btn-ghost gap-1.5 text-xs"
           onClick={() => navigate('/')}
-          style={{ gap: 5, fontSize: 12 }}
         >
           <Home size={13} /> Home
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="flex items-center gap-2">
           <Database size={14} color="var(--primary)" />
-          <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>
+          <span className="font-bold text-sm text-text">
             Custom Dataset
           </span>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              padding: '2px 7px',
-              borderRadius: 4,
-              background: 'var(--primary-muted)',
-              color: 'var(--primary)',
-            }}
-          >
+          <span className="text-[10px] font-bold px-[7px] py-[2px] rounded bg-primary-muted text-primary">
             Sandbox
           </span>
         </div>
 
         {/* Center space placeholder to push right icons to the edge */}
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {!qPanelVisible && hasData && (
           <button
-            className="btn btn-ghost"
+            className="btn btn-ghost gap-1.5 text-[11px]"
             onClick={() => setQPanelVisible(true)}
-            style={{ gap: 5, fontSize: 11 }}
           >
             <Sparkles size={12} color="var(--accent-1)" /> AI Questions
           </button>
         )}
 
-        <button className="btn btn-ghost" onClick={onToggleDark} style={{ padding: '6px 8px' }}>
+        <button className="btn btn-ghost px-2 py-1.5" onClick={onToggleDark}>
           {darkMode ? <Sun size={15} /> : <Moon size={15} />}
         </button>
       </nav>

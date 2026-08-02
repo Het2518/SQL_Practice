@@ -40,47 +40,16 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
         }
       />
 
-      <div
-        style={{
-          padding: '64px 32px',
-          background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-        }}
-      >
+      <div className="py-16 px-8 bg-gradient-to-b from-surface to-bg border-b border-border flex flex-col items-center text-center">
         <div
-          style={{
-            padding: '4px 16px',
-            borderRadius: 99,
-            background: 'var(--primary-muted)',
-            border: '1px solid var(--primary-light)',
-            fontSize: 11,
-            fontWeight: 700,
-            color: 'var(--primary)',
-            letterSpacing: '0.05em',
-            marginBottom: 20,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-          }}
+          className="px-4 py-1 rounded-full bg-primary-muted border border-primary-light text-[11px] font-bold text-primary tracking-widest mb-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
         >
           STRICT PROCTORING ENABLED
         </div>
-        <h1
-          style={{
-            fontSize: 48,
-            fontWeight: 900,
-            color: 'var(--text)',
-            lineHeight: 1.1,
-            letterSpacing: '-1px',
-            marginBottom: 16,
-            maxWidth: 800,
-          }}
-        >
+        <h1 className="text-5xl font-black text-text leading-[1.1] tracking-[-1px] mb-4 max-w-[800px]">
           Proctored Mock Interview
         </h1>
-        <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6 }}>
+        <p className="text-lg text-text-secondary max-w-[600px] leading-[1.6]">
           Configure your mock interview. Once started, you will enter a strictly proctored environment that prevents tab switching, copy-pasting, and requires full-screen mode.
         </p>
       </div>

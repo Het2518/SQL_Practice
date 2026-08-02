@@ -570,20 +570,10 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
 
   if (dbError) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          gap: 16,
-          color: 'var(--error)',
-        }}
-      >
-        <div style={{ fontSize: 48 }}>💥</div>
-        <div style={{ fontWeight: 700 }}>Database Error</div>
-        <div style={{ color: 'var(--muted)', maxWidth: 400, textAlign: 'center' }}>{dbError}</div>
+      <div className="flex flex-col items-center justify-center h-screen gap-4 text-error">
+        <div className="text-[48px]">💥</div>
+        <div className="font-bold">Database Error</div>
+        <div className="text-muted max-w-[400px] text-center">{dbError}</div>
         <Button variant="ghost" size="sm" icon={Home} onClick={() => navigate('/')}>
           Back to Home
         </Button>
@@ -603,17 +593,28 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         <title>{dbInfo?.label ? `Practice ${dbInfo.label} | DataDesk` : 'SQL Practice | DataDesk'}</title>
         <meta name="description" content={dbInfo?.description || 'Interactive SQL practice environment.'} />
       </Helmet>
+      
+      {/* ══ MOBILE WARNING OVERLAY ══ */}
+      <div className="md:hidden fixed inset-0 z-[100] bg-bg flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
+          <Database size={32} />
+        </div>
+        <h2 className="text-2xl font-extrabold text-text mb-3 tracking-tight">Desktop Recommended</h2>
+        <p className="text-text-secondary mb-8 leading-relaxed max-w-sm">
+          DataDesk's SQL IDE is designed for larger screens. Please switch to a desktop or tablet for the best practice experience.
+        </p>
+        <Button onClick={() => navigate('/')} variant="outline" size="lg">
+          Back to Home
+        </Button>
+      </div>
+
       {/* ══ NAV ══ */}
       <Header
         onShowAuth={onShowAuth}
         onShowSettings={onShowSettings}
         leftContent={
           <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-            }}
+            className="relative flex items-center"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -733,7 +734,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               <span className={`w-1.5 h-1.5 rounded-full ${sidebarOpen ? 'bg-primary' : 'bg-muted'}`} />
             </button>
 
-            <div style={{ position: 'relative' }}>
+            <div className="relative">
               <Button
                 variant="ghost"
                 size="sm"
@@ -745,7 +746,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
             {showOverflow && (
               <>
                 <div
-                  style={{ position: 'fixed', inset: 0, zIndex: 98 }}
+                  className="fixed inset-0 z-[98]"
                   onClick={() => setShowOverflow(false)}
                 />
                 <div className="absolute top-[calc(100%+4px)] right-0 z-50 bg-surface border border-border rounded-xl shadow-float min-w-[220px] py-1.5">

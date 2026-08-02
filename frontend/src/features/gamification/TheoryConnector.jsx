@@ -34,57 +34,42 @@ export const TheoryConnector = ({ sql }) => {
   };
 
   return (
-    <div className="theory-connector-panel" style={{
-      marginTop: '16px',
-      background: 'var(--surface-2)',
-      border: '1px solid var(--border)',
-      borderRadius: '8px',
-      overflow: 'hidden'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 14px',
-        background: 'rgba(139, 92, 246, 0.15)', // Purple tint for theory
-        borderBottom: '1px solid var(--border)'
-      }}>
-        <span style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <div className="theory-connector-panel mt-4 bg-surface-2 border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between py-2.5 px-3.5 bg-purple-500/15 border-b border-border">
+        <span className="font-bold text-[#8b5cf6] text-[13px] flex items-center gap-1.5">
           <span>🎓</span> DBMS Theory: {concept.title}
         </span>
-        <button onClick={handleDismiss} style={{
-          background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '14px'
-        }}>✖</button>
+        <button onClick={handleDismiss} className="bg-transparent border-none text-muted cursor-pointer text-sm">✖</button>
       </div>
 
-      <div style={{ padding: '14px', fontSize: '13px', color: 'var(--text)' }}>
-        <p style={{ margin: '0 0 12px 0', fontStyle: 'italic', color: 'var(--text-secondary)' }}>
+      <div className="p-3.5 text-[13px] text-text">
+        <p className="m-0 mb-3 italic text-text-secondary">
           {concept.tldr}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <h6 style={{ margin: '0 0 6px 0', color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.05em' }}>Key Points</h6>
-            <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text)' }}>
+            <h6 className="m-0 mb-1.5 text-text-secondary uppercase text-[11px] tracking-wider">Key Points</h6>
+            <ul className="m-0 pl-4 text-text">
               {concept.keyPoints.map((pt, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>{pt}</li>
+                <li key={i} className="mb-1">{pt}</li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h6 style={{ margin: '0 0 6px 0', color: 'var(--error)', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.05em' }}>Common Mistakes</h6>
-            <ul style={{ margin: 0, paddingLeft: '16px', color: 'var(--text)' }}>
+            <h6 className="m-0 mb-1.5 text-error uppercase text-[11px] tracking-wider">Common Mistakes</h6>
+            <ul className="m-0 pl-4 text-text">
               {concept.commonMistakes.map((pt, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>{pt}</li>
+                <li key={i} className="mb-1">{pt}</li>
               ))}
             </ul>
           </div>
         </div>
 
-        <div style={{ marginTop: '16px', padding: '10px', background: 'var(--surface)', borderRadius: '6px', borderLeft: '3px solid #8b5cf6' }}>
-          <h6 style={{ margin: '0 0 4px 0', color: '#8b5cf6', fontSize: '11px', textTransform: 'uppercase' }}>Interview Prep</h6>
-          <div style={{ fontWeight: 600 }}>{concept.interviewQuestion}</div>
+        <div className="mt-4 p-2.5 bg-surface rounded-md border-l-[3px] border-l-[#8b5cf6]">
+          <h6 className="m-0 mb-1 text-[#8b5cf6] text-[11px] uppercase">Interview Prep</h6>
+          <div className="font-semibold">{concept.interviewQuestion}</div>
         </div>
       </div>
     </div>

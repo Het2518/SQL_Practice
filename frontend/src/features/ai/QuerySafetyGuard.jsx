@@ -92,18 +92,18 @@ export function useQuerySafetyGuard() {
         <div className="safety-modal" onClick={e => e.stopPropagation()}>
           <div className="safety-icon">⚠️</div>
 
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>
+          <h3 className="text-base font-bold mb-2 text-text">
             Potential Query Issue Detected
           </h3>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16 }}>
+          <p className="text-[13px] text-text-secondary leading-[1.6] mb-4">
             {modal.warning}
           </p>
 
           {/* Safety score bar */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, color: 'var(--muted)' }}>
+          <div className="mb-5">
+            <div className="flex justify-between mb-1.5 text-xs text-muted">
               <span>{modal.source === 'ai' ? '🤖 AI Safety Score' : '🔍 Client Analysis'}</span>
-              <span style={{ fontWeight: 700, color: fillColor }}>{fillPercent}% safe</span>
+              <span className="font-bold" style={{ color: fillColor }}>{fillPercent}% safe</span>
             </div>
             <div className="safety-score-bar">
               <div
@@ -113,18 +113,16 @@ export function useQuerySafetyGuard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div className="flex gap-3">
             <button
-              className="btn btn-ghost"
+              className="btn btn-ghost flex-1 justify-center font-semibold"
               onClick={handleCancel}
-              style={{ flex: 1, justifyContent: 'center', fontWeight: 600 }}
             >
               ✏️ Edit Query
             </button>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary flex-1 justify-center font-semibold bg-error border-error hover:bg-error/90 hover:border-error/90"
               onClick={handleProceed}
-              style={{ flex: 1, justifyContent: 'center', fontWeight: 600, background: 'var(--error)', borderColor: 'var(--error)' }}
             >
               ▶ Run Anyway
             </button>

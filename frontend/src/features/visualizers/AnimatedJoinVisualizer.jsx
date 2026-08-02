@@ -181,14 +181,14 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
 
   if (error) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content" style={{ width: 500, padding: 30, textAlign: 'center' }}>
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 64, height: 64, flexShrink: 0, borderRadius: '50%', marginBottom: 16 }}>
-            <AlertTriangle size={32} color="var(--error)" />
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-surface w-[500px] p-8 text-center rounded-2xl shadow-xl border border-border">
+          <div className="bg-error/10 inline-flex items-center justify-center w-16 h-16 shrink-0 rounded-full mb-4">
+            <AlertTriangle size={32} className="text-error" />
           </div>
-          <h3 style={{ marginBottom: 12 }}>Cannot Animate Join</h3>
-          <p style={{ color: 'var(--muted)', marginBottom: 24 }}>{error}</p>
-          <button className="btn-primary" onClick={onClose}>Close</button>
+          <h3 className="mb-3 text-xl font-bold">Cannot Animate Join</h3>
+          <p className="text-muted mb-6">{error}</p>
+          <button className="btn btn-primary" onClick={onClose}>Close</button>
         </div>
       </div>
     );
@@ -196,10 +196,10 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
 
   if (!data) {
     return (
-      <div className="modal-overlay">
-        <div className="modal-content" style={{ width: 500, padding: 40, textAlign: 'center' }}>
-          <div className="spinner" style={{ margin: '0 auto 20px auto' }}></div>
-          <p>Analyzing SQL and buffering frames...</p>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-surface w-[500px] p-10 text-center rounded-2xl shadow-xl border border-border">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-5"></div>
+          <p className="text-text">Analyzing SQL and buffering frames...</p>
         </div>
       </div>
     );
@@ -211,68 +211,68 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
   const showOuter = phase >= PHASES.OUTER_RECOVERY;
 
   return (
-    <div className="modal-overlay" style={{ backdropFilter: 'blur(4px)' }}>
-      <div className="modal-content" style={{ width: '90vw', maxWidth: 1200, height: '85vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-surface w-[90vw] max-w-[1200px] h-[85vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-border">
         
         {/* Header */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-surface">
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2 className="text-lg font-bold m-0 flex items-center gap-2">
               ▶️ Cinematic Join Visualizer
-              <span className="tag" style={{ background: 'var(--primary-muted)', color: 'var(--primary)' }}>{data.joinType}</span>
+              <span className="px-2 py-0.5 rounded text-xs font-bold bg-primary-muted text-primary uppercase tracking-wider">{data.joinType}</span>
             </h2>
-            <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4, fontFamily: 'monospace' }}>ON {data.condition}</div>
+            <div className="text-[13px] text-muted mt-1 font-mono">ON {data.condition}</div>
           </div>
-          <button className="btn-icon" onClick={onClose}><X size={20} /></button>
+          <button className="btn btn-ghost w-10 h-10 rounded-full flex items-center justify-center p-0" onClick={onClose}><X size={20} /></button>
         </div>
 
         {/* Cinematic Area */}
-        <div style={{ flex: 1, backgroundColor: '#0f172a', overflow: 'auto', position: 'relative', padding: 24, display: 'flex', flexDirection: 'column' }}>
+        <div className="flex-1 bg-slate-900 overflow-auto relative p-6 flex flex-col">
           
           {/* Top Phase Indicator */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: 99, display: 'flex', gap: 16, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-              <span style={{ color: phase === PHASES.SETUP ? '#fff' : 'inherit' }}>1. Setup</span>
+          <div className="flex justify-center mb-8">
+            <div className="bg-white/5 px-4 py-2 rounded-full flex gap-4 text-[13px] font-semibold text-slate-400">
+              <span className={phase === PHASES.SETUP ? 'text-white' : ''}>1. Setup</span>
               <span>→</span>
-              <span style={{ color: phase === PHASES.CROSS_JOIN ? '#fff' : 'inherit' }}>2. Cross Join</span>
+              <span className={phase === PHASES.CROSS_JOIN ? 'text-white' : ''}>2. Cross Join</span>
               <span>→</span>
-              <span style={{ color: phase === PHASES.SCAN ? '#3b82f6' : 'inherit' }}>3. Scan ON</span>
+              <span className={phase === PHASES.SCAN ? 'text-blue-500' : ''}>3. Scan ON</span>
               <span>→</span>
-              <span style={{ color: phase === PHASES.FILTER ? '#fff' : 'inherit' }}>4. Filter</span>
+              <span className={phase === PHASES.FILTER ? 'text-white' : ''}>4. Filter</span>
               {(data.joinType.includes('LEFT') || data.joinType.includes('RIGHT')) && (
                 <>
                   <span>→</span>
-                  <span style={{ color: phase === PHASES.OUTER_RECOVERY ? '#fff' : 'inherit' }}>5. Outer</span>
+                  <span className={phase === PHASES.OUTER_RECOVERY ? 'text-white' : ''}>5. Outer</span>
                 </>
               )}
               <span>→</span>
-              <span style={{ color: phase === PHASES.RESULT ? '#10b981' : 'inherit' }}>Result</span>
+              <span className={phase === PHASES.RESULT ? 'text-emerald-500' : ''}>Result</span>
             </div>
           </div>
 
-          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+          <div className="flex-1 flex justify-center items-start">
             
             {/* Phase 0: Setup (Split Tables) */}
             {!showCrossJoin && (
-              <div style={{ display: 'flex', gap: 60, alignItems: 'center', animation: 'fadeIn 0.5s ease' }}>
+              <div className="flex gap-16 items-center animate-[fadeIn_0.5s_ease]">
                 <TablePreview name={data.leftTable} cols={data.leftCols} rows={data.leftRows} color="#3b82f6" />
-                <div style={{ fontSize: 24, color: 'var(--muted)', fontWeight: 'bold' }}>×</div>
+                <div className="text-2xl text-muted font-bold">×</div>
                 <TablePreview name={data.rightTable} cols={data.rightCols} rows={data.rightRows} color="#10b981" />
               </div>
             )}
 
             {/* Phase 1-5: Merged Grid (Cross Join -> Filter -> Outer -> Result) */}
             {showCrossJoin && (
-              <div style={{ animation: 'zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)', transformOrigin: 'top center' }}>
-                <table style={{ borderCollapse: 'collapse', color: '#fff', fontSize: 13, background: '#1e293b', borderRadius: 8, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+              <div className="animate-[zoomIn_0.6s_cubic-bezier(0.16,1,0.3,1)] origin-top">
+                <table className="border-collapse text-white text-[13px] bg-slate-800 rounded-lg overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
                   <thead>
                     <tr>
-                      <th colSpan={data.leftCols.length} style={{ background: '#1e3a8a', padding: 8, borderRight: '2px solid #0f172a' }}>{data.leftTable}</th>
-                      <th colSpan={data.rightCols.length} style={{ background: '#064e3b', padding: 8 }}>{data.rightTable}</th>
+                      <th colSpan={data.leftCols.length} className="bg-blue-900 p-2 border-r-2 border-slate-900">{data.leftTable}</th>
+                      <th colSpan={data.rightCols.length} className="bg-emerald-900 p-2">{data.rightTable}</th>
                     </tr>
-                    <tr style={{ background: '#334155' }}>
-                      {data.leftCols.map((c, i) => <th key={`lc-${i}`} style={{ padding: '8px 12px', borderBottom: '1px solid #475569', borderRight: i === data.leftCols.length-1 ? '2px solid #0f172a' : '1px solid #475569' }}>{c}</th>)}
-                      {data.rightCols.map((c, i) => <th key={`rc-${i}`} style={{ padding: '8px 12px', borderBottom: '1px solid #475569', borderRight: '1px solid #475569' }}>{c}</th>)}
+                    <tr className="bg-slate-700">
+                      {data.leftCols.map((c, i) => <th key={`lc-${i}`} className={`px-3 py-2 border-b border-slate-600 ${i === data.leftCols.length-1 ? 'border-r-2 border-slate-900' : 'border-r border-slate-600'}`}>{c}</th>)}
+                      {data.rightCols.map((c, i) => <th key={`rc-${i}`} className="px-3 py-2 border-b border-r border-slate-600">{c}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -316,12 +316,12 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
                       return (
                         <tr key={item.id} style={{ backgroundColor: rowBg, ...rowStyle }}>
                           {item.leftRow.map((c, i) => (
-                            <td key={`l-${i}`} style={{ padding: '8px 12px', borderBottom: '1px solid #334155', borderRight: i === data.leftCols.length-1 ? '2px solid #0f172a' : '1px solid #334155' }}>
+                            <td key={`l-${i}`} className={`px-3 py-2 border-b border-slate-700 ${i === data.leftCols.length-1 ? 'border-r-2 border-slate-900' : 'border-r border-slate-700'}`}>
                               {String(c)}
                             </td>
                           ))}
                           {item.rightRow.map((c, i) => (
-                            <td key={`r-${i}`} style={{ padding: '8px 12px', borderBottom: '1px solid #334155', borderRight: '1px solid #334155', color: isLeftRecovered ? '#64748b' : 'inherit', fontStyle: isLeftRecovered ? 'italic' : 'normal' }}>
+                            <td key={`r-${i}`} className={`px-3 py-2 border-b border-r border-slate-700 ${isLeftRecovered ? 'text-slate-500 italic' : ''}`}>
                               {isLeftRecovered ? 'NULL' : String(c)}
                             </td>
                           ))}
@@ -336,10 +336,10 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
         </div>
 
         {/* Control Bar */}
-        <div style={{ padding: '20px 32px', background: 'var(--surface)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="px-8 py-5 bg-surface border-t border-border flex flex-col gap-5">
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Timeline</span>
+          <div className="flex items-center gap-4">
+            <span className="text-[11px] text-muted font-bold uppercase tracking-[0.05em]">Timeline</span>
             <input 
               type="range" 
               min="0" 
@@ -350,25 +350,23 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
                 setPhase(Number(e.target.value));
                 if (Number(e.target.value) === PHASES.SCAN) setScanIndex(0);
               }}
-              style={{ flex: 1, cursor: 'pointer', accentColor: 'var(--primary)', height: 4 }}
+              className="flex-1 cursor-pointer accent-primary h-1"
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="flex items-center justify-between">
             
             {/* Speed Controls */}
-            <div style={{ display: 'flex', background: 'var(--bg)', borderRadius: 99, padding: 4, border: '1px solid var(--border)' }}>
+            <div className="flex bg-bg rounded-full p-1 border border-border">
               {[0.5, 1, 2].map(s => (
                 <button 
                   key={s}
                   onClick={() => setSpeedMultiplier(s)}
-                  style={{ 
-                    background: speedMultiplier === s ? 'var(--primary)' : 'transparent',
-                    color: speedMultiplier === s ? '#fff' : 'var(--muted)',
-                    border: 'none', padding: '6px 16px', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: speedMultiplier === s ? '0 2px 8px rgba(59,130,246,0.3)' : 'none'
-                  }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all duration-200 border-none ${
+                    speedMultiplier === s 
+                      ? 'bg-primary text-white shadow-[0_2px_8px_rgba(59,130,246,0.3)]' 
+                      : 'bg-transparent text-muted'
+                  }`}
                 >
                   {s}x
                 </button>
@@ -376,13 +374,11 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
             </div>
 
             {/* Playback Controls */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div className="flex items-center gap-4">
               <button 
                 onClick={reset} 
                 disabled={phase === PHASES.SETUP && !isPlaying} 
-                style={{ background: 'transparent', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 8, transition: 'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}
+                className="bg-transparent border-none text-muted cursor-pointer p-2 transition-colors hover:text-text disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Reset Simulation"
               >
                 <RotateCcw size={20} />
@@ -391,9 +387,9 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
               <button 
                 onClick={stepBackward} 
                 disabled={phase === PHASES.SETUP} 
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '50%', padding: 12, color: 'var(--text)', cursor: phase === PHASES.SETUP ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: phase === PHASES.SETUP ? 0.5 : 1 }}
-                onMouseEnter={e => { if (phase !== PHASES.SETUP) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                onMouseLeave={e => { if (phase !== PHASES.SETUP) e.currentTarget.style.background = 'var(--bg)'; }}
+                className={`bg-bg border border-border rounded-full p-3 text-text transition-all duration-200 ${
+                  phase === PHASES.SETUP ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-2'
+                }`}
                 title="Step Backward"
               >
                 <SkipBack size={20} />
@@ -401,35 +397,24 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
 
               <button 
                 onClick={togglePlay} 
-                style={{ 
-                  width: 64, height: 64, borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, var(--primary), #8b5cf6)', 
-                  border: 'none', color: '#fff', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(59,130,246,0.4)',
-                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-500 border-none text-white cursor-pointer flex items-center justify-center shadow-[0_8px_24px_rgba(59,130,246,0.4)] transition-transform duration-200 hover:scale-105 active:scale-95"
               >
-                {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" style={{ marginLeft: 4 }} />}
+                {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
               </button>
               
               <button 
                 onClick={stepForward} 
                 disabled={phase === PHASES.RESULT} 
-                style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '50%', padding: 12, color: 'var(--text)', cursor: phase === PHASES.RESULT ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: phase === PHASES.RESULT ? 0.5 : 1 }}
-                onMouseEnter={e => { if (phase !== PHASES.RESULT) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                onMouseLeave={e => { if (phase !== PHASES.RESULT) e.currentTarget.style.background = 'var(--bg)'; }}
+                className={`bg-bg border border-border rounded-full p-3 text-text transition-all duration-200 ${
+                  phase === PHASES.RESULT ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-2'
+                }`}
                 title="Step Forward"
               >
                 <SkipForward size={20} />
               </button>
             </div>
             
-            <div style={{ width: 140 }}></div> {/* Spacer to balance speed controls */}
+            <div className="w-[140px]"></div> {/* Spacer to balance speed controls */}
 
           </div>
         </div>
@@ -440,20 +425,20 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
 }
 
 const TablePreview = ({ name, cols, rows, color }) => (
-  <div style={{ background: '#1e293b', borderRadius: 8, overflow: 'hidden', border: `1px solid ${color}40`, boxShadow: `0 10px 30px ${color}20` }}>
-    <div style={{ padding: '8px 12px', background: `${color}20`, color, fontWeight: 'bold', fontSize: 14, textAlign: 'center', borderBottom: `1px solid ${color}40` }}>
+  <div className="bg-slate-800 rounded-lg overflow-hidden shadow-xl" style={{ border: `1px solid ${color}40`, boxShadow: `0 10px 30px ${color}20` }}>
+    <div className="px-3 py-2 font-bold text-sm text-center" style={{ background: `${color}20`, color, borderBottom: `1px solid ${color}40` }}>
       {name}
     </div>
-    <table style={{ borderCollapse: 'collapse', color: '#fff', fontSize: 13 }}>
+    <table className="border-collapse text-white text-[13px]">
       <thead>
-        <tr style={{ background: '#334155' }}>
-          {cols.map((c, i) => <th key={i} style={{ padding: '6px 12px', borderBottom: '1px solid #475569', fontWeight: 600 }}>{c}</th>)}
+        <tr className="bg-slate-700">
+          {cols.map((c, i) => <th key={i} className="px-3 py-1.5 border-b border-slate-600 font-semibold">{c}</th>)}
         </tr>
       </thead>
       <tbody>
         {rows.map((row, ri) => (
           <tr key={ri}>
-            {row.map((cell, ci) => <td key={ci} style={{ padding: '6px 12px', borderBottom: '1px solid #334155' }}>{String(cell)}</td>)}
+            {row.map((cell, ci) => <td key={ci} className="px-3 py-1.5 border-b border-slate-700">{String(cell)}</td>)}
           </tr>
         ))}
       </tbody>

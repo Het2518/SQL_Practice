@@ -14,9 +14,9 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const DB_NAMES = Object.keys(DB_INFO);
 
 const DIFF_COLORS = {
-  easy:   { color: 'var(--success)',  bg: 'var(--success-muted)' },
-  medium: { color: 'var(--warning)',  bg: 'var(--warning-muted)' },
-  hard:   { color: 'var(--error)',    bg: 'var(--error-muted)' },
+  easy:   { className: 'text-success bg-success-muted border-success' },
+  medium: { className: 'text-warning bg-warning-muted border-warning' },
+  hard:   { className: 'text-error bg-error-muted border-error' },
 };
 
 const DIFF_ORDER = { easy: 0, medium: 1, hard: 2 };
@@ -235,8 +235,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                   label={d.toUpperCase()}
                   active={selectedDiffs.has(d)}
                   onClick={() => setSelectedDiffs(toggle(selectedDiffs, d))}
-                  activeColor={DIFF_COLORS[d].color}
-                  activeBg={DIFF_COLORS[d].bg}
+                  activeClassName={DIFF_COLORS[d].className}
                 />
               ))}
             </FilterGroup>
@@ -336,8 +335,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
                         {/* Difficulty */}
                         <td className="p-2">
                           <span
-                            className="text-[10px] font-bold px-1.5 py-0.5 rounded-[5px] tracking-[0.04em]"
-                            style={{ color: diff.color, backgroundColor: diff.bg }}
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-[5px] tracking-[0.04em] ${diff.className}`}
                           >
                             {q.difficulty?.toUpperCase()}
                           </span>
@@ -373,17 +371,16 @@ function FilterGroup({ title, children }) {
   );
 }
 
-function FilterChip({ label, active, onClick, activeColor, activeBg }) {
+function FilterChip({ label, active, onClick, activeClassName }) {
   return (
     <button
       onClick={onClick}
-      style={active && activeColor ? { color: activeColor, backgroundColor: activeBg, borderColor: activeColor } : undefined}
       className={`px-2.5 py-1 rounded-[5px] cursor-pointer text-[11px] font-semibold font-sans border transition-all duration-100 ${
-        active && !activeColor
-          ? 'bg-primary text-white border-primary'
-          : !active
-            ? 'bg-surface text-text-secondary border-border hover:bg-surface-2 hover:text-text hover:border-text-secondary'
-            : ''
+        active && activeClassName
+          ? activeClassName
+          : active
+            ? 'bg-primary text-white border-primary'
+            : 'bg-surface text-text-secondary border-border hover:bg-surface-2 hover:text-text hover:border-text-secondary'
       }`}
     >
       {label}

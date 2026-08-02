@@ -3,15 +3,15 @@ import { ChevronDown, ChevronLeft, ChevronRight, Timer, Cpu, Zap, Check } from '
 import { isDailyChallenge } from '@/utils/dailyChallenge';
 
 const DIFFICULTY_STYLES = {
-  easy:   { background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)',  label: 'Easy' },
-  medium: { background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)',  label: 'Medium' },
-  hard:   { background: 'rgba(239, 68, 68, 0.1)',  color: 'var(--error)',    label: 'Hard' },
+  easy:   { className: 'bg-emerald-500/10 text-success', label: 'Easy' },
+  medium: { className: 'bg-amber-500/10 text-warning', label: 'Medium' },
+  hard:   { className: 'bg-red-500/10 text-error', label: 'Hard' },
 };
 
 const STATUS_STYLES = {
-  complete:   { color: 'var(--success)', bg: 'rgba(16,185,129,0.1)', label: 'Solved',     icon: <Check size={10} strokeWidth={2.5} /> },
-  attempted:  { color: 'var(--warning)', bg: 'rgba(245,158,11,0.1)', label: 'Attempted',  icon: null },
-  incomplete: { color: 'var(--muted)',   bg: 'transparent',          label: 'Unsolved',   icon: null },
+  complete:   { className: 'bg-emerald-500/10 text-success', label: 'Solved',     icon: <Check size={10} strokeWidth={2.5} /> },
+  attempted:  { className: 'bg-amber-500/10 text-warning', label: 'Attempted',  icon: null },
+  incomplete: { className: 'bg-transparent text-muted', label: 'Unsolved',   icon: null },
 };
 
 export const QuestionHeader = React.memo(function QuestionHeader({
@@ -82,18 +82,12 @@ export const QuestionHeader = React.memo(function QuestionHeader({
         {/* Badges row — compact, subtle */}
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           {/* Difficulty */}
-          <span
-            className="text-[10px] font-bold tracking-[0.06em] px-2 py-1 rounded-[5px] uppercase"
-            style={{ backgroundColor: diff.background, color: diff.color }}
-          >
+          <span className={`text-[10px] font-bold tracking-[0.06em] px-2 py-1 rounded-[5px] uppercase ${diff.className}`}>
             {diff.label}
           </span>
 
           {/* Status */}
-          <span
-            className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-[5px]"
-            style={{ backgroundColor: st.bg, color: st.color }}
-          >
+          <span className={`flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-[5px] ${st.className}`}>
             {st.icon}{st.label}
           </span>
 

@@ -57,56 +57,31 @@ export function ShortcutsManagerModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 100000 }}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+    <div className="modal-overlay z-[100000]" onClick={onClose}>
+      <div className="modal-content max-w-[500px]" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>
           <X size={20} />
         </button>
-        <div style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-            <Keyboard size={24} color="var(--primary)" />
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Keyboard Shortcuts</h2>
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Keyboard size={24} className="text-primary" />
+            <h2 className="text-xl font-bold m-0 text-text">Keyboard Shortcuts</h2>
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              marginBottom: 24,
-              maxHeight: '60vh',
-              overflowY: 'auto',
-            }}
-          >
+          <div className="flex flex-col gap-3 mb-6 max-h-[60vh] overflow-y-auto">
             {Object.values(shortcuts).map((sc) => (
               <div
                 key={sc.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  background: 'var(--surface-2)',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                }}
+                className="flex items-center justify-between px-4 py-3 bg-surface-2 rounded-lg border border-border"
               >
-                <span style={{ fontWeight: 500 }}>{sc.label}</span>
+                <span className="font-medium text-text">{sc.label}</span>
                 <button
                   onClick={() => setRecordingId(recordingId === sc.id ? null : sc.id)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border:
-                      recordingId === sc.id
-                        ? '2px solid var(--primary)'
-                        : '1px solid var(--border)',
-                    background: recordingId === sc.id ? 'var(--primary-muted)' : 'var(--bg)',
-                    color: recordingId === sc.id ? 'var(--primary)' : 'var(--text)',
-                    fontFamily: 'monospace',
-                    cursor: 'pointer',
-                    minWidth: 100,
-                  }}
+                  className={`px-3 py-1.5 rounded-md font-mono cursor-pointer min-w-[100px] transition-colors ${
+                    recordingId === sc.id
+                      ? 'border-2 border-primary bg-primary-muted text-primary'
+                      : 'border border-border bg-bg text-text hover:border-text-secondary'
+                  }`}
                 >
                   {recordingId === sc.id ? 'Press keys...' : sc.combo}
                 </button>
@@ -114,55 +89,23 @@ export function ShortcutsManagerModal({ isOpen, onClose }) {
             ))}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: 24,
-              paddingTop: 24,
-              borderTop: '1px solid var(--border)',
-            }}
-          >
+          <div className="flex justify-between mt-6 pt-6 border-t border-border">
             <button
               onClick={handleReset}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--border)',
-                background: 'transparent',
-                color: 'var(--text)',
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
+              className="px-4 py-2 rounded-lg border border-border bg-transparent text-text font-semibold cursor-pointer hover:bg-surface-2 transition-colors"
             >
               Reset Defaults
             </button>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="flex gap-3">
               <button
                 onClick={onClose}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--surface)',
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
+                className="px-4 py-2 rounded-lg border border-border bg-surface text-text font-semibold cursor-pointer hover:bg-surface-2 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: 'var(--primary)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
+                className="px-4 py-2 rounded-lg border-none bg-primary text-white font-semibold cursor-pointer hover:opacity-90 transition-opacity"
               >
                 Save Shortcuts
               </button>

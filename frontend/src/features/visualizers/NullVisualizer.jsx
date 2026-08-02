@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 
 export const TableCell = ({ value }) => {
   if (value === null || value === undefined || value === '__NULL__') {
-    return <span style={{ color: 'var(--muted)', fontStyle: 'italic', fontSize: '0.9em', opacity: 0.7 }}>null</span>;
+    return <span className="text-muted italic text-[0.9em] opacity-70">null</span>;
   }
   return String(value);
 };
@@ -28,12 +28,12 @@ export const NullSummaryPanel = ({ results }) => {
 
   if (totalNulls === 0) {
     return (
-      <div style={{ padding: '32px', textAlign: 'center', color: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--success-muted)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="p-8 text-center text-muted flex flex-col items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-success-muted text-success flex items-center justify-center">
           <Search size={24} />
         </div>
-        <div style={{ fontWeight: 600, color: 'var(--text)' }}>Perfect Data Quality</div>
-        <div style={{ fontSize: 13 }}>No NULL values detected in this result set.</div>
+        <div className="font-semibold text-text">Perfect Data Quality</div>
+        <div className="text-[13px]">No NULL values detected in this result set.</div>
       </div>
     );
   }
@@ -44,18 +44,18 @@ export const NullSummaryPanel = ({ results }) => {
     .sort((a, b) => b[1] - a[1]);
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <div style={{ background: 'var(--warning)', padding: 10, borderRadius: 10 }}>
+    <div className="p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-warning p-2.5 rounded-xl">
           <Search size={20} color="#fff" />
         </div>
         <div>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Data Quality Heatmap</h3>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>Visualizing missing data distributions across your query.</div>
+          <h3 className="m-0 text-base font-bold">Data Quality Heatmap</h3>
+          <div className="text-xs text-muted mt-0.5">Visualizing missing data distributions across your query.</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+      <div className="flex gap-6 flex-wrap">
         {sortedCols.map(([col, count]) => {
           const percentage = (count / totalRows) * 100;
           // Color scale: yellow -> orange -> red based on severity
@@ -65,29 +65,22 @@ export const NullSummaryPanel = ({ results }) => {
           if (percentage > 60) { color = 'var(--error)'; bg = 'var(--error-muted)'; }
 
           return (
-            <div key={col} style={{ 
-              flex: '1 1 300px', 
-              background: 'var(--surface-2)', 
-              border: '1px solid var(--border)', 
-              padding: '16px', 
-              borderRadius: '12px' 
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)', wordBreak: 'break-all' }}>{col}</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color }}>{percentage.toFixed(1)}%</span>
+            <div key={col} className="flex-[1_1_300px] bg-surface-2 border border-border p-4 rounded-xl">
+              <div className="flex justify-between items-center mb-3">
+                <span className="font-semibold text-sm text-text break-all">{col}</span>
+                <span className="text-lg font-bold" style={{ color }}>{percentage.toFixed(1)}%</span>
               </div>
               
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+              <div className="text-xs text-text-secondary mb-3">
                 {count} / {totalRows} rows are NULL
               </div>
 
               {/* Matrix Heatmap Blocks */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <div className="flex flex-wrap gap-0.5">
                 {Array.from({ length: Math.min(100, totalRows) }).map((_, i) => {
                   const isNullBlock = i < Math.ceil((count / totalRows) * 100);
                   return (
-                    <div key={i} style={{ 
-                      width: 8, height: 16, borderRadius: 2, 
+                    <div key={i} className="w-2 h-4 rounded-sm" style={{ 
                       background: isNullBlock ? color : 'var(--surface-3)',
                       opacity: isNullBlock ? 1 : 0.3
                     }} />

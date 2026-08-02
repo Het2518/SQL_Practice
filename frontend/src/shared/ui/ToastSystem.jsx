@@ -48,81 +48,62 @@ function Toast({ id, type, title, message, onRemove }) {
 
   return (
     <div
+      className="flex items-start gap-3 py-3.5 pl-5 pr-4 rounded-2xl bg-surface border border-border min-w-[280px] max-w-[360px] relative overflow-hidden cursor-pointer"
       style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 12,
-        padding: '14px 16px 14px 20px',
-        borderRadius: 16,
-        background: 'var(--surface)',
-        border: '1px solid var(--border)',
         boxShadow: `0 8px 40px rgba(0,0,0,0.18), 0 0 0 1px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`,
-        minWidth: 280,
-        maxWidth: 360,
         transform: visible && !leaving ? 'translateX(0) scale(1)' : 'translateX(130px) scale(0.95)',
         opacity: visible && !leaving ? 1 : 0,
         transition: leaving
           ? 'all 0.35s cubic-bezier(0.4, 0, 1, 1)'
           : 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        position: 'relative',
-        overflow: 'hidden',
-        cursor: 'pointer',
       }}
       onClick={dismiss}
     >
       {/* Left accent bar */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0, bottom: 0,
-        width: 4,
-        background: `linear-gradient(180deg, ${colors.bg}, ${colors.bg}88)`,
-        borderRadius: '16px 0 0 16px',
-      }} />
+      <div
+        className="absolute top-0 left-0 bottom-0 w-1 rounded-l-2xl"
+        style={{
+          background: `linear-gradient(180deg, ${colors.bg}, ${colors.bg}88)`,
+        }}
+      />
 
       {/* Shrinking progress bar at bottom */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0, left: 0, right: 0,
-        height: 3,
-        background: `${colors.bg}44`,
-        borderRadius: '0 0 16px 16px',
-      }}>
-        <div style={{
-          height: '100%',
-          background: colors.bg,
-          borderRadius: '0 0 0 16px',
-          animation: 'toast-shrink 4.5s linear forwards',
-        }} />
+      <div
+        className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-2xl"
+        style={{
+          background: `${colors.bg}44`,
+        }}
+      >
+        <div
+          className="h-full rounded-bl-2xl animate-[toast-shrink_4.5s_linear_forwards]"
+          style={{ background: colors.bg }}
+        />
       </div>
 
       {/* Icon */}
-      <div style={{
-        width: 36, height: 36, borderRadius: 10,
-        background: colors.glow,
-        border: `1px solid ${colors.bg}44`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 18, flexShrink: 0,
-      }}>
+      <div
+        className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
+        style={{
+          background: colors.glow,
+          border: `1px solid ${colors.bg}44`,
+        }}
+      >
         {TOAST_ICONS[type] || <Info size={18} strokeWidth={2} />}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>
+      <div className="flex-1 min-w-0 pt-0.5">
+        <div className="text-sm font-bold text-text mb-[3px]">
           {title}
         </div>
         {message && (
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+          <div className="text-xs text-text-secondary leading-relaxed">
             {message}
           </div>
         )}
       </div>
 
       <button
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: 'var(--muted)', fontSize: 18, padding: '0 0 0 4px', flexShrink: 0,
-          lineHeight: 1, opacity: 0.6, transition: 'opacity 0.2s',
-        }}
+        className="bg-transparent border-none cursor-pointer text-muted text-lg pl-1 shrink-0 leading-none opacity-60 transition-opacity duration-200 hover:opacity-100"
         onMouseEnter={e => e.currentTarget.style.opacity = '1'}
         onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
         onClick={e => { e.stopPropagation(); dismiss(); }}
@@ -157,18 +138,9 @@ export function ToastProvider({ children }) {
         }
       `}</style>
 
-      <div style={{
-        position: 'fixed',
-        bottom: 24,
-        right: 24,
-        zIndex: 99999,
-        display: 'flex',
-        flexDirection: 'column-reverse',
-        gap: 10,
-        pointerEvents: 'none',
-      }}>
+      <div className="fixed bottom-6 right-6 z-[99999] flex flex-col-reverse gap-2.5 pointer-events-none">
         {toasts.map(t => (
-          <div key={t.id} style={{ pointerEvents: 'all' }}>
+          <div key={t.id} className="pointer-events-auto">
             <Toast
               id={t.id}
               type={t.type}

@@ -16,7 +16,7 @@ export function DiscussionsTab() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '60px', color: 'var(--muted)' }}>
+      <div className="flex justify-center p-[60px] text-muted">
         <Loader2 className="spinner" size={32} />
       </div>
     );
@@ -24,10 +24,10 @@ export function DiscussionsTab() {
 
   if (comments.length === 0) {
     return (
-      <div style={{ background: 'var(--surface)', padding: '60px', borderRadius: 16, textAlign: 'center', border: '1px solid var(--border)' }}>
-        <MessageSquare size={48} style={{ color: 'var(--muted)', marginBottom: 16, opacity: 0.5 }} />
-        <h3 style={{ margin: '0 0 8px 0', fontSize: 20 }}>No Discussions Yet</h3>
-        <p style={{ color: 'var(--muted)', margin: 0, maxWidth: 400, marginInline: 'auto' }}>
+      <div className="bg-surface p-[60px] rounded-2xl text-center border border-border">
+        <MessageSquare size={48} className="text-muted mb-4 opacity-50 mx-auto" />
+        <h3 className="m-0 mb-2 text-xl text-text">No Discussions Yet</h3>
+        <p className="text-muted m-0 max-w-[400px] mx-auto">
           You haven't posted any comments or solutions. Head over to the practice area to start engaging with the community!
         </p>
       </div>
@@ -35,7 +35,7 @@ export function DiscussionsTab() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-4">
       {comments.map((comment) => {
         // Find the question info so we can link back to it
         const question = allQuestions.find(q => String(q.id) === String(comment.questionId));
@@ -45,57 +45,32 @@ export function DiscussionsTab() {
         return (
           <div 
             key={comment._id} 
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              padding: 24,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12
-            }}
+            className="bg-surface border border-border rounded-2xl p-6 flex flex-col gap-3"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="flex justify-between items-start">
               <Link 
                 to={`/practice/${dbName}?q=${comment.questionId}`}
-                style={{ 
-                  color: 'var(--text)', 
-                  textDecoration: 'none', 
-                  fontWeight: 600, 
-                  fontSize: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text)'}
+                className="text-text no-underline font-semibold text-base flex items-center gap-1.5 hover:text-primary transition-colors"
               >
-                {questionTitle} <ChevronRight size={16} style={{ opacity: 0.5 }} />
+                {questionTitle} <ChevronRight size={16} className="opacity-50" />
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted)', fontSize: 12 }}>
+              <div className="flex items-center gap-1.5 text-muted text-xs">
                 <Calendar size={12} />
                 {new Date(comment.createdAt).toLocaleDateString()}
               </div>
             </div>
 
-            <div style={{ 
-              background: 'var(--surface-2)', 
-              padding: '16px', 
-              borderRadius: 8,
-              color: 'var(--text)',
-              fontSize: 14,
-              lineHeight: 1.5
-            }}>
+            <div className="bg-surface-2 p-4 rounded-lg text-text text-sm leading-relaxed">
               "{comment.content}"
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}>
-                <ThumbsUp size={14} style={{ color: 'var(--primary)' }} /> 
+            <div className="flex items-center gap-4 mt-1">
+              <div className="flex items-center gap-1.5 text-text-secondary text-[13px] font-medium">
+                <ThumbsUp size={14} className="text-primary" /> 
                 {comment.upvotes} upvotes
               </div>
               {comment.isAcceptedSolution && (
-                <div style={{ background: 'var(--success-muted)', color: 'var(--success)', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
+                <div className="bg-success/10 text-success px-2 py-0.5 rounded-full text-[11px] font-bold">
                   Accepted Solution
                 </div>
               )}

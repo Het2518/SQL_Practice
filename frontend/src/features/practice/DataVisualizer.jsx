@@ -51,7 +51,7 @@ export function DataVisualizer({ result }) {
 
   if (data.length === 0) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontSize: 13 }}>
+      <div className="flex items-center justify-center h-full text-text-secondary text-[13px]">
         Not enough data to visualize. Run a query that returns rows.
       </div>
     );
@@ -59,45 +59,39 @@ export function DataVisualizer({ result }) {
 
   if (yAxisKeys.length === 0) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)', fontSize: 13 }}>
+      <div className="flex items-center justify-center h-full text-text-secondary text-[13px]">
         Could not detect numeric columns for charting.
       </div>
     );
   }
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+    <div className="w-full h-full flex flex-col">
+      <div className="flex gap-2 px-4 py-3 border-b border-border bg-surface">
         <button 
           onClick={() => setChartType('bar')}
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: chartType === 'bar' ? 'var(--primary-muted)' : 'transparent',
-            color: chartType === 'bar' ? 'var(--primary)' : 'var(--text-secondary)'
-          }}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border-none cursor-pointer text-xs font-semibold ${
+            chartType === 'bar' ? 'bg-primary-muted text-primary' : 'bg-transparent text-text-secondary hover:bg-surface-2'
+          }`}>
           <BarChart3 size={14} /> Bar
         </button>
         <button 
           onClick={() => setChartType('line')}
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: chartType === 'line' ? 'var(--primary-muted)' : 'transparent',
-            color: chartType === 'line' ? 'var(--primary)' : 'var(--text-secondary)'
-          }}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border-none cursor-pointer text-xs font-semibold ${
+            chartType === 'line' ? 'bg-primary-muted text-primary' : 'bg-transparent text-text-secondary hover:bg-surface-2'
+          }`}>
           <LineIcon size={14} /> Line
         </button>
         <button 
           onClick={() => setChartType('pie')}
-          style={{ 
-            display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            background: chartType === 'pie' ? 'var(--primary-muted)' : 'transparent',
-            color: chartType === 'pie' ? 'var(--primary)' : 'var(--text-secondary)'
-          }}>
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border-none cursor-pointer text-xs font-semibold ${
+            chartType === 'pie' ? 'bg-primary-muted text-primary' : 'bg-transparent text-text-secondary hover:bg-surface-2'
+          }`}>
           <PieIcon size={14} /> Pie
         </button>
       </div>
 
-      <div style={{ flex: 1, padding: '16px', minHeight: 0 }}>
+      <div className="flex-1 p-4 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'bar' ? (
             <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>

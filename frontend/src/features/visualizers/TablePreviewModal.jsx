@@ -49,123 +49,44 @@ export function TablePreviewModal({
   const totalPages = Math.ceil(actualRowCount / PAGE_SIZE);
   if (!tableInfo) return null;
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()} style={{
-      backdropFilter: 'blur(8px)',
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      animation: 'fadeIn 0.2s ease-out'
-    }}>
-      <div ref={trapRef} className="modal-content" style={{
-        width: '96vw',
-        maxWidth: '1800px',
-        height: '96vh',
-        maxHeight: '96vh',
-        borderRadius: '12px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border)',
-        background: 'var(--surface)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-      }}>
+    <div className="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div ref={trapRef} className="modal-content w-[96vw] max-w-[1800px] h-[96vh] rounded-xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5),0_0_0_1px_var(--border)] bg-surface overflow-hidden flex flex-col animate-[slideUp_0.3s_cubic-bezier(0.16,1,0.3,1)]">
         {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'var(--surface-2)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-        }}>
+        <div className="px-6 py-5 border-b border-border flex items-center justify-between bg-surface-2 shadow-sm">
           <div>
-            <h2 style={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: 'var(--text)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}>
-              <span style={{
-              fontSize: 20
-            }}>📊</span> {tableName}
+            <h2 className="text-lg font-bold text-text flex items-center gap-2 m-0">
+              <span className="text-xl">📊</span> {tableName}
             </h2>
-            <div style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            marginTop: 4
-          }}>
+            <div className="text-xs text-muted mt-1">
               {actualRowCount.toLocaleString()} total rows
             </div>
           </div>
           <button onClick={onClose} className="btn btn-ghost btn-icon">✕</button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <div className="flex flex-col flex-1 overflow-hidden">
           
           {/* Schema Info */}
-          <div style={{
-            padding: '24px',
-            borderBottom: '1px solid var(--border)',
-            background: 'var(--surface)',
-            flexShrink: 0
-          }}>
-            <h3 style={{
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'var(--text-secondary)',
-              marginBottom: 16,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}>
+          <div className="p-6 border-b border-border bg-surface shrink-0">
+            <h3 className="text-xs uppercase tracking-widest text-text-secondary mb-4 font-bold flex items-center gap-2 m-0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
               Schema Definition
             </h3>
-            <div className="custom-scrollbar" style={{
-              display: 'flex',
-              overflowX: 'auto',
-              paddingBottom: '8px',
-              gap: 12
-            }}>
+            <div className="custom-scrollbar flex overflow-x-auto pb-2 gap-3">
               {tableInfo.columns.map(col => (
-                <div key={col.name} style={{
-                  padding: '10px 14px',
-                  background: 'var(--surface-2)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
-                  minWidth: '200px',
-                  flex: '0 0 auto',
-                  maxWidth: '300px',
-                  transition: 'transform 0.2s, border-color 0.2s',
-                  cursor: 'default'
-                }} className="schema-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {col.isPrimaryKey && <span title="Primary Key" style={{ color: 'var(--accent)' }}>🔑</span>}
-                      {col.isForeignKey && <span title="Foreign Key" style={{ color: 'var(--text-secondary)' }}>🗝️</span>}
-                      <span style={{ fontFamily: 'var(--font-mono)' }}>{col.name}</span>
+                <div key={col.name} className="schema-card px-3.5 py-2.5 bg-surface-2 border border-border rounded-lg flex flex-col gap-1.5 min-w-[200px] max-w-[300px] flex-none transition-all cursor-default">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-[13px] text-text flex items-center gap-1.5">
+                      {col.isPrimaryKey && <span title="Primary Key" className="text-accent-1">🔑</span>}
+                      {col.isForeignKey && <span title="Foreign Key" className="text-text-secondary">🗝️</span>}
+                      <span className="font-mono">{col.name}</span>
                     </span>
-                    <span style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: col.type.includes('INT') ? '#4ade80' : col.type.includes('CHAR') || col.type.includes('TEXT') ? '#60a5fa' : '#f472b6',
-                      padding: '2px 8px',
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '12px',
-                      fontFamily: 'var(--font-mono)'
-                    }}>
+                    <span className="text-[11px] font-bold px-2 py-0.5 bg-white/5 border border-white/10 rounded-xl font-mono" style={{ color: col.type.includes('INT') ? '#4ade80' : col.type.includes('CHAR') || col.type.includes('TEXT') ? '#60a5fa' : '#f472b6' }}>
                       {col.type}
                     </span>
                   </div>
-                  {col.isNullable && <div style={{ fontSize: 11, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--muted)' }} /> Nullable
+                  {col.isNullable && <div className="text-[11px] text-muted flex items-center gap-1">
+                    <div className="w-1 h-1 rounded-full bg-muted" /> Nullable
                   </div>}
                 </div>
               ))}
@@ -173,44 +94,30 @@ export function TablePreviewModal({
           </div>
 
           {/* Data Preview */}
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--surface)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
-              <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-secondary)', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="flex-1 flex flex-col bg-surface overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-border bg-surface-2">
+              <h3 className="text-xs uppercase tracking-widest text-text-secondary font-bold m-0 flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 Data Preview
               </h3>
             </div>
             
-            <div style={{ flex: 1, overflow: 'auto', padding: '0' }} className="custom-scrollbar">
+            <div className="flex-1 overflow-auto p-0 custom-scrollbar">
               {isLoading ? (
-                <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, color: 'var(--muted)' }}>
-                  <div className="animate-pulse-glow" style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)' }} />
+                <div className="p-10 flex flex-col items-center gap-4 text-muted">
+                  <div className="animate-pulse-glow w-6 h-6 rounded-full bg-accent-1" />
                   Loading records...
                 </div>
               ) : result?.error ? (
-                <div style={{ padding: '24px', margin: '24px', background: 'var(--error-muted)', border: '1px solid var(--error)', borderRadius: 8, color: 'var(--error)' }}>
+                <div className="p-6 m-6 bg-error-muted border border-error rounded-lg text-error">
                   {result.error}
                 </div>
               ) : result && result.columns.length > 0 ? (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <table className="w-full border-collapse text-[13px]">
                   <thead>
                     <tr>
                       {result.columns.map(col => (
-                        <th key={col} style={{
-                          padding: '12px 16px',
-                          textAlign: 'left',
-                          borderBottom: '1px solid var(--border)',
-                          background: 'var(--surface-3)',
-                          backdropFilter: 'blur(12px)',
-                          position: 'sticky',
-                          top: 0,
-                          fontWeight: 700,
-                          color: 'var(--text-secondary)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          fontSize: 11,
-                          zIndex: 10
-                        }}>
+                        <th key={col} className="px-4 py-3 text-left border-b border-border bg-surface-3/80 backdrop-blur-md sticky top-0 font-bold text-text-secondary uppercase tracking-[0.05em] text-[11px] z-10">
                           {col}
                         </th>
                       ))}
@@ -218,10 +125,10 @@ export function TablePreviewModal({
                   </thead>
                   <tbody>
                     {(result.rows || []).map((row, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--border)' }} className="table-row-hover">
+                      <tr key={i} className="border-b border-border table-row-hover">
                         {row.map((val, j) => (
-                          <td key={j} style={{ padding: '10px 16px', color: 'var(--text)', fontFamily: 'var(--font-mono)' }}>
-                            {val === null ? <span style={{ color: 'var(--muted)', fontStyle: 'italic', background: 'var(--surface-2)', padding: '2px 6px', borderRadius: 4, fontSize: 11 }}>null</span> : String(val)}
+                          <td key={j} className="px-4 py-2.5 text-text font-mono">
+                            {val === null ? <span className="text-muted italic bg-surface-2 px-1.5 py-0.5 rounded text-[11px]">null</span> : String(val)}
                           </td>
                         ))}
                       </tr>
@@ -229,8 +136,8 @@ export function TablePreviewModal({
                   </tbody>
                 </table>
               ) : (
-                <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <div className="p-10 text-center text-muted flex flex-col items-center gap-3">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                   No data found in this table.
                 </div>
               )}
@@ -239,34 +146,24 @@ export function TablePreviewModal({
             
             {/* Pagination Footer */}
             {!isLoading && actualRowCount > 0 && (
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px 24px',
-                borderTop: '1px solid var(--border)',
-                background: 'var(--surface)',
-                fontSize: 13
-              }}>
-                <div style={{ color: 'var(--muted)' }}>
-                  Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{((page - 1) * PAGE_SIZE) + 1}</span> to <span style={{ fontWeight: 600, color: 'var(--text)' }}>{Math.min(page * PAGE_SIZE, actualRowCount)}</span> of <span style={{ fontWeight: 600, color: 'var(--text)' }}>{actualRowCount.toLocaleString()}</span> results
+              <div className="flex justify-between items-center px-6 py-3 border-t border-border bg-surface text-[13px]">
+                <div className="text-muted">
+                  Showing <span className="font-semibold text-text">{((page - 1) * PAGE_SIZE) + 1}</span> to <span className="font-semibold text-text">{Math.min(page * PAGE_SIZE, actualRowCount)}</span> of <span className="font-semibold text-text">{actualRowCount.toLocaleString()}</span> results
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="flex items-center gap-2">
                   <button 
-                    className="btn btn-ghost btn-icon" 
-                    style={{ width: 32, height: 32, minHeight: 32, borderRadius: 8, background: page <= 1 ? 'transparent' : 'var(--surface-2)', border: '1px solid', borderColor: page <= 1 ? 'transparent' : 'var(--border)' }}
+                    className={`btn btn-ghost btn-icon w-8 h-8 min-h-8 rounded-lg border transition-colors ${page <= 1 ? 'bg-transparent border-transparent text-muted' : 'bg-surface-2 border-border text-text hover:bg-surface-3'}`}
                     disabled={page <= 1}
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                   </button>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 40, fontWeight: 600, color: 'var(--text)' }}>
+                  <div className="flex items-center justify-center min-w-[40px] font-semibold text-text">
                     {page}
                   </div>
                   <button 
-                    className="btn btn-ghost btn-icon"
-                    style={{ width: 32, height: 32, minHeight: 32, borderRadius: 8, background: page >= totalPages ? 'transparent' : 'var(--surface-2)', border: '1px solid', borderColor: page >= totalPages ? 'transparent' : 'var(--border)' }}
+                    className={`btn btn-ghost btn-icon w-8 h-8 min-h-8 rounded-lg border transition-colors ${page >= totalPages ? 'bg-transparent border-transparent text-muted' : 'bg-surface-2 border-border text-text hover:bg-surface-3'}`}
                     disabled={page >= totalPages}
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   >

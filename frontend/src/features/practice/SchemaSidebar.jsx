@@ -10,7 +10,7 @@ const ChevronIcon = ({ open }) => (
     height="12"
     viewBox="0 0 12 12"
     fill="none"
-    style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none' }}
+    className={`transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
   >
     <path
       d="M4 2L8 6L4 10"
@@ -252,91 +252,39 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
   // Legacy: still derive a generatedJoinSQL fallback from the path (if needed)
   const generatedJoinSQL = joinSQL;
 
-  const nfBadgeStyle = (nf) => {
-    const colors = {
-      '3NF': '#10b981',
-      '2NF': '#f59e0b',
-      '1NF': '#ef4444',
-      Unnormalized: '#8b5cf6',
-      Unknown: '#9ca3af',
+  const nfBadgeClass = (nf) => {
+    const classes = {
+      '3NF': 'bg-emerald-500/15 text-emerald-500',
+      '2NF': 'bg-amber-500/15 text-amber-500',
+      '1NF': 'bg-red-500/15 text-red-500',
+      Unnormalized: 'bg-purple-500/15 text-purple-500',
+      Unknown: 'bg-slate-400/15 text-slate-400',
     };
-    const color = colors[nf] || '#9ca3af';
-    return {
-      fontSize: 9,
-      fontWeight: 700,
-      background: `${color}15`,
-      color,
-      padding: '3px 8px',
-      borderRadius: 99,
-      flexShrink: 0,
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-    };
+    const colorClass = classes[nf] || classes.Unknown;
+    return `text-[9px] font-bold px-2 py-[3px] rounded-full shrink-0 uppercase tracking-[0.04em] ${colorClass}`;
   };
 
   const tables = dbInfo?.tables || [];
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
-      }}
-    >
+    <div className="h-full flex flex-col bg-surface border-r border-border">
       {/* Header */}
-      <div
-        style={{
-          padding: '14px 16px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--surface)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: 'var(--primary-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              flexShrink: 0,
-            }}
-          >
+      <div className="px-4 py-3.5 border-b border-border bg-surface flex justify-between items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-primary-muted flex items-center justify-center text-base shrink-0">
             {dbInfo?.icon || '🗄️'}
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>
+            <div className="font-bold text-sm text-text">
               {dbInfo?.label || 'Database'}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{tables.length} tables</div>
+            <div className="text-[11px] text-muted">{tables.length} tables</div>
           </div>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 4,
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 6,
-              transition: 'background 0.2s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            className="bg-transparent hover:bg-surface border-none cursor-pointer p-1 text-text-secondary flex items-center justify-center rounded-md transition-colors"
             title="Hide Sidebar"
           >
             <X size={16} />
@@ -345,10 +293,8 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
       </div>
 
       {/* Segmented Control Tab Bar */}
-      <div style={{ padding: '12px 16px', background: 'var(--surface)' }}>
-        <div
-          style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 8, padding: 4 }}
-        >
+      <div className="py-3 px-4 bg-surface">
+        <div className="flex bg-surface-2 rounded-lg p-1">
           {[
             { id: 'schema', label: 'Schema' },
             { id: 'resources', label: 'Resources' },
@@ -356,19 +302,11 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: '6px 0',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 13,
-                borderRadius: 6,
-                fontWeight: activeTab === tab.id ? 600 : 500,
-                color: activeTab === tab.id ? 'var(--text)' : 'var(--muted)',
-                background: activeTab === tab.id ? 'var(--surface)' : 'transparent',
-                boxShadow: activeTab === tab.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                transition: 'all 0.2s ease',
-              }}
+              className={`flex-1 py-1.5 border-none cursor-pointer text-[13px] rounded-md transition-all duration-200 ${
+                activeTab === tab.id
+                  ? 'font-semibold text-text bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.1)]'
+                  : 'font-medium text-muted bg-transparent shadow-none'
+              }`}
             >
               {tab.label}
             </button>
@@ -377,14 +315,13 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+      <div className="flex-1 overflow-y-auto py-3">
         {activeTab === 'schema' && (
           <>
-            <div style={{ padding: '0 12px 12px' }}>
+            <div className="px-3 pb-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('open-er-diagram'))}
-                className="btn btn-secondary w-full"
-                style={{ justifyContent: 'center' }}
+                className="btn btn-secondary w-full justify-center"
               >
                 <svg
                   width="16"
@@ -407,108 +344,35 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
 
             {/* Join Path Finder Banner */}
             {selectedTables.length === 2 && (
-              <div
-                style={{
-                  margin: '0 12px 12px',
-                  padding: 14,
-                  background: 'var(--primary-muted)',
-                  borderRadius: 10,
-                  border: '1px solid var(--primary-light)',
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--primary)',
-                    marginBottom: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}
-                >
+              <div className="mx-3 mb-3 p-3.5 bg-primary-muted rounded-xl border border-primary-light">
+                <div className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
                   🔗 Join Path: {selectedTables[0]} → {selectedTables[1]}
                 </div>
                 {joinPath === 'loading' && (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--muted)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: 12,
-                        height: 12,
-                        border: '2px solid var(--primary)',
-                        borderTopColor: 'transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 0.7s linear infinite',
-                      }}
-                    />
+                  <div className="text-xs text-muted flex items-center gap-2">
+                    <span className="inline-block w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                     Computing join path…
                   </div>
                 )}
                 {Array.isArray(joinPath) && joinPath.length > 0 && (
                   <>
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 4,
-                        alignItems: 'center',
-                        marginBottom: 8,
-                      }}
-                    >
+                    <div className="flex flex-wrap gap-1 items-center mb-2">
                       {joinPath.map((step, i) => (
-                        <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span
-                            style={{
-                              fontSize: 11,
-                              fontWeight: 600,
-                              background: 'var(--surface)',
-                              padding: '2px 7px',
-                              borderRadius: 4,
-                              border: '1px solid var(--border)',
-                              color: 'var(--text)',
-                            }}
-                          >
+                        <span key={i} className="flex items-center gap-1">
+                          <span className="text-[11px] font-semibold bg-surface px-1.5 py-0.5 rounded border border-border text-text">
                             {step.table}
                           </span>
                           {i < joinPath.length - 1 && (
-                            <span style={{ color: 'var(--primary)', fontSize: 10 }}>→</span>
+                            <span className="text-primary text-[10px]">→</span>
                           )}
                         </span>
                       ))}
                     </div>
-                    <pre
-                      style={{
-                        margin: 0,
-                        padding: 10,
-                        background: 'var(--bg)',
-                        borderRadius: 6,
-                        overflowX: 'auto',
-                        border: '1px solid var(--border)',
-                        fontSize: 11,
-                        lineHeight: 1.6,
-                        color: 'var(--text)',
-                      }}
-                    >
+                    <pre className="m-0 p-2.5 bg-bg rounded-md overflow-x-auto border border-border text-[11px] leading-relaxed text-text">
                       <code>{generatedJoinSQL}</code>
                     </pre>
                     <button
-                      className="btn btn-primary"
-                      style={{
-                        marginTop: 8,
-                        width: '100%',
-                        padding: '6px',
-                        fontSize: 11,
-                        justifyContent: 'center',
-                      }}
+                      className="btn btn-primary mt-2 w-full p-1.5 text-[11px] justify-center"
                       onClick={() =>
                         navigator.clipboard.writeText(generatedJoinSQL).catch(() => {})
                       }
@@ -518,15 +382,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                   </>
                 )}
                 {Array.isArray(joinPath) && joinPath.length === 0 && (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--error)',
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 6,
-                    }}
-                  >
+                  <div className="text-xs text-error flex items-start gap-1.5">
                     <span>⚠️</span>
                     <span>
                       No direct join path detected between <strong>{selectedTables[0]}</strong> and{' '}
@@ -539,19 +395,10 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
             )}
 
             {/* Section heading */}
-            <div
-              style={{
-                padding: '0 16px 8px',
-                fontSize: 10,
-                fontWeight: 700,
-                color: 'var(--muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-              }}
-            >
+            <div className="px-4 pb-2 text-[10px] font-bold text-muted uppercase tracking-[0.08em]">
               Tables{' '}
               {selectedTables.length > 0 && (
-                <span style={{ color: 'var(--primary)' }}>
+                <span className="text-primary">
                   ({selectedTables.length}/2 selected)
                 </span>
               )}
@@ -565,128 +412,58 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
               const nf = normalForms[table.name];
 
               return (
-                <div key={table.name} style={{ borderBottom: '1px solid var(--border)' }}>
+                <div key={table.name} className="border-b border-border">
                   {/* Table Row */}
                   <div
                     onClick={() => toggleTable(table.name)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '9px 16px',
-                      cursor: 'pointer',
-                      background: isSelected
-                        ? 'rgba(var(--primary-rgb, 107,114,128),0.08)'
+                    className={`flex items-center gap-2 px-4 py-2 cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-primary/10'
                         : isExpanded
-                          ? 'var(--surface-2)'
-                          : 'transparent',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isExpanded && !isSelected)
-                        e.currentTarget.style.background = 'var(--surface-2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isExpanded && !isSelected)
-                        e.currentTarget.style.background = 'transparent';
-                    }}
+                          ? 'bg-surface-2'
+                          : 'bg-transparent hover:bg-surface-2'
+                    }`}
                   >
-                    {/* Expand arrow */}
-                    <span
-                      style={{
-                        color: isExpanded ? 'var(--primary)' : 'var(--muted)',
-                        transition: 'color 0.15s',
-                      }}
-                    >
+                    <span className={`transition-colors ${isExpanded ? 'text-primary' : 'text-muted'}`}>
                       <ChevronIcon open={isExpanded} />
                     </span>
 
-                    {/* Table Name */}
-                    <span
-                      style={{
-                        flex: 1,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: isExpanded || isSelected ? 'var(--primary)' : 'var(--text)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <span className={`flex-1 text-[13px] font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${
+                      isExpanded || isSelected ? 'text-primary' : 'text-text'
+                    }`}>
                       {table.name}
                     </span>
 
-                    {/* NF Badge */}
                     {nf && (
-                      <span
-                        style={nfBadgeStyle(nf)}
-                        title="Simplified analysis — assumes no partial dependencies"
-                      >
+                      <span className={nfBadgeClass(nf)} title="Simplified analysis — assumes no partial dependencies">
                         {nf}*
                       </span>
                     )}
 
-                    {/* Join Select Button */}
                     <button
                       onClick={(e) => handleTableSelect(e, table.name)}
                       title="Select for Join Path Analysis"
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 6,
-                        border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
-                        background: isSelected ? 'var(--primary)' : 'transparent',
-                        color: isSelected ? '#fff' : 'var(--muted)',
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
+                      className={`w-[22px] h-[22px] rounded-md border text-[11px] cursor-pointer flex items-center justify-center shrink-0 transition-all ${
+                        isSelected ? 'border-primary bg-primary text-white' : 'border-border bg-transparent text-muted hover:border-primary hover:text-primary'
+                      }`}
                     >
                       🔗
                     </button>
 
-                    {/* Preview Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onPreviewTable(table.name);
                       }}
                       title="Preview Table Data"
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 6,
-                        border: '1px solid var(--border)',
-                        background: 'transparent',
-                        color: 'var(--muted)',
-                        fontSize: 11,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = 'var(--primary)';
-                        e.currentTarget.style.borderColor = 'var(--primary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = 'var(--muted)';
-                        e.currentTarget.style.borderColor = 'var(--border)';
-                      }}
+                      className="w-[22px] h-[22px] rounded-md border border-border bg-transparent text-muted text-[11px] cursor-pointer flex items-center justify-center shrink-0 transition-all hover:text-primary hover:border-primary"
                     >
                       👁
                     </button>
                   </div>
 
-                  {/* Expanded Columns */}
                   {isExpanded && (
-                    <div style={{ background: 'var(--bg)', borderTop: '1px solid var(--border)' }}>
+                    <div className="bg-bg border-t border-border">
                       {cols.map((col, i) => {
                         const isPK = col.pk || col.isPrimaryKey;
                         const colName = col.name || col;
@@ -698,79 +475,34 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                         return (
                           <div
                             key={i}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              padding: '6px 16px',
-                              borderBottom:
-                                i < cols.length - 1 ? '1px solid var(--border)' : 'none',
-                              fontSize: 12,
-                              background: i % 2 === 0 ? 'transparent' : 'var(--surface-2)',
-                            }}
+                            className={`flex items-center gap-1.5 px-4 py-1.5 text-xs ${
+                              i < cols.length - 1 ? 'border-b border-border' : ''
+                            } ${i % 2 === 0 ? 'bg-transparent' : 'bg-surface-2'}`}
                           >
                             {/* Key badges */}
                             {isPK ? (
-                              <span
-                                style={{
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  background: 'rgba(234,179,8,0.15)',
-                                  color: '#ca8a04',
-                                  padding: '2px 4px',
-                                  borderRadius: 3,
-                                  flexShrink: 0,
-                                }}
-                              >
+                              <span className="text-[9px] font-bold bg-yellow-500/15 text-yellow-600 px-1 py-0.5 rounded shrink-0">
                                 PK
                               </span>
                             ) : isFK ? (
-                              <span
-                                style={{
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  background: 'rgba(59,130,246,0.15)',
-                                  color: '#3b82f6',
-                                  padding: '2px 4px',
-                                  borderRadius: 3,
-                                  flexShrink: 0,
-                                }}
-                              >
+                              <span className="text-[9px] font-bold bg-blue-500/15 text-blue-500 px-1 py-0.5 rounded shrink-0">
                                 FK
                               </span>
                             ) : (
-                              <span style={{ width: 20, flexShrink: 0 }} />
+                              <span className="w-5 shrink-0" />
                             )}
 
-                            <span
-                              style={{
-                                flex: 1,
-                                color: 'var(--text)',
-                                fontWeight: isPK || isFK ? 600 : 400,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
+                            <span className={`flex-1 text-text whitespace-nowrap overflow-hidden text-ellipsis ${
+                              isPK || isFK ? 'font-semibold' : 'font-normal'
+                            }`}>
                               {colName}
                               {col.notNull && (
-                                <span
-                                  style={{ color: 'var(--error)', marginLeft: 2, fontSize: 10 }}
-                                  title="NOT NULL"
-                                >
+                                <span className="text-error ml-0.5 text-[10px]" title="NOT NULL">
                                   *
                                 </span>
                               )}
                             </span>
-                            <span
-                              style={{
-                                color: 'var(--muted)',
-                                fontSize: 10,
-                                fontWeight: 600,
-                                textTransform: 'uppercase',
-                                flexShrink: 0,
-                              }}
-                            >
+                            <span className="text-muted text-[10px] font-semibold uppercase shrink-0">
                               {colType}
                             </span>
                           </div>
@@ -784,32 +516,15 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
 
             {/* Key Concepts */}
             {dbInfo?.concepts?.length > 0 && (
-              <div style={{ padding: '16px 16px 8px' }}>
-                <div
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'var(--muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    marginBottom: 10,
-                  }}
-                >
+              <div className="pt-4 px-4 pb-2">
+                <div className="text-[10px] font-bold text-muted uppercase tracking-[0.08em] mb-2.5">
                   Key Concepts
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div className="flex flex-wrap gap-1.5">
                   {dbInfo.concepts.map((c) => (
                     <span
                       key={c}
-                      style={{
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--text-secondary)',
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        fontSize: 11,
-                        fontWeight: 600,
-                      }}
+                      className="bg-surface-2 border border-border text-text-secondary px-2.5 py-1 rounded-md text-[11px] font-semibold"
                     >
                       {c}
                     </span>
@@ -821,18 +536,8 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
         )}
 
         {activeTab === 'resources' && (
-          <div style={{ padding: '8px 12px' }}>
-            <div
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: 'var(--muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                marginBottom: 10,
-                padding: '0 4px',
-              }}
-            >
+          <div className="py-2 px-3">
+            <div className="text-[10px] font-bold text-muted uppercase tracking-[0.08em] mb-2.5 px-1">
               Learning Resources
             </div>
             {learningResources.map((r) => (
@@ -841,33 +546,11 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                 href={r.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  color: 'var(--text-secondary)',
-                  textDecoration: 'none',
-                  fontSize: 13,
-                  marginBottom: 4,
-                  transition: 'all 0.15s',
-                  border: '1px solid transparent',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--surface-2)';
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                  e.currentTarget.style.color = 'var(--text)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-secondary)';
-                }}
+                className="flex items-center gap-2.5 py-2.5 px-3 rounded-lg text-text-secondary no-underline text-[13px] mb-1 transition-all border border-transparent hover:bg-surface-2 hover:border-border hover:text-text"
               >
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{r.icon}</span>
-                <span style={{ flex: 1, fontWeight: 500 }}>{r.label}</span>
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>→</span>
+                <span className="text-lg shrink-0">{r.icon}</span>
+                <span className="flex-1 font-medium">{r.label}</span>
+                <span className="text-xs text-muted">→</span>
               </a>
             ))}
           </div>

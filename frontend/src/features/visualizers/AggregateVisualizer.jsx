@@ -80,8 +80,8 @@ export const GroupedResultRow = React.memo(React.forwardRef(function GroupedResu
 
   return (
     <>
-      <tr ref={ref} {...props} onClick={handleExpand} style={{ cursor: 'pointer', background: expanded ? 'var(--surface-2)' : 'transparent', ...props.style }} title="Click to see rows in this group">
-        <td style={{ width: '30px', textAlign: 'center', color: 'var(--primary)', fontWeight: 'bold' }}>
+      <tr ref={ref} {...props} onClick={handleExpand} className={`cursor-pointer ${expanded ? 'bg-surface-2' : 'bg-transparent'} ${props.className || ''}`} style={props.style} title="Click to see rows in this group">
+        <td className="w-[30px] text-center text-primary font-bold">
           {expanded ? '▼' : '▶'}
         </td>
         {row.map((cell, ci) => <td key={ci}><TableCell value={cell} /></td>)}
@@ -89,17 +89,17 @@ export const GroupedResultRow = React.memo(React.forwardRef(function GroupedResu
       
       {expanded && (
         <tr className="constituent-row">
-          <td colSpan={columns.length + 1} style={{ padding: 0, background: 'var(--bg)' }}>
-            <div style={{ padding: '12px 12px 12px 42px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase' }}>
+          <td colSpan={columns.length + 1} className="p-0 bg-bg">
+            <div className="py-3 pr-3 pl-[42px] border-b border-border">
+              <div className="text-[11px] font-semibold text-text-secondary mb-2 uppercase">
                 ↳ Constituent Rows ({constituents?.values?.length || 0})
               </div>
               
               {loading ? (
-                <div style={{ color: 'var(--muted)', fontSize: '12px' }}>Loading constituent rows...</div>
+                <div className="text-muted text-xs">Loading constituent rows...</div>
               ) : constituents ? (
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="results-table" style={{ margin: 0, opacity: 0.9 }}>
+                <div className="overflow-x-auto">
+                  <table className="results-table m-0 opacity-90">
                     <thead>
                       <tr>
                         {constituents.columns.map((col, i) => <th key={i}>{col}</th>)}
@@ -115,7 +115,7 @@ export const GroupedResultRow = React.memo(React.forwardRef(function GroupedResu
                   </table>
                 </div>
               ) : (
-                <div style={{ color: 'var(--error)', fontSize: '12px' }}>Could not fetch constituent rows.</div>
+                <div className="text-error text-xs">Could not fetch constituent rows.</div>
               )}
             </div>
           </td>

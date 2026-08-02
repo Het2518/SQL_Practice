@@ -7,102 +7,49 @@ export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0, 0, 0, 0.6)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '24px'
-    }}>
-      <div ref={trapRef} style={{
-        background: 'var(--bg)',
-        width: '100%',
-        maxWidth: '1200px',
-        height: '80vh',
-        borderRadius: '12px',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        border: '1px solid var(--border)',
-        overflow: 'hidden'
-      }}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-6">
+      <div ref={trapRef} className="bg-bg w-full max-w-[1200px] h-[80vh] rounded-xl flex flex-col shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-border overflow-hidden">
         {/* Header */}
-        <div style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'var(--surface)'
-        }}>
+        <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-surface">
           <div>
-            <h2 style={{ margin: 0, fontSize: '18px', color: 'var(--text)' }}>Subquery → CTE Conversion</h2>
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+            <h2 className="m-0 text-lg text-text">Subquery → CTE Conversion</h2>
+            <div className="text-[13px] text-text-secondary mt-1">
               Both queries return identical results. CTEs are preferred for readability, reusability, and debugging.
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: '20px'
-          }}>✖</button>
+          <button onClick={onClose} className="bg-transparent border-none text-muted cursor-pointer text-xl">✖</button>
         </div>
 
         {/* Content */}
-        <div style={{
-          display: 'flex',
-          flex: 1,
-          overflow: 'hidden',
-          background: 'var(--surface-2)'
-        }}>
+        <div className="flex flex-1 overflow-hidden bg-surface-2">
           {/* Original */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)' }}>
-            <div style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--error)', background: 'rgba(239, 68, 68, 0.05)', borderBottom: '1px solid var(--border)' }}>
+          <div className="flex-1 flex flex-col border-r border-border">
+            <div className="px-4 py-3 font-semibold text-error bg-error/5 border-b border-border">
               Original (Subquery)
             </div>
-            <div style={{ flex: 1, position: 'relative' }}>
+            <div className="flex-1 relative">
               <SqlEditor value={originalSql} readOnly={true} />
             </div>
           </div>
 
           {/* Arrow */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '40px',
-            background: 'var(--surface)',
-            borderRight: '1px solid var(--border)',
-            color: 'var(--primary)',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            zIndex: 10
-          }}>
+          <div className="flex items-center justify-center w-10 bg-surface border-r border-border text-primary text-2xl font-bold z-10">
             →
           </div>
 
           {/* Converted */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--success)', background: 'rgba(16, 185, 129, 0.05)', borderBottom: '1px solid var(--border)' }}>
+          <div className="flex-1 flex flex-col">
+            <div className="px-4 py-3 font-semibold text-success bg-success/5 border-b border-border">
               Converted (CTE)
             </div>
-            <div style={{ flex: 1, position: 'relative' }}>
+            <div className="flex-1 relative">
               <SqlEditor value={convertedSql} readOnly={true} />
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '16px 24px',
-          borderTop: '1px solid var(--border)',
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '12px',
-          background: 'var(--surface)'
-        }}>
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-surface">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={() => {
             onUseConverted(convertedSql);

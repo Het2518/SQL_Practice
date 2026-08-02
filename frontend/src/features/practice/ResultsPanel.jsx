@@ -85,37 +85,18 @@ export const ResultsPanel = React.memo(function ResultsPanel({
   const currentRows = isError || isDML ? [] : result.rows;
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        background: 'var(--surface)',
-      }}
-    >
+    <div className="h-full flex flex-col overflow-hidden bg-surface">
       {/* Execution Stats Toolbar */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 14,
-          padding: '8px 16px',
-          borderBottom: '1px solid var(--border)',
-          background: 'var(--surface-2)',
-          flexShrink: 0,
-          fontSize: 12,
-        }}
-      >
+      <div className="flex items-center gap-3.5 py-2 px-4 border-b border-border bg-surface-2 shrink-0 text-xs">
         {/* Status Badge */}
         {validation && (
           <div className={validation.isCorrect ? 'badge badge-success' : 'badge badge-danger'}>
             {validation.isCorrect ? (
-              <div className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div className="badge badge-success flex items-center gap-1">
                 <CheckCircle size={12} /> Correct
               </div>
             ) : (
-              <div className="badge badge-danger" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div className="badge badge-danger flex items-center gap-1">
                 <XCircle size={12} /> Incorrect
               </div>
             )}
@@ -215,7 +196,7 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                     ) : (
                       <div className="flex-1 min-h-0">
                         <TableVirtuoso
-                          style={{ height: '100%', width: '100%' }}
+                          className="h-full w-full"
                           data={currentRows}
                           fixedHeaderContent={() => (
                             <tr>
@@ -310,19 +291,8 @@ export const ResultsPanel = React.memo(function ResultsPanel({
       )}
 
       {isDML && !isError && (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--muted)',
-            fontSize: 14,
-            flexDirection: 'column',
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: 32 }}>🔄</span>
+        <div className="flex-1 flex flex-col items-center justify-center text-muted text-sm gap-3">
+          <span className="text-[32px]">🔄</span>
           <span>
             DML statement executed successfully. Use <strong>Reset DB</strong> to restore original
             data.
