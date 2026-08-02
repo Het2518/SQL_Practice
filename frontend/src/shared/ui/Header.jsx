@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Flame,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
@@ -69,6 +70,15 @@ export function Header({ leftContent, centerContent, navLinks, onShowAuth, onSho
              {rightContent}
           </div>
         )}
+
+        {/* Global Mock Interviews Button */}
+        <button
+          className="flex items-center gap-1.5 px-3 py-1.5 mx-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors font-semibold text-xs border border-primary/20"
+          onClick={() => navigate('/interview')}
+          title="Mock Interviews"
+        >
+          <Briefcase size={14} /> <span className="hidden sm:inline">Mock Interviews</span>
+        </button>
 
         <button
           className="flex items-center justify-center p-1.5 rounded-md text-text-secondary hover:bg-surface-2 hover:text-text transition-colors"
