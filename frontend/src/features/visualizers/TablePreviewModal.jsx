@@ -63,6 +63,8 @@ export function TablePreviewModal({
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border)',
         background: 'var(--surface)',
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
       }}>
         {/* Header */}
@@ -122,9 +124,10 @@ export function TablePreviewModal({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
               Schema Definition
             </h3>
-            <div style={{
+            <div className="custom-scrollbar" style={{
               display: 'flex',
-              flexWrap: 'wrap',
+              overflowX: 'auto',
+              paddingBottom: '8px',
               gap: 12
             }}>
               {tableInfo.columns.map(col => (
@@ -137,7 +140,7 @@ export function TablePreviewModal({
                   flexDirection: 'column',
                   gap: 6,
                   minWidth: '200px',
-                  flex: '1 1 200px',
+                  flex: '0 0 auto',
                   maxWidth: '300px',
                   transition: 'transform 0.2s, border-color 0.2s',
                   cursor: 'default'

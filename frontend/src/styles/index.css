@@ -267,7 +267,7 @@ html, body {
   background: var(--surface-2) !important;
 }
 
-.chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
+.chat-markdown h1, .chat-markdown h2, .chat-markdown h3, .chat-markdown h4, .chat-markdown h5, .chat-markdown h6 {
   color: var(--text) !important;
   font-weight: 800 !important;
   margin-top: 24px !important;
