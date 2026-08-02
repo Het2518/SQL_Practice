@@ -205,10 +205,13 @@ export default function App() {
     (question, dbName, status, sql, executionTimeMs = 0) => {
       if (!question || !question.id) return;
       const id = question.id;
+      
+      const currentProgress = useProgressStore.getState().progress;
+      const wasComplete = currentProgress[id] === 'complete';
+      
       useProgressStore.getState().updateProgress(id, status);
 
-      const currentProgress = useProgressStore.getState().progress;
-      if (status === 'complete' && currentProgress[id] !== 'complete') {
+      if (status === 'complete' && !wasComplete) {
         useGamificationStore.getState().recordActivity(question, dbName, status, user, sql, executionTimeMs);
       }
     },

@@ -135,6 +135,12 @@ async function recordActivity(req, res, next) {
     if (!doc) {
       doc = new UserProgress({ userId: req.user._id });
     }
+    
+    // Ensure displayName is synced for leaderboard
+    const currentName = req.user.name || req.user.displayName || req.user.username;
+    if (doc.displayName !== currentName) {
+      doc.displayName = currentName;
+    }
 
     // Update streak
     if (doc.lastPracticeDate !== today) {
