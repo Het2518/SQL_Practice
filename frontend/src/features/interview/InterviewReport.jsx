@@ -201,7 +201,7 @@ ${payload.sql}
 
           {/* Hero Section */}
           <div className="bg-surface border border-border print-border rounded-3xl p-8 md:p-12 text-center shadow-xl mb-8 relative overflow-hidden print-break-inside">
-            <div className={\`absolute inset-0 opacity-10 no-print \${isHire ? 'bg-gradient-to-br from-success to-transparent' : isNoHire ? 'bg-gradient-to-br from-error to-transparent' : 'bg-gradient-to-br from-warning to-transparent'}\`} />
+            <div className={`absolute inset-0 opacity-10 no-print ${isHire ? 'bg-gradient-to-br from-success to-transparent' : isNoHire ? 'bg-gradient-to-br from-error to-transparent' : 'bg-gradient-to-br from-warning to-transparent'}`} />
             
             <div className="relative z-10 flex flex-col items-center">
               <div className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2 flex items-center justify-center gap-2">
@@ -214,12 +214,12 @@ ${payload.sql}
               <p className="text-text-secondary mb-6">{safeSession.roleName || 'Software Engineer'}</p>
 
               <div className="flex flex-col items-center gap-2">
-                <div className={\`text-7xl font-black tracking-tighter \${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}\`}>
+                <div className={`text-7xl font-black tracking-tighter ${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}`}>
                   {safeSession.score || 0}<span className="text-3xl text-text-secondary">/100</span>
                 </div>
               </div>
 
-              <div className={\`inline-flex items-center gap-2 px-6 py-2 rounded-full border bg-surface-2 text-lg font-bold mt-6 \${isHire ? 'border-success/30' : isNoHire ? 'border-error/30' : 'border-warning/30'}\`}>
+              <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full border bg-surface-2 text-lg font-bold mt-6 ${isHire ? 'border-success/30' : isNoHire ? 'border-error/30' : 'border-warning/30'}`}>
                 {isHire ? (
                   <><ShieldCheck size={20} className="text-success" /> <span className="text-success">{(safeSession.verdict || 'Hire').toUpperCase()}</span></>
                 ) : isNoHire ? (
@@ -290,7 +290,7 @@ ${payload.sql}
               </h3>
               <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-text-secondary">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {\`\`\`sql\n\${parsedFeedback.optimal_sql}\n\`\`\`}
+                  {`\`\`\`sql\n${parsedFeedback.optimal_sql}\n\`\`\``}
                 </ReactMarkdown>
                 <div className="mt-4 text-sm bg-surface-2 p-4 rounded-xl border border-border">
                   <span className="font-bold block mb-1">Optimization Notes:</span>
