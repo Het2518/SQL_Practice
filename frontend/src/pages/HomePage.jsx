@@ -26,6 +26,7 @@ import {
   LineChart,
   Code,
   Code2,
+  Link2,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { Header } from '@/shared/ui/Header';
@@ -326,7 +327,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
           {[
             { title: '1. Basic Filtering', desc: 'SELECT, WHERE, AND/OR', icon: Target },
             { title: '2. Aggregations', desc: 'GROUP BY, HAVING, SUM/AVG', icon: BarChart2 },
-            { title: '3. Joining Data', desc: 'INNER, LEFT, RIGHT JOINs', icon: Layers },
+            { title: '3. Joining Data', desc: 'INNER, LEFT, RIGHT JOINs', icon: Link2 },
             { title: '4. Subqueries', desc: 'Nested queries, IN, EXISTS', icon: Code },
             { title: '5. Date & Time', desc: 'Date math, EXTRACT, Formatting', icon: Clock },
             { title: '6. Window Functions', desc: 'ROW_NUMBER, RANK, OVER', icon: LineChart },

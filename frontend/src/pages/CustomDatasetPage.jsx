@@ -987,6 +987,16 @@ export function CustomDatasetPage() {
                     darkMode={darkMode}
                   />
                 </div>
+                <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm" onClick={() => setSql('')}>
+                      <RotateCcw size={13} /> Clear
+                    </Button>
+                  </div>
+                  <Button size="sm" onClick={handleRun} isLoading={isExecuting}>
+                    <Play size={13} fill="currentColor" /> Run Code (Ctrl+Enter)
+                  </Button>
+                </div>
               </div>
               
               {/* RESIZER */}
