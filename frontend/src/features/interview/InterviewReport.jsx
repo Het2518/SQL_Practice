@@ -65,16 +65,31 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
         feedback = response.replace(/\[SCORE:.*?\]/i, '').replace(/\[VERDICT:.*?\]/i, '').trim();
       }
 
-      // Save to database
-      const res = await api.interviews.saveScore({
-        companyName: payload.companyName,
+      const localSession = {
+        companyId: { name: payload.companyName },
         score,
         verdict,
         feedback,
-        durationMinutes: payload.durationMinutes
-      });
+        durationMinutes: payload.durationMinutes,
+        createdAt: new Date().toISOString()
+      };
 
-      setSession(res.data.data.session);
+      try {
+        // Save to database
+        const res = await api.interviews.saveScore({
+          companyName: payload.companyName,
+          score,
+          verdict,
+          feedback,
+          durationMinutes: payload.durationMinutes
+        });
+        setSession(res.data?.data?.session || res.data?.session || res.data || localSession);
+      } catch (saveErr) {
+        console.error('Failed to save score:', saveErr);
+        // Continue showing report locally even if save fails
+        setSession(localSession);
+      }
+
       // Clear history to prevent resubmission on refresh
       window.history.replaceState({}, document.title);
     } catch (err) {
@@ -112,8 +127,9 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
     );
   }
 
-  const isHire = session.verdict === 'Hire' || session.verdict === 'Strong Hire';
-  const isNoHire = session.verdict === 'No Hire' || session.verdict === 'Fail' || session.verdict.toLowerCase().includes('violation');
+  const safeSession = session || {};
+  const isHire = safeSession.verdict === 'Hire' || safeSession.verdict === 'Strong Hire';
+  const isNoHire = safeSession.verdict === 'No Hire' || safeSession.verdict === 'Fail' || (safeSession.verdict || '').toLowerCase().includes('violation');
 
   return (
     <div className="min-h-screen bg-bg text-text p-6 md:p-12 overflow-y-auto page-enter">
@@ -138,21 +154,22 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
             <div className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
               Mock Interview Results
             </div>
-            
-            <div className="flex justify-center items-end gap-2 mb-6">
-              <span className={`text-7xl font-black leading-none ${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}`}>
-                {session.overallScore}
-              </span>
-              <span className="text-2xl font-bold text-text-secondary mb-2">/100</span>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">
+              {safeSession.verdict || 'Evaluation Complete'}
+            </h2>
+            <div className="flex flex-col items-center gap-2">
+              <div className="text-7xl font-black tracking-tighter" style={{ color: isHire ? 'var(--success)' : isNoHire ? 'var(--error)' : 'var(--warning)' }}>
+                {safeSession.score || 0}<span className="text-3xl text-text-secondary">/100</span>
+              </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border bg-surface-2 text-lg font-bold">
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border bg-surface-2 text-lg font-bold mt-6">
               {isHire ? (
-                <><ShieldCheck size={20} className="text-success" /> <span className="text-success">{session.verdict.toUpperCase()}</span></>
+                <><ShieldCheck size={20} className="text-success" /> <span className="text-success">{safeSession.verdict.toUpperCase()}</span></>
               ) : isNoHire ? (
-                <><AlertTriangle size={20} className="text-error" /> <span className="text-error">{session.verdict.toUpperCase()}</span></>
+                <><AlertTriangle size={20} className="text-error" /> <span className="text-error">{safeSession.verdict.toUpperCase()}</span></>
               ) : (
-                <><Target size={20} className="text-warning" /> <span className="text-warning">{session.verdict.toUpperCase()}</span></>
+                <><Target size={20} className="text-warning" /> <span className="text-warning">{safeSession.verdict.toUpperCase()}</span></>
               )}
             </div>
           </div>
@@ -160,13 +177,12 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
 
         {/* AI Feedback Report */}
         <div className="bg-surface border border-border rounded-3xl p-8 shadow-sm">
-          <h3 className="text-xl font-bold text-text mb-6 pb-4 border-b border-border flex items-center gap-2">
-            <BotIcon /> Interviewer Feedback
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Target className="text-primary" /> Interviewer Feedback
           </h3>
-          
-          <div className="prose prose-p:my-4 prose-headings:text-text prose-strong:text-text prose-ul:text-text-secondary text-text-secondary max-w-none">
+          <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-text-secondary">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {session.aiFeedbackSummary}
+              {safeSession.feedback || 'No feedback available.'}
             </ReactMarkdown>
           </div>
         </div>

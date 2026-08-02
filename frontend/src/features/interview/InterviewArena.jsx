@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock } from 'lucide-react';
+import { Bot, User, Loader2, ShieldAlert, Clock, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
@@ -28,6 +28,11 @@ export function InterviewArena() {
   const [sql, setSql] = useState('-- Write your solution here once you understand the requirements...\n\n');
   const [timeLeft, setTimeLeft] = useState(duration * 60);
   const [warnings, setWarnings] = useState(0);
+
+  // Dry Run Panel State
+  const [dryRunFeedback, setDryRunFeedback] = useState('');
+  const [isDryRunning, setIsDryRunning] = useState(false);
+  const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
   
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
@@ -268,26 +273,27 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
       toast({ title: 'No SQL to run', message: 'Write some SQL code first before asking for a dry run.', type: 'info' });
       return;
     }
-    const msg = `Can you review my current progress? Are there any syntax errors or logical flaws? Here is my query so far:\n\n\`\`\`sql\n${sql}\n\`\`\``;
     
-    const newMessages = [...messages, { role: 'user', content: msg }];
-    setMessages(newMessages);
-    setIsLoading(true);
+    setDryRunFeedback('');
+    setIsDryRunPanelOpen(true);
+    setIsDryRunning(true);
 
     try {
       const systemPrompt = `[IDENTITY]: You are a FAANG interviewer. 
 [TASK]: The candidate wants you to review their current code.
 [RULES]: Point out syntax errors, missing GROUP BY clauses, or logical flaws. DO NOT write the correct code for them. Give them a hint. Keep it brief and professional.`;
+      
       const apiMessages = [
         { role: 'system', content: systemPrompt },
-        ...newMessages.map((m) => ({ role: m.role, content: m.content })),
+        ...messages.map((m) => ({ role: m.role, content: m.content })),
+        { role: 'user', content: `Here is my current query:\n\n\`\`\`sql\n${sql}\n\`\`\`` }
       ];
       const response = await groqChat(apiMessages, MODEL_SMART, 500, false);
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+      setDryRunFeedback(response);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Sorry, I encountered a network error.' }]);
+      setDryRunFeedback('❌ Sorry, I encountered a network error.');
     } finally {
-      setIsLoading(false);
+      setIsDryRunning(false);
     }
   };
 
@@ -416,25 +422,52 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
               </div>
             )}
 
-            <div className="flex-1 w-full relative">
-            <SqlEditor
-              value={sql}
-              onChange={setSql}
-              onRun={handleSubmitMsg}
-              disabled={isLoading}
-              height="100%"
-            />
-
-            {/* Webcam PIP */}
-            {cameraStream && (
-              <div className="absolute bottom-4 right-4 w-32 aspect-video bg-black rounded-lg border border-border shadow-2xl overflow-hidden z-50">
-                <VideoPreview stream={cameraStream} />
-                <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-error">
-                  <div className="w-1.5 h-1.5 rounded-full bg-error animate-pulse" /> REC
-                </div>
+            <div className="flex-1 w-full relative flex flex-col">
+              <div className="flex-1 relative min-h-[300px]">
+                <SqlEditor
+                  value={sql}
+                  onChange={setSql}
+                  onRun={handleDryRun}
+                  disabled={isLoading}
+                  height="100%"
+                />
               </div>
-            )}
-          </div>
+
+              {isDryRunPanelOpen && (
+                <div className="h-64 border-t border-border bg-surface flex flex-col shadow-inner">
+                  <div className="px-4 py-2 border-b border-border bg-surface-2 flex items-center justify-between text-text-secondary">
+                    <span className="text-sm font-bold flex items-center gap-2"><Bot size={16} className="text-primary" /> AI Review Panel</span>
+                    <button onClick={() => setIsDryRunPanelOpen(false)} className="hover:text-text transition-colors">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="flex-1 p-5 overflow-y-auto bg-bg">
+                    {isDryRunning ? (
+                      <div className="flex flex-col items-center justify-center h-full gap-3 text-text-secondary">
+                        <Loader2 size={24} className="animate-spin text-primary" />
+                        <span className="text-sm">Analyzing your query for errors...</span>
+                      </div>
+                    ) : (
+                      <div className="chat-markdown">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {dryRunFeedback}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Webcam PIP */}
+              {cameraStream && (
+                <div className="absolute bottom-4 right-4 w-32 aspect-video bg-black rounded-lg border border-border shadow-2xl overflow-hidden z-50">
+                  <VideoPreview stream={cameraStream} />
+                  <div className="absolute bottom-1 right-1 flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-bold text-error">
+                    <div className="w-1.5 h-1.5 rounded-full bg-error animate-pulse" /> REC
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2">
               <span className="text-xs text-text-secondary font-mono">-- Write your query above, then submit for AI evaluation!</span>
               <div className="flex items-center gap-3">
