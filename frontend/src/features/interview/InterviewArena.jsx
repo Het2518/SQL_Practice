@@ -191,7 +191,7 @@ Requirements:
       setMessages([
         {
           role: 'assistant',
-          content: `Welcome to your ${companyName} interview! I'm your interviewer today.\n\nHere is your task: **${initialTask}**\n\nBefore you start writing SQL, please ask me any clarifying questions about the data schema or edge cases.`
+          content: `Welcome to your ${companyName} interview! I'm your interviewer today.\n\nHere is your task:\n\n---\n\n${initialTask}\n\n---\n\nBefore you start writing SQL, please ask me any clarifying questions about the data schema or edge cases.`
         }
       ]);
     }
@@ -236,13 +236,6 @@ Requirements:
   };
 
   const handleFinalSubmit = async (isTimeUp = false) => {
-    if (!sql.trim() || sql === '-- Write your solution here once you understand the requirements...\n\n') {
-      if (!isTimeUp) {
-        toast({ title: 'No SQL provided', message: 'Please write your SQL solution in the editor before submitting.', type: 'error' });
-        return;
-      }
-    }
-    
     isSubmittedRef.current = true;
     setIsLoading(true);
 
