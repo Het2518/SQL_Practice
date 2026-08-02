@@ -29,6 +29,7 @@ export function InterviewArena() {
   
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
+  const warningsRef = useRef(0);
 
   // Dynamic Prompt Logic
   const getInitialTask = () => {
@@ -75,29 +76,31 @@ export function InterviewArena() {
         let msg = 'You exited full-screen mode or switched tabs.';
         if (isBlur) msg = 'Window lost focus. Strict proctoring forbids switching to other applications or monitors.';
 
-        setWarnings(prev => {
-          const next = prev + 1;
-          if (next >= 3) {
-            toast({ title: 'Interview Terminated', message: `${msg} You reached the maximum number of warnings. Score recorded as 0.`, type: 'error' });
-            isSubmittedRef.current = true;
-            api.interviews.saveScore({
-              companyName: 'Generic Tech',
-              score: 0,
-              verdict: 'No Hire',
-              feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
-              durationMinutes: Math.round((duration * 60 - timeLeft) / 60)
-            }).then(res => {
-              navigate('/interview/report', { state: { session: res.data.data.session } });
-            }).catch(() => navigate('/interview'));
-          } else {
-            toast({ title: 'Proctoring Warning', message: `${msg} Warning ${next} of 3.`, type: 'warning' });
-            // Attempt to re-enter fullscreen if they exited
-            if (isExit && document.documentElement.requestFullscreen) {
-              document.documentElement.requestFullscreen().catch(() => {});
-            }
+        warningsRef.current += 1;
+        const currentWarnings = warningsRef.current;
+        setWarnings(currentWarnings);
+
+        if (currentWarnings >= 3) {
+          toast({ title: 'Interview Terminated', message: `${msg} You reached the maximum number of warnings. Score recorded as 0.`, type: 'error' });
+          isSubmittedRef.current = true;
+          
+          api.interviews.saveScore({
+            companyName: 'Generic Tech',
+            score: 0,
+            verdict: 'No Hire',
+            feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
+            durationMinutes: Math.round((duration * 60 - timeLeft) / 60)
+          }).then(res => {
+            navigate('/interview/report', { state: { session: res.data.data.session } });
+          }).catch(() => navigate('/interview'));
+          
+        } else {
+          toast({ title: 'Proctoring Warning', message: `${msg} Warning ${currentWarnings} of 3.`, type: 'warning' });
+          // Attempt to re-enter fullscreen if they exited
+          if (isExit && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
           }
-          return next;
-        });
+        }
       }
     };
 
@@ -109,6 +112,15 @@ export function InterviewArena() {
       toast({ title: 'Proctoring Violation', message: 'Copy, Paste, and Cut are disabled during the interview.', type: 'error' });
     };
     const disableContextMenu = (e) => e.preventDefault();
+    const disableKeyboard = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'v' || e.key.toLowerCase() === 'x')) {
+        e.preventDefault();
+        toast({ title: 'Proctoring Violation', message: 'Keyboard shortcuts disabled.', type: 'error' });
+      }
+      if (e.key === 'PrintScreen' || e.key === 'F12' || e.key === 'Escape') {
+        e.preventDefault();
+      }
+    };
 
     document.addEventListener('visibilitychange', onVisibilityChange);
     document.addEventListener('fullscreenchange', onFullscreenChange);
@@ -117,6 +129,7 @@ export function InterviewArena() {
     document.addEventListener('paste', disableCopyPaste);
     document.addEventListener('cut', disableCopyPaste);
     document.addEventListener('contextmenu', disableContextMenu);
+    document.addEventListener('keydown', disableKeyboard);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -126,6 +139,7 @@ export function InterviewArena() {
       document.removeEventListener('paste', disableCopyPaste);
       document.removeEventListener('cut', disableCopyPaste);
       document.removeEventListener('contextmenu', disableContextMenu);
+      document.removeEventListener('keydown', disableKeyboard);
     };
   }, [navigate, duration, timeLeft, toast]);
 
