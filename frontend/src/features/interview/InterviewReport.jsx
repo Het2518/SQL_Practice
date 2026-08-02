@@ -64,8 +64,8 @@ ${payload.sql}
         
         let response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 1000, false);
         // Clean markdown backticks if any
-        if (response.startsWith('\`\`\`json')) response = response.replace(/\`\`\`json/g, '');
-        if (response.startsWith('\`\`\`')) response = response.replace(/\`\`\`/g, '');
+        if (response.startsWith('```json')) response = response.replace(/```json/g, '');
+        if (response.startsWith('```')) response = response.replace(/```/g, '');
         response = response.trim();
         
         try {
