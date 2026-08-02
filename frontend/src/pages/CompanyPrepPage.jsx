@@ -248,7 +248,7 @@ export default function CompanyPrepPage(props) {
             <Button
               variant="primary"
               size="lg"
-              onClick={() => navigate('/practice/ecommerce')}
+              onClick={() => navigate(`/interview/preflight/${slug}`)}
               style={{ padding: '0 32px' }}
             >
               Start Mock Interview

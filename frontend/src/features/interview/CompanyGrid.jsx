@@ -31,7 +31,8 @@ export function CompanyGrid({ companies, onSelect, onClose }) {
       {companies.map(company => (
         <div
           key={company.id}
-          className="company-card group relative"
+          className="company-card group relative cursor-pointer"
+          onClick={(e) => handlePracticeClick(e, company)}
         >
           {company.logo_url ? (
             <img src={company.logo_url} alt={`${company.name} logo`} className="company-logo" />
