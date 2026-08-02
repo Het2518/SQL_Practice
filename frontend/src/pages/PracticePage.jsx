@@ -211,7 +211,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const workspaceRef = useRef(null);
   const [editorHeightPct, setEditorHeightPct] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
-  const toast = useToast();
+  const { toast } = useToast();
   const { fireConfetti, ConfettiComponent } = useConfetti();
   const { checkSafety, SafetyModal } = useQuerySafetyGuard();
 

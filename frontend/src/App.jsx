@@ -131,7 +131,7 @@ function ProtectedRoute({ children, user, isCheckingSession }) {
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const toast = useToast();
+  const { toast } = useToast();
   const { user, isCheckingSession, logout, initializeAuth } = useAuth();
 
   const {
