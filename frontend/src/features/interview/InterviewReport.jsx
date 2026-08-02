@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Target, ArrowLeft, RotateCcw, AlertTriangle, ShieldCheck, Loader2, Download, Building2, User, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Target, ArrowLeft, RotateCcw, AlertTriangle, ShieldCheck, Loader2, Download, Building2, User, Star, CheckCircle, XCircle, Share2 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -155,6 +155,18 @@ ${payload.sql}
     window.print();
   };
 
+  const handleShare = async () => {
+    const shareText = `I just scored ${safeSession.score || 0}/100 on my ${safeSession.companyId?.name || safeSession.companyName || 'Enterprise'} Mock Interview via DataDesk! Verdict: ${(safeSession.verdict || 'Hire').toUpperCase()}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Interview Score', text: shareText, url: window.location.href });
+      } catch (err) {}
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert('Score copied to clipboard!');
+    }
+  };
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: \`
@@ -175,10 +187,13 @@ ${payload.sql}
               <ArrowLeft size={16} /> Back to Lobby
             </Button>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={handlePrint}>
+              <Button variant="outline" onClick={handleShare} className="no-print">
+                <Share2 size={16} /> Share Score
+              </Button>
+              <Button variant="outline" onClick={handlePrint} className="no-print">
                 <Download size={16} /> Download PDF
               </Button>
-              <Button variant="primary" onClick={() => navigate('/interview')}>
+              <Button variant="primary" onClick={() => navigate('/interview')} className="no-print">
                 <RotateCcw size={16} /> Retake Interview
               </Button>
             </div>

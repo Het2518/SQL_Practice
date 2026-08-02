@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon } from 'lucide-react';
+import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
@@ -33,6 +33,7 @@ export function InterviewArena() {
   const [dryRunFeedback, setDryRunFeedback] = useState('');
   const [isDryRunning, setIsDryRunning] = useState(false);
   const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
@@ -382,6 +383,33 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
         </div>
       )}
 
+      {/* ══ SHORTCUTS OVERLAY ══ */}
+      {showShortcuts && !isTerminated && (
+        <div className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-2">
+              <h3 className="font-bold flex items-center gap-2"><Keyboard size={18} className="text-primary"/> Keyboard Rules & Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-text-secondary hover:text-text"><X size={18}/></button>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                <span className="text-text-secondary">Run / AI Dry Run</span>
+                <kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Ctrl + Enter</kbd>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                <span className="text-text-secondary">Format SQL</span>
+                <kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Shift + Alt + F</kbd>
+              </div>
+              <div className="mt-4 bg-error/10 border border-error/20 rounded-xl p-4 text-xs text-error font-medium leading-relaxed">
+                <span className="font-bold block mb-1">PROHIBITED ACTION WARNING:</span>
+                Copy (Ctrl+C), Paste (Ctrl+V), Developer Tools (F12), and exiting Fullscreen (ESC) are strictly monitored and will result in an instant termination.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* ══ MOBILE WARNING OVERLAY ══ */}
       <div className="md:hidden fixed inset-0 z-[100] bg-bg flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
@@ -418,6 +446,9 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded font-mono font-bold text-sm ${timeLeft < 300 ? 'bg-error/10 text-error animate-pulse' : 'bg-surface-2 text-text'}`}>
               <Clock size={16} /> {formatTime(timeLeft)}
             </div>
+            <button onClick={() => setShowShortcuts(true)} className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors" title="Keyboard Shortcuts">
+              <Keyboard size={18} />
+            </button>
             <Button variant="danger" size="sm" onClick={() => handleFinalSubmit(false)} disabled={isLoading || generatingQuestion}>
               Submit Final Solution
             </Button>
