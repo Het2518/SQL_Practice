@@ -62,6 +62,27 @@ const InterviewPage = lazy(() =>
     }))
   )
 );
+const InterviewPreFlight = lazy(() =>
+  lazyRetry(() =>
+    import('@/features/interview/InterviewPreFlight').then((module) => ({
+      default: module.InterviewPreFlight,
+    }))
+  )
+);
+const InterviewArena = lazy(() =>
+  lazyRetry(() =>
+    import('@/features/interview/InterviewArena').then((module) => ({
+      default: module.InterviewArena,
+    }))
+  )
+);
+const InterviewReport = lazy(() =>
+  lazyRetry(() =>
+    import('@/features/interview/InterviewReport').then((module) => ({
+      default: module.InterviewReport,
+    }))
+  )
+);
 const AuthPage = lazy(() =>
   lazyRetry(() => import('@/pages/AuthPage'))
 );
@@ -231,6 +252,9 @@ export default function App() {
             />
           }
         />
+        <Route path="/interview/preflight/:companyId" element={<InterviewPreFlight />} />
+        <Route path="/interview/arena/:companyId" element={<InterviewArena />} />
+        <Route path="/interview/report" element={<InterviewReport />} />
         <Route
           path="/company/:slug"
           element={
