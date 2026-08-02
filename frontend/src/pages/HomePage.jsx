@@ -55,27 +55,27 @@ const HeroSection = ({ onShowInterview, navigate }) => (
     {/* App Preview Mockup */}
     <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up drop-shadow-2xl" style={{ animationDelay: '400ms' }}>
       <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent z-10 pointer-events-none" />
-      <div className="rounded-t-3xl border border-border border-b-0 bg-surface shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
+      <div className="rounded-t-3xl border border-border border-b-0 bg-slate-50 dark:bg-surface shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
         <div className="h-10 bg-surface-2 border-b border-border flex items-center px-4 gap-2">
           <div className="w-3 h-3 rounded-full bg-error/80" />
           <div className="w-3 h-3 rounded-full bg-warning/80" />
           <div className="w-3 h-3 rounded-full bg-success/80" />
         </div>
-        <div className="flex-1 p-6 flex gap-6 opacity-70">
-          <div className="w-1/4 bg-bg rounded-xl border border-border p-4 flex flex-col gap-3">
-            <div className="h-4 w-24 bg-surface-3 rounded" />
-            <div className="h-3 w-full bg-surface-2 rounded" />
-            <div className="h-3 w-3/4 bg-surface-2 rounded" />
-            <div className="h-3 w-5/6 bg-surface-2 rounded mt-4" />
+        <div className="flex-1 p-6 flex gap-6">
+          <div className="w-1/4 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-4 flex flex-col gap-3">
+            <div className="h-4 w-24 bg-border rounded" />
+            <div className="h-3 w-full bg-border/50 rounded" />
+            <div className="h-3 w-3/4 bg-border/50 rounded" />
+            <div className="h-3 w-5/6 bg-border/50 rounded mt-4" />
           </div>
           <div className="flex-1 flex flex-col gap-4">
-            <div className="flex-1 bg-bg rounded-xl border border-border p-5 flex flex-col gap-2 font-mono text-sm">
+            <div className="flex-1 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-5 flex flex-col gap-2 font-mono text-sm">
               <div><span className="text-primary">SELECT</span> <span className="text-text">user_id,</span> <span className="text-success">SUM</span><span className="text-text">(amount)</span></div>
               <div><span className="text-primary">FROM</span> <span className="text-text">transactions</span></div>
               <div><span className="text-primary">GROUP BY</span> <span className="text-text">user_id</span></div>
               <div><span className="text-primary">HAVING</span> <span className="text-success">SUM</span><span className="text-text">(amount) {'>'}</span> <span className="text-warning">1000</span><span className="text-text">;</span></div>
             </div>
-            <div className="h-32 bg-bg rounded-xl border border-border p-4 flex flex-col justify-center items-center gap-2">
+            <div className="h-32 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-4 flex flex-col justify-center items-center gap-2">
               <TablePlaceholder />
             </div>
           </div>
@@ -86,30 +86,30 @@ const HeroSection = ({ onShowInterview, navigate }) => (
 );
 
 const TablePlaceholder = () => (
-  <div className="w-full flex flex-col gap-2 opacity-50">
+  <div className="w-full flex flex-col gap-2 opacity-70">
     <div className="flex gap-2 border-b border-border pb-2">
-      <div className="h-3 w-1/4 bg-surface-3 rounded" />
-      <div className="h-3 w-1/4 bg-surface-3 rounded" />
-      <div className="h-3 w-1/4 bg-surface-3 rounded" />
+      <div className="h-3 w-1/4 bg-border rounded" />
+      <div className="h-3 w-1/4 bg-border rounded" />
+      <div className="h-3 w-1/4 bg-border rounded" />
     </div>
     <div className="flex gap-2">
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
     </div>
     <div className="flex gap-2">
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
-      <div className="h-3 w-1/4 bg-surface-2 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-border/50 rounded" />
     </div>
   </div>
 );
 
 const StatsBanner = () => (
-  <div className="border-b border-border bg-surface-2 py-8 overflow-hidden relative">
+  <div className="border-y border-border bg-slate-50 dark:bg-bg py-8 overflow-hidden relative">
     <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-center gap-12 text-text-secondary font-semibold">
       <span className="text-sm tracking-widest uppercase">Trusted by engineers at top companies</span>
-      <div className="flex flex-wrap justify-center items-center gap-8 opacity-60 grayscale">
+      <div className="flex flex-wrap justify-center items-center gap-8 opacity-80 grayscale">
         {/* Placeholder Logos */}
         <div className="flex items-center gap-2"><Globe size={20} /> Microsoft</div>
         <div className="flex items-center gap-2"><Cpu size={20} /> Databricks</div>
@@ -379,7 +379,7 @@ const DatabaseGrid = ({ navigate, progress, totalComplete }) => (
 
 const Footer = ({ navigate }) => (
   <footer className="border-t border-border bg-bg pt-16 pb-8">
-    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
       <div className="col-span-1 md:col-span-2">
         <div className="flex items-center gap-2 mb-4">
           <Terminal size={24} className="text-primary" />
@@ -408,12 +408,19 @@ const Footer = ({ navigate }) => (
           <li><a href="https://github.com/Het2518/SQL_Practice" target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">GitHub</a></li>
         </ul>
       </div>
+      <div>
+        <h4 className="font-bold mb-4 text-text">Legal</h4>
+        <ul className="space-y-3 text-sm text-text-secondary">
+          <li><button onClick={() => navigate('/privacy')} className="hover:text-primary transition-colors">Privacy Policy</button></li>
+          <li><button onClick={() => navigate('/terms')} className="hover:text-primary transition-colors">Terms of Service</button></li>
+        </ul>
+      </div>
     </div>
     <div className="max-w-7xl mx-auto px-6 border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-muted">
       <p>© {new Date().getFullYear()} DataDesk. All rights reserved.</p>
       <div className="flex gap-4 mt-4 md:mt-0">
-        <a href="#" className="hover:text-text transition-colors">Privacy Policy</a>
-        <a href="#" className="hover:text-text transition-colors">Terms of Service</a>
+        <button onClick={() => navigate('/privacy')} className="hover:text-text transition-colors">Privacy Policy</button>
+        <button onClick={() => navigate('/terms')} className="hover:text-text transition-colors">Terms of Service</button>
       </div>
     </div>
   </footer>

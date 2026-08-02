@@ -98,6 +98,12 @@ const SettingsModal = lazy(() =>
     import('@/features/profile/SettingsModal').then((module) => ({ default: module.SettingsModal }))
   )
 );
+const PrivacyPolicy = lazy(() =>
+  lazyRetry(() => import('@/pages/PrivacyPolicy').then((module) => ({ default: module.PrivacyPolicy })))
+);
+const TermsAndServices = lazy(() =>
+  lazyRetry(() => import('@/pages/TermsAndServices').then((module) => ({ default: module.TermsAndServices })))
+);
 const CompanyPrepPage = lazy(() => lazyRetry(() => import('@/pages/CompanyPrepPage')));
 const CustomDatasetPage = lazy(() =>
   lazyRetry(() =>
@@ -248,6 +254,10 @@ export default function App() {
           }
         />
         <Route path="/interview/permissions" element={<InterviewPermissions />} />
+        
+        {/* Legal Pages */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsAndServices />} />
         <Route path="/interview/preflight" element={<InterviewPreFlight />} />
         <Route path="/interview/arena" element={<InterviewArena />} />
         <Route path="/interview/report" element={<InterviewReport />} />
