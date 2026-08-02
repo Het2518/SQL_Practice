@@ -328,10 +328,10 @@ Provide a 2-3 row Markdown table showing EXACTLY what the final query output sho
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary text-bg' : 'bg-surface-3 text-text'}`}>
                     {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
                   </div>
-                  <div className={`px-4 py-3 rounded-2xl max-w-[90%] text-[13.5px] leading-relaxed ${
+                  <div className={`px-5 py-4 rounded-2xl max-w-[95%] text-[14px] leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-primary text-bg rounded-tr-sm' 
-                      : 'bg-surface shadow-sm rounded-tl-sm border border-border text-text prose prose-sm prose-p:my-1 prose-pre:my-1 prose-pre:bg-surface-3 prose-pre:text-text prose-code:text-primary dark:prose-invert max-w-none'
+                      : 'bg-surface shadow-md rounded-tl-sm border border-border text-text prose prose-sm prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-pre:my-2 prose-pre:bg-surface-3 prose-pre:text-text prose-code:text-primary prose-table:border-collapse prose-table:w-full prose-table:my-4 prose-table:text-sm prose-th:border prose-th:border-border prose-th:bg-surface-2 prose-th:p-3 prose-th:text-left prose-th:font-bold prose-td:border prose-td:border-border prose-td:p-3 prose-td:bg-surface dark:prose-invert max-w-none'
                   }`}>
                     {msg.role === 'user' ? (
                       msg.content
