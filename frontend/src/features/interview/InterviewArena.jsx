@@ -40,19 +40,44 @@ export function InterviewArena() {
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        const prompt = `You are an expert technical interviewer for a FAANG company.
-Generate a SINGLE, unique SQL interview question for a candidate. 
-Difficulty: ${difficulty.toUpperCase()}.
+        const prompt = `[SYSTEM IDENTITY]
+You are a Principal Software Engineer and Senior Manager at Google (Alphabet Inc.) / Microsoft. You have conducted over 500 technical interviews for L4/L5/L6 Data Engineer and Backend Engineer roles. Your technical rigor is legendary. You do not accept mediocre questions. You design questions that test deep fundamental understanding of SQL, not just syntax memorization.
 
-Requirements:
-1. Provide a comprehensive Markdown-formatted problem statement.
-2. Include the EXACT problem question (e.g. "Write a query to...").
-3. Include a "Schema" section showing the table structures (Columns, Types).
-4. Include an "Example Input" table and an "Example Output" table.
-5. DO NOT provide the SQL solution. 
-6. Do not include introductory conversational text. Just the markdown problem.`;
+[TASK]
+Your task is to generate a SINGLE, unique, highly realistic SQL interview question for a candidate.
+The difficulty level requested by the candidate is: ${difficulty.toUpperCase()}.
+
+[DIFFICULTY GUIDELINES]
+- EASY: Focus on basic aggregations, simple joins (INNER/LEFT), WHERE clause filtering, date manipulation, and basic string functions. Provide a 2-table schema.
+- MEDIUM: Focus on Window Functions (ROW_NUMBER, RANK, LEAD, LAG), intermediate CTEs, complex grouping, subqueries, and time-series analysis (e.g., rolling averages, retention). Provide a 3-table schema.
+- HARD: Focus on advanced optimization, Recursive CTEs, Gaps & Islands problems, complex hierarchical data, self-joins, and pivot operations. Provide a 3-to-4 table schema.
+
+[FORMATTING REQUIREMENTS]
+You MUST output the result entirely in Markdown format.
+You MUST strictly adhere to the following structure. Do NOT include conversational filler like "Here is your question" or "Good luck!". Output ONLY the markdown.
+
+# Problem Context
+Write a realistic 2-3 sentence business scenario. (e.g., "You are a Data Analyst at an e-commerce startup. The product team wants to understand user retention...").
+
+# Schema Definition
+Provide the exact table schemas using Markdown tables.
+Include: Table Name, Column Name, Data Type, and a brief Description.
+
+# Example Input Data
+Provide 3-5 rows of sample data for EACH table in Markdown format. This helps the candidate visualize the joins.
+
+# The Challenge
+Clearly state the exact query the candidate must write. Use bullet points for specific conditions (e.g., "Exclude users who joined before 2022", "Round the percentage to 2 decimal places").
+
+# Expected Output Format
+Provide a 2-3 row Markdown table showing EXACTLY what the final query output should look like given the Example Input Data.
+
+[CRITICAL CONSTRAINTS]
+1. DO NOT provide the SQL solution. You are administering the test, not taking it.
+2. Ensure the question logically makes sense and the Example Output matches the Example Input.
+3. Make the question feel like a real-world production issue, not a textbook exercise. Use realistic column names (e.g., 'session_id', 'revenue_usd', 'created_at').`;
         
-        const response = await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 600, false);
+        const response = await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1200, false);
         setInitialTask(response.trim());
       } catch (err) {
         setInitialTask("Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)");

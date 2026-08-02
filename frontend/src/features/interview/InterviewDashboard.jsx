@@ -140,9 +140,9 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
             <h4 className="font-bold text-text mb-1">Before you begin</h4>
             <ul className="text-sm text-text-secondary list-disc ml-4 space-y-1">
               <li>You must grant Fullscreen permission.</li>
-              <li>Leaving the tab or pressing Escape will trigger a violation warning.</li>
+              <li>Leaving the tab or pressing Escape will trigger a <b>Zero-Tolerance</b> violation.</li>
               <li>Copy, paste, and context menus are completely disabled.</li>
-              <li>After 3 warnings, your interview will be terminated.</li>
+              <li>There are no warnings. A single violation will instantly terminate your interview.</li>
             </ul>
           </div>
         </div>
