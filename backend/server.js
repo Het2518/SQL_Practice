@@ -31,16 +31,32 @@ const interviewRoutes = require('./src/routes/interviewRoutes');
 const app = express();
 app.set('trust proxy', 1);
 
+// ── Request ID Middleware (for distributed tracing) ────────────────────────
+app.use((req, res, next) => {
+  const requestId = req.headers['x-request-id'] || require('crypto').randomUUID();
+  req.requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  next();
+});
+
 // ── Security & Utility Middleware ──────────────────────────────────────────
 app.use(helmet()); // Sets secure HTTP headers
+// Explicit CORS allowlist — substring matching (e.g. .includes('vercel.app')) is a
+// security vulnerability: any attacker deploying evil-app.vercel.app could bypass it.
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  env.clientUrl,
+].filter(Boolean));
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.includes('vercel.app') || origin === env.clientUrl) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
+      callback(new Error(`CORS: Origin '${origin}' is not allowed.`));
     },
     credentials: true,
   })
@@ -49,8 +65,11 @@ app.use(express.json({ limit: '10kb' })); // Parse JSON, limit payload size
 app.use(cookieParser()); // Parse cookies
 app.use(mongoSanitize()); // Sanitize request data against NoSQL injection
 app.use(csrfProtection); // Protect against Cross-Site Request Forgery
+// Log in dev with pretty format; log in production as JSON for log aggregators
 if (env.isDev) {
-  app.use(morgan('dev')); // HTTP request logging in development
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
 }
 app.use('/api', apiLimiter); // Rate limit all API routes
 
@@ -65,7 +84,7 @@ app.use('/api/interviews', interviewRoutes);
 
 // ── Health Check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: 'DataDesk API is running', env: env.nodeEnv });
+  res.status(200).json({ success: true, status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ── 404 Handler ────────────────────────────────────────────────────────────

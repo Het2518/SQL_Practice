@@ -108,18 +108,6 @@ const LeaderboardPage = lazy(() =>
   lazyRetry(() => import('@/pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })))
 );
 
-// ─── Progress persistence ────────────────────────────────────────────────────
-const PROGRESS_KEY = 'sql-practice-progress';
-function loadProgress() {
-  try {
-    return JSON.parse(localStorage.getItem(PROGRESS_KEY) ?? '{}');
-  } catch {
-    return {};
-  }
-}
-function saveProgress(p) {
-  localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
-}
 
 // ─── Protected Route Component ───────────────────────────────────────────────
 function ProtectedRoute({ children, user, isCheckingSession }) {

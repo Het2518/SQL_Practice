@@ -15,15 +15,24 @@ const validateComment = [
 
 /**
  * GET /api/comments/question/:questionId
- * Fetch all comments for a specific question
+ * Fetch all comments for a specific question (paginated)
  */
 async function getCommentsByQuestion(req, res, next) {
   try {
     const { questionId } = req.params;
-    const comments = await Comment.find({ questionId })
-      .populate('userId', 'displayName username avatarUrl')
-      .sort({ upvotes: -1, createdAt: -1 })
-      .lean();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+    const skip = (page - 1) * limit;
+
+    const [comments, total] = await Promise.all([
+      Comment.find({ questionId })
+        .populate('userId', 'displayName username avatarUrl')
+        .sort({ upvotes: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Comment.countDocuments({ questionId }),
+    ]);
 
     // Map to a frontend friendly structure
     const formattedComments = comments.map(c => ({
@@ -34,10 +43,16 @@ async function getCommentsByQuestion(req, res, next) {
       upvotes: c.upvotes,
       isAccepted: c.isAcceptedSolution,
       time: c.createdAt,
-      isOwner: req.user ? c.userId?._id?.toString() === req.user._id.toString() : false
+      isOwner: req.user ? c.userId?._id?.toString() === req.user._id.toString() : false,
+      hasVoted: req.user ? (c.votedBy || []).includes(req.user._id.toString()) : false,
     }));
 
-    return sendSuccess(res, { data: { comments: formattedComments } });
+    return sendSuccess(res, {
+      data: {
+        comments: formattedComments,
+        pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -89,27 +104,33 @@ async function createComment(req, res, next) {
 
 /**
  * POST /api/comments/:id/upvote
- * Upvote a comment
+ * Toggle upvote on a comment (prevents vote stuffing)
  */
 async function upvoteComment(req, res, next) {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-       return sendError(res, { statusCode: 400, message: 'Invalid comment ID' });
+      return sendError(res, { statusCode: 400, message: 'Invalid comment ID' });
     }
 
-    const comment = await Comment.findByIdAndUpdate(
-      id,
-      { $inc: { upvotes: 1 } },
-      { new: true }
-    );
-
-    if (!comment) {
+    // Check if user already voted
+    const existing = await Comment.findById(id).select('votedBy').lean();
+    if (!existing) {
       return sendError(res, { statusCode: 404, message: 'Comment not found' });
     }
 
-    return sendSuccess(res, { data: { upvotes: comment.upvotes } });
+    const userId = req.user._id.toString();
+    const alreadyVoted = (existing.votedBy || []).map(String).includes(userId);
+
+    // Toggle vote using atomic operators
+    const update = alreadyVoted
+      ? { $pull: { votedBy: req.user._id }, $inc: { upvotes: -1 } }
+      : { $addToSet: { votedBy: req.user._id }, $inc: { upvotes: 1 } };
+
+    const comment = await Comment.findByIdAndUpdate(id, update, { new: true }).select('upvotes').lean();
+
+    return sendSuccess(res, { data: { upvotes: comment.upvotes, hasVoted: !alreadyVoted } });
   } catch (err) {
     next(err);
   }
@@ -123,6 +144,7 @@ async function getMyComments(req, res, next) {
   try {
     const comments = await Comment.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
+      .limit(100)
       .lean();
 
     return sendSuccess(res, { data: { comments } });

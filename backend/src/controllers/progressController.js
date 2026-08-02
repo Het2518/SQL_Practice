@@ -17,7 +17,7 @@ const updateProgressValidation = [
 const recordActivityValidation = [
   body('question').isObject().withMessage('question object is required'),
   body('question.id').notEmpty().withMessage('question.id is required'),
-  body('sql').notEmpty().withMessage('sql query is required'),
+  body('sql').notEmpty().withMessage('sql query is required').isLength({ max: 50000 }).withMessage('SQL query too large'),
   body('status').optional().isString(),
   body('executionTimeMs').optional().isNumeric(),
 ];
@@ -52,16 +52,17 @@ async function getProgress(req, res, next) {
     const completedQuestions = {};
     completedRaw.forEach(q => { completedQuestions[q._id] = 'complete'; });
 
-    // Activity heatmap (last 365 days or just raw aggregate)
-    // For simplicity, we just aggregate all accepted submissions by date string
+    // Activity heatmap (last 365 days only)
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const activityRaw = await Submission.aggregate([
-      { $match: { userId: req.user._id } },
+      { $match: { userId: req.user._id, createdAt: { $gte: oneYearAgo } } },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          count: { $sum: 1 }
-        }
-      }
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
     ]);
     const activity = {};
     activityRaw.forEach(a => { activity[a._id] = a.count; });

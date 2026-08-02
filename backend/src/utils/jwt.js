@@ -6,11 +6,12 @@ const { env } = require('../config/env');
 /**
  * Signs a JWT token for a given user ID.
  * @param {string} userId - The MongoDB user _id
+ * @param {string} [expiresIn] - Token expiry (e.g. '15m', '7d'). Falls back to env default.
  * @returns {string} Signed JWT token
  */
-function signToken(userId) {
+function signToken(userId, expiresIn) {
   return jwt.sign({ sub: userId }, env.jwtSecret, {
-    expiresIn: env.jwtExpiresIn,
+    expiresIn: expiresIn || env.jwtExpiresIn,
   });
 }
 

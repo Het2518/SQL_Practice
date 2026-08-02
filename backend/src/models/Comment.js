@@ -22,7 +22,13 @@ const commentSchema = new mongoose.Schema(
     upvotes: {
       type: Number,
       default: 0,
+      min: 0,
     },
+    // Tracks which users have voted to prevent stuffing
+    votedBy: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }],
     downvotes: {
       type: Number,
       default: 0,
@@ -43,7 +49,8 @@ const commentSchema = new mongoose.Schema(
   }
 );
 
-commentSchema.index({ questionId: 1, createdAt: -1 });
+// Compound index for sorting by upvotes then date
+commentSchema.index({ questionId: 1, upvotes: -1, createdAt: -1 });
 
 const Comment = mongoose.model('Comment', commentSchema);
 

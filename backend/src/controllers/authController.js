@@ -10,7 +10,24 @@ const { signToken } = require('../utils/jwt');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
 
-const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateCode = () => crypto.randomInt(100000, 999999).toString();
+
+/**
+ * Returns consistent cookie options based on the request context.
+ * Extracted to avoid duplication across register, login, logout, and refresh.
+ */
+function getCookieOptions(req, overrides = {}) {
+  const isCrossSite =
+    req.headers.origin &&
+    !req.headers.origin.includes('localhost') &&
+    !req.headers.origin.includes('127.0.0.1');
+  return {
+    httpOnly: true,
+    secure: isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: isCrossSite ? 'none' : 'lax',
+    ...overrides,
+  };
+}
 
 // ── Validation Rules ───────────────────────────────────────────────────────
 const registerValidation = [
@@ -113,20 +130,12 @@ async function register(req, res, next) {
       deviceInfo: req.headers['user-agent']
     });
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/',
-      maxAge: 15 * 60 * 1000 // 15 mins
-    });
+    const cookieBase = getCookieOptions(req);
+    res.cookie('token', token, { ...cookieBase, path: '/', maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshStr, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      path: '/api/auth/refresh', // Only sent to this endpoint
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      ...cookieBase,
+      path: '/api/auth/refresh',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     return sendSuccess(res, {
@@ -155,7 +164,7 @@ async function login(req, res, next) {
     }).select('+password');
     
     if (!user) {
-      return sendError(res, { statusCode: 401, message: 'No account found with this username or email.' });
+      return sendError(res, { statusCode: 401, message: 'Invalid credentials.' });
     }
 
     if (user.accountStatus === 'suspended' || user.accountStatus === 'banned') {
@@ -181,7 +190,7 @@ async function login(req, res, next) {
       if (auditAction === 'ACCOUNT_LOCKED') {
         return sendError(res, { statusCode: 429, message: 'Too many failed attempts. Account locked for 15 minutes.' });
       }
-      return sendError(res, { statusCode: 401, message: 'Incorrect password.' });
+      return sendError(res, { statusCode: 401, message: 'Invalid credentials.' });
     }
 
     // Success! Reset lockouts
@@ -204,24 +213,12 @@ async function login(req, res, next) {
       deviceInfo: req.headers['user-agent']
     });
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
-    const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
-    const cookieSameSite = isCrossSite ? 'none' : 'lax';
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: cookieSecure,
-      sameSite: cookieSameSite,
-      path: '/',
-      maxAge: 15 * 60 * 1000 // 15 mins
-    });
+    const cookieBase = getCookieOptions(req);
+    res.cookie('token', token, { ...cookieBase, path: '/', maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshStr, {
-      httpOnly: true,
-      secure: cookieSecure,
-      sameSite: cookieSameSite,
-      path: '/api/auth/refresh', // Only sent to this endpoint
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      ...cookieBase,
+      path: '/api/auth/refresh',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
     return sendSuccess(res, {
@@ -302,26 +299,13 @@ async function logout(req, res) {
     await RefreshToken.deleteOne({ token: refreshStr });
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
-  const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
-  const cookieSameSite = isCrossSite ? 'none' : 'lax';
-
-  res.cookie('token', '', {
-    httpOnly: true,
-    secure: cookieSecure,
-    sameSite: cookieSameSite,
-    path: '/',
-    expires: new Date(0)
-  });
+  const cookieBase = getCookieOptions(req);
+  res.cookie('token', '', { ...cookieBase, path: '/', expires: new Date(0) });
   res.cookie('refreshToken', '', {
-    httpOnly: true,
-    secure: cookieSecure,
-    sameSite: cookieSameSite,
+    ...cookieBase,
     path: '/api/auth/refresh',
-    expires: new Date(0)
+    expires: new Date(0),
   });
-  
   return sendSuccess(res, { message: 'Logged out successfully' });
 }
 
@@ -347,22 +331,29 @@ async function refreshTokenEndpoint(req, res) {
 
   const user = tokenDoc.userId;
   if (!user) {
-    return sendError(res, { statusCode: 401, message: 'User not found.' });
+    return sendError(res, { statusCode: 401, message: 'Invalid refresh token.' });
   }
+
+  // Rotate: delete old refresh token and issue a brand-new one
+  await RefreshToken.deleteOne({ _id: tokenDoc._id });
+  const newRefreshStr = crypto.randomBytes(40).toString('hex');
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  await RefreshToken.create({
+    userId: user._id,
+    token: newRefreshStr,
+    expiresAt,
+    ipAddress: req.ip || req.connection?.remoteAddress,
+    deviceInfo: req.headers['user-agent'],
+  });
 
   // Issue new access token (15 mins)
   const token = signToken(user._id, '15m');
-  const isProduction = process.env.NODE_ENV === 'production';
-  const isCrossSite = req.headers.origin && !req.headers.origin.includes('localhost') && !req.headers.origin.includes('127.0.0.1');
-  const cookieSecure = isCrossSite || req.secure || req.headers['x-forwarded-proto'] === 'https';
-  const cookieSameSite = isCrossSite ? 'none' : 'lax';
-  
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: cookieSecure,
-    sameSite: cookieSameSite,
-    path: '/',
-    maxAge: 15 * 60 * 1000 // 15 mins
+  const cookieBase = getCookieOptions(req);
+  res.cookie('token', token, { ...cookieBase, path: '/', maxAge: 15 * 60 * 1000 });
+  res.cookie('refreshToken', newRefreshStr, {
+    ...cookieBase,
+    path: '/api/auth/refresh',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 
   return sendSuccess(res, { message: 'Token refreshed successfully' });

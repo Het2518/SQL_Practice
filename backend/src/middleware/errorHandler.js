@@ -6,6 +6,7 @@ const { env } = require('../config/env');
  * Global error handling middleware.
  * Catches all errors passed via next(err).
  * Returns a clean JSON error response.
+ * Never leaks stack traces or internal details in production.
  */
 // eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
@@ -33,9 +34,32 @@ function errorHandler(err, req, res, next) {
     message = `Invalid value for field: ${err.path}`;
   }
 
-  // Don't leak stack traces in production
-  if (env.isDev) {
-    console.error('[Error]', err);
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    statusCode = 401;
+    message = 'Invalid token. Please log in again.';
+  }
+  if (err.name === 'TokenExpiredError') {
+    statusCode = 401;
+    message = 'Session expired. Please log in again.';
+  }
+
+  // Always log 5xx errors server-side with request context
+  if (statusCode >= 500) {
+    console.error(JSON.stringify({
+      level: 'error',
+      timestamp: new Date().toISOString(),
+      requestId: req.headers['x-request-id'] || 'unknown',
+      method: req.method,
+      path: req.originalUrl,
+      statusCode,
+      error: err.message,
+      stack: env.isDev ? err.stack : undefined,
+    }));
+    // Never expose internal server error details to clients
+    if (!env.isDev) {
+      message = 'An unexpected error occurred. Please try again later.';
+    }
   }
 
   return res.status(statusCode).json({
@@ -45,3 +69,4 @@ function errorHandler(err, req, res, next) {
 }
 
 module.exports = { errorHandler };
+
