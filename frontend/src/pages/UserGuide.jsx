@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
-import { BookOpen, Code2, Database, ShieldAlert, Target, PlayCircle, Trophy, Bot, Star, TerminalSquare, CheckCircle } from 'lucide-react';
+import { BookOpen, Code2, Database, ShieldAlert, Target, PlayCircle, Trophy, Bot, Star, TerminalSquare, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 
 export function UserGuide({ user, onShowAuth, onShowSettings }) {
