@@ -149,7 +149,7 @@ Rules:
                   'px-4 py-2.5 rounded-2xl max-w-[85%] text-[14px] leading-relaxed shadow-sm',
                   msg.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-tr-none'
-                    : 'bg-surface-2 text-text border border-border rounded-tl-none chat-markdown'
+                    : 'bg-surface-2 text-text border border-border rounded-tl-none prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:m-0'
                 )}
               >
                 {msg.role === 'user' ? (

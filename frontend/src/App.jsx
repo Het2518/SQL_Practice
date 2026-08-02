@@ -194,14 +194,11 @@ export default function App() {
       if (!question || !question.id) return;
       const id = question.id;
       
-      const currentProgress = useProgressStore.getState().progress;
-      const wasComplete = currentProgress[id] === 'complete';
-      
       useProgressStore.getState().updateProgress(id, status);
 
-      if (status === 'complete' && !wasComplete) {
-        useGamificationStore.getState().recordActivity(question, dbName, status, user, sql, executionTimeMs);
-      }
+      // Always record activity to backend (creates Submission record)
+      // This is now the only way backend knows about progress/attempts.
+      useGamificationStore.getState().recordActivity(question, dbName, status, user, sql, executionTimeMs);
     },
     [user]
   );

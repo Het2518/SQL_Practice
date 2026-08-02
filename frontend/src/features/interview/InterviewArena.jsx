@@ -368,7 +368,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
                   <div className={`px-5 py-4 rounded-2xl max-w-[95%] text-[14px] leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-primary text-bg rounded-tr-sm' 
-                      : 'bg-surface shadow-md rounded-tl-sm border border-border text-text chat-markdown'
+                      : 'bg-surface shadow-md rounded-tl-sm border border-border text-text prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:m-0'
                   }`}>
                     {msg.role === 'user' ? (
                       msg.content
@@ -448,7 +448,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
                         <span className="text-sm">Analyzing your query for errors...</span>
                       </div>
                     ) : (
-                      <div className="chat-markdown">
+                      <div className="prose prose-sm dark:prose-invert max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {dryRunFeedback}
                         </ReactMarkdown>
@@ -468,7 +468,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2">
+            <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2 shrink-0">
               <span className="text-xs text-text-secondary font-mono">-- Write your query above, then submit for AI evaluation!</span>
               <div className="flex items-center gap-3">
                 <Button variant="outline" className="px-6" onClick={handleDryRun} disabled={isLoading}>

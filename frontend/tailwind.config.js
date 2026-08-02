@@ -39,6 +39,22 @@ export default {
           3: 'var(--accent-3)',
         },
       },
+      ringColor: {
+        DEFAULT: 'var(--ring)',
+      },
+      boxShadow: {
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        float: 'var(--shadow-float)',
+      },
+      borderRadius: {
+        sm: 'var(--radius-sm)',
+        DEFAULT: 'var(--radius)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        pill: 'var(--radius-pill)',
+      },
       fontFamily: {
         sans: 'var(--font-sans)',
         mono: 'var(--font-mono)',

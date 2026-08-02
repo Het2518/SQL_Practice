@@ -1,65 +1,41 @@
-import React from 'react';
+import * as React from 'react';
+import { cva } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-export function Badge({ 
-  children, 
-  variant = 'default',
-  size = 'md',
-  style = {},
-  className = '',
-  ...props 
-}) {
-  const baseStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontWeight: 700,
-    fontFamily: 'var(--font-sans)',
-    whiteSpace: 'nowrap',
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase',
-  };
+const badgeVariants = cva(
+  'inline-flex items-center justify-center rounded-md border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  {
+    variants: {
+      variant: {
+        default: 'border-transparent bg-surface-2 text-text-secondary hover:bg-surface-3',
+        primary: 'border-transparent bg-primary-muted text-primary hover:bg-primary-light',
+        success: 'border-transparent bg-success-muted text-success hover:bg-success/20',
+        warning: 'border-transparent bg-warning-muted text-warning hover:bg-warning/20',
+        danger: 'border-transparent bg-error-muted text-error hover:bg-error/20',
+        error: 'border-transparent bg-error-muted text-error hover:bg-error/20',
+        easy: 'border-transparent bg-success-muted text-success hover:bg-success/20',
+        medium: 'border-transparent bg-warning-muted text-warning hover:bg-warning/20',
+        hard: 'border-transparent bg-error-muted text-error hover:bg-error/20',
+        accent: 'border-transparent bg-accent-1/10 text-accent-1 hover:bg-accent-1/20',
+        outline: 'text-text',
+      },
+      size: {
+        sm: 'px-1.5 py-0.5 text-[9px] uppercase tracking-wider',
+        md: 'px-2 py-0.5 text-[10px] uppercase tracking-wider',
+        lg: 'px-2.5 py-1 text-[11px] uppercase tracking-wider',
+      }
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'md',
+    },
+  }
+);
 
-  const sizes = {
-    sm: { padding: '2px 6px', fontSize: '9px', borderRadius: '4px' },
-    md: { padding: '3px 8px', fontSize: '10px', borderRadius: '5px' },
-    lg: { padding: '4px 10px', fontSize: '11px', borderRadius: '6px' },
-  };
-
-  // Maps variant names (or difficulty strings) to theme colors
-  const getColors = (v) => {
-    const norm = v.toLowerCase();
-    switch (norm) {
-      case 'easy':
-      case 'success':
-        return { color: 'var(--success)', background: 'var(--success-muted)' };
-      case 'medium':
-      case 'warning':
-        return { color: 'var(--warning)', background: 'var(--warning-muted)' };
-      case 'hard':
-      case 'error':
-      case 'danger':
-        return { color: 'var(--error)', background: 'var(--error-muted)' };
-      case 'primary':
-      case 'info':
-        return { color: 'var(--primary)', background: 'var(--primary-muted)' };
-      case 'accent':
-      case 'maang':
-        return { color: 'var(--accent-1)', background: 'rgba(139,92,246,0.1)' };
-      default:
-        return { color: 'var(--text-secondary)', background: 'var(--surface-2)', border: '1px solid var(--border)' };
-    }
-  };
-
-  const vStyle = getColors(variant);
-  const sStyle = sizes[size] || sizes.md;
-
+function Badge({ className, variant, size, ...props }) {
   return (
-    <span
-      style={{ ...baseStyle, ...vStyle, ...sStyle, ...style }}
-      className={className}
-      {...props}
-    >
-      {children}
-    </span>
+    <div className={cn(badgeVariants({ variant, size }), className)} {...props} />
   );
 }
+
+export { Badge, badgeVariants };

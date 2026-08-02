@@ -1,12 +1,12 @@
 /* ================================================================
    Enterprise DataDesk — Global Architecture Variables
-   Design: Onyx Dark / Alabaster Light, GPU Accelerated, Glassmorphism
+   Design System Tokens (Apple, Stripe, Vercel inspired)
    ================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Alabaster Light Theme */
+  /* ── Core Colors: Alabaster Light Theme ── */
   --bg:              #f7f7f8;
   --bg-2:            #f1f1f2;
   --surface:         #ffffff;
@@ -14,6 +14,7 @@
   --surface-3:       #f9f9fb;
   --border:          #e5e7eb;
   --border-hover:    #d1d5db;
+  --ring:            rgba(0, 0, 0, 0.2);
 
   --text:            #111827;
   --text-secondary:  #4b5563;
@@ -36,7 +37,7 @@
   --accent-2:        #ec4899;  
   --accent-3:        #3b82f6;  
 
-  /* Elevations & Shadows */
+  /* ── Elevations & Shadows (Vercel/Stripe scale) ── */
   --shadow-sm:       0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md:       0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-lg:       0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
@@ -48,18 +49,18 @@
   --gradient-primary: linear-gradient(135deg, #000000 0%, #333333 100%);
   --gradient-accent:  linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
 
-  /* Typography */
+  /* ── Typography ── */
   --font-sans:   'Inter', system-ui, -apple-system, sans-serif;
   --font-mono:   'JetBrains Mono', 'Fira Code', Consolas, monospace;
 
-  /* Sizing */
+  /* ── Sizing (Radius) ── */
   --radius-sm:   4px;
   --radius:      8px;
   --radius-lg:   12px;
   --radius-xl:   16px;
   --radius-pill: 9999px;
 
-  /* Hardware Accelerated Transitions */
+  /* ── Hardware Accelerated Transitions ── */
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: 150ms var(--ease-out);
@@ -69,7 +70,7 @@
 
 html[data-theme="dark"],
 [data-theme="dark"] {
-  /* Onyx Dark Theme */
+  /* ── Core Colors: Onyx Dark Theme ── */
   --bg:              #0a0a0a;
   --bg-2:            #121212;
   --surface:         #171717;
@@ -77,6 +78,7 @@ html[data-theme="dark"],
   --surface-3:       #262626;
   --border:          #2e2e2e;
   --border-hover:    #404040;
+  --ring:            rgba(255, 255, 255, 0.2);
 
   --text:            #f5f5f5;
   --text-secondary:  #a3a3a3;
@@ -111,7 +113,7 @@ html[data-theme="dark"],
   --gradient-primary: linear-gradient(135deg, #ffffff 0%, #d4d4d4 100%);
 }
 
-/* ── Reset ── */
+/* ── Reset & Globals ── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -127,12 +129,11 @@ html, body, #root {
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* GPU acceleration hint for background transitions */
   transition: background-color var(--transition), color var(--transition);
   will-change: background-color;
 }
 
-/* ── Global Animations & Polish ── */
+/* ── Global Animations ── */
 @keyframes smoothFadeIn {
   from { opacity: 0; transform: translateY(8px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -141,7 +142,7 @@ html, body, #root {
   animation: smoothFadeIn 0.5s var(--ease-out) forwards;
 }
 
-/* Smooth active feedback via GPU transforms */
+/* ── Active States ── */
 button, .btn, .nav-btn, a {
   transition: transform var(--transition-fast), opacity var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
   will-change: transform;
@@ -159,11 +160,11 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-a { color: var(--text); text-decoration: none; }
+a { color: var(--text); text-decoration: none; transition: opacity var(--transition-fast); }
 a:hover { opacity: 0.8; }
 
-/* ── Enterprise Scrollbars (Invisible until needed/hovered) ── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+/* ── Scrollbars (Stripe-like thin) ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 1px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); border: 1px solid transparent; background-clip: padding-box; }

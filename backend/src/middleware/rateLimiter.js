@@ -3,7 +3,7 @@
 const rateLimit = require('express-rate-limit');
 
 /**
- * Strict rate limiter for auth endpoints (login, register).
+ * Strict rate limiter for auth endpoints (login, register, forgot-password).
  * 10 requests per 15 minutes per IP.
  */
 const authLimiter = rateLimit({
@@ -11,6 +11,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: false,
   message: {
     success: false,
     message: 'Too many requests from this IP. Please try again after 15 minutes.',
@@ -32,4 +33,34 @@ const apiLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter };
+/**
+ * Strict limiter for activity recording to prevent XP farming.
+ * 60 per 15 minutes — allows ~4/minute which is generous for legit use.
+ */
+const activityLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many submissions. Please slow down.',
+  },
+});
+
+/**
+ * Limiter for upvoting to prevent abuse.
+ * 30 upvotes per 15 minutes per IP.
+ */
+const upvoteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many votes. Please slow down.',
+  },
+});
+
+module.exports = { authLimiter, apiLimiter, activityLimiter, upvoteLimiter };

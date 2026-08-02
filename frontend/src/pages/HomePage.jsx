@@ -126,72 +126,44 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         {/* ── Stats Row ── */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl z-10 px-6">
           <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
-              style={{
-                color: 'var(--success)',
-                background: 'var(--success-muted)',
-                borderColor: 'var(--success-light)',
-              }}
-            >
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg border border-success/20 text-success bg-success-muted">
               <TrendingUp size={22} />
             </div>
             <div className="text-left">
-              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--success)' }}>
+              <div className="text-2xl font-black tabular-nums tracking-tight text-success">
                 {totalComplete}
               </div>
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Solved</div>
             </div>
           </div>
           <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
-              style={{
-                color: 'var(--warning)',
-                background: 'var(--warning-muted)',
-                borderColor: 'var(--warning-light)',
-              }}
-            >
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg border border-warning/20 text-warning bg-warning-muted">
               <BookOpen size={22} />
             </div>
             <div className="text-left">
-              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--warning)' }}>
+              <div className="text-2xl font-black tabular-nums tracking-tight text-warning">
                 {totalAttempted}
               </div>
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">In Progress</div>
             </div>
           </div>
           <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
-              style={{
-                color: 'var(--primary)',
-                background: 'var(--primary-muted)',
-                borderColor: 'var(--primary-light)',
-              }}
-            >
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg border border-primary/20 text-primary bg-primary-muted">
               <Target size={22} />
             </div>
             <div className="text-left">
-              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--primary)' }}>
+              <div className="text-2xl font-black tabular-nums tracking-tight text-primary">
                 {score.toLocaleString()}
               </div>
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Score</div>
             </div>
           </div>
           <div className="flex items-center gap-4 px-6 py-4 bg-bg border border-border rounded-xl shadow-sm">
-            <div
-              className="flex items-center justify-center w-12 h-12 rounded-lg border border-opacity-50"
-              style={{
-                color: 'var(--primary)',
-                background: 'var(--primary-muted)',
-                borderColor: 'var(--primary-light)',
-              }}
-            >
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg border border-primary/20 text-primary bg-primary-muted">
               <Building2 size={22} />
             </div>
             <div className="text-left">
-              <div className="text-2xl font-black tabular-nums tracking-tight" style={{ color: 'var(--primary)' }}>
+              <div className="text-2xl font-black tabular-nums tracking-tight text-primary">
                 {totalPct}%
               </div>
               <div className="text-xs font-semibold text-text-secondary uppercase tracking-widest mt-0.5">Complete</div>
@@ -226,22 +198,14 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
 
       {/* ── Database Grid Header ── */}
       <div className="flex items-center justify-between max-w-7xl mx-auto mt-12 mb-6 px-6">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Layers size={14} color="var(--muted)" />
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: 'var(--text-secondary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
+        <div className="flex items-center gap-2.5">
+          <Layers size={14} className="text-muted" />
+          <span className="text-xs font-bold text-text-secondary uppercase tracking-[0.08em]">
             Built-in Databases
           </span>
           <span className="px-2 py-0.5 bg-surface-2 text-text text-xs font-bold rounded-md border border-border">{DB_NAMES.length}</span>
         </div>
-        <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+        <span className="text-xs text-muted">
           {allQuestions.length - totalComplete} questions remaining
         </span>
       </div>
@@ -308,17 +272,9 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
 
       {/* ── Learn SQL Section ── */}
       <div className="max-w-7xl mx-auto mt-20 mb-12 px-6">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-          <BookOpen size={14} color="var(--muted)" />
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: 'var(--text-secondary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-            }}
-          >
+        <div className="flex items-center gap-2.5 mb-6">
+          <BookOpen size={14} className="text-muted" />
+          <span className="text-xs font-bold text-text-secondary uppercase tracking-[0.08em]">
             Learn SQL Step-by-Step
           </span>
         </div>

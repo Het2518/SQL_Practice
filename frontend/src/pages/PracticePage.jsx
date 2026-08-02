@@ -387,7 +387,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
             localStorage.setItem('freemiumCount', (count + 1).toString());
           }
 
-          onProgressUpdate(currentQ, db, 'complete');
+          onProgressUpdate(currentQ, db, 'complete', sql);
           if (progress[currentQ.id] !== 'complete') {
             const diff = (currentQ.difficulty || '').toLowerCase();
             const pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
@@ -405,7 +405,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           }
         } else {
           if (progress[currentQ.id] !== 'complete') {
-            onProgressUpdate(currentQ, db, 'attempted');
+            onProgressUpdate(currentQ, db, 'attempted', sql);
           }
         }
       } else {
@@ -618,50 +618,13 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
           >
             <button
               onClick={() => setShowDbPicker((v) => !v)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '4px 8px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text)',
-                borderRadius: 'var(--radius)',
-                transition: 'background var(--transition-fast)',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              className="flex items-center gap-1.5 text-[13px] font-semibold px-2 py-1 bg-transparent border-none cursor-pointer text-text rounded-md transition-colors hover:bg-surface-2"
             >
-              {dbInfo.label} <ChevronDown size={14} style={{ opacity: 0.5 }} />
+              {dbInfo.label} <ChevronDown size={14} className="opacity-50" />
             </button>
             {showDbPicker && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 4px)',
-                  left: 0,
-                  zIndex: 999,
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-float)',
-                  minWidth: 230,
-                  padding: '6px 0',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '5px 14px 6px',
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'var(--muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: 1,
-                  }}
-                >
+              <div className="absolute top-[calc(100%+4px)] left-0 z-50 bg-surface border border-border rounded-xl shadow-float min-w-[230px] py-1.5">
+                <div className="px-3.5 pt-1.5 pb-1.5 text-[10px] font-bold text-muted uppercase tracking-[1px]">
                   Switch Database
                 </div>
                 {Object.keys(DB_INFO).map((d) => {
@@ -673,75 +636,32 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                     <button
                       key={d}
                       onClick={() => handleSwitchDb(d)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        width: '100%',
-                        padding: '8px 14px',
-                        background: isActive ? 'var(--primary-muted)' : 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: 'var(--text)',
-                        fontSize: 13,
-                        fontFamily: 'var(--font-sans)',
-                        transition: 'background 0.12s',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.background = 'var(--surface-2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) e.currentTarget.style.background = 'transparent';
-                      }}
+                      className={`flex items-center gap-2.5 w-full px-3.5 py-2 border-none cursor-pointer text-[13px] font-sans transition-colors ${
+                        isActive ? 'bg-primary-muted font-semibold text-text' : 'bg-transparent font-normal text-text hover:bg-surface-2'
+                      }`}
                     >
-                      <span
-                        style={{ flex: 1, fontWeight: isActive ? 600 : 400, textAlign: 'left' }}
-                      >
+                      <span className="flex-1 text-left">
                         {info.label}
                       </span>
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color: 'var(--muted)',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
+                      <span className="text-[11px] text-muted tabular-nums">
                         {comp}/{info.questionCount}
                       </span>
                       {isActive && (
-                        <span style={{ color: 'var(--text)', fontSize: 11, fontWeight: 700 }}>
+                        <span className="text-text text-[11px] font-bold">
                           ✓
                         </span>
                       )}
                     </button>
                   );
                 })}
-                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                <div className="border-t border-border my-1" />
                 <button
                   onClick={() => {
                     if (window.confirm('Reset all progress for ' + dbInfo.label + '?'))
                       resetDb(db);
                     setShowDbPicker(false);
                   }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '8px 14px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--error)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--surface-2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'none';
-                  }}
+                  className="flex items-center w-full px-3.5 py-2 bg-transparent hover:bg-surface-2 border-none cursor-pointer text-error text-xs font-semibold transition-colors"
                 >
                   ↺ Reset Progress
                 </button>
@@ -828,34 +748,12 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                   style={{ position: 'fixed', inset: 0, zIndex: 98 }}
                   onClick={() => setShowOverflow(false)}
                 />
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 4px)',
-                    right: 0,
-                    zIndex: 99,
-                    background: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-float)',
-                    minWidth: 220,
-                    padding: '6px 0',
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '4px 14px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: 'var(--muted)',
-                      textTransform: 'uppercase',
-                      letterSpacing: 1,
-                    }}
-                  >
+                <div className="absolute top-[calc(100%+4px)] right-0 z-50 bg-surface border border-border rounded-xl shadow-float min-w-[220px] py-1.5">
+                  <div className="px-3.5 pt-1 pb-1 text-[10px] font-bold text-muted uppercase tracking-[1px]">
                     Query History
                   </div>
                   {queryHistory.length === 0 && (
-                    <div style={{ padding: '8px 14px', fontSize: 12, color: 'var(--muted)' }}>
+                    <div className="px-3.5 py-2 text-xs text-muted">
                       No recent queries
                     </div>
                   )}
@@ -993,29 +891,31 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               </Suspense>
             </div>
             <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" onClick={() => setSql('')}>
-                  <RotateCcw size={13} /> Reset
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
+                <Button variant="secondary" size="sm" onClick={() => setSql('')} title="Reset">
+                  <RotateCcw size={13} /> <span className="hidden sm:inline">Reset</span>
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSql(formatQuery(sql))}>
+                <Button variant="ghost" size="sm" onClick={() => setSql(formatQuery(sql))} title="Format">
                   Format
                 </Button>
-                <div className="w-px h-4 bg-border mx-1" />
+                <div className="hidden sm:block w-px h-4 bg-border mx-1" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowCteModal(true)}
                   style={{ fontSize: 11 }}
+                  title="Convert to CTE"
                 >
-                  🪄 CTE
+                  🪄 <span className="hidden sm:inline">CTE</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setJoinAnalysisData({ db: executeQuery, sql })}
                   style={{ fontSize: 11 }}
+                  title="Analyze Joins"
                 >
-                  🔗 Joins
+                  🔗 <span className="hidden sm:inline">Joins</span>
                 </Button>
               </div>
               <Button size="sm" onClick={runQuery} isLoading={isRunning}>

@@ -192,22 +192,12 @@ export const ResultsPanel = React.memo(function ResultsPanel({
               <>
                 {/* Data Tab */}
                 {activeTab === 'data' && (
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div className="flex-1 flex flex-col min-h-0">
                     {/* Performance Analyzer Warning (Phase 1) */}
                     {result.explainPlan &&
                       result.explainPlan.some((row) => row[3] && row[3].includes('SCAN TABLE')) && (
-                        <div
-                          style={{
-                            margin: '12px 16px',
-                            padding: '10px 14px',
-                            background: 'rgba(230,126,34,0.1)',
-                            borderLeft: '4px solid #e67e22',
-                            borderRadius: '4px',
-                            fontSize: '12.5px',
-                            color: 'var(--text)',
-                          }}
-                        >
-                          <strong style={{ color: '#e67e22' }}>Performance Warning:</strong> This
+                        <div className="mx-4 my-3 px-3.5 py-2.5 bg-warning-muted border-l-4 border-warning rounded text-[12.5px] text-text">
+                          <strong className="text-warning">Performance Warning:</strong> This
                           query performs a <strong>Full Table Scan</strong>. While it works, it
                           might be slow on large datasets. Consider adding an index or filtering
                           earlier!
@@ -215,26 +205,15 @@ export const ResultsPanel = React.memo(function ResultsPanel({
                       )}
 
                     {result.columns.length === 0 ? (
-                      <div
-                        style={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--muted)',
-                          fontSize: 13,
-                          gap: 12,
-                        }}
-                      >
-                        <CheckCircle size={20} strokeWidth={1.5} color="var(--success)" />
-                        <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>
+                      <div className="flex-1 flex flex-col items-center justify-center text-muted text-[13px] gap-3">
+                        <CheckCircle size={20} strokeWidth={1.5} className="text-success" />
+                        <div className="font-semibold text-text text-sm">
                           Query Successful
                         </div>
                         <div>Your query returned 0 rows.</div>
                       </div>
                     ) : (
-                      <div style={{ flex: 1, minHeight: 0 }}>
+                      <div className="flex-1 min-h-0">
                         <TableVirtuoso
                           style={{ height: '100%', width: '100%' }}
                           data={currentRows}

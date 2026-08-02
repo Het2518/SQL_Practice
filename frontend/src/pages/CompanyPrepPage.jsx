@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeBase';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
-import { Card } from '@/shared/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/Card';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 
 const TABS = [
@@ -291,7 +291,11 @@ export default function CompanyPrepPage(props) {
         {/* ━━ OVERVIEW ━━ */}
         {activeTab === 'overview' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <Card title="Difficulty Distribution">
+            <Card>
+              <CardHeader>
+                <CardTitle>Difficulty Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
               <DiffBar easy={diffDist.easy} medium={diffDist.medium} hard={diffDist.hard} />
               <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
                 {[
@@ -323,9 +327,14 @@ export default function CompanyPrepPage(props) {
                   </span>
                 ))}
               </div>
+              </CardContent>
             </Card>
 
-            <Card title="Frequently Asked Topics">
+            <Card>
+              <CardHeader>
+                <CardTitle>Frequently Asked Topics</CardTitle>
+              </CardHeader>
+              <CardContent>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                 {(
                   kb?.topics || ['Joins', 'Window Functions', 'Aggregations', 'Subqueries', 'CTEs']
@@ -346,13 +355,15 @@ export default function CompanyPrepPage(props) {
                   </span>
                 ))}
               </div>
+              </CardContent>
             </Card>
 
             {kb?.patterns && kb.patterns.length > 0 && (
-              <Card
-                title={`Common Question Patterns at ${companyName}`}
-                style={{ gridColumn: '1 / -1' }}
-              >
+              <Card className="col-span-full">
+                <CardHeader>
+                  <CardTitle>Common Question Patterns at {companyName}</CardTitle>
+                </CardHeader>
+                <CardContent>
                 <div
                   style={{
                     display: 'grid',
@@ -390,10 +401,15 @@ export default function CompanyPrepPage(props) {
                     </div>
                   ))}
                 </div>
+                </CardContent>
               </Card>
             )}
 
-            <Card title="Quick Actions" style={{ gridColumn: '1 / -1' }}>
+            <Card className="col-span-full">
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Button
                   variant="secondary"
@@ -420,6 +436,7 @@ export default function CompanyPrepPage(props) {
                   View Learning Path
                 </Button>
               </div>
+              </CardContent>
             </Card>
           </div>
         )}
