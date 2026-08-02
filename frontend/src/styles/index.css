@@ -229,62 +229,62 @@ html, body {
 
 /* ── Chat Markdown Styling ── */
 .chat-markdown table {
-  width: max-content;
-  max-width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-  font-size: 13px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  display: block;
-  overflow-x: auto;
+  width: max-content !important;
+  max-width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 16px 0 !important;
+  font-size: 13px !important;
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  display: block !important;
+  overflow-x: auto !important;
 }
 
 .chat-markdown th {
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 10px 16px;
-  text-align: left;
-  border-bottom: 2px solid var(--border);
+  background: var(--surface-2) !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 10px 16px !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--border) !important;
 }
 
 .chat-markdown td {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text) !important;
 }
 
 .chat-markdown tr:last-child td {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .chat-markdown tr:hover td {
-  background: var(--surface-2);
+  background: var(--surface-2) !important;
 }
 
 .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
-  color: var(--text);
-  font-weight: 800;
-  margin-top: 24px;
-  margin-bottom: 12px;
+  color: var(--text) !important;
+  font-weight: 800 !important;
+  margin-top: 24px !important;
+  margin-bottom: 12px !important;
 }
 
 .chat-markdown p {
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 16px;
+  color: var(--text-secondary) !important;
+  line-height: 1.6 !important;
+  margin-bottom: 16px !important;
 }
 
 .chat-markdown ul {
-  list-style-type: disc;
-  margin-left: 20px;
-  margin-bottom: 16px;
-  color: var(--text-secondary);
+  list-style-type: disc !important;
+  margin-left: 20px !important;
+  margin-bottom: 16px !important;
+  color: var(--text-secondary) !important;
 }
 
 .chat-markdown code {
@@ -294,4 +294,24 @@ html, body {
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
+}
+
+.chat-markdown pre {
+  background: var(--surface-3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.chat-markdown pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text);
+}
+
+.chat-markdown strong {
+  font-weight: 700;
+  color: var(--text);
 }
