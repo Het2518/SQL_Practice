@@ -1,82 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
-import { Search, Bot } from 'lucide-react';
+import { Clock, BarChart, ShieldCheck, PlayCircle, AlertTriangle } from 'lucide-react';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';
-import { CompanyGrid } from './CompanyGrid';
 
-const CATEGORIES = [
-  'All',
-  'MNC',
-  'Startup',
-  'SaaS',
-  'FinTech',
-  'Cloud',
-  'Data',
-  'E-commerce',
-  'Social',
-  'Security',
-  'HealthTech',
+const DURATIONS = [
+  { label: '15 Minutes', value: 15 },
+  { label: '30 Minutes', value: 30 },
+  { label: '45 Minutes', value: 45 },
+  { label: '60 Minutes', value: 60 },
 ];
-const ITEMS_PER_PAGE = 24;
+
+const DIFFICULTIES = [
+  { label: 'Mixed', value: 'mixed' },
+  { label: 'Easy', value: 'easy' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Hard', value: 'hard' },
+];
 
 export function InterviewPage({ user, onShowAuth, onShowSettings }) {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [duration, setDuration] = useState(30);
+  const [difficulty, setDifficulty] = useState('mixed');
 
-  const {
-    data: companies = [],
-    isLoading: loading,
-    error: queryError,
-  } = useQuery({
-    queryKey: ['companies'],
-    queryFn: async () => {
-      const { data } = await api.companies.getAll();
-      return data.data.companies ?? [];
-    },
-  });
-
-  const error = queryError ? 'Failed to load companies.' : null;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeCategory, searchQuery]);
-
-  const filtered = companies.filter((c) => {
-    const matchCat = activeCategory === 'All' || c.category === activeCategory;
-    const matchQ = c.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchQ;
-  });
-
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const handleStart = () => {
+    navigate(`/interview/preflight?duration=${duration}&difficulty=${difficulty}`);
+  };
 
   return (
     <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text flex flex-col page-enter">
-      {/* ── Global Header ── */}
       <Header
         user={user}
         onShowAuth={onShowAuth}
         onShowSettings={onShowSettings}
         leftContent={
           <HeaderBreadcrumbs
-            items={[{ label: 'Home', onClick: () => navigate('/') }, { label: 'Interview Prep' }]}
+            items={[{ label: 'Home', onClick: () => navigate('/') }, { label: 'Mock Interview Setup' }]}
           />
         }
       />
 
-      {/* ── Premium Hero ── */}
       <div
         style={{
           padding: '64px 32px',
-          background: 'linear-gradient(180deg, var(--primary-muted) 0%, var(--bg) 100%)',
+          background: 'linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%)',
           borderBottom: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
@@ -88,7 +55,7 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
           style={{
             padding: '4px 16px',
             borderRadius: 99,
-            background: 'var(--surface)',
+            background: 'var(--primary-muted)',
             border: '1px solid var(--primary-light)',
             fontSize: 11,
             fontWeight: 700,
@@ -98,222 +65,95 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
             boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
           }}
         >
-          SQL INTERVIEW PREP
+          STRICT PROCTORING ENABLED
         </div>
         <h1
           style={{
-            fontSize: 42,
+            fontSize: 48,
             fontWeight: 900,
             color: 'var(--text)',
-            letterSpacing: '-1px',
-            margin: '0 0 16px',
             lineHeight: 1.1,
+            letterSpacing: '-1px',
+            marginBottom: 16,
+            maxWidth: 800,
           }}
         >
-          Ace your interviews
-          <br />
-          <span style={{ color: 'var(--primary)' }}>at top tech companies</span>
+          Proctored Mock Interview
         </h1>
-        <p
-          style={{
-            fontSize: 16,
-            color: 'var(--text-secondary)',
-            lineHeight: 1.6,
-            margin: '0 0 40px',
-            maxWidth: 600,
-          }}
-        >
-          Master company-specific SQL questions, study real candidate experiences, and take our new <strong>Proctored Mock Interviews</strong> to land your dream role.
+        <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 600, lineHeight: 1.6 }}>
+          Configure your mock interview. Once started, you will enter a strictly proctored environment that prevents tab switching, copy-pasting, and requires full-screen mode.
         </p>
-
-        {/* Floating Search Bar */}
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 540,
-            marginBottom: 24,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-            borderRadius: 16,
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Search companies (e.g., Affirm, Meta)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '16px 20px 16px 52px',
-              border: '1px solid var(--border)',
-              borderRadius: 16,
-              background: 'var(--surface)',
-              color: 'var(--text)',
-              fontFamily: 'var(--font-sans)',
-              fontSize: 15,
-              fontWeight: 500,
-              outline: 'none',
-              boxSizing: 'border-box',
-              transition: 'all 0.2s ease',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = 'var(--primary)')}
-            onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-          />
-          <Search
-            size={18}
-            color="var(--muted)"
-            style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)' }}
-          />
-        </div>
-
-        {/* Modern Category Chips */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            paddingBottom: 4,
-            maxWidth: '100%',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 99,
-                fontSize: 13,
-                fontWeight: 600,
-                border: 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                fontFamily: 'var(--font-sans)',
-                background: activeCategory === cat ? 'var(--text)' : 'var(--surface)',
-                color: activeCategory === cat ? 'var(--bg)' : 'var(--text-secondary)',
-                boxShadow:
-                  activeCategory === cat
-                    ? '0 4px 12px rgba(0,0,0,0.1)'
-                    : 'inset 0 0 0 1px var(--border)',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Content ── */}
-      <div style={{ flex: 1, padding: '24px 32px 64px' }}>
-        {/* Results count */}
-        <div style={{ marginBottom: 16, fontSize: 12, color: 'var(--muted)', fontWeight: 500 }}>
-          {loading
-            ? 'Loading...'
-            : `${filtered.length} companies${searchQuery ? ` matching "${searchQuery}"` : ''}`}
+      <div className="max-w-2xl mx-auto px-6 py-12 w-full flex flex-col gap-10">
+        
+        {/* Time Limit */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={20} className="text-primary" />
+            <h2 className="text-xl font-bold">Time Limit</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {DURATIONS.map((d) => (
+              <button
+                key={d.value}
+                onClick={() => setDuration(d.value)}
+                className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
+                  duration === d.value
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-border bg-surface hover:bg-surface-2 text-text-secondary'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {error ? (
-          <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--error)', marginBottom: 8 }}>
-              Failed to load companies
-            </div>
-            <div style={{ fontSize: 13 }}>{error}</div>
+        {/* Difficulty */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart size={20} className="text-primary" />
+            <h2 className="text-xl font-bold">Difficulty Level</h2>
           </div>
-        ) : loading ? (
-          <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontSize: 14 }}>
-            Loading companies...
-          </div>
-        ) : (
-          <>
-            <CompanyGrid
-              companies={paginated}
-              onSelect={(c) => navigate(`/company/${c.name?.toLowerCase().replace(/\s+/g, '-')}`)}
-              onClose={() => navigate('/')}
-            />
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 8,
-                  marginTop: 32,
-                  alignItems: 'center',
-                }}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d.value}
+                onClick={() => setDifficulty(d.value)}
+                className={`py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
+                  difficulty === d.value
+                    ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                    : 'border-border bg-surface hover:bg-surface-2 text-text-secondary'
+                }`}
               >
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
-                  style={{
-                    padding: '6px 14px',
-                    border: '1px solid var(--border)',
-                    borderRadius: 7,
-                    background: 'var(--surface)',
-                    color: 'var(--text)',
-                    cursor: currentPage === 1 ? 'default' : 'pointer',
-                    opacity: currentPage === 1 ? 0.4 : 1,
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: 13,
-                  }}
-                >
-                  Previous
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 7,
-                      border: '1px solid',
-                      fontFamily: 'var(--font-sans)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      background: currentPage === page ? 'var(--primary)' : 'var(--surface)',
-                      color: currentPage === page ? '#fff' : 'var(--text-secondary)',
-                      borderColor: currentPage === page ? 'var(--primary)' : 'var(--border)',
-                    }}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
-                  style={{
-                    padding: '6px 14px',
-                    border: '1px solid var(--border)',
-                    borderRadius: 7,
-                    background: 'var(--surface)',
-                    color: 'var(--text)',
-                    cursor: currentPage === totalPages ? 'default' : 'pointer',
-                    opacity: currentPage === totalPages ? 0.4 : 1,
-                    fontFamily: 'var(--font-sans)',
-                    fontSize: 13,
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
+                {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Warnings */}
+        <div className="bg-warning-muted border border-warning-light rounded-xl p-5 flex items-start gap-3 mt-4">
+          <AlertTriangle className="text-warning shrink-0 mt-0.5" size={20} />
+          <div>
+            <h4 className="font-bold text-text mb-1">Before you begin</h4>
+            <ul className="text-sm text-text-secondary list-disc ml-4 space-y-1">
+              <li>You must grant Fullscreen permission.</li>
+              <li>Leaving the tab or pressing Escape will trigger a violation warning.</li>
+              <li>Copy, paste, and context menus are completely disabled.</li>
+              <li>After 3 warnings, your interview will be terminated.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Start Button */}
+        <Button size="xl" variant="primary" onClick={handleStart} className="w-full mt-4 text-lg py-5 shadow-lg shadow-primary/20">
+          <ShieldCheck size={20} />
+          Enter Proctored Setup
+        </Button>
+
       </div>
     </div>
   );
-}
-
-// Keep backward-compat export for modal usage (now unused but kept to not break imports)
-export function InterviewDashboard({ onClose }) {
-  const navigate = useNavigate();
-  useEffect(() => {
-    navigate('/interview');
-    onClose?.();
-  }, []);
-  return null;
 }

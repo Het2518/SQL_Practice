@@ -252,8 +252,8 @@ export default function App() {
             />
           }
         />
-        <Route path="/interview/preflight/:companyId" element={<InterviewPreFlight />} />
-        <Route path="/interview/arena/:companyId" element={<InterviewArena />} />
+        <Route path="/interview/preflight" element={<InterviewPreFlight />} />
+        <Route path="/interview/arena" element={<InterviewArena />} />
         <Route path="/interview/report" element={<InterviewReport />} />
         <Route
           path="/company/:slug"

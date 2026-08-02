@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { hasGroqKey } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
 
 export function InterviewPreFlight() {
-  const { companyId } = useParams();
+  const [searchParams] = useSearchParams();
+  const duration = searchParams.get('duration') || 30;
+  const difficulty = searchParams.get('difficulty') || 'mixed';
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   const [checks, setChecks] = useState({
@@ -50,7 +53,7 @@ export function InterviewPreFlight() {
     } catch (err) {
       console.warn('Fullscreen failed:', err);
     }
-    navigate(`/interview/arena/${companyId}`);
+    navigate(`/interview/arena?duration=${duration}&difficulty=${difficulty}`);
   };
 
   return (
@@ -64,7 +67,7 @@ export function InterviewPreFlight() {
           </div>
           <h1 className="text-2xl font-black mb-2">Proctored Interview Arena</h1>
           <p className="text-text-secondary text-sm">
-            You are about to begin a strictly proctored mock interview for {companyId?.toUpperCase() || 'FAANG'}.
+            You are about to begin a strictly proctored mock interview. Length: {duration} minutes.
           </p>
         </div>
 

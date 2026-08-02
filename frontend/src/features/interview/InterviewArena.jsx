@@ -12,30 +12,30 @@ import remarkGfm from 'remark-gfm';
 const INTERVIEW_DURATION_MINUTES = 45;
 
 export function InterviewArena() {
-  const { companyId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const companyName = companyId?.toUpperCase() || "FAANG";
+  const duration = parseInt(searchParams.get('duration') || '30', 10);
+  const difficulty = searchParams.get('difficulty') || 'mixed';
+  const companyName = 'Generic Tech';
 
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sql, setSql] = useState('-- Write your solution here once you understand the requirements...\n\n');
-  const [timeLeft, setTimeLeft] = useState(INTERVIEW_DURATION_MINUTES * 60);
+  const [timeLeft, setTimeLeft] = useState(duration * 60);
+  const [warnings, setWarnings] = useState(0);
   
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
 
   // Dynamic Prompt Logic
   const getInitialTask = () => {
-    const tasks = [
-      "Find our top 3 most valuable customers who joined this year.",
-      "Calculate the week-over-week retention rate of active users.",
-      "Identify the second highest salary in each department.",
-      "Find all users who have made a purchase in all product categories."
-    ];
-    return tasks[companyName.length % tasks.length]; // Deterministic random based on company
+    if (difficulty === 'easy') return "Find our top 3 most valuable customers who joined this year.";
+    if (difficulty === 'medium') return "Calculate the week-over-week retention rate of active users.";
+    if (difficulty === 'hard') return "Write a recursive CTE to find the shortest path between two nodes in a graph table.";
+    return "Identify the second highest salary in each department.";
   };
 
   const initialTask = getInitialTask();
@@ -75,92 +75,59 @@ export function InterviewArena() {
         let msg = 'You exited full-screen mode or switched tabs.';
         if (isBlur) msg = 'Window lost focus. Strict proctoring forbids switching to other applications or monitors.';
 
-        toast({ title: 'Interview Terminated', message: `${msg} Score recorded as 0.`, type: 'error' });
-        isSubmittedRef.current = true;
-        
-        try {
-          const res = await api.interviews.saveScore({
-            companyName,
-            score: 0,
-            verdict: 'No Hire',
-            feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
-            durationMinutes: Math.round((INTERVIEW_DURATION_MINUTES * 60 - timeLeft) / 60)
-          });
-          // Route to report
-          navigate('/interview/report', { state: { session: res.data.data.session } });
-        } catch(e) {
-          console.error(e);
-          navigate('/interview');
-        }
+        setWarnings(prev => {
+          const next = prev + 1;
+          if (next >= 3) {
+            toast({ title: 'Interview Terminated', message: `${msg} You reached the maximum number of warnings. Score recorded as 0.`, type: 'error' });
+            isSubmittedRef.current = true;
+            api.interviews.saveScore({
+              companyName: 'Generic Tech',
+              score: 0,
+              verdict: 'No Hire',
+              feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
+              durationMinutes: Math.round((duration * 60 - timeLeft) / 60)
+            }).then(res => {
+              navigate('/interview/report', { state: { session: res.data.data.session } });
+            }).catch(() => navigate('/interview'));
+          } else {
+            toast({ title: 'Proctoring Warning', message: `${msg} Warning ${next} of 3.`, type: 'warning' });
+            // Attempt to re-enter fullscreen if they exited
+            if (isExit && document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            }
+          }
+          return next;
+        });
       }
     };
 
     const onVisibilityChange = () => handleAntiCheat('visibility');
     const onFullscreenChange = () => handleAntiCheat('fullscreen');
     const onWindowBlur = () => handleAntiCheat('blur');
-
-    const handleProctoring = (e) => {
-      if (isSubmittedRef.current) return;
-
-      if (e.type === 'contextmenu') e.preventDefault();
-      if (e.type === 'copy' || e.type === 'cut') {
-        e.preventDefault();
-        toast({ title: 'Proctoring Alert', message: 'Copy/Cut operations are disabled.', type: 'warning' });
-      }
-      if (e.type === 'paste') {
-        e.preventDefault();
-        toast({ title: 'Proctoring Alert', message: 'Pasting external code is strictly prohibited.', type: 'error' });
-      }
-      if (e.type === 'dragstart' || e.type === 'drop') {
-        e.preventDefault();
-        toast({ title: 'Proctoring Alert', message: 'Drag and drop is disabled.', type: 'error' });
-      }
-
-      if (e.type === 'keydown') {
-        if (e.key === 'PrintScreen') {
-          e.preventDefault();
-          navigator.clipboard?.writeText('');
-          toast({ title: 'Proctoring Alert', message: 'Screenshots are prohibited!', type: 'error' });
-        }
-        if (
-          e.key === 'F12' ||
-          ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c')) ||
-          ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P'))
-        ) {
-          e.preventDefault();
-        }
-        if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 's' || e.key === 'S' || e.key === '3' || e.key === '4' || e.key === '5')) {
-          e.preventDefault();
-          navigator.clipboard?.writeText('');
-          toast({ title: 'Proctoring Alert', message: 'Screenshots are prohibited!', type: 'error' });
-        }
-      }
+    const disableCopyPaste = (e) => {
+      e.preventDefault();
+      toast({ title: 'Proctoring Violation', message: 'Copy, Paste, and Cut are disabled during the interview.', type: 'error' });
     };
+    const disableContextMenu = (e) => e.preventDefault();
 
-    document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('visibilitychange', onVisibilityChange);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
     window.addEventListener('blur', onWindowBlur);
-    document.addEventListener('contextmenu', handleProctoring, { capture: true });
-    document.addEventListener('copy', handleProctoring, { capture: true });
-    document.addEventListener('cut', handleProctoring, { capture: true });
-    document.addEventListener('paste', handleProctoring, { capture: true });
-    document.addEventListener('dragstart', handleProctoring, { capture: true });
-    document.addEventListener('drop', handleProctoring, { capture: true });
-    document.addEventListener('keydown', handleProctoring, { capture: true });
+    document.addEventListener('copy', disableCopyPaste);
+    document.addEventListener('paste', disableCopyPaste);
+    document.addEventListener('cut', disableCopyPaste);
+    document.addEventListener('contextmenu', disableContextMenu);
 
     return () => {
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
       window.removeEventListener('blur', onWindowBlur);
-      document.removeEventListener('contextmenu', handleProctoring, { capture: true });
-      document.removeEventListener('copy', handleProctoring, { capture: true });
-      document.removeEventListener('cut', handleProctoring, { capture: true });
-      document.removeEventListener('paste', handleProctoring, { capture: true });
-      document.removeEventListener('dragstart', handleProctoring, { capture: true });
-      document.removeEventListener('drop', handleProctoring, { capture: true });
-      document.removeEventListener('keydown', handleProctoring, { capture: true });
+      document.removeEventListener('copy', disableCopyPaste);
+      document.removeEventListener('paste', disableCopyPaste);
+      document.removeEventListener('cut', disableCopyPaste);
+      document.removeEventListener('contextmenu', disableContextMenu);
     };
-  }, [companyName, navigate, toast, timeLeft]);
+  }, [navigate, duration, timeLeft, toast]);
 
   // Initial Message
   useEffect(() => {
@@ -276,10 +243,17 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-surface shadow-sm">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-black text-text tracking-tight uppercase">{companyName} Interview</h2>
-            <div className="px-2 py-1 rounded bg-error/10 text-error border border-error/20 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider">
-              <ShieldAlert size={14} /> Proctored Arena
-            </div>
+            <h1 className="font-black text-xl tracking-tight text-text flex items-center gap-2">
+            MOCK INTERVIEW
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-error/10 text-error border border-error/20 uppercase tracking-wider">
+              <ShieldAlert size={10} className="inline mr-1" /> Proctored Arena
+            </span>
+            {warnings > 0 && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20 ml-2">
+                Warnings: {warnings}/3
+              </span>
+            )}
+            </h1>
           </div>
           
           <div className="flex items-center gap-3">

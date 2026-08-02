@@ -244,15 +244,6 @@ export default function CompanyPrepPage(props) {
                 </p>
               </div>
             </div>
-
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => navigate(`/interview/preflight/${slug}`)}
-              style={{ padding: '0 32px' }}
-            >
-              Start Mock Interview
-            </Button>
           </div>
 
           {/* Stats strip */}
