@@ -81,7 +81,7 @@ export function LeaderboardTab({ currentUser, currentScore }) {
                 >
                   {entry.displayName || (entry.isCurrentUser ? 'You' : 'Anonymous User')}
                   {entry.isCurrentUser && (
-                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-primary text-white rounded-full">
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full">
                       YOU
                     </span>
                   )}

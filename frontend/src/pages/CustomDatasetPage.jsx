@@ -509,16 +509,16 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
           )}
         </div>
         <button
-          className="btn btn-ghost gap-1.5 text-[11px]"
+          className="flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
           onClick={() => inputRef.current?.click()}
         >
-          <Upload size={11} /> Add
+          <Upload size={13} /> Add
         </button>
         <button
-          className="btn btn-ghost gap-1.5 text-[11px] text-error"
+          className="flex items-center gap-1.5 text-[11px] text-error px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
           onClick={onReset}
         >
-          <Trash2 size={11} /> Clear
+          <Trash2 size={13} /> Clear
         </button>
         <input
           ref={inputRef}
@@ -831,14 +831,14 @@ export function CustomDatasetPage() {
       {/* ── Nav ── */}
       <nav className="sandbox-nav">
         <button
-          className="btn btn-ghost gap-1.5 text-xs"
+          className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
           onClick={() => navigate('/')}
         >
-          <Home size={13} /> Home
+          <Home size={15} /> Home
         </button>
 
         <div className="flex items-center gap-2">
-          <Database size={14} color="var(--primary)" />
+          <Database size={15} color="var(--primary)" />
           <span className="font-bold text-sm text-text">
             Custom Dataset
           </span>
@@ -852,15 +852,15 @@ export function CustomDatasetPage() {
 
         {!qPanelVisible && hasData && (
           <button
-            className="btn btn-ghost gap-1.5 text-[11px]"
+            className="flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
             onClick={() => setQPanelVisible(true)}
           >
-            <Sparkles size={12} color="var(--accent-1)" /> AI Questions
+            <Sparkles size={14} color="var(--accent-1)" /> AI Questions
           </button>
         )}
 
-        <button className="btn btn-ghost px-2 py-1.5" onClick={onToggleDark}>
-          {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+        <button className="flex items-center justify-center px-2 py-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-2 transition-colors" onClick={onToggleDark}>
+          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </nav>
 

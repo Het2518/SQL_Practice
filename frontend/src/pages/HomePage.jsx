@@ -23,7 +23,6 @@ import {
   TrendingUp,
   Building2,
   Terminal,
-  LineChart,
   Code,
   Code2,
   Link2,
@@ -286,7 +285,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             { title: '3. Joining Data', desc: 'INNER, LEFT, RIGHT JOINs', icon: Link2 },
             { title: '4. Subqueries', desc: 'Nested queries, IN, EXISTS', icon: Code },
             { title: '5. Date & Time', desc: 'Date math, EXTRACT, Formatting', icon: Clock },
-            { title: '6. Window Functions', desc: 'ROW_NUMBER, RANK, OVER', icon: LineChart },
+            { title: '6. Window Functions', desc: 'ROW_NUMBER, RANK, OVER', icon: Layers },
             { title: '7. CTEs', desc: 'WITH clause, readability', icon: Code2 },
             { title: '8. Advanced Topics', desc: 'Recursive CTEs, PIVOT', icon: Zap },
           ].map((topic, i) => (

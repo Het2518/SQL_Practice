@@ -26,13 +26,13 @@ function ToggleRow({ label, description, checked, onChange }) {
         )}
       </div>
       <div
-        className={`relative w-10 h-[22px] rounded-full shrink-0 transition-colors duration-300 ${
-          checked ? 'bg-primary' : 'bg-border'
+        className={`relative w-11 h-6 rounded-full shrink-0 transition-colors duration-300 ${
+          checked ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'
         }`}
       >
         <div
-          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-surface shadow-sm transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
-            checked ? 'left-[20px]' : 'left-[2px]'
+          className={`absolute top-[2px] w-5 h-5 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${
+            checked ? 'left-[22px] bg-primary-foreground' : 'left-[2px] bg-white'
           }`}
         />
       </div>

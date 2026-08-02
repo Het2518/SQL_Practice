@@ -21,8 +21,8 @@ function ProfileToggleRow({ label, description, checked, onChange }) {
         }`}
       >
         <div
-          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full bg-white shadow-md transition-all duration-300 ${
-            checked ? 'left-[20px]' : 'left-[2px]'
+          className={`absolute top-[2px] w-[18px] h-[18px] rounded-full shadow-md transition-all duration-300 ${
+            checked ? 'left-[20px] bg-primary-foreground' : 'left-[2px] bg-white'
           }`}
         />
       </div>
@@ -198,7 +198,7 @@ function ChangePasswordSection() {
         <button 
           type="submit" 
           disabled={status === 'loading'}
-          className="self-start flex items-center gap-2 px-4 py-2 bg-primary text-white border-none rounded-md cursor-pointer font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="self-start flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground border-none rounded-md cursor-pointer font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {status === 'loading' ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
         </button>

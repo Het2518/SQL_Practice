@@ -209,7 +209,7 @@ export const TheoryConnector = ({ sql, question }) => {
       {/* Header */}
       <div className="flex items-start gap-4 mb-8">
         <div className="bg-primary p-3 rounded-xl shadow-[0_4px_12px_var(--primary-muted)]">
-          <GraduationCap size={24} color="#fff" />
+          <GraduationCap size={24} className="text-primary-foreground" />
         </div>
         <div>
           <h2 className="m-0 text-[22px] font-bold text-text">
@@ -246,7 +246,7 @@ export const TheoryConnector = ({ sql, question }) => {
       {activeConcept.interviewQuestion && (
         <div className="mt-6 bg-primary/10 border border-primary/20 rounded-xl p-5 flex gap-4 items-start">
           <div className="bg-primary rounded-full p-2 flex">
-            <Lightbulb size={18} color="#fff" />
+            <Lightbulb size={18} className="text-primary-foreground" />
           </div>
           <div>
             <h4 className="m-0 mb-2 text-[13px] uppercase tracking-[0.05em] text-primary font-bold">

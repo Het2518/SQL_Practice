@@ -285,7 +285,7 @@ export function DashboardTab({ stats, gameState, nextRecommendations, quests, ti
                 const dateStr = d.toISOString().slice(0, 10);
                 const count = gameState.activity?.[dateStr] || 0;
 
-                let bg = 'var(--surface-2)';
+                let bg = 'var(--border)';
                 if (count === 1) bg = '#a5b4fc';
                 if (count === 2) bg = '#818cf8';
                 if (count > 2) bg = '#4f46e5';
@@ -294,7 +294,7 @@ export function DashboardTab({ stats, gameState, nextRecommendations, quests, ti
                   <div
                     key={rowIdx}
                     title={`${count} submissions on ${dateStr}`}
-                    className="w-3.5 h-3.5 rounded-[3px] cursor-pointer border border-white/5"
+                    className="w-3.5 h-3.5 rounded-[3px] cursor-pointer border border-border/50"
                     style={{ background: bg }}
                   />
                 );
