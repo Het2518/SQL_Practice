@@ -62,6 +62,13 @@ const InterviewPage = lazy(() =>
     }))
   )
 );
+const InterviewPermissions = lazy(() =>
+  lazyRetry(() =>
+    import('@/features/interview/InterviewPermissions').then((module) => ({
+      default: module.InterviewPermissions,
+    }))
+  )
+);
 const InterviewPreFlight = lazy(() =>
   lazyRetry(() =>
     import('@/features/interview/InterviewPreFlight').then((module) => ({
