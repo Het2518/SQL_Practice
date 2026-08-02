@@ -399,3 +399,13 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
     </>
   );
 }
+
+function VideoPreview({ stream }) {
+  const videoRef = React.useRef(null);
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+  return <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform -scale-x-100" />;
+}
