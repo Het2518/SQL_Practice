@@ -43,16 +43,19 @@ export function InterviewArena() {
         const prompt = `You are an expert technical interviewer for a FAANG company.
 Generate a SINGLE, unique SQL interview question for a candidate. 
 Difficulty: ${difficulty.toUpperCase()}.
+
 Requirements:
-1. Just provide the raw text of the question. NO introductory text, NO pleasantries, NO schema definitions.
-2. The question should be realistic, testing concepts like Joins, Window Functions, or CTEs based on the difficulty.
-3. Do not provide the answer.
-Example: "Write a query to calculate the 7-day rolling average of daily active users for the past month."`;
+1. Provide a comprehensive Markdown-formatted problem statement.
+2. Include the EXACT problem question (e.g. "Write a query to...").
+3. Include a "Schema" section showing the table structures (Columns, Types).
+4. Include an "Example Input" table and an "Example Output" table.
+5. DO NOT provide the SQL solution. 
+6. Do not include introductory conversational text. Just the markdown problem.`;
         
-        const response = await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 100, false);
-        setInitialTask(response.trim().replace(/^"|"$/g, ''));
+        const response = await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 600, false);
+        setInitialTask(response.trim());
       } catch (err) {
-        setInitialTask("Identify the top 3 users by total transaction volume in the last 30 days.");
+        setInitialTask("Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)");
       } finally {
         setGeneratingQuestion(false);
       }
@@ -95,31 +98,29 @@ Example: "Write a query to calculate the 7-day rolling average of daily active u
         let msg = 'You exited full-screen mode or switched tabs.';
         if (isBlur) msg = 'Window lost focus. Strict proctoring forbids switching to other applications or monitors.';
 
-        warningsRef.current += 1;
-        const currentWarnings = warningsRef.current;
-        setWarnings(currentWarnings);
-
-        if (currentWarnings >= 3) {
-          toast({ title: 'Interview Terminated', message: `${msg} You reached the maximum number of warnings. Score recorded as 0.`, type: 'error' });
-          isSubmittedRef.current = true;
-          
-          api.interviews.saveScore({
-            companyName: 'Generic Tech',
-            score: 0,
-            verdict: 'No Hire',
-            feedback: `Interview terminated early due to anti-cheat violation: ${msg}`,
-            durationMinutes: Math.round((duration * 60 - timeLeft) / 60)
-          }).then(res => {
-            navigate('/interview/report', { state: { session: res.data.data.session } });
-          }).catch(() => navigate('/interview'));
-          
-        } else {
-          toast({ title: 'Proctoring Warning', message: `${msg} Warning ${currentWarnings} of 3.`, type: 'warning' });
-          // Attempt to re-enter fullscreen if they exited
-          if (isExit && document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => {});
-          }
-        }
+        // ZERO TOLERANCE: INSTANT TERMINATION
+        toast({ title: 'Interview Terminated', message: `${msg} Zero-Tolerance Policy Enforced.`, type: 'error' });
+        isSubmittedRef.current = true;
+        
+        try {
+          const { stopAllStreams } = useProctorStore.getState();
+          stopAllStreams();
+        } catch(e) {}
+        
+        // Redirect to report immediately, forcing a score of 0
+        navigate('/interview/report', { 
+          state: { 
+            sessionPayload: {
+              companyName,
+              sql: '',
+              initialTask,
+              durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
+              chatHistory: messages,
+              forceZero: true,
+              violationMsg: msg
+            }
+          } 
+        });
       }
     };
 
@@ -242,69 +243,32 @@ Example: "Write a query to calculate the 7-day rolling average of daily active u
       }
     }
     
+    isSubmittedRef.current = true;
     setIsLoading(true);
-    setMessages((prev) => [...prev, { role: 'user', content: isTimeUp ? 'Time is up! Submitting automatically.' : 'I am ready to submit my SQL solution for evaluation.' }]);
 
     try {
-      const systemPrompt = `[IDENTITY]: You are a Principal Engineer at ${companyName} grading a SQL interview.
-[TASK]: The candidate was given the problem: "${initialTask}"
-They have submitted their final SQL query:
-\`\`\`sql
-${sql}
-\`\`\`
-[INSTRUCTIONS]: 
-1. Ignore any previous chat history. Evaluate ONLY the final SQL query submitted.
-2. Rate the query purely on logic, correctness, efficiency, and edge-case handling.
-3. DO NOT hallucinate. If the query logically solves the prompt based on a reasonable schema assumption, pass it.
-4. Provide a structured markdown response with:
-   - **Verdict**: Hire / No Hire / Lean Hire
-   - **Correctness**: What they got right/wrong.
-   - **Efficiency**: Any optimization feedback.
-   - **Optimal Solution**: (You MAY provide the correct SQL solution here in the final report).
-CRITICAL: You MUST end your response with a JSON-like block containing the numeric score out of 100 and a short verdict ("Strong Hire", "Hire", "Borderline", "No Hire"), in exactly this format:
-[SCORE: 85/100]
-[VERDICT: Hire]`;
-      
-      const response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 500, false);
-      
-      const scoreMatch = response.match(/\[SCORE:\s*(\d+)\/100\]/i);
-      const verdictMatch = response.match(/\[VERDICT:\s*(.+?)\]/i);
-      
-      const score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
-      const verdict = verdictMatch ? verdictMatch[1].trim() : 'Borderline';
-      
-      isSubmittedRef.current = true;
-
-      try {
-        const res = await api.interviews.saveScore({
-          companyName,
-          score,
-          verdict,
-          feedback: response,
-          durationMinutes: Math.round((INTERVIEW_DURATION_MINUTES * 60 - timeLeft) / 60)
-        });
-        
-        try {
-          if (document.exitFullscreen) {
-            await document.exitFullscreen().catch(() => {});
-          }
-        } catch (e) {}
-
-        try {
-          const { stopAllStreams } = useProctorStore.getState();
-          stopAllStreams();
-        } catch(e) {}
-        
-        navigate('/interview/report', { state: { session: res.data.data.session } });
-      } catch (saveErr) {
-        console.error('Failed to save score:', saveErr);
-        toast({ title: 'Error saving score', type: 'error' });
+      if (document.exitFullscreen) {
+        await document.exitFullscreen().catch(() => {});
       }
+    } catch (e) {}
 
-    } catch (err) {
-      toast({ title: 'Evaluation Failed', message: 'Network error.', type: 'error' });
-      setIsLoading(false);
-    }
+    try {
+      const { stopAllStreams } = useProctorStore.getState();
+      stopAllStreams();
+    } catch(e) {}
+    
+    navigate('/interview/report', { 
+      state: { 
+        sessionPayload: {
+          companyName,
+          sql,
+          initialTask,
+          durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
+          chatHistory: messages,
+          forceZero: false
+        }
+      } 
+    });
   };
 
   return (

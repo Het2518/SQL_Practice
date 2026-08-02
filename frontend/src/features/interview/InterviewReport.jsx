@@ -1,22 +1,119 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { Target, ArrowLeft, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Target, ArrowLeft, RotateCcw, AlertTriangle, ShieldCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { api } from '@/lib/api';
+import { groqChat, MODEL_SMART } from '@/lib/groq';
 
 export function InterviewReport() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const session = location.state?.session;
+  const [session, setSession] = useState(location.state?.session || null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // If we received a raw payload, we need to grade it first!
+    const payload = location.state?.sessionPayload;
+    if (payload && !session && !isEvaluating && !error) {
+      evaluateSubmission(payload);
+    }
+  }, [location.state, session, isEvaluating, error]);
+
+  const evaluateSubmission = async (payload) => {
+    setIsEvaluating(true);
+    try {
+      let score = 0;
+      let verdict = 'No Hire';
+      let feedback = payload.violationMsg || 'No feedback provided.';
+
+      if (payload.forceZero) {
+        // Zero-tolerance failure
+        score = 0;
+        verdict = 'No Hire';
+        feedback = `**PROCTORING VIOLATION DETECTED**\n\nYour interview was instantly terminated and a score of 0 was recorded due to the following violation:\n\n> ${payload.violationMsg}\n\nFAANG interviews require strict adherence to proctoring rules. You may not exit fullscreen or switch tabs.`;
+      } else {
+        // AI Grading
+        const systemPrompt = `[IDENTITY]: You are a Principal Engineer at ${payload.companyName} grading a SQL interview.
+[TASK]: The candidate was given the problem: "${payload.initialTask}"
+They have submitted their final SQL query:
+\`\`\`sql
+${payload.sql}
+\`\`\`
+[INSTRUCTIONS]: 
+1. Ignore any previous chat history. Evaluate ONLY the final SQL query submitted.
+2. Rate the query purely on logic, correctness, efficiency, and edge-case handling.
+3. DO NOT hallucinate. If the query logically solves the prompt based on a reasonable schema assumption, pass it.
+4. Provide a structured markdown response with:
+   - **Verdict**: Hire / No Hire / Lean Hire
+   - **Correctness**: What they got right/wrong.
+   - **Efficiency**: Any optimization feedback.
+   - **Optimal Solution**: (You MAY provide the correct SQL solution here in the final report).
+CRITICAL: You MUST end your response with a JSON-like block containing the numeric score out of 100 and a short verdict ("Strong Hire", "Hire", "Borderline", "No Hire"), in exactly this format:
+[SCORE: 85/100]
+[VERDICT: Hire]`;
+        
+        const response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 500, false);
+        const scoreMatch = response.match(/\[SCORE:\s*(\d+)\/100\]/i);
+        const verdictMatch = response.match(/\[VERDICT:\s*(.+?)\]/i);
+        
+        score = scoreMatch ? parseInt(scoreMatch[1], 10) : 0;
+        verdict = verdictMatch ? verdictMatch[1].trim() : 'Borderline';
+        feedback = response.replace(/\[SCORE:.*?\]/i, '').replace(/\[VERDICT:.*?\]/i, '').trim();
+      }
+
+      // Save to database
+      const res = await api.interviews.saveScore({
+        companyName: payload.companyName,
+        score,
+        verdict,
+        feedback,
+        durationMinutes: payload.durationMinutes
+      });
+
+      setSession(res.data.data.session);
+      // Clear history to prevent resubmission on refresh
+      window.history.replaceState({}, document.title);
+    } catch (err) {
+      console.error(err);
+      setError('A network error occurred while grading your interview.');
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
   
-  if (!session) {
+  if (!session && !location.state?.sessionPayload) {
     return <Navigate to="/interview" replace />;
   }
 
+  if (isEvaluating) {
+    return (
+      <div className="min-h-screen bg-bg text-text flex flex-col items-center justify-center p-6 page-enter">
+        <Loader2 size={64} className="animate-spin text-primary mb-6" />
+        <h1 className="text-3xl font-black mb-4">Evaluating Submission...</h1>
+        <p className="text-text-secondary text-lg max-w-md text-center">
+          Our AI Principal Engineer is carefully reviewing your SQL query against FAANG standards. This takes about 5-10 seconds.
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bg text-text flex flex-col items-center justify-center p-6 page-enter">
+        <AlertTriangle size={64} className="text-error mb-6" />
+        <h1 className="text-3xl font-black mb-4 text-error">Evaluation Failed</h1>
+        <p className="text-text-secondary text-lg max-w-md text-center mb-8">{error}</p>
+        <Button variant="primary" onClick={() => navigate('/interview')}>Return to Dashboard</Button>
+      </div>
+    );
+  }
+
   const isHire = session.verdict === 'Hire' || session.verdict === 'Strong Hire';
-  const isNoHire = session.verdict === 'No Hire' || session.verdict === 'Fail';
+  const isNoHire = session.verdict === 'No Hire' || session.verdict === 'Fail' || session.verdict.toLowerCase().includes('violation');
 
   return (
     <div className="min-h-screen bg-bg text-text p-6 md:p-12 overflow-y-auto page-enter">
