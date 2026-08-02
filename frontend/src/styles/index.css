@@ -226,3 +226,72 @@ html, body {
   background: var(--surface-2);
   color: var(--text);
 }
+
+/* ── Chat Markdown Styling ── */
+.chat-markdown table {
+  width: max-content;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: block;
+  overflow-x: auto;
+}
+
+.chat-markdown th {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+}
+
+.chat-markdown td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.chat-markdown tr:last-child td {
+  border-bottom: none;
+}
+
+.chat-markdown tr:hover td {
+  background: var(--surface-2);
+}
+
+.chat-markdown h1, .chat-markdown h2, .chat-markdown h3 {
+  color: var(--text);
+  font-weight: 800;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.chat-markdown p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.chat-markdown ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.chat-markdown code {
+  background: var(--surface-3);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

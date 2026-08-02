@@ -61,16 +61,19 @@ Write a realistic 2-3 sentence business scenario. (e.g., "You are a Data Analyst
 
 # Schema Definition
 Provide the exact table schemas using Markdown tables.
-Include: Table Name, Column Name, Data Type, and a brief Description.
+CRITICAL: Above EVERY table, you MUST include a bold title specifying the table name (e.g., **Table: users**).
+Include: Column Name, Data Type, and a brief Description.
 
 # Example Input Data
-Provide 3-5 rows of sample data for EACH table in Markdown format. This helps the candidate visualize the joins.
+Provide 3-5 rows of sample data for EACH table in Markdown format.
+CRITICAL: Above EVERY sample data table, you MUST include a bold title (e.g., **Example Data: users**).
 
 # The Challenge
 Clearly state the exact query the candidate must write. Use bullet points for specific conditions (e.g., "Exclude users who joined before 2022", "Round the percentage to 2 decimal places").
 
 # Expected Output Format
 Provide a 2-3 row Markdown table showing EXACTLY what the final query output should look like given the Example Input Data.
+CRITICAL: Include a bold title above it (e.g., **Expected Output**).
 
 [CRITICAL CONSTRAINTS]
 1. DO NOT provide the SQL solution. You are administering the test, not taking it.
@@ -260,6 +263,34 @@ Provide a 2-3 row Markdown table showing EXACTLY what the final query output sho
     }
   };
 
+  const handleDryRun = async () => {
+    if (!sql.trim() || sql === '-- Write your solution here once you understand the requirements...\n\n') {
+      toast({ title: 'No SQL to run', message: 'Write some SQL code first before asking for a dry run.', type: 'info' });
+      return;
+    }
+    const msg = `Can you review my current progress? Are there any syntax errors or logical flaws? Here is my query so far:\n\n\`\`\`sql\n${sql}\n\`\`\``;
+    
+    const newMessages = [...messages, { role: 'user', content: msg }];
+    setMessages(newMessages);
+    setIsLoading(true);
+
+    try {
+      const systemPrompt = `[IDENTITY]: You are a FAANG interviewer. 
+[TASK]: The candidate wants you to review their current code.
+[RULES]: Point out syntax errors, missing GROUP BY clauses, or logical flaws. DO NOT write the correct code for them. Give them a hint. Keep it brief and professional.`;
+      const apiMessages = [
+        { role: 'system', content: systemPrompt },
+        ...newMessages.map((m) => ({ role: m.role, content: m.content })),
+      ];
+      const response = await groqChat(apiMessages, MODEL_SMART, 500, false);
+      setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Sorry, I encountered a network error.' }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleFinalSubmit = async (isTimeUp = false) => {
     isSubmittedRef.current = true;
     setIsLoading(true);
@@ -406,9 +437,14 @@ Provide a 2-3 row Markdown table showing EXACTLY what the final query output sho
           </div>
             <div className="p-4 border-t border-border flex items-center justify-between bg-surface-2">
               <span className="text-xs text-text-secondary font-mono">-- Write your query above, then submit for AI evaluation!</span>
-              <Button className="hero-btn-primary px-8" onClick={() => handleFinalSubmit(false)} disabled={isLoading}>
-                Submit Final Answer
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" className="px-6" onClick={handleDryRun} disabled={isLoading}>
+                  Ask AI for Hint / Dry Run
+                </Button>
+                <Button className="hero-btn-primary px-8" onClick={() => handleFinalSubmit(false)} disabled={isLoading}>
+                  Submit Final Answer
+                </Button>
+              </div>
             </div>
           </div>
         </div>
