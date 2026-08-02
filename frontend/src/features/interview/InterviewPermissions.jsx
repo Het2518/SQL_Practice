@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Camera, Monitor, ArrowRight, ShieldAlert, VideoOff } from 'lucide-react';
+import { Camera, Monitor, ArrowRight, ShieldAlert, VideoOff, Mic } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { useProctorStore } from './useProctorStore';
 
@@ -10,9 +10,10 @@ export function InterviewPermissions() {
   
   const [cameraGranted, setCameraGranted] = useState(false);
   const [screenGranted, setScreenGranted] = useState(false);
+  const [micGranted, setMicGranted] = useState(false);
   const [error, setError] = useState(null);
 
-  const { setCameraStream, setScreenStream } = useProctorStore();
+  const { setCameraStream, setScreenStream, setMicStream } = useProctorStore();
 
   const requestCamera = async () => {
     try {
@@ -25,9 +26,20 @@ export function InterviewPermissions() {
     }
   };
 
+  const requestMic = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      setMicStream(stream);
+      setMicGranted(true);
+      setError(null);
+    } catch (err) {
+      setError('Microphone access denied. You must grant microphone access to proceed.');
+    }
+  };
+
   const requestScreen = async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
       setScreenStream(stream);
       setScreenGranted(true);
       setError(null);
@@ -36,7 +48,7 @@ export function InterviewPermissions() {
     }
   };
 
-  const allGranted = cameraGranted && screenGranted;
+  const allGranted = cameraGranted && screenGranted && micGranted;
 
   const handleNext = () => {
     if (allGranted) {
@@ -46,15 +58,15 @@ export function InterviewPermissions() {
 
   return (
     <div className="min-h-screen bg-bg text-text flex items-center justify-center p-6 page-enter">
-      <div className="max-w-[700px] w-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
+      <div className="max-w-[900px] w-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
         
         <div className="bg-surface-2 px-8 py-6 border-b border-border text-center">
           <div className="mx-auto w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mb-4">
             <ShieldAlert size={32} />
           </div>
           <h1 className="text-2xl font-black mb-2">High-Security Proctoring</h1>
-          <p className="text-text-secondary text-sm">
-            This interview strictly requires continuous camera and screen monitoring. 
+          <p className="text-text-secondary text-sm max-w-2xl mx-auto">
+            This enterprise interview strictly requires continuous camera, microphone, and screen monitoring. 
             You must grant these permissions to continue.
           </p>
         </div>
@@ -67,21 +79,38 @@ export function InterviewPermissions() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Camera */}
             <div className={`p-6 rounded-xl border-2 transition-all ${cameraGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
               <div className="flex flex-col items-center text-center gap-3">
                 <Camera size={32} className={cameraGranted ? 'text-success' : 'text-text-secondary'} />
                 <h3 className="font-bold text-lg">Webcam Access</h3>
-                <p className="text-sm text-text-secondary mb-2">Required for visual proctoring during the test.</p>
+                <p className="text-sm text-text-secondary mb-4">Required for visual proctoring.</p>
                 <Button 
                   variant={cameraGranted ? 'ghost' : 'primary'} 
                   onClick={requestCamera}
                   disabled={cameraGranted}
-                  className={cameraGranted ? 'text-success' : ''}
+                  className={cameraGranted ? 'text-success mt-auto' : 'mt-auto'}
                 >
-                  {cameraGranted ? 'Granted' : 'Grant Camera Access'}
+                  {cameraGranted ? 'Granted' : 'Grant Camera'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Mic */}
+            <div className={`p-6 rounded-xl border-2 transition-all ${micGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
+              <div className="flex flex-col items-center text-center gap-3">
+                <Mic size={32} className={micGranted ? 'text-success' : 'text-text-secondary'} />
+                <h3 className="font-bold text-lg">Microphone</h3>
+                <p className="text-sm text-text-secondary mb-4">Required for audio proctoring.</p>
+                <Button 
+                  variant={micGranted ? 'ghost' : 'primary'} 
+                  onClick={requestMic}
+                  disabled={micGranted}
+                  className={micGranted ? 'text-success mt-auto' : 'mt-auto'}
+                >
+                  {micGranted ? 'Granted' : 'Grant Microphone'}
                 </Button>
               </div>
             </div>
@@ -90,15 +119,15 @@ export function InterviewPermissions() {
             <div className={`p-6 rounded-xl border-2 transition-all ${screenGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
               <div className="flex flex-col items-center text-center gap-3">
                 <Monitor size={32} className={screenGranted ? 'text-success' : 'text-text-secondary'} />
-                <h3 className="font-bold text-lg">Screen Share Access</h3>
-                <p className="text-sm text-text-secondary mb-2">Required to monitor your full screen activity.</p>
+                <h3 className="font-bold text-lg">Screen Share</h3>
+                <p className="text-sm text-text-secondary mb-4">Required to monitor full screen.</p>
                 <Button 
                   variant={screenGranted ? 'ghost' : 'primary'} 
                   onClick={requestScreen}
                   disabled={screenGranted}
-                  className={screenGranted ? 'text-success' : ''}
+                  className={screenGranted ? 'text-success mt-auto' : 'mt-auto'}
                 >
-                  {screenGranted ? 'Granted' : 'Grant Screen Access'}
+                  {screenGranted ? 'Granted' : 'Grant Screen'}
                 </Button>
               </div>
             </div>
