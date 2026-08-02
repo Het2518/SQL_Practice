@@ -140,7 +140,7 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
           <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary">
             <ArrowLeft size={16} /> Back to Dashboard
           </Button>
-          <Button variant="ghost" onClick={() => navigate(`/interview/preflight/${session.companyId?.name || 'FAANG'}`)}>
+          <Button variant="ghost" onClick={() => navigate(`/interview/preflight/${safeSession.companyId?.name || 'FAANG'}`)}>
             <RotateCcw size={16} /> Retake Interview
           </Button>
         </div>
@@ -165,11 +165,11 @@ CRITICAL: You MUST end your response with a JSON-like block containing the numer
 
             <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full border bg-surface-2 text-lg font-bold mt-6">
               {isHire ? (
-                <><ShieldCheck size={20} className="text-success" /> <span className="text-success">{safeSession.verdict.toUpperCase()}</span></>
+                <><ShieldCheck size={20} className="text-success" /> <span className="text-success">{(safeSession.verdict || 'Hire').toUpperCase()}</span></>
               ) : isNoHire ? (
-                <><AlertTriangle size={20} className="text-error" /> <span className="text-error">{safeSession.verdict.toUpperCase()}</span></>
+                <><AlertTriangle size={20} className="text-error" /> <span className="text-error">{(safeSession.verdict || 'Fail').toUpperCase()}</span></>
               ) : (
-                <><Target size={20} className="text-warning" /> <span className="text-warning">{safeSession.verdict.toUpperCase()}</span></>
+                <><Target size={20} className="text-warning" /> <span className="text-warning">{(safeSession.verdict || 'Borderline').toUpperCase()}</span></>
               )}
             </div>
           </div>
