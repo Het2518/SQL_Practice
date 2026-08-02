@@ -21,8 +21,8 @@ export const apiClient = axios.create({
 let isRefreshing = false;
 let refreshSubscribers = [];
 
-function onRefreshed() {
-  refreshSubscribers.forEach(cb => cb());
+function onRefreshed(err = null) {
+  refreshSubscribers.forEach(cb => cb(err));
   refreshSubscribers = [];
 }
 
@@ -38,8 +38,9 @@ apiClient.interceptors.response.use(
     // Prevent retry loops
     if (error.response?.status === 401 && originalRequest.url !== '/auth/refresh' && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(resolve => {
-          subscribeTokenRefresh(() => {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((err) => {
+            if (err) return reject(err);
             resolve(apiClient(originalRequest));
           });
         });
@@ -52,12 +53,12 @@ apiClient.interceptors.response.use(
         apiClient.post('/auth/refresh')
           .then(() => {
             isRefreshing = false;
-            onRefreshed();
+            onRefreshed(null);
             resolve(apiClient(originalRequest));
           })
           .catch((err) => {
             isRefreshing = false;
-            refreshSubscribers = [];
+            onRefreshed(err);
             // Refresh failed, user must log in again
             window.dispatchEvent(new CustomEvent('datadesk:auth:expired'));
             reject(err);

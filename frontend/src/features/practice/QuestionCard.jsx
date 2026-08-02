@@ -549,7 +549,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                                     setAiSolutionLoading(false);
                                   }
                                 }}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-none bg-primary text-white font-bold text-[13px] shadow-[0_2px_8px_rgba(139,92,246,0.35)] cursor-pointer hover:bg-primary/90 transition-colors"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-none bg-primary text-primary-foreground font-bold text-[13px] shadow-[0_2px_8px_rgba(139,92,246,0.35)] cursor-pointer hover:bg-primary/90 transition-colors"
                               >
                                 <Sparkles size={13} strokeWidth={2} /> Generate AI Solution
                               </button>

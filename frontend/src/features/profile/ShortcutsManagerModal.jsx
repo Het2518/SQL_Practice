@@ -105,7 +105,7 @@ export function ShortcutsManagerModal({ isOpen, onClose }) {
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded-lg border-none bg-primary text-white font-semibold cursor-pointer hover:opacity-90 transition-opacity"
+                className="px-4 py-2 rounded-lg border-none bg-primary text-primary-foreground font-semibold cursor-pointer hover:opacity-90 transition-opacity"
               >
                 Save Shortcuts
               </button>

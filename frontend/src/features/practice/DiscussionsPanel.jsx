@@ -116,7 +116,7 @@ export function DiscussionsPanel({ questionId }) {
         <button 
           type="submit" 
           disabled={!newComment.trim() || postMutation.isPending || !user} 
-          className="bg-primary text-white border-none rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition-all duration-200 hover:not(:disabled):scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-primary text-primary-foreground border-none rounded-full w-10 h-10 flex items-center justify-center cursor-pointer transition-all duration-200 hover:not(:disabled):scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {postMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
         </button>

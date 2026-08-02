@@ -133,7 +133,7 @@ export function ExecutionOrderExplainer({ sql, executeQuery }) {
           <div key={step.id} className={`flex gap-3 relative z-10 ${step.active ? 'opacity-100' : 'opacity-40'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
               step.active 
-                ? 'bg-primary text-white shadow-[0_0_0_4px_var(--surface-2)]' 
+                ? 'bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--surface-2)]' 
                 : 'bg-surface-3 text-muted shadow-[0_0_0_4px_var(--surface)]'
             }`}>
               {idx + 1}

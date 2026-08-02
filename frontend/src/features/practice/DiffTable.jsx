@@ -127,7 +127,7 @@ export const DiffTable = ({ diff, expectedColumns }) => {
                 className={`border-none px-3 py-1 rounded ${
                   safePage === 1
                     ? 'bg-surface text-muted cursor-not-allowed'
-                    : 'bg-primary text-white cursor-pointer'
+                    : 'bg-primary text-primary-foreground cursor-pointer'
                 }`}
               >Prev</button>
               <span className="px-3 py-1 text-text">
@@ -139,7 +139,7 @@ export const DiffTable = ({ diff, expectedColumns }) => {
                 className={`border-none px-3 py-1 rounded ${
                   safePage === totalPages
                     ? 'bg-surface text-muted cursor-not-allowed'
-                    : 'bg-primary text-white cursor-pointer'
+                    : 'bg-primary text-primary-foreground cursor-pointer'
                 }`}
               >Next</button>
             </div>

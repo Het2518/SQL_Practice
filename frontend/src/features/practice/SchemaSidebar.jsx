@@ -444,7 +444,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                       onClick={(e) => handleTableSelect(e, table.name)}
                       title="Select for Join Path Analysis"
                       className={`w-[22px] h-[22px] rounded-md border text-[11px] cursor-pointer flex items-center justify-center shrink-0 transition-all ${
-                        isSelected ? 'border-primary bg-primary text-white' : 'border-border bg-transparent text-muted hover:border-primary hover:text-primary'
+                        isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-transparent text-muted hover:border-primary hover:text-primary'
                       }`}
                     >
                       🔗

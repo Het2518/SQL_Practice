@@ -379,7 +379,7 @@ function FilterChip({ label, active, onClick, activeClassName }) {
         active && activeClassName
           ? activeClassName
           : active
-            ? 'bg-primary text-white border-primary'
+            ? 'bg-primary text-primary-foreground border-primary'
             : 'bg-surface text-text-secondary border-border hover:bg-surface-2 hover:text-text hover:border-text-secondary'
       }`}
     >

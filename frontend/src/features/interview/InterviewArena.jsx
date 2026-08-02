@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock, X, MonitorOff, VideoOff } from 'lucide-react';
+import { Bot, User, Loader2, ShieldAlert, Clock, X, Monitor, Smartphone, VideoOff } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
@@ -333,7 +333,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
       {/* ══ MOBILE WARNING OVERLAY ══ */}
       <div className="md:hidden fixed inset-0 z-[100] bg-bg flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
-          <MonitorOff size={32} />
+          <Smartphone size={32} />
         </div>
         <h2 className="text-2xl font-extrabold text-text mb-3 tracking-tight">Desktop Required</h2>
         <p className="text-text-secondary mb-8 leading-relaxed max-w-sm">

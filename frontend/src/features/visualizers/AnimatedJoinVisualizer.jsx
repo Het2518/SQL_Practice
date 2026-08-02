@@ -364,7 +364,7 @@ export function AnimatedJoinVisualizer({ executeQuery, sql, onClose }) {
                   onClick={() => setSpeedMultiplier(s)}
                   className={`px-4 py-1.5 rounded-full text-xs font-bold cursor-pointer transition-all duration-200 border-none ${
                     speedMultiplier === s 
-                      ? 'bg-primary text-white shadow-[0_2px_8px_rgba(59,130,246,0.3)]' 
+                      ? 'bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(59,130,246,0.3)]' 
                       : 'bg-transparent text-muted'
                   }`}
                 >

@@ -13,7 +13,7 @@ import {
   Trophy,
   CheckCircle,
   Clock,
-  BarChart2,
+  BarChart3,
   Briefcase,
   Upload,
   ChevronRight,
@@ -281,7 +281,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
             { title: '1. Basic Filtering', desc: 'SELECT, WHERE, AND/OR', icon: Target },
-            { title: '2. Aggregations', desc: 'GROUP BY, HAVING, SUM/AVG', icon: BarChart2 },
+            { title: '2. Aggregations', desc: 'GROUP BY, HAVING, SUM/AVG', icon: BarChart3 },
             { title: '3. Joining Data', desc: 'INNER, LEFT, RIGHT JOINs', icon: Link2 },
             { title: '4. Subqueries', desc: 'Nested queries, IN, EXISTS', icon: Code },
             { title: '5. Date & Time', desc: 'Date math, EXTRACT, Formatting', icon: Clock },
@@ -290,7 +290,7 @@ export function DbSelector({ onShowAuth, onShowSettings, onShowInterview }) {
             { title: '8. Advanced Topics', desc: 'Recursive CTEs, PIVOT', icon: Zap },
           ].map((topic, i) => (
             <div key={topic.title} className="bg-surface border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/practice/hospital')}>
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-colors border border-primary/20">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors border border-primary/20">
                 <topic.icon size={20} strokeWidth={2} fill="none" />
               </div>
               <h3 className="text-base font-bold text-text mb-1.5">{topic.title}</h3>

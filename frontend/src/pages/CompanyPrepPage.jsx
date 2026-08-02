@@ -387,7 +387,7 @@ export default function CompanyPrepPage(props) {
                           <td className="p-3 px-4 text-right">
                             <Link
                               to={`/practice/${(q.schema_name || 'ecommerce').toLowerCase()}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md no-underline bg-primary text-white font-bold text-xs"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md no-underline bg-primary text-primary-foreground font-bold text-xs"
                             >
                               Practice
                             </Link>

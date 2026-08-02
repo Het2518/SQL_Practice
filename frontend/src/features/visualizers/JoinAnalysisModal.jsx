@@ -373,9 +373,9 @@ export function JoinAnalysisModal({ executeQuery, sql, onClose }) {
                       <button 
                         key={step.id}
                         onClick={() => setActiveSubStep(step.id)}
-                        className={`px-4 py-2 text-xs font-semibold rounded-lg cursor-pointer border-none transition-all ${
+                        className={`px-3 py-1.5 rounded text-xs font-bold transition-all duration-300 ${
                           activeSubStep === step.id 
-                            ? 'bg-primary text-white shadow-[0_4px_12px_rgba(99,102,241,0.3)]' 
+                            ? 'bg-primary text-primary-foreground shadow-[0_4px_12px_rgba(99,102,241,0.3)]' 
                             : 'bg-transparent text-text hover:bg-surface-3'
                         }`}
                       >
