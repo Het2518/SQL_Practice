@@ -412,7 +412,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
           </div>
 
           {/* Right: SQL Editor */}
-          <div className="flex-1 flex flex-col bg-bg relative">
+          <div className="flex-1 flex flex-col bg-bg relative min-h-0 overflow-hidden">
             
             {generatingQuestion && (
               <div className="absolute inset-0 z-50 bg-bg/80 backdrop-blur-sm flex flex-col items-center justify-center">
@@ -422,8 +422,8 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
               </div>
             )}
 
-            <div className="flex-1 w-full relative flex flex-col">
-              <div className="flex-1 relative min-h-[300px]">
+            <div className="flex-1 w-full relative flex flex-col min-h-0">
+              <div className="flex-1 relative min-h-0">
                 <SqlEditor
                   value={sql}
                   onChange={setSql}
@@ -434,7 +434,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
               </div>
 
               {isDryRunPanelOpen && (
-                <div className="h-64 border-t border-border bg-surface flex flex-col shadow-inner">
+                <div className="h-64 shrink-0 border-t border-border bg-surface flex flex-col shadow-inner">
                   <div className="px-4 py-2 border-b border-border bg-surface-2 flex items-center justify-between text-text-secondary">
                     <span className="text-sm font-bold flex items-center gap-2"><Bot size={16} className="text-primary" /> AI Review Panel</span>
                     <button onClick={() => setIsDryRunPanelOpen(false)} className="hover:text-text transition-colors">
