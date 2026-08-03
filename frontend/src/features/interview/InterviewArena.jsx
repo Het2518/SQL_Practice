@@ -61,11 +61,35 @@ export function InterviewArena() {
   const [generatingQuestion, setGeneratingQuestion] = useState(true);
 
   // Restore or Initialize Session
+  // Guaranteed fallback to build SQL perfectly matching the UI if AI forgets or messes up
+  const generateInitSqlFromTables = (tables) => {
+    if (!tables || !Array.isArray(tables)) return '-- init';
+    let sql = '';
+    for (const t of tables) {
+      if (!t.name || !t.columns) continue;
+      const cols = t.columns.map(c => `"${c.name}" ${c.type || 'TEXT'}`).join(', ');
+      sql += `CREATE TABLE "${t.name}" (${cols});\n`;
+      
+      if (t.sampleData && Array.isArray(t.sampleData) && t.sampleData.length > 0) {
+        for (const row of t.sampleData) {
+          const keys = Object.keys(row).map(k => `"${k}"`).join(', ');
+          const vals = Object.values(row).map(v => {
+            if (typeof v === 'number') return v;
+            if (v === null) return 'NULL';
+            return `'${String(v).replace(/'/g, "''")}'`;
+          }).join(', ');
+          sql += `INSERT INTO "${t.name}" (${keys}) VALUES (${vals});\n`;
+        }
+      }
+    }
+    return sql || '-- init';
+  };
+
   useEffect(() => {
     const saved = restoreSessionState();
     
     // Invalidate legacy sessions that don't have database initialization scripts
-    if (saved && saved.initSql) {
+    if (saved && (saved.initSql || saved.initialTask?.tables)) {
       setInitialTask(saved.initialTask);
       setMessages(saved.messages || []);
       setSql(saved.sql || '');
@@ -73,9 +97,17 @@ export function InterviewArena() {
       setTimeLeft(saved.timeLeft || duration * 60);
       setGeneratingQuestion(false);
       
-      let cleanInitSql = saved.initSql || '-- init';
-      cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-      initWithSql(cleanInitSql);
+      let cleanInitSql = saved.initSql;
+      if (!cleanInitSql || cleanInitSql === '-- init') {
+         cleanInitSql = generateInitSqlFromTables(saved.initialTask?.tables);
+      } else {
+         cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
+      }
+      
+      initWithSql(cleanInitSql).catch(err => {
+        console.error('Failed to init DB from saved state:', err);
+        toast({ title: 'Database Error', message: err.message, type: 'error' });
+      });
     } else {
       const fetchQuestion = async () => {
         try {
@@ -99,9 +131,18 @@ export function InterviewArena() {
 
           setInitialTask(taskData);
           
-          let cleanInitSql = taskData.initSql || '-- init';
-          cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-          initWithSql(cleanInitSql);
+          let cleanInitSql = taskData.initSql;
+          if (!cleanInitSql || cleanInitSql.trim() === '') {
+             cleanInitSql = generateInitSqlFromTables(taskData.tables);
+          } else {
+             cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
+             // Just to be ultra-safe, if the AI provided broken SQL, fallback to our generator
+             if (!cleanInitSql.toLowerCase().includes('create table')) {
+               cleanInitSql = generateInitSqlFromTables(taskData.tables);
+             }
+          }
+          
+          await initWithSql(cleanInitSql);
           
           const welcomeMsg = {
             role: 'assistant',
@@ -152,7 +193,7 @@ export function InterviewArena() {
           };
           
           setInitialTask(fallbackTask);
-          initWithSql(fallbackTask.initSql);
+          await initWithSql(fallbackTask.initSql);
         } finally {
           setGeneratingQuestion(false);
         }
