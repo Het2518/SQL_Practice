@@ -46,9 +46,10 @@ function writeCache(key, data) {
  * @param {string} model    - MODEL_FAST | MODEL_SMART
  * @param {number} maxTokens
  * @param {boolean} useCache - skip API call if identical prompt was answered recently
+ * @param {string} responseFormat - 'text' | 'json_object'
  * @returns {Promise<string>} - assistant message text
  */
-export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true) {
+export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true, responseFormat = 'text') {
   const cacheKey = getCacheKey(messages, model);
   if (useCache) {
     const cached = readCache(cacheKey);
@@ -81,6 +82,7 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
         max_tokens: maxTokens,
         temperature: 0.3,
         top_p: 0.9,
+        ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {})
       })
     });
     
@@ -427,7 +429,7 @@ You MUST output the result purely as a JSON object matching this exact structure
   "initSql": "Valid SQLite CREATE TABLE and INSERT INTO statements to build the in-memory database for this exact problem, matching the Schema Definition and Example Input Data exactly."
 }`;
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1500, false);
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1500, false, 'json_object');
 }
 
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {

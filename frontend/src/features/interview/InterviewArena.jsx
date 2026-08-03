@@ -106,8 +106,14 @@ export function InterviewArena() {
         } catch (err) {
           console.error(err);
           const fallbackMd = "Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)";
+          const fallbackSql = `
+            CREATE TABLE users (user_id INT, name TEXT);
+            CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL, date DATE);
+            INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie'), (4, 'David');
+            INSERT INTO transactions VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02'), (3, 1, 200, '2023-10-05');
+          `;
           setInitialTask(fallbackMd);
-          initWithSql('-- init');
+          initWithSql(fallbackSql);
         } finally {
           setGeneratingQuestion(false);
         }
