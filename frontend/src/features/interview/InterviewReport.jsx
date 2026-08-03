@@ -173,8 +173,16 @@ export function InterviewReport() {
         }
       `}} />
 
-      <div className="min-h-screen bg-bg text-text p-6 md:p-12 overflow-y-auto page-enter">
-        <div className="max-w-[900px] mx-auto print:max-w-full">
+      <div className="min-h-screen bg-bg text-text p-6 md:p-12 overflow-y-auto page-enter relative overflow-hidden">
+        
+        {/* Dynamic Ambient Background Glow */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0 no-print">
+          <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full blur-[150px] opacity-[0.15] dark:opacity-[0.1] transition-colors duration-1000 ${isHire ? 'bg-success' : isNoHire ? 'bg-error' : 'bg-warning'}`} />
+          <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
+            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+        </div>
+
+        <div className="max-w-[900px] mx-auto print:max-w-full relative z-10">
           
           {/* Header Actions (No Print) */}
           <div className="flex items-center justify-between mb-8 no-print">
@@ -195,8 +203,11 @@ export function InterviewReport() {
           </div>
 
           {/* Hero Section */}
-          <div className="bg-surface border border-border print-border rounded-3xl p-8 md:p-12 text-center shadow-xl mb-8 relative overflow-hidden print-break-inside">
-            <div className={`absolute inset-0 opacity-10 no-print ${isHire ? 'bg-gradient-to-br from-success to-transparent' : isNoHire ? 'bg-gradient-to-br from-error to-transparent' : 'bg-gradient-to-br from-warning to-transparent'}`} />
+          <div className="bg-surface/80 backdrop-blur-2xl border border-border/80 print-border rounded-[2.5rem] p-10 md:p-16 text-center shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] mb-8 relative overflow-hidden print-break-inside transition-all">
+            <div className={`absolute top-0 left-0 w-full h-2 no-print ${isHire ? 'bg-gradient-to-r from-success/50 via-success to-success/50' : isNoHire ? 'bg-gradient-to-r from-error/50 via-error to-error/50' : 'bg-gradient-to-r from-warning/50 via-warning to-warning/50'}`} />
+            
+            <div className={`absolute -top-32 -right-32 w-80 h-80 rounded-full blur-[100px] opacity-20 pointer-events-none no-print ${isHire ? 'bg-success' : isNoHire ? 'bg-error' : 'bg-warning'}`} />
+            <div className={`absolute -bottom-32 -left-32 w-80 h-80 rounded-full blur-[100px] opacity-20 pointer-events-none no-print ${isHire ? 'bg-success' : isNoHire ? 'bg-error' : 'bg-warning'}`} />
             
             <div className="relative z-10 flex flex-col items-center">
               <div className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2 flex items-center justify-center gap-2">
@@ -208,9 +219,12 @@ export function InterviewReport() {
               </h2>
               <p className="text-text-secondary mb-6">{safeSession.roleName || 'Software Engineer'}</p>
 
-              <div className="flex flex-col items-center gap-2">
-                <div className={`text-7xl font-black tracking-tighter ${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}`}>
-                  {safeSession.score || 0}<span className="text-3xl text-text-secondary">/100</span>
+              <div className="flex flex-col items-center gap-2 my-6">
+                <div className="relative">
+                  <div className={`absolute inset-0 blur-3xl opacity-20 ${isHire ? 'bg-success' : isNoHire ? 'bg-error' : 'bg-warning'}`} />
+                  <div className={`text-8xl md:text-[8rem] font-black tracking-tighter relative z-10 leading-none ${isHire ? 'text-success' : isNoHire ? 'text-error' : 'text-warning'}`} style={{ textShadow: '0 10px 40px rgba(0,0,0,0.15)' }}>
+                    {safeSession.score || 0}<span className="text-4xl text-text-secondary/50 font-bold tracking-normal align-baseline">/100</span>
+                  </div>
                 </div>
               </div>
 
@@ -227,9 +241,9 @@ export function InterviewReport() {
           </div>
 
           {/* Feedback Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 print-break-inside">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print-break-inside">
             {/* Strengths */}
-            <div className="bg-surface border border-border print-border rounded-2xl p-6 shadow-sm">
+            <div className="bg-surface/70 backdrop-blur-xl border border-border print-border rounded-3xl p-8 shadow-lg hover:shadow-xl hover:border-success/30 transition-all group">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-text">
                 <CheckCircle size={18} className="text-success" /> Key Strengths
               </h3>
@@ -247,7 +261,7 @@ export function InterviewReport() {
             </div>
             
             {/* Weaknesses */}
-            <div className="bg-surface border border-border print-border rounded-2xl p-6 shadow-sm">
+            <div className="bg-surface/70 backdrop-blur-xl border border-border print-border rounded-3xl p-8 shadow-lg hover:shadow-xl hover:border-error/30 transition-all group">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-text">
                 <XCircle size={18} className="text-error" /> Areas for Improvement
               </h3>
@@ -266,7 +280,7 @@ export function InterviewReport() {
           </div>
 
           {/* Correctness & Logic */}
-          <div className="bg-surface border border-border print-border rounded-2xl p-8 shadow-sm mb-8 print-break-inside">
+          <div className="bg-surface/70 backdrop-blur-xl border border-border print-border rounded-3xl p-8 md:p-10 shadow-lg mb-8 print-break-inside hover:border-primary/30 transition-all">
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Target className="text-primary" /> Hiring Committee Feedback
             </h3>
@@ -279,7 +293,8 @@ export function InterviewReport() {
 
           {/* Optimal Solution */}
           {parsedFeedback.optimal_sql && (
-            <div className="bg-surface border border-border print-border rounded-2xl p-8 shadow-sm print-break-inside">
+            <div className="bg-surface/70 backdrop-blur-xl border border-border print-border rounded-3xl p-8 md:p-10 shadow-lg print-break-inside relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-warning/5 rounded-bl-full blur-3xl group-hover:bg-warning/10 transition-colors pointer-events-none" />
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <Star className="text-warning" /> Optimal FAANG Solution
               </h3>

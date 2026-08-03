@@ -350,17 +350,40 @@ export function InterviewArena() {
 
       {/* ══ TERMINATED OVERLAY ══ */}
       {isTerminated && (
-        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white">
-          <AlertOctagon size={80} className="text-error mb-6 animate-pulse" />
-          <h1 className="text-4xl font-black mb-4">Interview Terminated</h1>
-          <p className="text-xl text-white/80 max-w-lg leading-relaxed mb-8">
-            Your interview session was terminated due to a strict zero-tolerance integrity policy violation.
-            <br/><br/>
-            <span className="text-error font-bold block bg-error/10 p-4 rounded-xl border border-error/20">
-              Reason: {useProctorStore.getState().violations[0]?.message}
-            </span>
-          </p>
-          <Button variant="danger" size="xl" onClick={handleFailToReport}>View Incident Report</Button>
+        <div className="fixed inset-0 z-[200] bg-bg/95 backdrop-blur-3xl flex items-center justify-center p-6 animate-fade-in relative overflow-hidden">
+          {/* Background Ambient Glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[150px] pointer-events-none" />
+          
+          <div className="w-full max-w-2xl bg-surface/80 backdrop-blur-xl border border-error/30 rounded-3xl p-12 text-center shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out">
+            {/* Top Red Gradient Bar */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-error to-transparent" />
+            
+            <div className="w-24 h-24 bg-gradient-to-br from-error/20 to-error/5 border border-error/30 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-error/20 relative">
+              <div className="absolute inset-0 bg-error/20 rounded-full animate-ping opacity-50" />
+              <AlertOctagon size={48} className="text-error" />
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight text-text">Session Terminated</h1>
+            <p className="text-lg md:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed mb-10">
+              Your interview was automatically halted due to a strict zero-tolerance integrity policy violation.
+            </p>
+            
+            <div className="bg-[#09090b] border border-border/50 rounded-2xl p-6 text-left mb-10 shadow-inner">
+              <span className="text-xs font-black uppercase tracking-widest text-error/80 mb-2 block flex items-center gap-2">
+                <AlertOctagon size={14} /> Incident Reason
+              </span>
+              <span className="text-error font-medium text-lg leading-snug">
+                {useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation'}
+              </span>
+            </div>
+            
+            <button 
+              onClick={handleFailToReport}
+              className="w-full sm:w-auto px-10 py-4 bg-error text-white font-bold text-lg rounded-xl shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] hover:scale-[1.02] transition-all"
+            >
+              Acknowledge & View Report
+            </button>
+          </div>
         </div>
       )}
 
