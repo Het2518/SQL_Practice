@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { groqChat, buildSolutionReviewPrompt } from '@/lib/groq';
 import { Search, Zap, GitCompare, CheckCircle, XCircle, Clock, Lightbulb, AlertTriangle } from 'lucide-react';
+import { CodeBlock } from '@/shared/ui/CodeBlock';
 
 const APPROACH_LABELS = {
   optimized: { label: 'Optimized Query', icon: <Zap size={12} />, color: 'var(--success)' },
@@ -148,8 +149,8 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
               {/* Optimized Tab */}
               {activeTab === 'optimized' && review.optimized_sql && (
                 <div className="review-approach-block">
-                  <div className="review-approach-label flex items-center gap-1.5"><Zap size={12} /> Optimized Query</div>
-                  <pre className="review-code">{review.optimized_sql}</pre>
+                  <div className="review-approach-label flex items-center gap-1.5 mb-2"><Zap size={12} /> Optimized Query</div>
+                  <CodeBlock code={review.optimized_sql} />
                 </div>
               )}
 

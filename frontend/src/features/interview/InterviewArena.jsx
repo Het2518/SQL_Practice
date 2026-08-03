@@ -7,7 +7,9 @@ import { api } from '@/lib/api';
 import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useProctorStore } from './useProctorStore';
+import { sqlWorkerManager } from '@/workers/SqlWorkerManager';
+import { useProctorStore } from '@/stores/useProctorStore';
+import { CodeBlock } from '@/shared/ui/CodeBlock';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
@@ -803,7 +805,23 @@ export function InterviewArena() {
                           {msg.role === 'user' ? (
                             msg.content
                           ) : (
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                code({ node, inline, className, children, ...props }) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const codeText = String(children).replace(/\n$/, '');
+                                  if (!inline) {
+                                    return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
+                                  }
+                                  return (
+                                    <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                              }}
+                            >
                               {msg.content}
                             </ReactMarkdown>
                           )}
@@ -934,7 +952,25 @@ export function InterviewArena() {
                             <p className="text-xs opacity-70">The AI Principal Engineer is reviewing your SQL.</p>
                           </div>
                         ) : (
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{dryRunFeedback}</ReactMarkdown>
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code({ node, inline, className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                const codeText = String(children).replace(/\n$/, '');
+                                if (!inline) {
+                                  return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
+                                }
+                                return (
+                                  <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
+                                    {children}
+                                  </code>
+                                );
+                              }
+                            }}
+                          >
+                            {dryRunFeedback}
+                          </ReactMarkdown>
                         )}
                       </div>
                     )}

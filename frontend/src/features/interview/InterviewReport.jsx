@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
 import { evaluateInterview } from '@/lib/groq';
+import { CodeBlock } from '@/shared/ui/CodeBlock';
 
 export function InterviewReport() {
   const location = useLocation();
@@ -293,7 +294,23 @@ export function InterviewReport() {
               <Target className="text-primary" /> Hiring Committee Feedback
             </h3>
             <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-text-secondary">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const codeText = String(children).replace(/\n$/, '');
+                    if (!inline) {
+                      return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
+                    }
+                    return (
+                      <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
                 {parsedFeedback.correctness || safeSession.feedback || 'No feedback available.'}
               </ReactMarkdown>
             </div>
@@ -307,7 +324,23 @@ export function InterviewReport() {
                 <Star className="text-warning" /> Optimal FAANG Solution
               </h3>
               <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-text-secondary">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ node, inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const codeText = String(children).replace(/\n$/, '');
+                      if (!inline) {
+                        return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
+                      }
+                      return (
+                        <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                  }}
+                >
                   {`\`\`\`sql\n${parsedFeedback.optimal_sql}\n\`\`\``}
                 </ReactMarkdown>
                 <div className="mt-4 text-sm bg-surface-2 p-4 rounded-xl border border-border">

@@ -7,6 +7,7 @@ import { useProactiveTutor } from '@/features/ai/useProactiveTutor';
 import { groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
 import { QuestionHeader } from './QuestionHeader';
 import { QuestionBody } from './QuestionBody';
+import { CodeBlock } from '@/shared/ui/CodeBlock';
 
 const difficultyLabel = {
   easy: 'EASY',
@@ -584,9 +585,7 @@ export const QuestionCard = React.memo(function QuestionCard({
                                 Regenerate
                               </button>
                             </div>
-                            <pre className="bg-bg p-3.5 rounded-lg font-mono text-xs text-text border border-border m-0 overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                              {aiSolution}
-                            </pre>
+                            <CodeBlock code={aiSolution} />
                           </div>
                         )}
                       </div>

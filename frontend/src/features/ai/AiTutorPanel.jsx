@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
+import { CodeBlock } from '@/shared/ui/CodeBlock';
 // useGroqKey removed
 import { groqChat, MODEL_SMART } from '@/lib/groq';
 import { cn } from '@/lib/utils';
@@ -155,7 +156,23 @@ Rules:
                 {msg.role === 'user' ? (
                   <div className="whitespace-pre-wrap">{msg.content}</div>
                 ) : (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const codeText = String(children).replace(/\n$/, '');
+                        if (!inline) {
+                          return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
+                        }
+                        return (
+                          <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
+                            {children}
+                          </code>
+                        );
+                      }
+                    }}
+                  >
                     {msg.content}
                   </ReactMarkdown>
                 )}
