@@ -8,6 +8,7 @@ import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useProctorStore } from './useProctorStore';
+import { SqlEditor } from '@/features/practice/SqlEditor';
 
 export function InterviewArena() {
   const [searchParams] = useSearchParams();
