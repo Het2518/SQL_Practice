@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X, FileText, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X, FileText, CheckCircle2, Sun, Moon, Play, RotateCcw, Database } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { generateInterviewTask, chatInterview, dryRunInterview } from '@/lib/groq';
 import { api } from '@/lib/api';
@@ -644,6 +644,18 @@ export function InterviewArena() {
                     height="100%"
                   />
                 )}
+              </div>
+
+              {/* Action Bar */}
+              <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
+                  <Button variant="secondary" size="sm" onClick={() => activeTab === 'sql' ? setSql('') : setScratchpad('')} title="Reset">
+                    <RotateCcw size={13} /> <span className="hidden sm:inline">Reset</span>
+                  </Button>
+                </div>
+                <Button size="sm" onClick={handleRunSql} isLoading={isRunning}>
+                  <Play size={13} fill="currentColor" className="mr-1" /> Run Code (Ctrl+Enter)
+                </Button>
               </div>
 
               {bottomPanel && (
