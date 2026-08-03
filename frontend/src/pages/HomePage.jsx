@@ -55,27 +55,30 @@ const HeroSection = ({ onShowInterview, navigate }) => (
     {/* App Preview Mockup */}
     <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up drop-shadow-2xl" style={{ animationDelay: '400ms' }}>
       <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-bg to-transparent z-10 pointer-events-none" />
-      <div className="rounded-t-3xl border border-border border-b-0 bg-slate-50 dark:bg-surface shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
-        <div className="h-10 bg-surface-2 border-b border-border flex items-center px-4 gap-2">
-          <div className="w-3 h-3 rounded-full bg-error/80" />
-          <div className="w-3 h-3 rounded-full bg-warning/80" />
-          <div className="w-3 h-3 rounded-full bg-success/80" />
+      <div className="rounded-t-3xl border border-slate-200/80 dark:border-border border-b-0 bg-slate-50 dark:bg-surface shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
+        <div className="h-10 bg-slate-100/50 dark:bg-surface-2 border-b border-slate-200/80 dark:border-border flex items-center px-4 gap-2 backdrop-blur-md">
+          <div className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-sm border border-black/10 dark:border-transparent" />
+          <div className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-sm border border-black/10 dark:border-transparent" />
+          <div className="w-3 h-3 rounded-full bg-[#27c93f] shadow-sm border border-black/10 dark:border-transparent" />
         </div>
-        <div className="flex-1 p-6 flex gap-6">
-          <div className="w-1/4 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-4 flex flex-col gap-3">
-            <div className="h-4 w-24 bg-border rounded" />
-            <div className="h-3 w-full bg-border/50 rounded" />
-            <div className="h-3 w-3/4 bg-border/50 rounded" />
-            <div className="h-3 w-5/6 bg-border/50 rounded mt-4" />
+        <div className="flex-1 p-6 flex gap-6 bg-slate-50 dark:bg-transparent">
+          <div className="w-1/4 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border shadow-sm p-4 flex flex-col gap-3 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:hidden" />
+            <div className="h-4 w-24 bg-slate-200 dark:bg-border rounded" />
+            <div className="h-3 w-full bg-slate-100 dark:bg-border/50 rounded" />
+            <div className="h-3 w-3/4 bg-slate-100 dark:bg-border/50 rounded" />
+            <div className="h-3 w-5/6 bg-slate-100 dark:bg-border/50 rounded mt-4" />
           </div>
           <div className="flex-1 flex flex-col gap-4">
-            <div className="flex-1 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-5 flex flex-col gap-2 font-mono text-sm">
-              <div><span className="text-primary">SELECT</span> <span className="text-text">user_id,</span> <span className="text-success">SUM</span><span className="text-text">(amount)</span></div>
-              <div><span className="text-primary">FROM</span> <span className="text-text">transactions</span></div>
-              <div><span className="text-primary">GROUP BY</span> <span className="text-text">user_id</span></div>
-              <div><span className="text-primary">HAVING</span> <span className="text-success">SUM</span><span className="text-text">(amount) {'>'}</span> <span className="text-warning">1000</span><span className="text-text">;</span></div>
+            <div className="flex-1 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border shadow-sm p-5 flex flex-col gap-2 font-mono text-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-100 to-transparent dark:hidden" />
+              <div><span className="text-blue-600 dark:text-primary font-semibold">SELECT</span> <span className="text-slate-700 dark:text-text">user_id,</span> <span className="text-emerald-600 dark:text-success font-semibold">SUM</span><span className="text-slate-700 dark:text-text">(amount)</span></div>
+              <div><span className="text-blue-600 dark:text-primary font-semibold">FROM</span> <span className="text-slate-700 dark:text-text">transactions</span></div>
+              <div><span className="text-blue-600 dark:text-primary font-semibold">GROUP BY</span> <span className="text-slate-700 dark:text-text">user_id</span></div>
+              <div><span className="text-blue-600 dark:text-primary font-semibold">HAVING</span> <span className="text-emerald-600 dark:text-success font-semibold">SUM</span><span className="text-slate-700 dark:text-text">(amount) {'>'}</span> <span className="text-amber-600 dark:text-warning font-semibold">1000</span><span className="text-slate-700 dark:text-text">;</span></div>
             </div>
-            <div className="h-32 bg-white dark:bg-bg rounded-xl border border-border shadow-sm p-4 flex flex-col justify-center items-center gap-2">
+            <div className="h-32 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border shadow-sm p-4 flex flex-col justify-center items-center gap-2 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:hidden" />
               <TablePlaceholder />
             </div>
           </div>
@@ -87,20 +90,20 @@ const HeroSection = ({ onShowInterview, navigate }) => (
 
 const TablePlaceholder = () => (
   <div className="w-full flex flex-col gap-2">
-    <div className="flex gap-2 border-b border-border pb-2">
-      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
-      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
-      <div className="h-3 w-1/4 bg-gray-300 dark:bg-border rounded" />
+    <div className="flex gap-2 border-b border-slate-200 dark:border-border pb-2">
+      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
+      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
+      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
     </div>
-    <div className="flex gap-2 opacity-80">
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+    <div className="flex gap-2 opacity-80 mt-1">
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
     </div>
     <div className="flex gap-2 opacity-60">
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-gray-200 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
     </div>
   </div>
 );
