@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X, FileText, CheckCircle2 } from 'lucide-react';
+import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X, FileText, CheckCircle2, Sun, Moon } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { generateInterviewTask, chatInterview, dryRunInterview } from '@/lib/groq';
 import { api } from '@/lib/api';
@@ -9,11 +9,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useProctorStore } from './useProctorStore';
 import { SqlEditor } from '@/features/practice/SqlEditor';
+import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useSqlDatabase } from '@/hooks/useSqlDatabase';
+import { ResultsPanel } from '@/features/practice/ResultsPanel';
 
 export function InterviewArena() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings, toggleDarkMode } = useSettingsStore();
   
   const duration = parseInt(searchParams.get('duration') || '30', 10);
   const rawDifficulty = searchParams.get('difficulty') || 'mixed';
@@ -42,7 +46,16 @@ export function InterviewArena() {
   const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [leftTab, setLeftTab] = useState('problem'); // 'problem' or 'chat'
-  
+  const [bottomPanel, setBottomPanel] = useState(null); // 'ai' | 'results' | null
+  const [queryResult, setQueryResult] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const { executeQuery, initWithSql } = useSqlDatabase();
+
+  useEffect(() => {
+    initWithSql(''); // Initialize an empty in-memory SQLite database
+  }, [initWithSql]);
+
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
 
@@ -226,6 +239,16 @@ export function InterviewArena() {
     };
   }, [cameraStream, screenStream, isTerminated]);
 
+  // Ensure streams are explicitly killed on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        const { stopAllStreams } = useProctorStore.getState();
+        stopAllStreams();
+      } catch(e) {}
+    };
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -265,7 +288,7 @@ export function InterviewArena() {
     }
     
     setDryRunFeedback('');
-    setIsDryRunPanelOpen(true);
+    setBottomPanel('ai');
     setIsDryRunning(true);
 
     try {
@@ -284,6 +307,20 @@ export function InterviewArena() {
     } finally {
       setIsDryRunning(false);
     }
+  };
+
+  const handleRunSql = async () => {
+    const currentCode = activeTab === 'sql' ? sql : scratchpad;
+    if (!currentCode.trim() || currentCode.includes('Write your solution here')) {
+      toast({ title: 'No SQL', message: 'Please write some valid SQL to run.', type: 'info' });
+      return;
+    }
+    
+    setBottomPanel('results');
+    setIsRunning(true);
+    const res = await executeQuery(currentCode);
+    setQueryResult(res);
+    setIsRunning(false);
   };
 
   const handleFinalSubmit = async (isTimeUp = false) => {
@@ -453,6 +490,13 @@ export function InterviewArena() {
             <button onClick={() => setShowShortcuts(true)} className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors" title="Keyboard Shortcuts">
               <Keyboard size={18} />
             </button>
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors"
+              title={settings.darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {settings.darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <Button variant="danger" size="sm" onClick={() => handleFinalSubmit(false)} disabled={isLoading || generatingQuestion}>
               Submit Final Solution
             </Button>
@@ -587,7 +631,7 @@ export function InterviewArena() {
                   <SqlEditor
                     value={sql}
                     onChange={setSql}
-                    onRun={handleDryRun}
+                    onRun={handleRunSql}
                     disabled={isLoading || generatingQuestion}
                     height="100%"
                   />
@@ -595,34 +639,55 @@ export function InterviewArena() {
                   <SqlEditor
                     value={scratchpad}
                     onChange={setScratchpad}
+                    onRun={handleRunSql}
                     disabled={isLoading || generatingQuestion}
                     height="100%"
                   />
                 )}
               </div>
 
-              {activeTab === 'sql' && isDryRunPanelOpen && (
+              {bottomPanel && (
                 <div className="h-[280px] border-t border-border bg-surface flex flex-col shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-10 transition-all duration-300 relative">
                   <div className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-surface-2">
                     <h3 className="text-sm font-bold flex items-center gap-2">
-                      {isDryRunning ? (
-                        <Loader2 size={14} className="animate-spin text-purple-500" />
+                      {bottomPanel === 'ai' ? (
+                        <>
+                          {isDryRunning ? <Loader2 size={14} className="animate-spin text-purple-500" /> : <CheckCircle2 size={14} className="text-success" />}
+                          AI Code Review (Dry Run)
+                        </>
                       ) : (
-                        <CheckCircle2 size={14} className="text-success" />
+                        <>
+                          <Database size={14} className="text-blue-500" />
+                          SQL Execution Output
+                        </>
                       )}
-                      AI Code Review (Dry Run)
                     </h3>
-                    <button onClick={() => setIsDryRunPanelOpen(false)} className="p-1 hover:bg-surface-3 rounded text-text-secondary transition-colors"><X size={16} /></button>
+                    <button onClick={() => setBottomPanel(null)} className="p-1 hover:bg-surface-3 rounded text-text-secondary transition-colors"><X size={16} /></button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-5 bg-bg text-sm text-text leading-relaxed prose prose-sm dark:prose-invert max-w-none custom-scrollbar">
-                    {isDryRunning ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 text-text-secondary">
-                        <Loader2 size={24} className="animate-spin text-purple-500" /> 
-                        <p className="font-medium text-text">Evaluating execution plan and logic...</p>
-                        <p className="text-xs opacity-70">The AI Principal Engineer is reviewing your SQL.</p>
+                  
+                  <div className="flex-1 overflow-hidden relative">
+                    {bottomPanel === 'ai' && (
+                      <div className="absolute inset-0 overflow-y-auto p-5 bg-bg text-sm text-text leading-relaxed prose prose-sm dark:prose-invert max-w-none custom-scrollbar">
+                        {isDryRunning ? (
+                          <div className="flex flex-col items-center justify-center h-full gap-3 text-text-secondary">
+                            <Loader2 size={24} className="animate-spin text-purple-500" /> 
+                            <p className="font-medium text-text">Evaluating execution plan and logic...</p>
+                            <p className="text-xs opacity-70">The AI Principal Engineer is reviewing your SQL.</p>
+                          </div>
+                        ) : (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{dryRunFeedback}</ReactMarkdown>
+                        )}
                       </div>
-                    ) : (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{dryRunFeedback}</ReactMarkdown>
+                    )}
+
+                    {bottomPanel === 'results' && (
+                      <div className="absolute inset-0 bg-bg">
+                        <ResultsPanel 
+                          result={queryResult} 
+                          sql={activeTab === 'sql' ? sql : scratchpad} 
+                          isRunning={isRunning} 
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

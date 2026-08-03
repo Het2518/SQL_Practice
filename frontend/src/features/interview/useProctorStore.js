@@ -21,6 +21,7 @@ export const useProctorStore = create((set, get) => ({
       violations: [...state.violations, { type, message, timestamp: Date.now() }],
       isTerminated: true // Zero tolerance
     }));
+    get().stopAllStreams();
   },
   
   resetProctoring: () => set({ violations: [], isTerminated: false }),

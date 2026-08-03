@@ -39,7 +39,7 @@ export function InterviewPermissions() {
 
   const requestScreen = async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'monitor' }, audio: false });
       setScreenStream(stream);
       setScreenGranted(true);
       setError(null);
