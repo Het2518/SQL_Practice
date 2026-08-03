@@ -53,7 +53,7 @@ export function InterviewArena() {
   const { executeQuery, initWithSql } = useSqlDatabase();
 
   useEffect(() => {
-    initWithSql(''); // Initialize an empty in-memory SQLite database
+    initWithSql('-- init');
   }, [initWithSql]);
 
   const messagesEndRef = useRef(null);
@@ -175,7 +175,14 @@ export function InterviewArena() {
       if (!document.fullscreenElement) enforceViolation('Exited fullscreen mode.');
     };
     
-    const onWindowBlur = () => enforceViolation('Window lost focus. (Alt-Tabbed or clicked external monitor).');
+    const onWindowBlur = () => {
+      // 1-second grace period for interacting with browser UI (like the screen share "Hide" banner)
+      setTimeout(() => {
+        if (!document.hasFocus() && !isSubmittedRef.current && !isTerminated) {
+          enforceViolation('Window lost focus. (Alt-Tabbed or clicked external monitor).');
+        }
+      }, 1000);
+    };
 
     const disableCopyPaste = (e) => {
       e.preventDefault();
@@ -387,12 +394,13 @@ export function InterviewArena() {
 
       {/* ══ TERMINATED OVERLAY ══ */}
       {isTerminated && (
-        <div className="fixed inset-0 z-[200] bg-surface/80 dark:bg-bg/95 backdrop-blur-xl dark:backdrop-blur-3xl flex items-center justify-center p-6 animate-fade-in relative overflow-hidden">
-          {/* Background Ambient Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[100px] dark:blur-[150px] pointer-events-none" />
-          
-          <div className="w-full max-w-2xl bg-surface dark:bg-surface/80 backdrop-blur-xl border border-border dark:border-error/30 rounded-3xl p-12 text-center shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out">
-            {/* Top Red Gradient Bar */}
+        <div className="fixed inset-0 z-[200] bg-surface/80 dark:bg-bg/95 backdrop-blur-xl dark:backdrop-blur-3xl overflow-y-auto animate-fade-in">
+          <div className="min-h-full flex items-center justify-center p-4 sm:p-6 relative">
+            {/* Background Ambient Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[100px] dark:blur-[150px] pointer-events-none" />
+            
+            <div className="w-full max-w-2xl bg-surface dark:bg-surface/80 backdrop-blur-xl border border-border dark:border-error/30 rounded-3xl p-8 sm:p-12 text-center shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out z-10">
+              {/* Top Red Gradient Bar */}
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-error to-transparent" />
             
             <div className="w-24 h-24 bg-gradient-to-br from-error/20 to-error/5 border border-error/30 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-error/20 relative">
@@ -422,6 +430,7 @@ export function InterviewArena() {
             </button>
           </div>
         </div>
+      </div>
       )}
 
       {/* ══ SHORTCUTS OVERLAY ══ */}
