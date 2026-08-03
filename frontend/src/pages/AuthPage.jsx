@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Mail, Lock, User, Terminal, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, User, Terminal, ArrowRight, ShieldCheck, Database, Zap, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
+import { Button } from '@/shared/ui/Button';
 
 const VIEWS = {
   LOGIN: 'login',
@@ -10,6 +11,21 @@ const VIEWS = {
   FORGOT_PASSWORD: 'forgot_password',
   RESET_PASSWORD: 'reset_password',
 };
+
+// ─── Reusable Input Component ───
+function AuthInput({ icon: Icon, ...props }) {
+  return (
+    <div className="relative group">
+      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted group-focus-within:text-primary transition-colors">
+        <Icon size={18} strokeWidth={2.5} />
+      </div>
+      <input
+        {...props}
+        className="block w-full pl-11 pr-4 py-3.5 bg-surface border border-border/50 rounded-2xl text-[13px] font-semibold text-text placeholder-muted/70 focus:bg-surface focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all shadow-[0_2px_10px_rgba(0,0,0,0.02)] outline-none"
+      />
+    </div>
+  );
+}
 
 export default function AuthPage() {
   const { login, register, user } = useAuth();
@@ -30,19 +46,13 @@ export default function AuthPage() {
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
 
-  // Auto-redirect if already logged in
   useEffect(() => {
-    if (user) {
-      navigate('/practice', { replace: true });
-    }
+    if (user) navigate('/practice', { replace: true });
   }, [user, navigate]);
 
-  // Set initial view based on query params (e.g. ?view=register)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('view') === 'register') {
-      setView(VIEWS.REGISTER);
-    }
+    if (params.get('view') === 'register') setView(VIEWS.REGISTER);
   }, [location]);
 
   const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -65,28 +75,18 @@ export default function AuthPage() {
         await login(form.identifier, form.password);
         nextStatus = 'success';
         navigate('/practice');
-        
       } else if (view === VIEWS.REGISTER) {
         if (!form.email || !form.username || !form.password) return;
-        if (form.password !== form.confirmPassword) {
-          throw new Error("Passwords do not match.");
-        }
-        await register({ 
-          email: form.email, 
-          username: form.username, 
-          password: form.password, 
-          displayName: form.displayName 
-        });
+        if (form.password !== form.confirmPassword) throw new Error("Passwords do not match.");
+        await register({ email: form.email, username: form.username, password: form.password, displayName: form.displayName });
         nextStatus = 'success';
         navigate('/practice');
-        
       } else if (view === VIEWS.FORGOT_PASSWORD) {
         if (!form.email) return;
         await api.auth.forgotPassword({ email: form.email });
         nextStatus = 'success';
         setMessage('If an account exists, a password reset email was sent.');
         setView(VIEWS.RESET_PASSWORD);
-        
       } else if (view === VIEWS.RESET_PASSWORD) {
         if (!form.email || !form.code || !form.newPassword) return;
         await api.auth.resetPassword({ email: form.email, code: form.code, newPassword: form.newPassword });
@@ -103,290 +103,183 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto flex items-center justify-center bg-bg py-12 px-4 sm:px-6 lg:px-8 page-enter relative overflow-hidden">
+    <div className="flex w-full h-[100dvh] overflow-hidden bg-bg">
       
-      {/* Background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center">
-        <div className="absolute w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[100px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[80px] translate-y-20 translate-x-32 opacity-60" />
-      </div>
-
-      <div className="max-w-md w-full space-y-8 bg-surface/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl border border-border/50 relative z-10">
+      {/* ─── LEFT PANEL (Visual Hook - Hidden on Mobile) ─── */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-[#09090b] text-white overflow-hidden border-r border-white/10">
+        {/* Glows & Gradients */}
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-500/15 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
         
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-500/10 to-purple-500/10 text-primary flex items-center justify-center rounded-2xl mb-6 shadow-sm border border-border/50">
-            <Terminal size={28} strokeWidth={2.5} />
+        {/* Abstract Grid Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+        {/* Brand Header */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md">
+            <Terminal size={20} className="text-white" />
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-text">
-            {view === VIEWS.LOGIN && 'Welcome Back'}
-            {view === VIEWS.REGISTER && 'Create Account'}
-            {view === VIEWS.FORGOT_PASSWORD && 'Reset Password'}
-            {view === VIEWS.RESET_PASSWORD && 'New Password'}
-          </h2>
-          <p className="mt-2 text-sm text-text-secondary">
-            {view === VIEWS.LOGIN && 'Sign in to sync your progress and join the leaderboard.'}
-            {view === VIEWS.REGISTER && 'Join DataDesk to track your SQL journey.'}
-            {view === VIEWS.FORGOT_PASSWORD && 'Enter your email to reset your password.'}
-            {view === VIEWS.RESET_PASSWORD && 'Enter the reset code sent to your email.'}
-          </p>
+          <span className="text-[20px] font-black tracking-tight">DataDesk.</span>
         </div>
 
-        {/* Form */}
-        <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+        {/* Center Graphic */}
+        <div className="relative z-10 flex flex-col items-start gap-8 max-w-lg mt-12">
+          <div className="px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-2">
+            <Sparkles size={12} className="text-primary-light" /> Product Hunt Design of the Year
+          </div>
+          <h1 className="text-[52px] font-black leading-[1.05] tracking-tight">
+            Master SQL.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-blue-400">
+              Land the offer.
+            </span>
+          </h1>
+          <p className="text-[17px] text-white/60 font-medium leading-relaxed">
+            The ultimate platform for data engineers and analysts. Practice real-world interview questions, build your streak, and climb the global leaderboard.
+          </p>
           
-          {/* REGISTER FIELDS */}
-          {view === VIEWS.REGISTER && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Name (Optional)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <User size={18} />
-                  </div>
-                  <input
-                    name="displayName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={form.displayName}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
+          <div className="flex flex-col gap-5 mt-4 w-full">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 text-primary-light">
+                <Database size={20} />
               </div>
-              
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Username *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <User size={18} />
-                  </div>
-                  <input
-                    name="username"
-                    type="text"
-                    required
-                    placeholder="johndoe"
-                    value={form.username}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Email *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <Mail size={18} />
-                  </div>
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Password *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={8}
-                    placeholder="Min. 8 characters"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Confirm Password *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Confirm your password"
-                    value={form.confirmPassword}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* LOGIN FIELDS */}
-          {view === VIEWS.LOGIN && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Username or Email *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <User size={18} />
-                  </div>
-                  <input
-                    name="identifier"
-                    type="text"
-                    required
-                    placeholder="johndoe or you@example.com"
-                    value={form.identifier}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-text-secondary">Password *</label>
-                  <button 
-                    type="button" 
-                    onClick={() => switchView(VIEWS.FORGOT_PASSWORD)}
-                    className="text-xs font-semibold text-primary hover:text-primary-hover"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* FORGOT PASSWORD */}
-          {(view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1">Email *</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                  <Mail size={18} />
-                </div>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-2.5 bg-surface-2 border border-border rounded-lg text-text focus:ring-primary focus:border-primary sm:text-sm transition-colors"
-                />
+                <div className="text-[14px] font-bold">Real-world Schemas</div>
+                <div className="text-[12px] text-white/50 font-medium mt-0.5">Practice on multi-table datasets</div>
               </div>
             </div>
-          )}
-
-          {/* RESET PASSWORD ONLY */}
-          {view === VIEWS.RESET_PASSWORD && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">6-Digit Code *</label>
-                <input
-                  name="code"
-                  type="text"
-                  required
-                  maxLength={6}
-                  placeholder="------"
-                  value={form.code}
-                  onChange={handleChange}
-                  className="block w-full py-3 bg-surface-2 border border-border/50 rounded-xl text-center text-xl tracking-[0.5em] font-mono font-bold text-text focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                />
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center border border-success/30 text-success">
+                <ShieldCheck size={20} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">New Password *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
-                    <Lock size={18} />
+                <div className="text-[14px] font-bold">AI Mock Interviews</div>
+                <div className="text-[12px] text-white/50 font-medium mt-0.5">Get graded by our FAANG-calibre AI</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="relative z-10 text-[13px] font-medium text-white/40">
+          © {new Date().getFullYear()} DataDesk platform.
+        </div>
+      </div>
+
+      {/* ─── RIGHT PANEL (The Form) ─── */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto page-enter">
+        {/* Mobile-only background effects */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none lg:hidden">
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+        </div>
+
+        <div className="w-full max-w-[420px] relative z-10">
+          
+          {/* Mobile Header (Hidden on Desktop) */}
+          <div className="flex lg:hidden items-center justify-center gap-3 mb-12">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <Terminal size={20} />
+            </div>
+            <span className="text-[20px] font-black tracking-tight text-text">DataDesk.</span>
+          </div>
+
+          <div className="mb-10 text-center lg:text-left">
+            <h2 className="text-[32px] font-black tracking-tight text-text mb-2">
+              {view === VIEWS.LOGIN && 'Welcome back'}
+              {view === VIEWS.REGISTER && 'Create account'}
+              {view === VIEWS.FORGOT_PASSWORD && 'Reset password'}
+              {view === VIEWS.RESET_PASSWORD && 'Set new password'}
+            </h2>
+            <p className="text-[14px] text-muted font-medium">
+              {view === VIEWS.LOGIN && 'Enter your credentials to access your command center.'}
+              {view === VIEWS.REGISTER && 'Start your SQL mastery journey today.'}
+              {view === VIEWS.FORGOT_PASSWORD && 'We will send you a 6-digit recovery code.'}
+              {view === VIEWS.RESET_PASSWORD && 'Check your inbox for the recovery code.'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            
+            {view === VIEWS.REGISTER && (
+              <div className="flex flex-col gap-4 animate-[smoothFadeIn_0.3s_ease-out_forwards]">
+                <AuthInput name="displayName" type="text" placeholder="Full Name (Optional)" value={form.displayName} onChange={handleChange} icon={User} />
+                <AuthInput name="username" type="text" required placeholder="Username" value={form.username} onChange={handleChange} icon={User} />
+                <AuthInput name="email" type="email" required placeholder="name@company.com" value={form.email} onChange={handleChange} icon={Mail} />
+                <AuthInput name="password" type="password" required minLength={8} placeholder="Password (min 8 chars)" value={form.password} onChange={handleChange} icon={Lock} />
+                <AuthInput name="confirmPassword" type="password" required minLength={8} placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} icon={Lock} />
+              </div>
+            )}
+
+            {view === VIEWS.LOGIN && (
+              <div className="flex flex-col gap-4 animate-[smoothFadeIn_0.3s_ease-out_forwards]">
+                <AuthInput name="identifier" type="text" required placeholder="Username or Email" value={form.identifier} onChange={handleChange} icon={User} />
+                <div className="flex flex-col gap-1.5">
+                  <AuthInput name="password" type="password" required placeholder="Password" value={form.password} onChange={handleChange} icon={Lock} />
+                  <div className="text-right mt-1">
+                    <button type="button" onClick={() => switchView(VIEWS.FORGOT_PASSWORD)} className="text-[12px] font-bold text-primary hover:text-primary-hover transition-colors">
+                      Forgot password?
+                    </button>
                   </div>
-                  <input
-                    name="newPassword"
-                    type="password"
-                    required
-                    minLength={8}
-                    placeholder="Min. 8 characters"
-                    value={form.newPassword}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
-                  />
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          {/* Status Message */}
-          {message && (
-            <div className={`p-3 rounded-md text-sm font-medium ${
-              status === 'error' ? 'bg-error/10 text-error' : 'bg-success/10 text-success'
-            }`}>
-              {message}
-            </div>
-          )}
+            {(view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
+              <div className="flex flex-col gap-4 animate-[smoothFadeIn_0.3s_ease-out_forwards]">
+                <AuthInput name="email" type="email" required placeholder="name@company.com" value={form.email} onChange={handleChange} icon={Mail} />
+              </div>
+            )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={status === 'loading'}
-            className="w-full flex justify-center items-center h-12 hero-btn-primary rounded-xl text-sm font-bold text-primary-foreground shadow-lg hover:shadow-xl hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-bg disabled:opacity-70 transition-all"
-          >
-            {status === 'loading' ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <>
+            {view === VIEWS.RESET_PASSWORD && (
+              <div className="flex flex-col gap-4 animate-[smoothFadeIn_0.3s_ease-out_forwards]">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted group-focus-within:text-primary transition-colors">
+                    <Zap size={18} strokeWidth={2.5} />
+                  </div>
+                  <input
+                    name="code" type="text" required maxLength={6} placeholder="6-Digit Code" value={form.code} onChange={handleChange}
+                    className="block w-full pl-11 pr-4 py-3.5 bg-surface border border-border/50 rounded-2xl text-[18px] font-mono font-bold tracking-[0.3em] text-text placeholder-muted/50 focus:bg-surface focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all shadow-sm outline-none uppercase"
+                  />
+                </div>
+                <AuthInput name="newPassword" type="password" required minLength={8} placeholder="New Password" value={form.newPassword} onChange={handleChange} icon={Lock} />
+              </div>
+            )}
+
+            {/* Status Alert */}
+            {message && (
+              <div className={`mt-2 p-3.5 rounded-xl border text-[12px] font-bold animate-[smoothFadeIn_0.2s_ease-out_forwards] ${
+                status === 'error' ? 'bg-error/10 border-error/20 text-error' : 'bg-success/10 border-success/20 text-success'
+              }`}>
+                {message}
+              </div>
+            )}
+
+            {/* Submit */}
+            <div className="mt-4">
+              <Button type="submit" variant="primary" size="lg" className="w-full h-12 text-[14px] font-bold rounded-2xl shadow-[0_8px_20px_rgba(99,102,241,0.25)] hover:shadow-[0_12px_24px_rgba(99,102,241,0.35)] transition-all" isLoading={status === 'loading'}>
                 {view === VIEWS.LOGIN && 'Sign In'}
                 {view === VIEWS.REGISTER && 'Create Account'}
-                {view === VIEWS.FORGOT_PASSWORD && 'Send Reset Code'}
+                {view === VIEWS.FORGOT_PASSWORD && 'Send Reset Link'}
                 {view === VIEWS.RESET_PASSWORD && 'Reset Password'}
-                {(view === VIEWS.LOGIN || view === VIEWS.REGISTER) && <ArrowRight size={16} className="ml-2" />}
-              </>
-            )}
-          </button>
-        </form>
+                {(view === VIEWS.LOGIN || view === VIEWS.REGISTER) && <ArrowRight size={16} />}
+              </Button>
+            </div>
+          </form>
 
-        {/* Footer Links */}
-        <div className="mt-6 text-center">
-          {view === VIEWS.LOGIN && (
-            <p className="text-sm text-text-secondary">
-              Don't have an account?{' '}
-              <button type="button" onClick={() => switchView(VIEWS.REGISTER)} className="font-semibold text-primary hover:text-primary-hover transition-colors">Sign Up</button>
-            </p>
-          )}
-          {view === VIEWS.REGISTER && (
-            <p className="text-sm text-text-secondary">
-              Already have an account?{' '}
-              <button type="button" onClick={() => switchView(VIEWS.LOGIN)} className="font-semibold text-primary hover:text-primary-hover transition-colors">Sign In</button>
-            </p>
-          )}
-          {(view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
-            <p className="text-sm text-text-secondary">
-              <button type="button" onClick={() => switchView(VIEWS.LOGIN)} className="font-semibold text-primary hover:text-primary-hover transition-colors">Back to Sign In</button>
-            </p>
-          )}
+          {/* Footer Toggles */}
+          <div className="mt-8 text-center text-[13px] font-semibold text-muted">
+            {view === VIEWS.LOGIN && (
+              <>Don't have an account? <button type="button" onClick={() => switchView(VIEWS.REGISTER)} className="text-text hover:text-primary transition-colors underline underline-offset-4 decoration-border hover:decoration-primary">Sign up</button></>
+            )}
+            {view === VIEWS.REGISTER && (
+              <>Already have an account? <button type="button" onClick={() => switchView(VIEWS.LOGIN)} className="text-text hover:text-primary transition-colors underline underline-offset-4 decoration-border hover:decoration-primary">Sign in</button></>
+            )}
+            {(view === VIEWS.FORGOT_PASSWORD || view === VIEWS.RESET_PASSWORD) && (
+              <><button type="button" onClick={() => switchView(VIEWS.LOGIN)} className="text-text hover:text-primary transition-colors underline underline-offset-4 decoration-border hover:decoration-primary">Back to Sign in</button></>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
