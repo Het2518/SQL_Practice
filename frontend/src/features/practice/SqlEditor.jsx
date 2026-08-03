@@ -102,11 +102,18 @@ export function SqlEditor({
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
   // Listen for shortcut changes across the app
   useEffect(() => {
+    const handleShortcutUpdate = () => {
+      setShortcuts(loadShortcuts());
+    };
     const handleStorage = (e) => {
       if (e.key === 'sql-practice-shortcuts') setShortcuts(loadShortcuts());
     };
+    window.addEventListener('sql-practice-shortcuts-updated', handleShortcutUpdate);
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('sql-practice-shortcuts-updated', handleShortcutUpdate);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
   const handleFormatProxy = useCallback(() => {

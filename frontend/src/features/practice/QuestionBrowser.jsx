@@ -72,17 +72,23 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
   }, [search]);
 
   useEffect(() => {
-    api.companies
-      .getAll()
-      .then(({ data }) => {
-        const companies = data.data.companies ?? [];
-        setDynamicCompanies(companies.map((c) => c.name).sort());
-        setQCompanyMap({});
-      })
-      .catch((err) => {
-        console.error('[QuestionBrowser] Failed to load companies:', err.message);
-      });
-  }, []);
+    const companyNames = new Set();
+    const companyMap = {};
+
+    questions.forEach((question) => {
+      const companies = (question.keywords || [])
+        .filter((keyword) => keyword.startsWith('company:'))
+        .map((keyword) => keyword.replace('company:', ''));
+
+      if (companies.length > 0) {
+        companyMap[question.prompt] = new Set(companies);
+        companies.forEach((company) => companyNames.add(company));
+      }
+    });
+
+    setDynamicCompanies(Array.from(companyNames).sort());
+    setQCompanyMap(companyMap);
+  }, [questions]);
 
   const toggle = (set, item) => {
     const next = new Set(set);

@@ -63,4 +63,19 @@ const upvoteLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter, activityLimiter, upvoteLimiter };
+/**
+ * Comment creation limiter to reduce spam and flooding.
+ * 20 comments per 15 minutes per IP.
+ */
+const commentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many comments. Please slow down.',
+  },
+});
+
+module.exports = { authLimiter, apiLimiter, activityLimiter, upvoteLimiter, commentLimiter };

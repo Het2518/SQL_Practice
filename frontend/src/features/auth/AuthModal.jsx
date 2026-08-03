@@ -230,11 +230,11 @@ export function AuthModal({ onClose }) {
                   <input
                     type="password"
                     name="password"
-                    placeholder={view === VIEWS.LOGIN ? '••••••••' : 'Min. 6 characters'}
+                    placeholder={view === VIEWS.LOGIN ? '••••••••' : 'Min. 8 characters'}
                     value={form.password}
                     onChange={handleChange}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                   />
                 </div>
@@ -269,11 +269,11 @@ export function AuthModal({ onClose }) {
                   <input
                     type="password"
                     name="newPassword"
-                    placeholder="Min. 6 characters"
+                    placeholder="Min. 8 characters"
                     value={form.newPassword}
                     onChange={handleChange}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="w-full pl-10 pr-4 py-2.5 bg-surface-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
                   />
                 </div>

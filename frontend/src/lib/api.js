@@ -15,6 +15,49 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
+function getCookieValue(name) {
+  if (typeof document === 'undefined') return '';
+  return document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${name}=`))
+    ?.split('=')[1] || '';
+}
+
+let csrfTokenPromise = null;
+
+async function ensureCsrfToken() {
+  const existingToken = getCookieValue('csrfToken');
+  if (existingToken) return existingToken;
+
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = fetch(`${BASE_URL}/auth/csrf`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`CSRF bootstrap failed: HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const token = payload?.data?.csrfToken || getCookieValue('csrfToken');
+        if (!token) {
+          throw new Error('CSRF bootstrap failed: missing token');
+        }
+
+        apiClient.defaults.headers.common['X-CSRF-Token'] = token;
+        return token;
+      })
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+
+  return csrfTokenPromise;
+}
+
 // ── Request Interceptor: (No longer attaching JWT manually, cookie handles it) ──
 
 // ── Response Interceptor: Handle auth errors and Silent Refresh ────────────
@@ -74,6 +117,23 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+apiClient.interceptors.request.use(async (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  const isMutating = !['get', 'head', 'options'].includes(method);
+  const url = config.url || '';
+
+  if (isMutating && !url.includes('/auth/csrf')) {
+    const token = getCookieValue('csrfToken') || (await ensureCsrfToken());
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers['X-CSRF-Token'] = token;
+      apiClient.defaults.headers.common['X-CSRF-Token'] = token;
+    }
+  }
+
+  return config;
+});
 
 // ── Token Helpers (Removed, using HttpOnly cookies) ──────────────────────
 

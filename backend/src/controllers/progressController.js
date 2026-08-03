@@ -168,7 +168,7 @@ async function recordActivity(req, res, next) {
 
     // Compute badges
     const badgeSet = new Set(doc.badges);
-    badgeSet.add('first_query');
+    if (isAccepted) badgeSet.add('first_query');
     if (doc.currentStreak >= 3) badgeSet.add('streak_3');
     if (doc.currentStreak >= 7) badgeSet.add('streak_7');
     doc.badges = Array.from(badgeSet);

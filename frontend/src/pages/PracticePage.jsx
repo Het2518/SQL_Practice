@@ -57,7 +57,7 @@ import { hasGroqKey } from '@/lib/groq';
 
 export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const { user } = useAuth();
-  const { progress } = useProgressStore();
+  const { progress, progressLoaded } = useProgressStore();
   const { gameState } = useGamificationStore();
   const { settings, toggleDarkMode } = useSettingsStore();
   const navigate = useNavigate();
@@ -77,6 +77,17 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     }
     return dbQs.find((q) => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
   });
+
+  useEffect(() => {
+    if (!progressLoaded || qParam) return;
+
+    const dbQs = getQuestionsForDb(initialDb);
+    const preferredQuestion = dbQs.find((q) => !progress[q.id] || progress[q.id] === 'incomplete') ?? dbQs[0];
+
+    if (preferredQuestion && preferredQuestion.id !== currentQ?.id) {
+      setCurrentQ(preferredQuestion);
+    }
+  }, [progressLoaded, qParam, initialDb, progress, currentQ?.id]);
 
   useEffect(() => {
     if (routeDb) {
@@ -256,10 +267,10 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   }, [currentQ.id, EDITOR_KEY]);
   useEffect(() => {
     // Always save current SQL for this question
-    if (sql !== undefined) {
+    if (settings?.persistEditorText && sql !== undefined) {
       localStorage.setItem(EDITOR_KEY, sql);
     }
-  }, [sql, EDITOR_KEY]);
+  }, [sql, EDITOR_KEY, settings?.persistEditorText]);
 
   const dbInfo = DB_INFO[db];
   const dbQuestions = useMemo(() => {

@@ -34,8 +34,8 @@ const registerValidation = [
   body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
   body('username').trim().notEmpty().withMessage('Username is required').isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
   body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long'),
   body('displayName')
     .optional()
     .trim()
@@ -50,7 +50,7 @@ const loginValidation = [
 
 const updatePasswordValidation = [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters long'),
 ];
 
 const forgotPasswordValidation = [
@@ -60,7 +60,7 @@ const forgotPasswordValidation = [
 const resetPasswordValidation = [
   body('email').isEmail().normalizeEmail().withMessage('A valid email is required'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits'),
-  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  body('newPassword').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
 ];
 
 const updateNameValidation = [

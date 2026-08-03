@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { api, apiClient } from '@/lib/api';
 
+let authExpiredListenerBound = false;
+
 /**
  * Zustand store for JWT-based authentication.
  *
@@ -9,7 +11,8 @@ import { api, apiClient } from '@/lib/api';
  *   to handle session expiration.
  */
 export const useAuth = create((set, get) => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && !authExpiredListenerBound) {
+    authExpiredListenerBound = true;
     window.addEventListener('datadesk:auth:expired', () => {
       set({ user: null, loading: false });
     });

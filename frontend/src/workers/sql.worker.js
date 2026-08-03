@@ -2,6 +2,9 @@ let db = null;
 let SQL = null;
 let currentSchema = null; // Caches GET_SCHEMA results to avoid repetitive O(N) COUNT(*) scans
 
+const BASE_URL = import.meta?.env?.BASE_URL || '/';
+const SQL_JS_URL = `${BASE_URL}sql-wasm.js`;
+
 // Beast Optimization: LRU Cache for query results
 const queryCache = new Map();
 const MAX_CACHE_SIZE = 50;
@@ -32,19 +35,11 @@ function setCachedResult(sql, result) {
 
 async function loadSqlJs() {
   if (SQL) return SQL;
-  
-  try {
-    importScripts('/sql-wasm.js');
-  } catch (e) {
-    // If we're in a module worker in Vite dev server, importScripts fails.
-    const res = await fetch('/sql-wasm.js');
-    let code = await res.text();
-    code += '\nreturn initSqlJs;';
-    self.initSqlJs = (new Function(code))();
-  }
+
+  importScripts(SQL_JS_URL);
 
   SQL = await self.initSqlJs({
-    locateFile: file => `/${file}`
+    locateFile: file => `${BASE_URL}${file}`
   });
   return SQL;
 }
@@ -75,7 +70,7 @@ self.onmessage = async (e) => {
       
       if (payload.dbPath) {
         // Fetch from origin
-        const response = await fetch(payload.dbPath);
+        const response = await fetch(`${BASE_URL}${payload.dbPath.replace(/^\//, '')}`);
         if (!response.ok) throw new Error(`Failed to fetch database file`);
         
         const contentLength = response.headers.get('content-length');

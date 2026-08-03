@@ -57,11 +57,13 @@ export default function AuthPage() {
     e.preventDefault();
     setStatus('loading');
     setMessage('');
+    let nextStatus = 'idle';
     
     try {
       if (view === VIEWS.LOGIN) {
         if (!form.identifier || !form.password) return;
         await login(form.identifier, form.password);
+        nextStatus = 'success';
         navigate('/practice');
         
       } else if (view === VIEWS.REGISTER) {
@@ -75,27 +77,28 @@ export default function AuthPage() {
           password: form.password, 
           displayName: form.displayName 
         });
+        nextStatus = 'success';
         navigate('/practice');
         
       } else if (view === VIEWS.FORGOT_PASSWORD) {
         if (!form.email) return;
         await api.auth.forgotPassword({ email: form.email });
-        setStatus('success');
+        nextStatus = 'success';
         setMessage('If an account exists, a password reset email was sent.');
         setView(VIEWS.RESET_PASSWORD);
         
       } else if (view === VIEWS.RESET_PASSWORD) {
         if (!form.email || !form.code || !form.newPassword) return;
         await api.auth.resetPassword({ email: form.email, code: form.code, newPassword: form.newPassword });
-        setStatus('success');
+        nextStatus = 'success';
         setMessage('Password reset successful! You can now log in.');
         setView(VIEWS.LOGIN);
       }
     } catch (err) {
-      setStatus('error');
+      nextStatus = 'error';
       setMessage(err.response?.data?.message || err.message || 'Something went wrong.');
     } finally {
-      if (status !== 'error' && status !== 'success') setStatus('idle');
+      setStatus(nextStatus);
     }
   };
 
@@ -198,8 +201,8 @@ export default function AuthPage() {
                     name="password"
                     type="password"
                     required
-                    minLength={6}
-                    placeholder="Min. 6 characters"
+                    minLength={8}
+                    placeholder="Min. 8 characters"
                     value={form.password}
                     onChange={handleChange}
                     className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"
@@ -325,8 +328,8 @@ export default function AuthPage() {
                     name="newPassword"
                     type="password"
                     required
-                    minLength={6}
-                    placeholder="Min. 6 characters"
+                    minLength={8}
+                    placeholder="Min. 8 characters"
                     value={form.newPassword}
                     onChange={handleChange}
                     className="block w-full pl-10 pr-3 py-3 bg-surface-2 border border-border/50 rounded-xl text-text focus:ring-2 focus:ring-primary/20 focus:border-primary sm:text-sm transition-all shadow-sm"

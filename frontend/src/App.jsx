@@ -276,6 +276,8 @@ export default function App() {
         <Route path="/leaderboard" element={<LeaderboardPage user={user} />} />
 
         <Route path="/login" element={<AuthPage />} />
+
+        <Route path="/practice" element={<Navigate to="/practice/airlines" replace />} />
         
         <Route
           path="/practice/:db"

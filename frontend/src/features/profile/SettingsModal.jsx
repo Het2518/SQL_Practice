@@ -124,8 +124,9 @@ export function SettingsModal({ onClose }) {
     // Save Groq key
     if (groqKeyInput.trim()) saveGroqKey(groqKeyInput.trim());
     else saveGroqKey('');
-    // Dispatch an event so SqlEditor and App can pickup the shortcut changes without reload
-    window.dispatchEvent(new Event('storage'));
+    // Dispatch explicit app-level events so listeners can refresh without reload.
+    window.dispatchEvent(new CustomEvent('sql-practice-shortcuts-updated'));
+    window.dispatchEvent(new CustomEvent('sql-practice-settings-updated'));
 
     updateSettings(local);
     onClose();
