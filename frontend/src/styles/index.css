@@ -148,3 +148,6 @@ html, body {
   opacity: 0.7;
 }
 
+/* ── Utility: hide scrollbar while keeping scroll ── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Target, Award, Shield, Zap, Star, CheckCircle, Clock, ChevronRight } from 'lucide-react';
+import { Lock, Target, Award, Shield, Zap, Star, CheckCircle, Flame } from 'lucide-react';
 import { BADGE_DEFS } from '@/hooks/useGamification';
 
 // Badge icon mapping — no emoji, use Lucide icons
@@ -19,7 +19,7 @@ function getRarity(badge) {
   return { label: 'Common', color: '#94a3b8', glow: 'rgba(148,163,184,0.20)', bg: 'rgba(148,163,184,0.06)', border: 'rgba(148,163,184,0.25)' };
 }
 
-import { Flame } from 'lucide-react';
+
 
 function BadgeCard({ badge, isEarned }) {
   const rarity = getRarity(badge);

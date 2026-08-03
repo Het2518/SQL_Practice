@@ -2,10 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import {
-  Settings as SettingsIcon, User, LogOut, Edit2, Check, X, Trophy, Zap, Target,
-  Star, Flame, Medal, Share2, BarChart2, MessageSquare, Folder, Swords, Award,
+  Settings as SettingsIcon, LogOut, Edit2, Check, X, Zap,
+  Medal, Share2, BarChart2, MessageSquare, Folder, Swords, Award,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { allQuestions } from '@/data/index';
 import { BADGE_DEFS } from '@/hooks/useGamification';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
