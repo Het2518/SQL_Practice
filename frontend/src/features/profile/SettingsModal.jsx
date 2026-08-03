@@ -9,7 +9,7 @@ import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { Settings, X, Bot, Download, UploadCloud, RotateCcw, Trash2, ClipboardCopy, HardDrive, Keyboard, Search } from 'lucide-react';
+import { Settings, X, Bot, Download, UploadCloud, RotateCcw, Trash2, ClipboardCopy, HardDrive, Keyboard, Search, Database } from 'lucide-react';
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (

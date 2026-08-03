@@ -534,7 +534,7 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
 
   // Full upload screen
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100vh-65px)] p-6 md:p-12 relative overflow-hidden bg-bg">
+    <div className="flex-1 flex flex-col items-center justify-center min-h-0 h-full p-6 md:p-12 relative overflow-y-auto custom-scrollbar bg-bg">
       {/* Background Orbs */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
       <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
