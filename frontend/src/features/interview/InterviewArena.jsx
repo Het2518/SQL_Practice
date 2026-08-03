@@ -61,14 +61,19 @@ export function InterviewArena() {
   // Restore or Initialize Session
   useEffect(() => {
     const saved = restoreSessionState();
-    if (saved && saved.initialTask && saved.difficulty === difficulty) {
+    
+    // Invalidate legacy sessions that don't have database initialization scripts
+    if (saved && saved.initSql) {
       setInitialTask(saved.initialTask);
       setMessages(saved.messages || []);
       setSql(saved.sql || '');
       setScratchpad(saved.scratchpad || '');
       setTimeLeft(saved.timeLeft || duration * 60);
       setGeneratingQuestion(false);
-      initWithSql(saved.initSql || '-- init');
+      
+      let cleanInitSql = saved.initSql || '-- init';
+      cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
+      initWithSql(cleanInitSql);
     } else {
       const fetchQuestion = async () => {
         try {
@@ -91,7 +96,10 @@ export function InterviewArena() {
           }
 
           setInitialTask(taskData.markdown);
-          initWithSql(taskData.initSql);
+          
+          let cleanInitSql = taskData.initSql || '-- init';
+          cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
+          initWithSql(cleanInitSql);
           
           const welcomeMsg = {
             role: 'assistant',
@@ -101,7 +109,7 @@ export function InterviewArena() {
           
           saveSessionState({
             difficulty, companyName, roleName, candidateName, initialTask: taskData.markdown,
-            initSql: taskData.initSql, messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
+            initSql: cleanInitSql, messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
           });
         } catch (err) {
           console.error(err);
