@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
-import { groqChat, MODEL_SMART } from '@/lib/groq';
+import { generateInterviewTask, chatInterview, dryRunInterview } from '@/lib/groq';
 import { api } from '@/lib/api';
 import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
@@ -61,13 +61,12 @@ export function InterviewArena() {
     } else {
       const fetchQuestion = async () => {
         try {
-          const { data } = await api.ai.generateInterview({
+          const taskText = await generateInterviewTask({
             difficulty,
             companyName,
             candidateName,
             roleName
           });
-          const taskText = data.data?.choices?.[0]?.message?.content?.trim() || '';
           
           if (!taskText) throw new Error('Empty response');
 
@@ -241,15 +240,18 @@ export function InterviewArena() {
     setIsLoading(true);
 
     try {
-      const { data } = await api.ai.chatInterview({
+      const responseText = await chatInterview({
         companyName,
         initialTask,
         messages: newMessages
       });
-      const responseText = data.data?.choices?.[0]?.message?.content || '';
       setMessages((prev) => [...prev, { role: 'assistant', content: responseText }]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: Network request failed. Please try again.' }]);
+      if (err.message === 'MISSING_API_KEY') {
+        toast({ title: 'Missing API Key', message: 'Please add your Groq API key in Settings.', type: 'error' });
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: Network request failed. Please try again.' }]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -266,15 +268,18 @@ export function InterviewArena() {
     setIsDryRunning(true);
 
     try {
-      const { data } = await api.ai.dryRunInterview({
+      const responseText = await dryRunInterview({
         companyName,
         messages,
         sql
       });
-      const responseText = data.data?.choices?.[0]?.message?.content || '';
       setDryRunFeedback(responseText);
     } catch (err) {
-      setDryRunFeedback('⚠️ Error: Network request failed. Please try again.');
+      if (err.message === 'MISSING_API_KEY') {
+        setDryRunFeedback('⚠️ Please add your Groq API key in Settings to use the AI Dry Run feature.');
+      } else {
+        setDryRunFeedback('⚠️ Error: Network request failed. Please try again.');
+      }
     } finally {
       setIsDryRunning(false);
     }

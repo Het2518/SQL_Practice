@@ -408,10 +408,21 @@ export function SettingsModal({ onClose }) {
               <div className="p-5 bg-surface-2 border border-border rounded-xl mt-4">
                 <div className="flex items-center gap-2 mb-3.5">
                   <span className="text-[20px]">🧠</span>
-                  <div className="font-semibold">AI Capabilities Enabled</div>
+                  <div className="font-semibold">Groq API Key (Required for AI Features)</div>
                 </div>
-                <div className="text-[13px] text-text-secondary mb-4">
-                  DataDesk uses the ultra-fast Groq API for AI explanations. The platform provides this service automatically to help you learn faster. No configuration is required.
+                <div className="text-[13px] text-text-secondary mb-4 leading-relaxed">
+                  DataDesk uses the ultra-fast Groq API for mock interviews, code explanations, and AI dry runs. 
+                  To use these features, you must provide your own free API key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">console.groq.com</a>.
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-semibold text-text-secondary">Your API Key (stored locally)</label>
+                  <input
+                    type="password"
+                    placeholder="gsk_..."
+                    value={local.groqApiKey || ''}
+                    onChange={(e) => set('groqApiKey', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-surface text-text text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  />
                 </div>
               </div>
             </>

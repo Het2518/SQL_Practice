@@ -24,4 +24,5 @@ export const defaultSettings = {
   persistEditorText: false,
   timedChallenges: false,
   editorFontSize: 14,
+  groqApiKey: '',
 };

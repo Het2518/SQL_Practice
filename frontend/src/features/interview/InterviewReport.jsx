@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
+import { evaluateInterview } from '@/lib/groq';
 
 export function InterviewReport() {
   const location = useLocation();
@@ -41,15 +42,23 @@ export function InterviewReport() {
         jsonFeedback.strengths = ['None recorded due to termination'];
         jsonFeedback.weaknesses = ['Zero-Tolerance Integrity Policy Violation'];
       } else {
-        const { data } = await api.ai.evaluateInterview({
-          companyName: payload.companyName,
-          candidateName: payload.candidateName,
-          roleName: payload.roleName,
-          initialTask: payload.initialTask,
-          sql: payload.sql
-        });
-        
-        let response = data.data?.choices?.[0]?.message?.content || '';
+        let response = '';
+        try {
+          response = await evaluateInterview({
+            companyName: payload.companyName,
+            candidateName: payload.candidateName,
+            roleName: payload.roleName,
+            initialTask: payload.initialTask,
+            sql: payload.sql
+          });
+        } catch (apiErr) {
+          if (apiErr.message === 'MISSING_API_KEY') {
+            setError('Missing API Key: Please configure your Groq API key in Settings to receive AI evaluations.');
+            throw apiErr;
+          } else {
+            throw apiErr;
+          }
+        }
         
         try {
           // Robustly extract JSON block using regex to ignore markdown or conversational filler
