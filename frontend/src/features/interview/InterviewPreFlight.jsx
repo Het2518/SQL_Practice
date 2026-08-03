@@ -127,39 +127,49 @@ export function InterviewPreFlight() {
   };
 
   return (
-    <div className="h-screen bg-bg text-text flex items-center justify-center p-6 page-enter overflow-hidden">
-      <div className="max-w-[900px] w-full max-h-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
+    <div className="h-screen bg-bg text-text flex items-center justify-center p-6 page-enter relative overflow-hidden">
+      
+      {/* Background glow effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+      </div>
+
+      <div className="max-w-[1000px] w-full max-h-[90vh] bg-surface/80 backdrop-blur-2xl border border-border/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative z-10 animate-fade-in-up">
         
         {/* Header */}
-        <div className="bg-surface-2 px-8 py-6 border-b border-border text-center shrink-0">
-          <div className="mx-auto w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mb-4">
-            <ShieldAlert size={32} />
+        <div className="px-10 py-8 border-b border-border/50 text-center relative overflow-hidden shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-error/50 to-transparent" />
+          <div className="mx-auto w-14 h-14 bg-gradient-to-br from-error/20 to-error/5 border border-error/20 text-error rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-error/10 backdrop-blur-sm">
+            <ShieldAlert size={28} />
           </div>
-          <h1 className="text-2xl font-black mb-2">Final System Pre-Flight</h1>
-          <p className="text-text-secondary text-sm">
+          <h1 className="text-2xl font-black mb-2 tracking-tight text-text">Final System Pre-Flight</h1>
+          <p className="text-text-secondary text-sm max-w-xl mx-auto leading-relaxed">
             Verify your environment and agree to the integrity policy.
           </p>
         </div>
 
-        <div className="p-8 flex flex-col gap-8 overflow-y-auto flex-1">
+        <div className="p-10 flex flex-col gap-10 overflow-y-auto flex-1 bg-surface/50 custom-scrollbar">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {/* System Checks */}
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary mb-4">Diagnostics</h3>
-              <div className="flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">Diagnostics</h3>
+              <div className="flex flex-col gap-4">
                 <CheckItem 
-                  icon={<Wifi size={16} />} 
+                  icon={<Wifi size={18} />} 
                   label="Network Stability (Latency < 100ms)" 
                   status={checking && !checks.network ? 'loading' : checks.network ? 'pass' : 'fail'} 
                 />
                 <CheckItem 
-                  icon={<Monitor size={16} />} 
+                  icon={<Monitor size={18} />} 
                   label="Browser Fullscreen Capability" 
                   status={checking && !checks.browser ? 'loading' : checks.browser ? 'pass' : 'fail'} 
                 />
                 <CheckItem 
-                  icon={<Camera size={16} />} 
+                  icon={<Camera size={18} />} 
                   label="AV Streams & Screen Share" 
                   status={checking && !checks.media ? 'loading' : checks.media ? 'pass' : 'fail'} 
                 />
@@ -168,22 +178,22 @@ export function InterviewPreFlight() {
 
             {/* Candidate Agreement */}
             <div className="flex flex-col">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary mb-4">Integrity Policy</h3>
-              <div className="bg-surface-2 border border-border p-4 rounded-xl text-sm leading-relaxed mb-4 flex-1">
-                <p className="mb-3 font-semibold text-text">By proceeding, you agree that:</p>
-                <ul className="flex flex-col gap-2 text-error font-medium">
-                  <li>• You will remain in fullscreen mode.</li>
-                  <li>• You will not use external IDEs or tools.</li>
-                  <li>• You will not copy, cut, or paste code.</li>
-                  <li>• You will not switch tabs or monitors.</li>
-                  <li>• A single violation will instantly terminate the session (Score: 0).</li>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">Integrity Policy</h3>
+              <div className="bg-surface-2 border border-border/60 p-5 rounded-2xl text-sm leading-relaxed mb-5 flex-1 shadow-inner shadow-black/5">
+                <p className="mb-4 font-bold text-text">By proceeding, you agree that:</p>
+                <ul className="flex flex-col gap-3 text-error/90 font-medium">
+                  <li className="flex items-start gap-2"><span className="mt-0.5">•</span> You will remain in fullscreen mode.</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">•</span> You will not use external IDEs or tools.</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">•</span> You will not copy, cut, or paste code.</li>
+                  <li className="flex items-start gap-2"><span className="mt-0.5">•</span> You will not switch tabs or monitors.</li>
+                  <li className="flex items-start gap-2 text-error"><span className="mt-0.5">•</span> A single violation will instantly terminate the session (Score: 0).</li>
                 </ul>
               </div>
-              <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all select-none ${agreed ? 'border-primary bg-primary/5' : 'border-border bg-surface'}`}>
-                <div className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${agreed ? 'bg-primary border-primary text-primary-foreground' : 'bg-surface-2 border-border text-transparent'}`}>
-                  <Check size={14} strokeWidth={3} />
+              <label className={`flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all select-none ${agreed ? 'border-primary bg-primary/5 shadow-[0_0_15px_rgba(var(--primary),0.1)]' : 'border-border bg-surface hover:border-border/80'}`}>
+                <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${agreed ? 'bg-primary border-primary text-primary-foreground' : 'bg-surface-3 border-border text-transparent'}`}>
+                  <Check size={14} strokeWidth={4} />
                 </div>
-                <span className={`text-sm font-semibold ${agreed ? 'text-primary' : 'text-text-secondary'}`}>
+                <span className={`text-sm font-bold ${agreed ? 'text-primary' : 'text-text-secondary'}`}>
                   I accept the strict proctoring rules.
                 </span>
                 <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="hidden" />
@@ -193,35 +203,35 @@ export function InterviewPreFlight() {
 
           {/* Media Previews */}
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary mb-4">Stream Previews</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-black rounded-lg overflow-hidden border border-border aspect-video relative">
-                <span className="absolute top-2 left-2 text-[10px] uppercase font-bold text-white bg-black/50 px-2 py-1 rounded z-10">Camera</span>
-                {cameraStream ? <VideoPreview stream={cameraStream} /> : <div className="w-full h-full flex items-center justify-center text-error text-xs font-semibold">Missing</div>}
+            <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">Stream Previews</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="bg-[#09090b] rounded-2xl overflow-hidden border border-border/50 aspect-video relative shadow-lg">
+                <span className="absolute top-3 left-3 text-[9px] uppercase tracking-wider font-black text-white bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md z-10">Camera</span>
+                {cameraStream ? <VideoPreview stream={cameraStream} /> : <div className="w-full h-full flex items-center justify-center text-error/80 text-xs font-bold">Missing Stream</div>}
               </div>
-              <div className="bg-black rounded-lg overflow-hidden border border-border aspect-video relative">
-                <span className="absolute top-2 left-2 text-[10px] uppercase font-bold text-white bg-black/50 px-2 py-1 rounded z-10">Screen</span>
-                {screenStream ? <VideoPreview stream={screenStream} /> : <div className="w-full h-full flex items-center justify-center text-error text-xs font-semibold">Missing</div>}
+              <div className="bg-[#09090b] rounded-2xl overflow-hidden border border-border/50 aspect-video relative shadow-lg">
+                <span className="absolute top-3 left-3 text-[9px] uppercase tracking-wider font-black text-white bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md z-10">Screen</span>
+                {screenStream ? <VideoPreview stream={screenStream} /> : <div className="w-full h-full flex items-center justify-center text-error/80 text-xs font-bold">Missing Stream</div>}
               </div>
-              <div className="bg-black rounded-lg overflow-hidden border border-border aspect-video relative">
-                <span className="absolute top-2 left-2 text-[10px] uppercase font-bold text-white bg-black/50 px-2 py-1 rounded z-10">Microphone</span>
-                {micStream ? <AudioPreview stream={micStream} /> : <div className="w-full h-full flex items-center justify-center text-error text-xs font-semibold">Missing</div>}
+              <div className="bg-[#09090b] rounded-2xl overflow-hidden border border-border/50 aspect-video relative shadow-lg">
+                <span className="absolute top-3 left-3 text-[9px] uppercase tracking-wider font-black text-white bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-md z-10">Microphone</span>
+                {micStream ? <AudioPreview stream={micStream} /> : <div className="w-full h-full flex items-center justify-center text-error/80 text-xs font-bold">Missing Stream</div>}
               </div>
             </div>
           </div>
 
         </div>
 
-        <div className="p-6 border-t border-border bg-surface-2 flex items-center justify-between shrink-0">
-          <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary">
-            Cancel
+        <div className="p-8 border-t border-border/50 bg-bg/50 backdrop-blur-xl flex items-center justify-between shrink-0">
+          <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary hover:text-text">
+            Cancel Setup
           </Button>
           <Button 
-            className="hero-btn-primary h-12 px-8 text-base shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+            className="h-12 px-8 text-base font-bold shadow-[0_0_24px_rgba(var(--primary),0.3)] hover:shadow-[0_0_32px_rgba(var(--primary),0.4)] transition-all rounded-xl"
             disabled={!allClear || !agreed}
             onClick={handleStart}
           >
-            Start Interview <ArrowRight size={18} />
+            Start Interview <ArrowRight size={18} className="ml-2" />
           </Button>
         </div>
       </div>

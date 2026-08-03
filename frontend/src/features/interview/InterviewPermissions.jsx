@@ -57,95 +57,111 @@ export function InterviewPermissions() {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-text flex items-center justify-center p-6 page-enter">
-      <div className="max-w-[900px] w-full bg-surface border border-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex items-center justify-center p-6 page-enter relative overflow-hidden">
+      
+      {/* Background glow effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.015]"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+      </div>
+
+      <div className="max-w-[950px] w-full bg-surface/80 backdrop-blur-2xl border border-border/60 rounded-3xl shadow-2xl overflow-hidden flex flex-col relative z-10 animate-fade-in-up">
         
-        <div className="bg-surface-2 px-8 py-6 border-b border-border text-center">
-          <div className="mx-auto w-16 h-16 bg-error/10 text-error rounded-full flex items-center justify-center mb-4">
+        <div className="px-10 py-10 border-b border-border/50 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-error/50 to-transparent" />
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-error/20 to-error/5 border border-error/20 text-error rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-error/10 backdrop-blur-sm">
             <ShieldAlert size={32} />
           </div>
-          <h1 className="text-2xl font-black mb-2">High-Security Proctoring</h1>
-          <p className="text-text-secondary text-sm max-w-2xl mx-auto">
+          <h1 className="text-3xl font-black mb-3 tracking-tight text-text">High-Security Proctoring</h1>
+          <p className="text-text-secondary text-base max-w-2xl mx-auto leading-relaxed">
             This enterprise interview strictly requires continuous camera, microphone, and screen monitoring. 
             You must grant these permissions to continue.
           </p>
         </div>
 
-        <div className="p-8 flex flex-col gap-6">
+        <div className="p-10 flex flex-col gap-8 bg-surface/50">
           
           {error && (
-            <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-lg text-sm font-semibold flex items-center gap-2">
-              <VideoOff size={18} /> {error}
+            <div className="bg-error/10 border border-error/20 text-error px-5 py-4 rounded-xl text-sm font-semibold flex items-center gap-3 animate-fade-in">
+              <VideoOff size={20} /> {error}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Camera */}
-            <div className={`p-6 rounded-xl border-2 transition-all ${cameraGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
-              <div className="flex flex-col items-center text-center gap-3">
-                <Camera size={32} className={cameraGranted ? 'text-success' : 'text-text-secondary'} />
-                <h3 className="font-bold text-lg">Webcam Access</h3>
-                <p className="text-sm text-text-secondary mb-4">Required for visual proctoring.</p>
-                <Button 
-                  variant={cameraGranted ? 'ghost' : 'primary'} 
-                  onClick={requestCamera}
-                  disabled={cameraGranted}
-                  className={cameraGranted ? 'text-success mt-auto' : 'mt-auto'}
-                >
-                  {cameraGranted ? 'Granted' : 'Grant Camera'}
-                </Button>
+            <div className={`p-8 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center text-center gap-4 ${cameraGranted ? 'border-success bg-success/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' : 'border-border bg-surface hover:border-border/80 hover:shadow-lg'}`}>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-2 transition-colors ${cameraGranted ? 'bg-success text-bg' : 'bg-surface-2 text-text-secondary'}`}>
+                <Camera size={28} />
               </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">Webcam Access</h3>
+                <p className="text-sm text-text-secondary">Required for visual proctoring.</p>
+              </div>
+              <Button 
+                variant={cameraGranted ? 'ghost' : 'primary'} 
+                onClick={requestCamera}
+                disabled={cameraGranted}
+                className={`mt-auto w-full ${cameraGranted ? 'text-success hover:bg-transparent cursor-default' : 'shadow-md shadow-primary/20'}`}
+              >
+                {cameraGranted ? 'Granted' : 'Grant Camera'}
+              </Button>
             </div>
 
             {/* Mic */}
-            <div className={`p-6 rounded-xl border-2 transition-all ${micGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
-              <div className="flex flex-col items-center text-center gap-3">
-                <Mic size={32} className={micGranted ? 'text-success' : 'text-text-secondary'} />
-                <h3 className="font-bold text-lg">Microphone</h3>
-                <p className="text-sm text-text-secondary mb-4">Required for audio proctoring.</p>
-                <Button 
-                  variant={micGranted ? 'ghost' : 'primary'} 
-                  onClick={requestMic}
-                  disabled={micGranted}
-                  className={micGranted ? 'text-success mt-auto' : 'mt-auto'}
-                >
-                  {micGranted ? 'Granted' : 'Grant Microphone'}
-                </Button>
+            <div className={`p-8 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center text-center gap-4 ${micGranted ? 'border-success bg-success/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' : 'border-border bg-surface hover:border-border/80 hover:shadow-lg'}`}>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-2 transition-colors ${micGranted ? 'bg-success text-bg' : 'bg-surface-2 text-text-secondary'}`}>
+                <Mic size={28} />
               </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">Microphone</h3>
+                <p className="text-sm text-text-secondary">Required for audio proctoring.</p>
+              </div>
+              <Button 
+                variant={micGranted ? 'ghost' : 'primary'} 
+                onClick={requestMic}
+                disabled={micGranted}
+                className={`mt-auto w-full ${micGranted ? 'text-success hover:bg-transparent cursor-default' : 'shadow-md shadow-primary/20'}`}
+              >
+                {micGranted ? 'Granted' : 'Grant Microphone'}
+              </Button>
             </div>
 
             {/* Screen */}
-            <div className={`p-6 rounded-xl border-2 transition-all ${screenGranted ? 'border-success bg-success/5' : 'border-border bg-surface'}`}>
-              <div className="flex flex-col items-center text-center gap-3">
-                <Monitor size={32} className={screenGranted ? 'text-success' : 'text-text-secondary'} />
-                <h3 className="font-bold text-lg">Screen Share</h3>
-                <p className="text-sm text-text-secondary mb-4">Required to monitor full screen.</p>
-                <Button 
-                  variant={screenGranted ? 'ghost' : 'primary'} 
-                  onClick={requestScreen}
-                  disabled={screenGranted}
-                  className={screenGranted ? 'text-success mt-auto' : 'mt-auto'}
-                >
-                  {screenGranted ? 'Granted' : 'Grant Screen'}
-                </Button>
+            <div className={`p-8 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center text-center gap-4 ${screenGranted ? 'border-success bg-success/5 shadow-[0_0_20px_rgba(34,197,94,0.1)]' : 'border-border bg-surface hover:border-border/80 hover:shadow-lg'}`}>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-2 transition-colors ${screenGranted ? 'bg-success text-bg' : 'bg-surface-2 text-text-secondary'}`}>
+                <Monitor size={28} />
               </div>
+              <div>
+                <h3 className="font-bold text-lg mb-1">Screen Share</h3>
+                <p className="text-sm text-text-secondary">Required to monitor full screen.</p>
+              </div>
+              <Button 
+                variant={screenGranted ? 'ghost' : 'primary'} 
+                onClick={requestScreen}
+                disabled={screenGranted}
+                className={`mt-auto w-full ${screenGranted ? 'text-success hover:bg-transparent cursor-default' : 'shadow-md shadow-primary/20'}`}
+              >
+                {screenGranted ? 'Granted' : 'Grant Screen'}
+              </Button>
             </div>
 
           </div>
 
         </div>
 
-        <div className="p-6 border-t border-border bg-surface-2 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary">
-            Cancel
+        <div className="p-8 border-t border-border/50 bg-bg/50 backdrop-blur-xl flex items-center justify-between">
+          <Button variant="ghost" onClick={() => navigate('/interview')} className="text-text-secondary hover:text-text">
+            Cancel Setup
           </Button>
           <Button 
-            className="hero-btn-primary h-12 px-8 text-base shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+            className="h-12 px-8 text-base font-bold shadow-[0_0_24px_rgba(var(--primary),0.3)] hover:shadow-[0_0_32px_rgba(var(--primary),0.4)] transition-all rounded-xl"
             disabled={!allGranted}
             onClick={handleNext}
           >
-            Continue to Pre-Flight <ArrowRight size={18} />
+            Continue to Pre-Flight <ArrowRight size={18} className="ml-2" />
           </Button>
         </div>
       </div>
