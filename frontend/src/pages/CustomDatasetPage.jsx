@@ -534,112 +534,148 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
 
   // Full upload screen
   return (
-    <div className="flex-1 flex flex-col items-center justify-center min-h-0 h-full p-6 md:p-12 relative overflow-y-auto custom-scrollbar bg-bg">
-      {/* Background Orbs */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
-      <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="flex-1 flex flex-col md:flex-row min-h-0 h-full w-full">
+      
+      {/* ── LEFT PANEL: The Hook ── */}
+      <div className="flex-1 bg-[#09090b] text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden border-r border-border/10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
+        <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="absolute inset-0 opacity-[0.015] pointer-events-none"
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
-      {/* Header */}
-      <div className="text-center relative z-10 mb-12 animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full bg-surface-2 border border-border shadow-sm text-xs font-bold uppercase tracking-widest text-primary">
-          <Database size={14} /> Custom Sandbox
+        <div className="relative z-10 max-w-xl mx-auto w-full animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 shadow-sm text-xs font-bold uppercase tracking-widest text-white/90 backdrop-blur-md">
+            <Database size={14} className="text-blue-400" /> Custom Sandbox
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+            Bring Your <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Own Data</span>
+          </h1>
+          
+          <p className="text-white/60 text-lg mb-12 leading-relaxed max-w-md">
+            Practice real SQL against your data instantly. Upload CSV or SQLite files, and let our AI generate MAANG-level questions tailored to your schema.
+          </p>
+
+          <div className="space-y-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
+                <Database size={22} className="text-blue-400" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white mb-1">Zero Latency SQLite</h4>
+                <p className="text-sm text-white/50 leading-relaxed max-w-xs">Your database runs entirely in-browser using WebAssembly. No servers, no waiting.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20">
+                <Sparkles size={22} className="text-purple-400" />
+              </div>
+              <div>
+                <h4 className="font-bold text-white mb-1">AI-Generated Interviews</h4>
+                <p className="text-sm text-white/50 leading-relaxed max-w-xs">We automatically analyze your schema and generate complex, real-world questions.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-text mb-4">
-          Bring Your Own <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-primary bg-300% animate-gradient">Data</span>
-        </h1>
-        <p className="text-text-secondary text-lg max-w-xl mx-auto leading-relaxed">
-          Upload CSV or SQLite files instantly. Practice real SQL against your data, supercharged with <span className="text-primary font-bold">AI-generated MAANG questions</span>.
-        </p>
       </div>
 
-      {/* Upload Zone */}
-      <div
-        className={`relative z-10 w-full max-w-[640px] rounded-[28px] p-[2px] transition-all duration-300 animate-fade-in-up shadow-2xl ${dragOver ? 'bg-gradient-to-r from-primary via-blue-500 to-primary scale-[1.02] shadow-primary/20' : 'bg-border/60 hover:bg-border'}`}
-        style={{ animationDelay: '100ms' }}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onDragLeave={() => setDragOver(false)}
-        onClick={() => !uploading && inputRef.current?.click()}
-      >
-        <div className="bg-surface/90 dark:bg-surface-2/90 backdrop-blur-xl rounded-[26px] h-full w-full p-12 flex flex-col items-center justify-center text-center cursor-pointer border border-transparent hover:border-primary/20 transition-all relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".csv,.sqlite,.db"
-            multiple
-            className="hidden"
-            onChange={onChange}
-          />
-          <div className="w-24 h-24 rounded-3xl bg-bg border border-border flex items-center justify-center mb-6 shadow-sm relative z-10 group-hover:-translate-y-1 transition-transform">
-            <div className="absolute inset-0 bg-primary/10 rounded-3xl" />
-            {uploading ? (
-              <RefreshCw size={44} className="animate-spin text-primary" />
-            ) : (
-              <Upload size={44} className={`text-primary transition-transform ${dragOver ? 'animate-bounce' : 'group-hover:scale-110'}`} />
+      {/* ── RIGHT PANEL: The Action ── */}
+      <div className="flex-1 bg-bg flex flex-col justify-center items-center p-8 md:p-12 lg:p-16 relative overflow-y-auto custom-scrollbar">
+        
+        {/* Upload Zone */}
+        <div
+          className={`relative z-10 w-full max-w-[560px] rounded-[32px] p-[2px] transition-all duration-300 animate-fade-in-up shadow-2xl ${dragOver ? 'bg-gradient-to-r from-primary via-blue-500 to-primary scale-[1.02] shadow-primary/20' : 'bg-border/60 hover:bg-border'}`}
+          style={{ animationDelay: '100ms' }}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={() => setDragOver(false)}
+          onClick={() => !uploading && inputRef.current?.click()}
+        >
+          <div className="bg-surface/90 dark:bg-surface-2/90 backdrop-blur-xl rounded-[30px] h-full w-full p-12 flex flex-col items-center justify-center text-center cursor-pointer border border-transparent hover:border-primary/20 transition-all relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".csv,.sqlite,.db"
+              multiple
+              className="hidden"
+              onChange={onChange}
+            />
+            <div className="w-24 h-24 rounded-3xl bg-bg border border-border flex items-center justify-center mb-8 shadow-sm relative z-10 group-hover:-translate-y-1 transition-transform">
+              <div className="absolute inset-0 bg-primary/10 rounded-3xl" />
+              {uploading ? (
+                <RefreshCw size={44} className="animate-spin text-primary" />
+              ) : (
+                <Upload size={44} className={`text-primary transition-transform ${dragOver ? 'animate-bounce' : 'group-hover:scale-110'}`} />
+              )}
+            </div>
+            <h3 className="text-3xl font-black text-text mb-3 relative z-10 tracking-tight">
+              {dragOver ? 'Drop it like it\'s hot!' : uploading ? 'Processing your data...' : 'Drag & Drop Datasets'}
+            </h3>
+            <p className="text-text-secondary text-[15px] mb-8 relative z-10">
+              {uploading ? 'Parsing files in-memory (Zero Latency)...' : 'or click to browse .csv, .sqlite, .db files'}
+            </p>
+            
+            {!uploading && (
+               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest px-4 py-2 bg-bg rounded-xl border border-border text-text-secondary relative z-10 shadow-sm">
+                 <Database size={14} className="text-primary" /> Multiple CSVs = Multiple tables
+               </div>
+            )}
+
+            {uploading && (
+              <div className="w-full max-w-[300px] h-2 bg-bg rounded-full overflow-hidden border border-border mt-4 relative z-10">
+                <div className="h-full bg-primary animate-pulse w-full rounded-full" />
+              </div>
             )}
           </div>
-          <h3 className="text-2xl font-black text-text mb-2 relative z-10">
-            {dragOver ? 'Drop it like it\'s hot!' : uploading ? 'Processing your data...' : 'Drag & Drop Datasets'}
-          </h3>
-          <p className="text-text-secondary text-base mb-8 relative z-10">
-            {uploading ? 'Parsing files in-memory (Zero Latency)...' : 'or click to browse .csv, .sqlite, .db files'}
-          </p>
+        </div>
+
+        {/* Status Messages */}
+        {uploadStatus && (
+          <div className={`mt-6 relative z-10 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold animate-fade-in-up ${uploadStatus.type === 'error' ? 'bg-error/10 text-error border border-error/20' : 'bg-success/10 text-success border border-success/20'}`}>
+            {uploadStatus.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+            {uploadStatus.message}
+          </div>
+        )}
+
+        {/* AI Generate Section */}
+        <div className="mt-12 relative z-10 w-full max-w-[560px] animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-px bg-border flex-1" />
+            <span className="text-[11px] uppercase tracking-widest text-text-secondary font-bold">Or build with AI</span>
+            <div className="h-px bg-border flex-1" />
+          </div>
           
-          {!uploading && (
-             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide px-4 py-2 bg-bg rounded-xl border border-border text-text-secondary relative z-10 shadow-sm">
-               <Database size={14} className="text-primary" /> Multiple CSVs = Multiple tables to JOIN
+          <div className="group relative bg-surface p-2.5 rounded-[20px] border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/40 focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10 flex flex-col sm:flex-row gap-3">
+             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-blue-500/5 to-primary/5 rounded-[20px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+             <div className="flex items-center gap-3 flex-1 px-2">
+               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 relative z-10">
+                 <Sparkles size={18} />
+               </div>
+               <input 
+                 type="text" 
+                 value={aiPrompt}
+                 onChange={e => setAiPrompt(e.target.value)}
+                 placeholder="e.g. A hospital schema..." 
+                 className="flex-1 bg-transparent border-none text-text text-[15px] font-medium outline-none placeholder:text-text-secondary/50 placeholder:font-normal relative z-10 min-w-0"
+                 onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
+                 disabled={generatingSchema || uploading}
+               />
              </div>
-          )}
+             <Button 
+               onClick={() => onAiGenerate(aiPrompt)} 
+               disabled={!aiPrompt.trim() || generatingSchema || uploading} 
+               variant="primary"
+               className="rounded-xl px-6 py-3 font-bold relative z-10 shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all text-[14px] w-full sm:w-auto"
+             >
+               {generatingSchema ? <RefreshCw size={16} className="animate-spin mr-2" /> : null}
+               {generatingSchema ? 'Building...' : 'Generate Sandbox'}
+             </Button>
+          </div>
+        </div>
 
-          {uploading && (
-            <div className="w-full max-w-[300px] h-2 bg-bg rounded-full overflow-hidden border border-border mt-4 relative z-10">
-              <div className="h-full bg-primary animate-pulse w-full rounded-full" />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Status Messages */}
-      {uploadStatus && (
-        <div className={`mt-6 relative z-10 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold animate-fade-in-up ${uploadStatus.type === 'error' ? 'bg-error/10 text-error border border-error/20' : 'bg-success/10 text-success border border-success/20'}`}>
-          {uploadStatus.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-          {uploadStatus.message}
-        </div>
-      )}
-
-      {/* AI Generate Section */}
-      <div className="mt-12 relative z-10 w-full max-w-[640px] animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <div className="flex items-center gap-4 mb-6">
-          <div className="h-px bg-border flex-1" />
-          <span className="text-xs uppercase tracking-widest text-text-secondary font-bold">Or build with AI</span>
-          <div className="h-px bg-border flex-1" />
-        </div>
-        
-        <div className="group relative bg-surface p-2.5 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/40 focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10 flex gap-3">
-           <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-blue-500/5 to-primary/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 relative z-10">
-             <Sparkles size={20} />
-           </div>
-           <input 
-             type="text" 
-             value={aiPrompt}
-             onChange={e => setAiPrompt(e.target.value)}
-             placeholder="e.g. A hospital with patients, doctors, and appointments..." 
-             className="flex-1 bg-transparent border-none text-text text-base font-medium outline-none placeholder:text-text-secondary/50 placeholder:font-normal relative z-10"
-             onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
-             disabled={generatingSchema || uploading}
-           />
-           <Button 
-             onClick={() => onAiGenerate(aiPrompt)} 
-             disabled={!aiPrompt.trim() || generatingSchema || uploading} 
-             variant="primary"
-             className="rounded-xl px-6 font-bold relative z-10 shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all text-[15px]"
-           >
-             {generatingSchema ? <RefreshCw size={18} className="animate-spin mr-2" /> : null}
-             {generatingSchema ? 'Building Sandbox...' : 'Generate Sandbox'}
-           </Button>
-        </div>
       </div>
     </div>
   );
