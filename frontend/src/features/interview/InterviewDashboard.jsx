@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Briefcase, FileText, Rocket, Landmark, Zap, Database, ArrowRight, Monitor } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';
+import { useProctorStore } from './useProctorStore';
 
 const DURATIONS = [
   { label: '30 Min (Screen)', value: 30 },
@@ -35,6 +36,14 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
   
   // Profile state for candidate lobby
   const [candidateName, setCandidateName] = useState(user?.name || '');
+
+  const { resetProctoring, clearSessionState } = useProctorStore();
+
+  useEffect(() => {
+    // Wipe any previous termination states or saved sessions when landing in the lobby
+    resetProctoring();
+    clearSessionState();
+  }, [resetProctoring, clearSessionState]);
 
   const handleStart = () => {
     navigate(`/interview/permissions?duration=${duration}&difficulty=${difficulty}&company=${company}&role=${encodeURIComponent(role)}&name=${encodeURIComponent(candidateName)}`);
