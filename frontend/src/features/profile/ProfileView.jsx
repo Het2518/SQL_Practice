@@ -181,11 +181,11 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   };
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto flex flex-col bg-bg text-text relative">
-      {/* Background gradients matching HomePage */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-start justify-center fixed h-[100vh] w-full z-0">
-        <div className="absolute top-[10%] w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute top-[30%] w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] translate-x-32 opacity-60" />
+    <div className="flex-1 w-full h-full overflow-y-auto flex flex-col bg-bg text-text relative page-enter">
+      {/* Background gradients matching HomePage exactly */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none flex items-center justify-center z-0">
+        <div className="absolute w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] translate-y-20 translate-x-32 opacity-60" />
       </div>
 
       <Header user={user} leftContent={<HeaderBreadcrumbs items={[{ label: 'Home', onClick: onHome }, { label: 'Profile' }]} />} />
