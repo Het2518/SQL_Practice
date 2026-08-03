@@ -443,7 +443,6 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
                 <LogOut size={14} /> Sign Out
               </button>
             </div>
-          </div>
 
           {activeTab === 'dashboard' && (
             <DashboardTab
