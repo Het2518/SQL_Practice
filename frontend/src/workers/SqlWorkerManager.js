@@ -1,5 +1,52 @@
 import SqlWorker from './sql.worker.js?worker';
 
+const DB_NAME = 'DataDesk_SQLite_Backup';
+const STORE_NAME = 'db_backups';
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveToIDB(key, buffer) {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.put(buffer, key);
+      req.onsuccess = () => resolve();
+      req.onerror = (e) => reject(e.target.error);
+    });
+  } catch(e) {
+    console.error("IndexedDB Save Error:", e);
+  }
+}
+
+async function loadFromIDB(key) {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = (e) => reject(e.target.error);
+    });
+  } catch(e) { 
+    return null; 
+  }
+}
+
 class SqlWorkerManager {
   constructor() {
     this.worker = null;
@@ -7,6 +54,7 @@ class SqlWorkerManager {
     this.pendingRequests = new Map();
     this.isRespawning = false;
     this.lastDbPayload = null; // Remember the last loaded DB to restore state
+    this.currentDbKey = null;
   }
 
   init() {
@@ -41,6 +89,9 @@ class SqlWorkerManager {
         if (success) {
           if (data && data.exportedDb) {
             this.lastDbPayload = { binaryData: data.exportedDb };
+            if (this.currentDbKey) {
+              saveToIDB(this.currentDbKey, data.exportedDb).catch(e => console.error(e));
+            }
           }
           resolve(data);
         } else {
@@ -80,13 +131,36 @@ class SqlWorkerManager {
     return new Promise((resolve, reject) => {
       this.init();
       
-      // Keep track of the INIT payload so we can recover it if the worker crashes
       if (type === 'INIT') {
+        const dbKey = payload.dbPath || (payload.initSql ? 'custom_sql' : 'custom_binary');
+        this.currentDbKey = dbKey;
         this.lastDbPayload = payload;
+
+        // Automatically attempt to restore from IndexedDB if we are loading fresh
+        if (!payload.binaryData) {
+          loadFromIDB(dbKey).then(backup => {
+            if (backup) {
+              console.warn(`[DataDesk] Restored database '${dbKey}' from IndexedDB backup!`);
+              this.lastDbPayload = { binaryData: backup };
+              this.currentDbKey = dbKey;
+              this._dispatchMessage(type, { binaryData: backup }, resolve, reject);
+            } else {
+              this._dispatchMessage(type, payload, resolve, reject);
+            }
+          }).catch(() => {
+            this._dispatchMessage(type, payload, resolve, reject);
+          });
+          return;
+        }
       }
       
-      const id = this.msgIdCounter++;
-      this.pendingRequests.set(id, { resolve, reject });
+      this._dispatchMessage(type, payload, resolve, reject);
+    });
+  }
+
+  _dispatchMessage(type, payload, resolve, reject) {
+    const id = this.msgIdCounter++;
+    this.pendingRequests.set(id, { resolve, reject });
       
       // Add a safety timeout for infinite loops (15 seconds)
       const timeoutId = setTimeout(() => {

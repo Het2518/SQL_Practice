@@ -5,7 +5,6 @@ import { Button } from '@/shared/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
-import { groqChat, MODEL_SMART } from '@/lib/groq';
 
 export function InterviewReport() {
   const location = useLocation();
@@ -42,27 +41,15 @@ export function InterviewReport() {
         jsonFeedback.strengths = ['None recorded due to termination'];
         jsonFeedback.weaknesses = ['Zero-Tolerance Integrity Policy Violation'];
       } else {
-        const systemPrompt = `[IDENTITY]: You are the Hiring Manager at ${payload.companyName} evaluating a ${payload.roleName} candidate named ${payload.candidateName}.
-[TASK]: Evaluate the candidate's final SQL query based on this prompt: "${payload.initialTask}"
-Their code:
-\`\`\`sql
-${payload.sql}
-\`\`\`
-[RULES]: 
-1. Evaluate purely on logic, correctness, efficiency, and edge-case handling.
-2. DO NOT hallucinate.
-3. You MUST output a strictly valid JSON object matching this schema exactly, and nothing else (no markdown wrappers, just raw JSON):
-{
-  "score": 85, // number from 0 to 100
-  "verdict": "Hire", // must be "Strong Hire", "Hire", "Lean Hire", or "No Hire"
-  "correctness": "Detailed analysis of what works and what fails",
-  "strengths": ["string", "string"], // 2-3 bullet points
-  "weaknesses": ["string", "string"], // 2-3 bullet points
-  "optimization": "How to optimize this query further",
-  "optimal_sql": "The optimal solution code"
-}`;
+        const { data } = await api.ai.evaluateInterview({
+          companyName: payload.companyName,
+          candidateName: payload.candidateName,
+          roleName: payload.roleName,
+          initialTask: payload.initialTask,
+          sql: payload.sql
+        });
         
-        let response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 1000, false);
+        let response = data.data?.choices?.[0]?.message?.content || '';
         
         try {
           // Robustly extract JSON block using regex to ignore markdown or conversational filler

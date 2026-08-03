@@ -197,5 +197,9 @@ export const api = {
   // AI Proxy
   ai: {
     chat: (data) => apiClient.post('/ai/chat', data),
+    generateInterview: (data) => apiClient.post('/ai/interview/generate', data),
+    chatInterview: (data) => apiClient.post('/ai/interview/chat', data),
+    dryRunInterview: (data) => apiClient.post('/ai/interview/dry-run', data),
+    evaluateInterview: (data) => apiClient.post('/ai/interview/evaluate', data),
   }
 };
