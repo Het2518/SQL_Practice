@@ -368,7 +368,7 @@ export function InterviewArena() {
               Your interview was automatically halted due to a strict zero-tolerance integrity policy violation.
             </p>
             
-            <div className="bg-[#09090b] border border-border/50 rounded-2xl p-6 text-left mb-10 shadow-inner">
+            <div className="bg-error/5 dark:bg-[#09090b] border border-error/20 dark:border-border/50 rounded-2xl p-6 text-left mb-10 shadow-inner">
               <span className="text-xs font-black uppercase tracking-widest text-error/80 mb-2 block flex items-center gap-2">
                 <AlertOctagon size={14} /> Incident Reason
               </span>
