@@ -181,22 +181,27 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   };
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto flex flex-col bg-bg text-text">
+    <div className="flex-1 w-full h-full overflow-y-auto flex flex-col bg-bg text-text relative">
+      {/* Background gradients matching HomePage */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-start justify-center fixed h-[100vh] w-full z-0">
+        <div className="absolute top-[10%] w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] opacity-60 animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute top-[30%] w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] translate-x-32 opacity-60" />
+      </div>
+
       <Header user={user} leftContent={<HeaderBreadcrumbs items={[{ label: 'Home', onClick: onHome }, { label: 'Profile' }]} />} />
 
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-16 relative z-10">
         <div className="max-w-[1240px] mx-auto px-4 md:px-8 lg:px-10">
 
           {/* ─── HERO ─── */}
-          <div className="relative overflow-hidden rounded-[32px] border border-border/40 bg-surface mt-6 mb-6 shadow-[0_32px_80px_rgba(0,0,0,0.28)]">
-            <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none"
+          <div className="relative mt-6 mb-12">
+            <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none z-0"
               style={{ background: `radial-gradient(circle, ${league.glow} 0%, transparent 70%)` }} />
-            <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none"
+            <div className="absolute -bottom-40 -left-40 w-[400px] h-[400px] rounded-full blur-[100px] pointer-events-none z-0"
               style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)' }} />
-            <div className="absolute inset-0 opacity-[0.018] pointer-events-none"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
-            <div className="relative z-10 p-8 md:p-10">
+
+            <div className="relative z-10 py-8">
               <div className="flex flex-col md:flex-row md:items-start gap-8">
 
                 {/* Avatar + ring */}
