@@ -537,44 +537,44 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
     <div className="flex-1 flex flex-col md:flex-row min-h-0 h-full w-full">
       
       {/* ── LEFT PANEL: The Hook ── */}
-      <div className="flex-1 bg-[#09090b] text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden border-r border-border/10">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-blue-500/15 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
-        <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-purple-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="flex-1 bg-surface-2 text-text p-8 md:p-16 flex flex-col justify-center relative overflow-hidden border-r border-border/50">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse dark:bg-blue-500/15 dark:mix-blend-screen" style={{ animationDuration: '5s' }} />
+        <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none dark:bg-purple-500/15 dark:mix-blend-screen" />
         
-        <div className="absolute inset-0 opacity-[0.015] pointer-events-none"
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
         <div className="relative z-10 max-w-xl mx-auto w-full animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 shadow-sm text-xs font-bold uppercase tracking-widest text-white/90 backdrop-blur-md">
-            <Database size={14} className="text-blue-400" /> Custom Sandbox
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-border bg-surface/50 shadow-sm text-xs font-bold uppercase tracking-widest text-text-secondary backdrop-blur-md">
+            <Database size={14} className="text-primary" /> Custom Sandbox
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-text">
             Bring Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Own Data</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">Own Data</span>
           </h1>
           
-          <p className="text-white/60 text-lg mb-12 leading-relaxed max-w-md">
+          <p className="text-text-secondary text-lg mb-12 leading-relaxed max-w-md">
             Practice real SQL against your data instantly. Upload CSV or SQLite files, and let our AI generate MAANG-level questions tailored to your schema.
           </p>
 
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
-                <Database size={22} className="text-blue-400" />
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 shadow-sm backdrop-blur-sm">
+                <Database size={22} className="text-primary" />
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">Zero Latency SQLite</h4>
-                <p className="text-sm text-white/50 leading-relaxed max-w-xs">Your database runs entirely in-browser using WebAssembly. No servers, no waiting.</p>
+                <h4 className="font-bold text-text mb-1">Zero Latency SQLite</h4>
+                <p className="text-sm text-text-secondary leading-relaxed max-w-xs">Your database runs entirely in-browser using WebAssembly. No servers, no waiting.</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/20">
-                <Sparkles size={22} className="text-purple-400" />
+              <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center shrink-0 border border-success/20 shadow-sm backdrop-blur-sm">
+                <Sparkles size={22} className="text-success" />
               </div>
               <div>
-                <h4 className="font-bold text-white mb-1">AI-Generated Interviews</h4>
-                <p className="text-sm text-white/50 leading-relaxed max-w-xs">We automatically analyze your schema and generate complex, real-world questions.</p>
+                <h4 className="font-bold text-text mb-1">AI-Generated Interviews</h4>
+                <p className="text-sm text-text-secondary leading-relaxed max-w-xs">We automatically analyze your schema and generate complex, real-world questions.</p>
               </div>
             </div>
           </div>

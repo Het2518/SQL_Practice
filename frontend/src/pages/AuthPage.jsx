@@ -106,62 +106,62 @@ export default function AuthPage() {
     <div className="flex w-full h-[100dvh] overflow-hidden bg-bg">
       
       {/* ─── LEFT PANEL (Visual Hook - Hidden on Mobile) ─── */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-[#09090b] text-white overflow-hidden border-r border-white/10">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-surface-2 text-text overflow-hidden border-r border-border/50">
         {/* Glows & Gradients */}
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-primary/20 rounded-full blur-[140px] pointer-events-none mix-blend-screen" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-500/15 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-primary/10 rounded-full blur-[140px] pointer-events-none mix-blend-screen dark:mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen dark:mix-blend-screen" />
         
         {/* Abstract Grid Overlay */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-             style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
+             style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
         {/* Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-md">
-            <Terminal size={20} className="text-white" />
+          <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center shadow-sm backdrop-blur-md">
+            <Terminal size={20} className="text-primary" />
           </div>
-          <span className="text-[20px] font-black tracking-tight">DataDesk.</span>
+          <span className="text-[20px] font-black tracking-tight text-text">DataDesk.</span>
         </div>
 
         {/* Center Graphic */}
         <div className="relative z-10 flex flex-col items-start gap-8 max-w-lg mt-12">
-          <div className="px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-white/80 flex items-center gap-2">
-            <Sparkles size={12} className="text-primary-light" /> Product Hunt Design of the Year
+          <div className="px-4 py-1.5 rounded-full border border-border bg-surface/50 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2 shadow-sm">
+            <Sparkles size={12} className="text-primary" /> Product Hunt Design of the Year
           </div>
-          <h1 className="text-[52px] font-black leading-[1.05] tracking-tight">
+          <h1 className="text-[52px] font-black leading-[1.05] tracking-tight text-text">
             Master SQL.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-blue-400">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">
               Land the offer.
             </span>
           </h1>
-          <p className="text-[17px] text-white/60 font-medium leading-relaxed">
+          <p className="text-[17px] text-text-secondary font-medium leading-relaxed">
             The ultimate platform for data engineers and analysts. Practice real-world interview questions, build your streak, and climb the global leaderboard.
           </p>
           
           <div className="flex flex-col gap-5 mt-4 w-full">
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 text-primary-light">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface/50 border border-border shadow-sm backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
                 <Database size={20} />
               </div>
               <div>
-                <div className="text-[14px] font-bold">Real-world Schemas</div>
-                <div className="text-[12px] text-white/50 font-medium mt-0.5">Practice on multi-table datasets</div>
+                <div className="text-[14px] font-bold text-text">Real-world Schemas</div>
+                <div className="text-[12px] text-text-secondary font-medium mt-0.5">Practice on multi-table datasets</div>
               </div>
             </div>
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-              <div className="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center border border-success/30 text-success">
+            <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface/50 border border-border shadow-sm backdrop-blur-sm">
+              <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center border border-success/20 text-success">
                 <ShieldCheck size={20} />
               </div>
               <div>
-                <div className="text-[14px] font-bold">AI Mock Interviews</div>
-                <div className="text-[12px] text-white/50 font-medium mt-0.5">Get graded by our FAANG-calibre AI</div>
+                <div className="text-[14px] font-bold text-text">AI Mock Interviews</div>
+                <div className="text-[12px] text-text-secondary font-medium mt-0.5">Get graded by our FAANG-calibre AI</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 text-[13px] font-medium text-white/40">
+        <div className="relative z-10 text-[13px] font-medium text-muted">
           © {new Date().getFullYear()} DataDesk platform.
         </div>
       </div>
