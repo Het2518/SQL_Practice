@@ -229,7 +229,7 @@ export function SettingsModal({ onClose }) {
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-md animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-[600px] bg-surface/95 dark:bg-surface-2/95 backdrop-blur-2xl rounded-[28px] overflow-hidden flex flex-col shadow-2xl shadow-black/20 border border-border/50 mx-4 max-h-[85vh] transform transition-all">
+      <div className="w-full max-w-[600px] bg-surface dark:bg-surface-2 rounded-[28px] overflow-hidden flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-border/80 mx-4 max-h-[85vh] transform transition-all">
         {/* Header */}
         <div className="pt-6 px-8 pb-0 bg-transparent">
           <div className="flex items-center justify-between mb-6">

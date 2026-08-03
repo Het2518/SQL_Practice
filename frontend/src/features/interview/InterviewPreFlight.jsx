@@ -4,6 +4,7 @@ import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Ca
 import { Button } from '@/shared/ui/Button';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { useProctorStore } from './useProctorStore';
+import { useSettingsStore } from '@/stores/useSettingsStore';
 
 const XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -78,10 +79,13 @@ export function InterviewPreFlight() {
   const { toast } = useToast();
   const { cameraStream, screenStream, micStream } = useProctorStore();
 
+  const { settings, updateSettings } = useSettingsStore();
+
   const [checks, setChecks] = useState({
     network: false,
     browser: false,
     media: false,
+    ai: false,
   });
   const [checking, setChecking] = useState(true);
   const [agreed, setAgreed] = useState(false);
@@ -96,13 +100,14 @@ export function InterviewPreFlight() {
       setChecks(prev => ({ ...prev, browser: canFullscreen }));
 
       setChecks(prev => ({ ...prev, media: !!cameraStream && !!screenStream && !!micStream }));
+      setChecks(prev => ({ ...prev, ai: !!settings.groqApiKey }));
 
       setChecking(false);
     };
     runChecks();
-  }, [cameraStream, screenStream, micStream]);
+  }, [cameraStream, screenStream, micStream, settings.groqApiKey]);
 
-  const allClear = checks.network && checks.browser && checks.media;
+  const allClear = checks.network && checks.browser && checks.media && checks.ai;
 
   const handleStart = async () => {
     if (!allClear) {
@@ -173,6 +178,30 @@ export function InterviewPreFlight() {
                   label="AV Streams & Screen Share" 
                   status={checking && !checks.media ? 'loading' : checks.media ? 'pass' : 'fail'} 
                 />
+                <CheckItem 
+                  icon={<Key size={18} />} 
+                  label="AI Evaluator Ready (API Key)" 
+                  status={checking && !checks.ai ? 'loading' : checks.ai ? 'pass' : 'fail'} 
+                />
+
+                {!checking && !checks.ai && (
+                  <div className="mt-1 p-4 bg-error/5 border border-error/20 rounded-xl flex flex-col gap-3 animate-fade-in shadow-sm">
+                    <p className="text-xs text-error font-medium leading-relaxed">
+                      A free Groq API key is required to power the AI interviewer. 
+                      <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="underline font-bold ml-1 hover:text-error/80">Get one here</a>.
+                    </p>
+                    <input 
+                      type="password" 
+                      placeholder="Paste your gsk_... key here"
+                      className="w-full bg-surface border border-error/30 rounded-lg px-4 py-2.5 text-sm text-text focus:border-error focus:ring-1 focus:ring-error outline-none font-mono transition-all"
+                      onChange={(e) => {
+                        if (e.target.value.trim().startsWith('gsk_')) {
+                          updateSettings({ groqApiKey: e.target.value.trim() });
+                        }
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
