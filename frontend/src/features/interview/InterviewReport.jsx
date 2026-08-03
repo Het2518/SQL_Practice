@@ -16,7 +16,14 @@ export function InterviewReport() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const payload = location.state?.sessionPayload;
+    let payload = location.state?.sessionPayload;
+    if (!payload) {
+      try {
+        const stored = sessionStorage.getItem('pending_interview_report');
+        if (stored) payload = JSON.parse(stored);
+      } catch(e) {}
+    }
+
     if (payload && !session && !isEvaluating && !error) {
       evaluateSubmission(payload);
     }
@@ -101,7 +108,8 @@ export function InterviewReport() {
         setSession(localSession);
       }
 
-      window.history.replaceState({}, document.title);
+      sessionStorage.removeItem('pending_interview_report');
+      navigate(location.pathname, { replace: true, state: { session: localSession } });
     } catch (err) {
       console.error(err);
       setError('A network error occurred while grading your interview.');
@@ -110,7 +118,7 @@ export function InterviewReport() {
     }
   };
   
-  if (!session && !location.state?.sessionPayload) {
+  if (!session && !location.state?.sessionPayload && !sessionStorage.getItem('pending_interview_report')) {
     return <Navigate to="/interview" replace />;
   }
 

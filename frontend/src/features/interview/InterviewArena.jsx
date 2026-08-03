@@ -357,19 +357,20 @@ export function InterviewArena() {
     
     clearSessionState();
     
+    const payload = {
+      companyName,
+      candidateName,
+      roleName,
+      sql,
+      initialTask,
+      durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
+      chatHistory: messages,
+      forceZero: false
+    };
+    sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
+    
     navigate('/interview/report', { 
-      state: { 
-        sessionPayload: {
-          companyName,
-          candidateName,
-          roleName,
-          sql,
-          initialTask,
-          durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
-          chatHistory: messages,
-          forceZero: false
-        }
-      } 
+      state: { sessionPayload: payload } 
     });
   };
 
@@ -380,20 +381,21 @@ export function InterviewArena() {
       stopAllStreams();
     } catch(e) {}
     
+    const payload = {
+      companyName,
+      candidateName,
+      roleName,
+      sql,
+      initialTask,
+      durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
+      chatHistory: messages,
+      forceZero: true,
+      violationMsg: useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation'
+    };
+    sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
+
     navigate('/interview/report', { 
-      state: { 
-        sessionPayload: {
-          companyName,
-          candidateName,
-          roleName,
-          sql,
-          initialTask,
-          durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
-          chatHistory: messages,
-          forceZero: true,
-          violationMsg: useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation'
-        }
-      } 
+      state: { sessionPayload: payload } 
     });
   };
 
