@@ -394,8 +394,7 @@ The difficulty level requested by the candidate is: ${difficulty.toUpperCase()}.
 - MIXED: Surprise them with a medium-hard question that touches multiple concepts.
 
 [FORMATTING REQUIREMENTS]
-You MUST output the result entirely in Markdown format.
-You MUST strictly adhere to the following structure. Do NOT include conversational filler like "Here is your question" or "Good luck!". Output ONLY the markdown.
+You MUST strictly adhere to the following structure for the markdown field. Do NOT include conversational filler like "Here is your question" or "Good luck!".
 
 # Problem Context
 Write a realistic 2-3 sentence business scenario.
@@ -419,9 +418,16 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
 [CRITICAL CONSTRAINTS]
 1. DO NOT provide the SQL solution. You are administering the test, not taking it.
 2. Ensure the question logically makes sense and the Example Output matches the Example Input.
-3. Make the question feel like a real-world production issue, not a textbook exercise.`;
+3. Make the question feel like a real-world production issue, not a textbook exercise.
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1200, false);
+[OUTPUT FORMAT]
+You MUST output the result purely as a JSON object matching this exact structure, with NO markdown code blocks around the JSON:
+{
+  "markdown": "The full markdown formatted problem description... (using # Problem Context, # Schema Definition, etc. as described above)",
+  "initSql": "Valid SQLite CREATE TABLE and INSERT INTO statements to build the in-memory database for this exact problem, matching the Schema Definition and Example Input Data exactly."
+}`;
+
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1500, false);
 }
 
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {

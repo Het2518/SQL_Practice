@@ -52,10 +52,6 @@ export function InterviewArena() {
 
   const { executeQuery, initWithSql } = useSqlDatabase();
 
-  useEffect(() => {
-    initWithSql('-- init');
-  }, [initWithSql]);
-
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
 
@@ -72,6 +68,7 @@ export function InterviewArena() {
       setScratchpad(saved.scratchpad || '');
       setTimeLeft(saved.timeLeft || duration * 60);
       setGeneratingQuestion(false);
+      initWithSql(saved.initSql || '-- init');
     } else {
       const fetchQuestion = async () => {
         try {
@@ -84,21 +81,33 @@ export function InterviewArena() {
           
           if (!taskText) throw new Error('Empty response');
 
-          setInitialTask(taskText);
+          let taskData;
+          try {
+            taskData = JSON.parse(taskText);
+          } catch(e) {
+            // Fallback parsing just in case model wraps in markdown
+            const cleaned = taskText.replace(/```json/i, '').replace(/```/g, '').trim();
+            taskData = JSON.parse(cleaned);
+          }
+
+          setInitialTask(taskData.markdown);
+          initWithSql(taskData.initSql);
           
           const welcomeMsg = {
             role: 'assistant',
-            content: `Welcome to your ${companyName} interview, ${candidateName}! I'm your interviewer today.\n\nHere is your task:\n\n---\n\n${taskText}\n\n---\n\nBefore you start writing SQL, please ask me any clarifying questions about the data schema or edge cases.`
+            content: `Welcome to your ${companyName} interview, ${candidateName}! I'm your interviewer today.\n\nHere is your task:\n\n---\n\n${taskData.markdown}\n\n---\n\nBefore you start writing SQL, please ask me any clarifying questions about the data schema or edge cases.`
           };
           setMessages([welcomeMsg]);
           
           saveSessionState({
-            difficulty, companyName, roleName, candidateName, initialTask: taskText,
-            messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
+            difficulty, companyName, roleName, candidateName, initialTask: taskData.markdown,
+            initSql: taskData.initSql, messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
           });
         } catch (err) {
           console.error(err);
-          setInitialTask("Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)");
+          const fallbackMd = "Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)";
+          setInitialTask(fallbackMd);
+          initWithSql('-- init');
         } finally {
           setGeneratingQuestion(false);
         }
