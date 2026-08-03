@@ -387,11 +387,11 @@ export function InterviewArena() {
 
       {/* ══ TERMINATED OVERLAY ══ */}
       {isTerminated && (
-        <div className="fixed inset-0 z-[200] bg-bg/95 backdrop-blur-3xl flex items-center justify-center p-6 animate-fade-in relative overflow-hidden">
+        <div className="fixed inset-0 z-[200] bg-surface/80 dark:bg-bg/95 backdrop-blur-xl dark:backdrop-blur-3xl flex items-center justify-center p-6 animate-fade-in relative overflow-hidden">
           {/* Background Ambient Glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[100px] dark:blur-[150px] pointer-events-none" />
           
-          <div className="w-full max-w-2xl bg-surface/80 backdrop-blur-xl border border-error/30 rounded-3xl p-12 text-center shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out">
+          <div className="w-full max-w-2xl bg-surface dark:bg-surface/80 backdrop-blur-xl border border-border dark:border-error/30 rounded-3xl p-12 text-center shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out">
             {/* Top Red Gradient Bar */}
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-error to-transparent" />
             
