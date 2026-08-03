@@ -4,7 +4,7 @@ import { AiHintPanel } from '@/features/ai/AiHintPanel';
 import { AiSolutionReview } from '@/features/ai/AiSolutionReview';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
 import { useProactiveTutor } from '@/features/ai/useProactiveTutor';
-import { useGroqKey, groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
+import { groqChat, buildAiSolutionPrompt, buildAiValidationPrompt } from '@/lib/groq';
 import { QuestionHeader } from './QuestionHeader';
 import { QuestionBody } from './QuestionBody';
 
@@ -66,7 +66,7 @@ export const QuestionCard = React.memo(function QuestionCard({
   // Real companies from Supabase mapping
   const [realCompanies, setRealCompanies] = useState([]);
 
-  const hasKey = useGroqKey();
+  const hasKey = true;
 
   // Proactive Background AI Tutor (analyzes code if user is stuck for 30s)
   useProactiveTutor({

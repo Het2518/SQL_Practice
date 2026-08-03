@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { groqChat, buildHintPrompt, useGroqKey } from '@/lib/groq';
+import { groqChat, buildHintPrompt } from '@/lib/groq';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 
 /**
@@ -12,7 +12,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
-  const hasKey = useGroqKey();
+  const hasKey = true;
 
   const generateHint = useCallback(async () => {
     if (!hasKey) {

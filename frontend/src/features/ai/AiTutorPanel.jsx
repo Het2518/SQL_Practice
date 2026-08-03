@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
-import { useGroqKey } from '@/hooks/useGroqKey';
+// useGroqKey removed
 import { groqChat, MODEL_SMART } from '@/lib/groq';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';
@@ -9,7 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export function AiTutorPanel({ isOpen, onClose, question, currentSql, dbSchemaContext }) {
-  const hasKey = useGroqKey();
+  const hasKey = true;
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
