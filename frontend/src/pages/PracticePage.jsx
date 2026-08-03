@@ -851,7 +851,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               }
               onOpenBrowser={() => setShowBrowser(true)}
               onOpenAiTutor={() => {
-                if (hasGroqKey()) setShowAiTutor(true);
+                const hasKey = !!JSON.parse(localStorage.getItem('sql-platform-settings') || '{}').groqApiKey;
+                if (hasKey) setShowAiTutor(true);
                 else {
                   toast({
                     title: 'AI Disabled',
