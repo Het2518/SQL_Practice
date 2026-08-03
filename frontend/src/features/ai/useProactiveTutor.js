@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/shared/ui/ToastSystem';
-import { hasGroqKey, groqChat, MODEL_FAST } from '@/lib/groq';
+import { groqChat, MODEL_FAST } from '@/lib/groq';
 
 export function useProactiveTutor({
   sql,
@@ -14,8 +14,8 @@ export function useProactiveTutor({
   const lastAnalyzedSqlRef = useRef('');
 
   useEffect(() => {
-    // If feature is disabled, or no API key, or empty SQL/Question, do nothing
-    if (!isEnabled || !hasGroqKey() || !sql?.trim() || !question) return;
+    // If feature is disabled, or empty SQL/Question, do nothing
+    if (!isEnabled || !sql?.trim() || !question) return;
 
     // Clear previous timer
     if (timerRef.current) clearTimeout(timerRef.current);

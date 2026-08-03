@@ -53,7 +53,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProgressStore } from '@/stores/useProgressStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { hasGroqKey } from '@/lib/groq';
 
 export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const { user } = useAuth();

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
+import { useGamificationStore } from './useGamificationStore';
 
 const PROGRESS_KEY = 'sql-practice-progress';
 
@@ -44,7 +45,7 @@ export const useProgressStore = create((set, get) => ({
 
   /**
    * Sync progress from the backend API when user logs in.
-   * Replaces local state entirely with server data.
+   * Replaces local state entirely with server data and pushes gamification slice to useGamificationStore.
    */
   syncFromServer: async (user) => {
     if (!user) {
@@ -57,6 +58,9 @@ export const useProgressStore = create((set, get) => ({
       const serverProgress = data.data.completedQuestions ?? {};
       set({ progress: serverProgress, progressLoaded: true });
       saveLocalProgress(serverProgress);
+      
+      // Push gamification slice to avoid a duplicate API request
+      useGamificationStore.getState().setFromServer(data.data);
     } catch (err) {
       console.error('[Progress] Failed to sync from server:', err.message);
       // Fall back to local storage

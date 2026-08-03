@@ -4,6 +4,7 @@ import { format } from 'sql-formatter';
 import { DB_INFO } from '@/data/schemas';
 import { sqlKeywords } from '@/data/sqlKeywords';
 import { loadShortcuts, comboToMonaco } from '@/utils/shortcutManager';
+import { useEvent } from '@/hooks/useEvent';
 
 const handleEditorWillMount = monaco => {
   monaco.editor.defineTheme('earthy-light', {
@@ -93,11 +94,25 @@ export function SqlEditor({
   const editorRef = useRef(null);
   const [monacoInstance, setMonacoInstance] = useState(null);
   
-  // Use a ref to store the LATEST callbacks to prevent stale closures wiping the editor
-  const callbacksRef = useRef({ onRun, onChange, value, disabled });
-  useEffect(() => {
-    callbacksRef.current = { onRun, onChange, value, disabled };
-  }, [onRun, onChange, value, disabled]);
+  // Use stable event handlers to prevent stale closures without re-triggering effects
+  const stableOnRun = useEvent(() => {
+    if (!disabled) onRun();
+  });
+  
+  const stableOnChange = useEvent(onChange);
+  
+  const stableFormat = useEvent(() => {
+    try {
+      const formatted = format(value, {
+        language: 'sqlite',
+        tabWidth: 2,
+        keywordCase: 'upper'
+      });
+      onChange(formatted);
+    } catch {
+      // ignore formatting errors
+    }
+  });
 
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
   // Listen for shortcut changes across the app
@@ -116,34 +131,15 @@ export function SqlEditor({
     };
   }, []);
 
-  const handleFormatProxy = useCallback(() => {
-    try {
-      const current = callbacksRef.current;
-      const formatted = format(current.value, {
-        language: 'sqlite',
-        tabWidth: 2,
-        keywordCase: 'upper'
-      });
-      current.onChange(formatted);
-    } catch {
-      // ignore formatting errors
-    }
-  }, []);
-
   const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
     setMonacoInstance(monaco);
 
-    // Bind shortcuts using the proxy ref so we NEVER use stale values
-    editor?.addCommand(comboToMonaco(shortcuts.runQuery.combo, monaco), () => {
-      if (!callbacksRef.current.disabled) callbacksRef.current.onRun();
-    });
-
-    editor?.addCommand(comboToMonaco(shortcuts.formatCode.combo, monaco), () => {
-      handleFormatProxy();
-    });
-  }, [shortcuts.runQuery.combo, shortcuts.formatCode.combo, handleFormatProxy]);
+    // Bind shortcuts using the stable event handlers
+    editor?.addCommand(comboToMonaco(shortcuts.runQuery.combo, monaco), stableOnRun);
+    editor?.addCommand(comboToMonaco(shortcuts.formatCode.combo, monaco), stableFormat);
+  }, [shortcuts.runQuery.combo, shortcuts.formatCode.combo, stableOnRun, stableFormat]);
 
   // Register SQL autocomplete for tables, columns, functions, and keywords
   useEffect(() => {
@@ -346,7 +342,7 @@ export function SqlEditor({
         </span>
         <div className="flex-1" />
         <button
-          onClick={handleFormatProxy}
+          onClick={stableFormat}
           className="px-2 py-0.5 hover:bg-surface-2 text-text rounded text-[11px] transition-colors"
         >
           Format

@@ -8,56 +8,12 @@
  * React hook: see @/hooks/useGroqKey.js
  */
 
-
-const GROQ_BASE = 'https://api.groq.com/openai/v1/chat/completions';
+import { api } from '@/lib/api';
 
 // Primary: fastest + cheapest + highest rate limits
 export const MODEL_FAST = 'llama-3.1-8b-instant';
 // Fallback for complex tasks (mock interview final report)
 export const MODEL_SMART = 'llama-3.3-70b-versatile';
-
-// sessionStorage key — scoped to current tab session, cleared on tab close
-const GROQ_KEY_STORAGE = 'groq-api-key';
-
-/** Retrieves the active API key. sessionStorage (tab-scoped) takes priority over .env */
-export function getGroqKey() {
-  const userKey = sessionStorage.getItem(GROQ_KEY_STORAGE);
-  if (userKey && userKey.startsWith('gsk_')) return userKey;
-  const envKey = import.meta.env.VITE_GROQ_API_KEY;
-  if (envKey && envKey.startsWith('gsk_')) return envKey;
-  return null;
-}
-
-/** Saves user's personal API key to sessionStorage (tab-scoped, clears on close) */
-export function saveGroqKey(key) {
-  if (key && key.trim()) {
-    sessionStorage.setItem(GROQ_KEY_STORAGE, key.trim());
-  } else {
-    sessionStorage.removeItem(GROQ_KEY_STORAGE);
-  }
-  // Clear any cached AI responses from the previous key or error state
-  try {
-    for (let i = sessionStorage.length - 1; i >= 0; i--) {
-      const k = sessionStorage.key(i);
-      if (k && (k.startsWith('groq-cache-') || k.startsWith('ai-hint-') || k.startsWith('ai-sol-') || k.startsWith('ai-val-'))) {
-        sessionStorage.removeItem(k);
-      }
-    }
-  } catch {}
-}
-
-/** Returns true if any API key is available */
-export function hasGroqKey() {
-  return !!getGroqKey();
-}
-
-/**
- * useGroqKey has been moved to @/hooks/useGroqKey.js
- * This re-export exists for backward compatibility with existing import sites.
- * Update your imports to: import { useGroqKey } from '@/hooks/useGroqKey';
- */
-export { useGroqKey } from '@/hooks/useGroqKey';
-
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
@@ -93,41 +49,29 @@ function writeCache(key, data) {
  * @returns {Promise<string>} - assistant message text
  */
 export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true) {
-  const key = getGroqKey();
-  if (!key) throw new Error('NO_KEY');
-
   const cacheKey = getCacheKey(messages, model);
   if (useCache) {
     const cached = readCache(cacheKey);
     if (cached) return cached;
   }
 
-  const res = await fetch(GROQ_BASE, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${key}`,
-    },
-    body: JSON.stringify({
+  try {
+    const { data } = await api.ai.chat({
       model,
       messages,
       max_tokens: maxTokens,
-      temperature: 0.3,   // lower = more deterministic SQL analysis
+      temperature: 0.3,
       top_p: 0.9,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    if (res.status === 429) throw new Error('RATE_LIMIT');
-    if (res.status === 401) throw new Error('BAD_KEY');
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
+    });
+    
+    const text = data.data?.choices?.[0]?.message?.content?.trim() || '';
+    if (useCache) writeCache(cacheKey, text);
+    return text;
+  } catch (err) {
+    if (err.response?.status === 429) throw new Error('RATE_LIMIT');
+    if (err.response?.status === 401) throw new Error('BAD_KEY');
+    throw new Error(err.response?.data?.message || err.message);
   }
-
-  const data = await res.json();
-  const text = data.choices?.[0]?.message?.content?.trim() || '';
-  if (useCache) writeCache(cacheKey, text);
-  return text;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -208,7 +152,7 @@ The question must be solvable, specific, and mirror real ${company} interview st
       role: 'user',
       content: `Company style: ${companyContext?.slice(0, 400)}
 Database: ${schemaName}
-Schema tables: ${schemaContext?.slice(0, 3000)}
+Schema tables: ${schemaContext?.slice(0, 1000)}
 Topic focus: ${topic || 'any'}
 Generate question JSON:`
     }

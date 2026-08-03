@@ -63,13 +63,12 @@ ${payload.sql}
 }`;
         
         let response = await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 1000, false);
-        // Clean markdown backticks if any
-        if (response.startsWith('```json')) response = response.replace(/```json/g, '');
-        if (response.startsWith('```')) response = response.replace(/```/g, '');
-        response = response.trim();
         
         try {
-          const parsed = JSON.parse(response);
+          // Robustly extract JSON block using regex to ignore markdown or conversational filler
+          const jsonMatch = response.match(/\{[\s\S]*\}/);
+          const cleanJsonString = jsonMatch ? jsonMatch[0] : response;
+          const parsed = JSON.parse(cleanJsonString);
           score = parsed.score || 0;
           verdict = parsed.verdict || 'No Hire';
           jsonFeedback = parsed;

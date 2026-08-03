@@ -30,7 +30,7 @@ DataDesk abandons the traditional REST/Postgres backend model for executing quer
 - **State Management**: Zustand (Multi-store architecture: Auth, Gamification, Progress, Settings).
 - **Execution Engine**: `sql.js` (SQLite compiled to WebAssembly).
 - **AI Engine**: Groq Cloud API (Llama 3.3 70B for reasoning, Llama 3.1 8B Instant for background tasks).
-- **Data Persistence**: Supabase (PostgreSQL) for user auth, leaderboard, and gamification syncing. LocalStorage for transient interview states.
+- **Data Persistence**: MongoDB via a Node.js/Express backend for user auth, leaderboard, and gamification syncing. LocalStorage for transient interview states.
 - **Code Editor**: `@monaco-editor/react` with extensive syntax highlighting and SQL-Formatter formatting.
 
 ---
@@ -132,7 +132,7 @@ If `> 1 day`, `streak = 0`.
 
 Zustand is used to prevent prop-drilling across the massive application.
 
-1. **`useAuthStore.js`**: Manages the Supabase Session. Tracks `user` object and `isCheckingSession`.
+1. **`useAuthStore.js`**: Manages the authentication state via the backend API. Tracks `user` object and `isCheckingSession`.
 2. **`useProgressStore.js`**: Tracks which questions are 'attempted' vs 'completed'. Syncs to the DB.
 3. **`useGamificationStore.js`**: Tracks XP, Level, Badges, and Streaks.
 4. **`useSettingsStore.js`**: Tracks Editor preferences (Dark Mode, Font Size, API Keys, Auto-Run).
@@ -160,9 +160,8 @@ frontend/src/
 │   ├── useAuth.js           # Supabase auth wrapper
 │   └── useSqlDatabase.js    # WASM Web Worker controller
 ├── lib/                     # 3rd-party integrations
-│   ├── api.js               # Supabase data access layer
+│   ├── api.js               # Backend API data access layer
 │   ├── groq.js              # Groq API integration and model routing
-│   └── supabase.js          # Client initialization
 ├── pages/                   # Top-level route components
 │   ├── HomePage.jsx         # Landing page and DB selector
 │   ├── PracticePage.jsx     # Main IDE view
@@ -218,7 +217,7 @@ The platform is built on Vite, ensuring extremely fast HMR (Hot Module Replaceme
 
 ### Prerequisites
 - Node.js 18+
-- A Supabase Project
+- A MongoDB Database
 - A Groq Cloud API Key
 
 ### Local Setup
@@ -230,9 +229,16 @@ npm install
 
 ### Environment Variables (`.env`)
 ```env
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_API_URL=http://localhost:3000/api
 VITE_GROQ_API_KEY=gsk_your_api_key
+```
+
+And for the backend (`backend/.env`):
+```env
+PORT=3000
+MONGO_URI=mongodb+srv://...
+JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:5173
 ```
 
 ### Build for Production

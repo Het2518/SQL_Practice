@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera, Mic, FileText, Check } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
-import { hasGroqKey } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { useProctorStore } from './useProctorStore';
 
@@ -81,7 +80,6 @@ export function InterviewPreFlight() {
 
   const [checks, setChecks] = useState({
     network: false,
-    apiKey: false,
     browser: false,
     media: false,
   });
@@ -92,9 +90,6 @@ export function InterviewPreFlight() {
     const runChecks = async () => {
       await new Promise(r => setTimeout(r, 600));
       setChecks(prev => ({ ...prev, network: true }));
-
-      await new Promise(r => setTimeout(r, 400));
-      setChecks(prev => ({ ...prev, apiKey: hasGroqKey() }));
 
       await new Promise(r => setTimeout(r, 500));
       const canFullscreen = !!document.documentElement.requestFullscreen;
@@ -107,7 +102,7 @@ export function InterviewPreFlight() {
     runChecks();
   }, [cameraStream, screenStream, micStream]);
 
-  const allClear = checks.network && checks.apiKey && checks.browser && checks.media;
+  const allClear = checks.network && checks.browser && checks.media;
 
   const handleStart = async () => {
     if (!allClear) {
@@ -162,11 +157,6 @@ export function InterviewPreFlight() {
                   icon={<Monitor size={16} />} 
                   label="Browser Fullscreen Capability" 
                   status={checking && !checks.browser ? 'loading' : checks.browser ? 'pass' : 'fail'} 
-                />
-                <CheckItem 
-                  icon={<Key size={16} />} 
-                  label="Groq API Key (AI Evaluation)" 
-                  status={checking && !checks.apiKey ? 'loading' : checks.apiKey ? 'pass' : 'fail'} 
                 />
                 <CheckItem 
                   icon={<Camera size={16} />} 

@@ -144,7 +144,7 @@ export default function App() {
     progress,
     syncFromServer: syncProgressServer,
   } = useProgressStore();
-  const { gameState, syncFromServer: syncGamificationServer } = useGamificationStore();
+  const { gameState } = useGamificationStore();
 
   const [showSettings, setShowSettings] = useState(false);
 
@@ -186,12 +186,11 @@ export default function App() {
   useEffect(() => {
     if (user) {
       syncProgressServer(user);
-      syncGamificationServer(user);
     } else {
       useProgressStore.getState().resetProgress();
       useGamificationStore.getState().resetGamification();
     }
-  }, [user, syncProgressServer, syncGamificationServer]);
+  }, [user, syncProgressServer]);
 
   // ── No client → server sync needed: updates are fired directly in updateProgress ──
 

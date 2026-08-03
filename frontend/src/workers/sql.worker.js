@@ -126,13 +126,14 @@ self.onmessage = async (e) => {
       const end = performance.now();
       const execTimeMs = end - start;
       
+      let exportedDb = null;
       if (isDML) {
         queryCache.clear();
         currentSchema = null;
+        try { exportedDb = db.export(); } catch(e) {}
       }
       
       if (results.length === 0) {
-         const isDML = /^\s*(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|REPLACE)/i.test(payload.sql);
          const cols = !isDML ? getColumnsFromEmptyQuery(db, payload.sql) : [];
          const data = { 
            columns: cols, 
@@ -141,6 +142,7 @@ self.onmessage = async (e) => {
            execTimeMs, 
            isDML 
          };
+         if (exportedDb) data.exportedDb = exportedDb;
          self.postMessage({ id, success: true, data });
       } else {
          const { columns, values } = results[results.length - 1];
@@ -152,6 +154,7 @@ self.onmessage = async (e) => {
            execTimeMs, 
            totalRows: values.length 
          };
+         if (exportedDb) data.exportedDb = exportedDb;
          
          if (payload.sql.trim().toUpperCase().startsWith('SELECT')) {
            try {

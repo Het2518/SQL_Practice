@@ -28,6 +28,7 @@ const progressRoutes = require('./src/routes/progressRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
 const interviewRoutes = require('./src/routes/interviewRoutes');
+const aiRoutes = require('./src/routes/aiRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -76,7 +77,8 @@ const ALLOWED_ORIGINS = new Set(
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin) return callback(null, true); // curl/mobile/server-to-server
+      // In production, strictly require a known origin to prevent CSRF bypass
+      if (env.isDev && !origin) return callback(null, true); // Allow curl/postman only in dev
       if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
       callback(new Error(`CORS: Origin '${origin}' is not allowed.`));
     },
@@ -106,6 +108,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/ai', aiRoutes);
 
 // ── Health Check ────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

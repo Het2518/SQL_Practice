@@ -39,6 +39,9 @@ class SqlWorkerManager {
         const { resolve, reject } = this.pendingRequests.get(id);
         this.pendingRequests.delete(id);
         if (success) {
+          if (data && data.exportedDb) {
+            this.lastDbPayload = { binaryData: data.exportedDb };
+          }
           resolve(data);
         } else {
           reject(new Error(error));

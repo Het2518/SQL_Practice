@@ -6,7 +6,6 @@ import {
   eventToComboString,
 } from '@/utils/shortcutManager';
 import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
-import { getGroqKey, saveGroqKey, hasGroqKey } from '@/lib/groq';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -99,8 +98,6 @@ export function SettingsModal({ onClose }) {
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
   const [activeTab, setActiveTab] = useState('general');
   const [searchQuery, setSearchQuery] = useState('');
-  const [groqKeyInput, setGroqKeyInput] = useState(() => getGroqKey() || '');
-  const [keySaved, setKeySaved] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
   const [storageSize, setStorageSize] = useState('0 KB');
 
@@ -121,12 +118,9 @@ export function SettingsModal({ onClose }) {
   const handleSave = () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(local));
     saveShortcuts(shortcuts);
-    // Save Groq key
-    if (groqKeyInput.trim()) saveGroqKey(groqKeyInput.trim());
-    else saveGroqKey('');
+    
     // Dispatch explicit app-level events so listeners can refresh without reload.
     window.dispatchEvent(new CustomEvent('sql-practice-shortcuts-updated'));
-    window.dispatchEvent(new CustomEvent('sql-practice-settings-updated'));
 
     updateSettings(local);
     onClose();
@@ -414,51 +408,10 @@ export function SettingsModal({ onClose }) {
               <div className="p-5 bg-surface-2 border border-border rounded-xl mt-4">
                 <div className="flex items-center gap-2 mb-3.5">
                   <span className="text-[20px]">🧠</span>
-                  <div className="font-semibold">Groq API Key</div>
+                  <div className="font-semibold">AI Capabilities Enabled</div>
                 </div>
                 <div className="text-[13px] text-text-secondary mb-4">
-                  DataDesk uses the ultra-fast Groq API for AI explanations. Get a free API key at{' '}
-                  <a
-                    href="https://console.groq.com/keys"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary"
-                  >
-                    console.groq.com
-                  </a>
-                  .
-                </div>
-
-                <input
-                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-sm font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary mb-3"
-                  type="password"
-                  placeholder="gsk_..."
-                  value={groqKeyInput}
-                  onChange={(e) => {
-                    setGroqKeyInput(e.target.value);
-                    setKeySaved(false);
-                  }}
-                />
-
-                <div className="flex items-center gap-1.5 mt-2 text-xs font-semibold">
-                  {groqKeyInput.startsWith('gsk_') ? (
-                    <>
-                      <span className="text-success">✓</span>
-                      <span className="text-success">Valid key format</span>
-                    </>
-                  ) : groqKeyInput.length > 0 ? (
-                    <>
-                      <span className="text-error">✗</span>
-                      <span className="text-error">Key should start with gsk_</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-muted">○</span>
-                      <span className="text-muted">
-                        No key entered — using .env fallback
-                      </span>
-                    </>
-                  )}
+                  DataDesk uses the ultra-fast Groq API for AI explanations. The platform provides this service automatically to help you learn faster. No configuration is required.
                 </div>
               </div>
             </>

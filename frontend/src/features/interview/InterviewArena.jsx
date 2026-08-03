@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { SqlEditor } from '@/features/practice/SqlEditor';
-import { hasGroqKey, groqChat, MODEL_SMART } from '@/lib/groq';
+import { groqChat, MODEL_SMART } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -15,10 +15,16 @@ export function InterviewArena() {
   const { toast } = useToast();
   
   const duration = parseInt(searchParams.get('duration') || '30', 10);
-  const difficulty = searchParams.get('difficulty') || 'mixed';
-  const companyName = searchParams.get('company') || 'FAANG';
-  const candidateName = searchParams.get('name') || 'Candidate';
-  const roleName = searchParams.get('role') || 'Software Engineer';
+  const rawDifficulty = searchParams.get('difficulty') || 'mixed';
+  const rawCompanyName = searchParams.get('company') || 'FAANG';
+  const rawCandidateName = searchParams.get('name') || 'Candidate';
+  const rawRoleName = searchParams.get('role') || 'Software Engineer';
+  
+  // Sanitize to prevent prompt injection
+  const difficulty = ['easy', 'medium', 'hard', 'mixed'].includes(rawDifficulty.toLowerCase()) ? rawDifficulty.toLowerCase() : 'mixed';
+  const companyName = rawCompanyName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'FAANG';
+  const candidateName = rawCandidateName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'Candidate';
+  const roleName = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Software Engineer';
   
   const { cameraStream, screenStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
 
@@ -163,7 +169,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
       isSubmittedRef.current = true;
       addViolation('integrity_breach', reason);
       try {
-        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
       } catch (e) {}
     };
 
@@ -311,7 +317,7 @@ CRITICAL: Include a bold title above it (e.g., **Expected Output**).
     setIsLoading(true);
 
     try {
-      if (document.exitFullscreen) {
+      if (document.fullscreenElement && document.exitFullscreen) {
         await document.exitFullscreen().catch(() => {});
       }
     } catch (e) {}

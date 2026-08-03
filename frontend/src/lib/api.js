@@ -192,5 +192,10 @@ export const api = {
   interviews: {
     saveScore: (data) => apiClient.post('/interviews/score', data),
     getHistory: (limit = 50) => apiClient.get('/interviews/history', { params: { limit } }),
+  },
+  
+  // AI Proxy
+  ai: {
+    chat: (data) => apiClient.post('/ai/chat', data),
   }
 };

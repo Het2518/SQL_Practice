@@ -46,28 +46,22 @@ export const useGamificationStore = create((set, get) => ({
   gameState: DEFAULT_STATE,
 
   /**
-   * Sync all gamification data from the server when user logs in.
+   * Called by useProgressStore when it fetches from the server.
+   * This prevents duplicate API calls on login.
    */
-  syncFromServer: async (user) => {
-    if (!user) return;
-    try {
-      const { data } = await api.progress.get();
-      const d = data.data;
-      set({
-        gameState: {
-          ...DEFAULT_STATE,
-          activity: d.activity || {},
-          currentStreak: d.currentStreak || 0,
-          maxStreak: d.maxStreak || 0,
-          badges: d.badges || [],
-          lastPracticeDate: d.lastPracticeDate || null,
-          recentSubmissions: Array.isArray(d.recentSubmissions) ? d.recentSubmissions : [],
-        },
-      });
-    } catch (err) {
-      console.error('[Gamification] Failed to sync from server', err.message);
-      set({ gameState: DEFAULT_STATE });
-    }
+  setFromServer: (d) => {
+    if (!d) return;
+    set({
+      gameState: {
+        ...DEFAULT_STATE,
+        activity: d.activity || {},
+        currentStreak: d.currentStreak || 0,
+        maxStreak: d.maxStreak || 0,
+        badges: d.badges || [],
+        lastPracticeDate: d.lastPracticeDate || null,
+        recentSubmissions: Array.isArray(d.recentSubmissions) ? d.recentSubmissions : [],
+      },
+    });
   },
 
   resetGamification: () => {
