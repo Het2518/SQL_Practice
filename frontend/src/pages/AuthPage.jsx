@@ -106,10 +106,10 @@ export default function AuthPage() {
     <div className="flex w-full h-[100dvh] overflow-hidden bg-bg">
       
       {/* ─── LEFT PANEL (Visual Hook - Hidden on Mobile) ─── */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-surface-2 text-text overflow-hidden border-r border-border/50">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-slate-50/50 dark:bg-[#09090b] text-text overflow-hidden border-r border-border/50">
         {/* Glows & Gradients */}
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-primary/10 rounded-full blur-[140px] pointer-events-none mix-blend-screen dark:mix-blend-screen" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen dark:mix-blend-screen" />
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-indigo-500/20 dark:bg-indigo-500/15 rounded-full blur-[120px] pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-500/20 dark:bg-blue-500/15 rounded-full blur-[120px] pointer-events-none mix-blend-multiply dark:mix-blend-screen" />
         
         {/* Abstract Grid Overlay */}
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
@@ -118,7 +118,7 @@ export default function AuthPage() {
         {/* Brand Header */}
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center shadow-sm backdrop-blur-md">
-            <Terminal size={20} className="text-primary" />
+            <Terminal size={20} className="text-indigo-500 dark:text-primary" />
           </div>
           <span className="text-[20px] font-black tracking-tight text-text">DataDesk.</span>
         </div>
@@ -126,11 +126,11 @@ export default function AuthPage() {
         {/* Center Graphic */}
         <div className="relative z-10 flex flex-col items-start gap-8 max-w-lg mt-12">
           <div className="px-4 py-1.5 rounded-full border border-border bg-surface/50 backdrop-blur-md text-[11px] font-bold uppercase tracking-widest text-text-secondary flex items-center gap-2 shadow-sm">
-            <Sparkles size={12} className="text-primary" /> Product Hunt Design of the Year
+            <Sparkles size={12} className="text-indigo-500 dark:text-primary" /> Product Hunt Design of the Year
           </div>
           <h1 className="text-[52px] font-black leading-[1.05] tracking-tight text-text">
             Master SQL.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-blue-500 dark:from-primary dark:to-blue-500">
               Land the offer.
             </span>
           </h1>
