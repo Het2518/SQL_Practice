@@ -257,19 +257,31 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
     };
   }, [isDragging]);
 
-  // Persist editor text — always save per question, always restore on question switch
-  const EDITOR_KEY = `sql-persist-${currentQ.id}`;
+  // Handle editor state initialization and persistence when switching questions
   useEffect(() => {
-    // Always restore saved SQL when switching questions
-    const saved = localStorage.getItem(EDITOR_KEY);
-    setSql(saved || '');
-  }, [currentQ.id, EDITOR_KEY]);
+    if (settings?.persistEditorText) {
+      const EDITOR_KEY = `sql-persist-${currentQ.id}`;
+      // Load from local storage
+      const savedSql = localStorage.getItem(EDITOR_KEY);
+      if (savedSql !== null) {
+        setSql(savedSql);
+      } else {
+        setSql('');
+      }
+    } else {
+      setSql('');
+    }
+    // We intentionally only run this when the question changes, NOT when sql changes or settings change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQ.id]);
+
   useEffect(() => {
     // Always save current SQL for this question
     if (settings?.persistEditorText && sql !== undefined) {
+      const EDITOR_KEY = `sql-persist-${currentQ.id}`;
       localStorage.setItem(EDITOR_KEY, sql);
     }
-  }, [sql, EDITOR_KEY, settings?.persistEditorText]);
+  }, [sql, currentQ.id, settings?.persistEditorText]);
 
   const dbInfo = DB_INFO[db];
   const dbQuestions = useMemo(() => {

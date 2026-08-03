@@ -133,6 +133,8 @@ export function SqlEditor({
     };
   }, []);
 
+
+
   const handleEditorMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -355,7 +357,11 @@ export function SqlEditor({
           height="100%"
           language="sql"
           value={value}
-          onChange={v => stableOnChange(v ?? '')}
+          onChange={v => {
+            if (v !== undefined) {
+              stableOnChange(v);
+            }
+          }}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorMount}
           theme={darkMode ? 'earthy-dark' : 'earthy-light'}
