@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import {
-  Settings as SettingsIcon, LogOut, Edit2, Check, X, Zap,
+  Settings as SettingsIcon, LogOut, Edit2, Check, X, Zap, Trophy,
   Medal, Share2, BarChart2, MessageSquare, Folder, Swords, Award,
 } from 'lucide-react';
 import { allQuestions } from '@/data/index';
