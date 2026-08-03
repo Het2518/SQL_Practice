@@ -59,6 +59,14 @@ export default {
         sans: 'var(--font-sans)',
         mono: 'var(--font-mono)',
       },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 2s infinite',
+      },
     },
   },
   plugins: [

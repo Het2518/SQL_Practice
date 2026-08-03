@@ -53,21 +53,23 @@ const HeroSection = ({ onShowInterview, navigate }) => (
     </div>
 
     {/* App Preview Mockup */}
-    <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up drop-shadow-2xl" style={{ animationDelay: '400ms' }}>
-      <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-bg to-transparent z-10 pointer-events-none" />
-      <div className="rounded-t-3xl border border-slate-200/80 dark:border-border border-b-0 bg-slate-50 dark:bg-surface shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative">
+    <div className="relative w-full max-w-5xl mx-auto mt-20 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+      <div 
+        className="rounded-t-3xl border border-slate-200/80 dark:border-border border-b-0 bg-slate-50 dark:bg-surface overflow-hidden aspect-[16/9] md:aspect-[21/9] flex flex-col relative"
+        style={{ WebkitMaskImage: 'linear-gradient(to top, transparent, black 35%)', maskImage: 'linear-gradient(to top, transparent, black 35%)' }}
+      >
         <div className="h-10 bg-slate-100/50 dark:bg-surface-2 border-b border-slate-200/80 dark:border-border flex items-center px-4 gap-2 backdrop-blur-md">
           <div className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-sm border border-black/10 dark:border-transparent" />
           <div className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-sm border border-black/10 dark:border-transparent" />
           <div className="w-3 h-3 rounded-full bg-[#27c93f] shadow-sm border border-black/10 dark:border-transparent" />
         </div>
         <div className="flex-1 p-6 flex gap-6 bg-slate-50 dark:bg-transparent">
-          <div className="w-1/4 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border shadow-sm p-4 flex flex-col gap-3 relative overflow-hidden">
+          <div className="w-1/4 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border p-4 flex flex-col gap-3 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:hidden" />
-            <div className="h-4 w-24 bg-slate-200 dark:bg-border rounded" />
-            <div className="h-3 w-full bg-slate-100 dark:bg-border/50 rounded" />
-            <div className="h-3 w-3/4 bg-slate-100 dark:bg-border/50 rounded" />
-            <div className="h-3 w-5/6 bg-slate-100 dark:bg-border/50 rounded mt-4" />
+            <ShimmerLine className="h-4 w-24 bg-slate-200 dark:bg-border rounded" delay="0ms" />
+            <ShimmerLine className="h-3 w-full bg-slate-100 dark:bg-border/50 rounded" delay="100ms" />
+            <ShimmerLine className="h-3 w-3/4 bg-slate-100 dark:bg-border/50 rounded" delay="200ms" />
+            <ShimmerLine className="h-3 w-5/6 bg-slate-100 dark:bg-border/50 rounded mt-4" delay="300ms" />
           </div>
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex-1 bg-white dark:bg-bg rounded-xl border border-slate-200 dark:border-border shadow-sm p-5 flex flex-col gap-2 font-mono text-sm relative overflow-hidden">
@@ -88,22 +90,31 @@ const HeroSection = ({ onShowInterview, navigate }) => (
   </section>
 );
 
+const ShimmerLine = ({ className, delay }) => (
+  <div className={`relative overflow-hidden ${className}`} style={{ animationDelay: delay }}>
+    <div 
+      className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 dark:via-white/10 to-transparent" 
+      style={{ animationDelay: delay }}
+    />
+  </div>
+);
+
 const TablePlaceholder = () => (
   <div className="w-full flex flex-col gap-2">
     <div className="flex gap-2 border-b border-slate-200 dark:border-border pb-2">
-      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
-      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
-      <div className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" delay="0ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" delay="100ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-200 dark:bg-border rounded" delay="200ms" />
     </div>
     <div className="flex gap-2 opacity-80 mt-1">
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="300ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="400ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="500ms" />
     </div>
     <div className="flex gap-2 opacity-60">
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
-      <div className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="600ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="700ms" />
+      <ShimmerLine className="h-3 w-1/4 bg-slate-100 dark:bg-border/50 rounded" delay="800ms" />
     </div>
   </div>
 );
