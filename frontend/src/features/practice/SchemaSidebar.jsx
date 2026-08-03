@@ -318,30 +318,6 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
       <div className="flex-1 overflow-y-auto py-3">
         {activeTab === 'schema' && (
           <>
-            <div className="px-3 pb-3">
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent('open-er-diagram'))}
-                className="btn btn-secondary w-full justify-center"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                </svg>
-                View ER Diagram
-              </button>
-            </div>
-
             {/* Join Path Finder Banner */}
             {selectedTables.length === 2 && (
               <div className="mx-3 mb-3 p-3.5 bg-primary-muted rounded-xl border border-primary-light">

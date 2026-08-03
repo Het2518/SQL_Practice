@@ -593,19 +593,26 @@ export const QuestionCard = React.memo(function QuestionCard({
                     </div>
                   ) : (
                     /* Static question: standard AI Solution Review */
-                    <button
-                      onClick={onOpenAiTutor}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-surface-2 cursor-pointer text-[13px] font-semibold text-text transition-all duration-150 ease-in-out hover:bg-surface hover:border-primary/40 group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Sparkles size={15} strokeWidth={2} className="text-primary" />
-                        <span>AI Tutor Chat</span>
-                        <span className="ai-badge text-[10px] px-1.5 py-[1px]">Groq</span>
-                      </div>
-                      <span className="text-xs text-text-secondary font-medium flex items-center gap-1 group-hover:text-primary transition-colors">
-                        Ask the AI Tutor <ChevronRight size={14} />
-                      </span>
-                    </button>
+                    <div className="flex flex-col gap-3">
+                      <AiSolutionReview
+                        question={question}
+                        studentSQL={currentSql}
+                        solutionSQL={question.solution_sql}
+                      />
+                      <button
+                        onClick={onOpenAiTutor}
+                        className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-surface-2 cursor-pointer text-[13px] font-semibold text-text transition-all duration-150 ease-in-out hover:bg-surface hover:border-primary/40 group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={15} strokeWidth={2} className="text-primary" />
+                          <span>AI Tutor Chat</span>
+                          <span className="ai-badge text-[10px] px-1.5 py-[1px]">Groq</span>
+                        </div>
+                        <span className="text-xs text-text-secondary font-medium flex items-center gap-1 group-hover:text-primary transition-colors">
+                          Ask the AI Tutor <ChevronRight size={14} />
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
