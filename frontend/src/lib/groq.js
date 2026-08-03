@@ -396,38 +396,34 @@ The difficulty level requested by the candidate is: ${difficulty.toUpperCase()}.
 - MIXED: Surprise them with a medium-hard question that touches multiple concepts.
 
 [FORMATTING REQUIREMENTS]
-You MUST strictly adhere to the following structure for the markdown field. Do NOT include conversational filler like "Here is your question" or "Good luck!".
-
-# Problem Context
-Write a realistic 2-3 sentence business scenario.
-
-# Schema Definition
-Provide the exact table schemas using Markdown tables.
-CRITICAL: Above EVERY table, you MUST include a bold title specifying the table name (e.g., **Table: users**).
-Include: Column Name, Data Type, and a brief Description.
-
-# Example Input Data
-Provide 3-5 rows of sample data for EACH table in Markdown format.
-CRITICAL: Above EVERY sample data table, you MUST include a bold title (e.g., **Example Data: users**).
-
-# The Challenge
-Clearly state the exact query the candidate must write. Use bullet points for specific conditions.
-
-# Expected Output Format
-Provide a 2-3 row Markdown table showing EXACTLY what the final query output should look like given the Example Input Data.
-CRITICAL: Include a bold title above it (e.g., **Expected Output**).
+You MUST output the result purely as a JSON object matching this EXACT structure:
+{
+  "problemStatement": "Write a realistic 2-3 sentence business scenario and clearly state the exact query the candidate must write.",
+  "explanation": "A brief explanation of what the expected query should achieve.",
+  "tables": [
+    {
+      "name": "table_name",
+      "columns": [
+        { "name": "column_name", "type": "column_type", "description": "Brief description of the column" }
+      ],
+      "sampleData": [
+        { "column_name": "value1" }
+      ]
+    }
+  ],
+  "expectedOutput": [
+    { "column_name": "expected_value" }
+  ],
+  "constraints": "List any specific constraints or edge cases the candidate must handle (e.g. handle ties, null values).",
+  "notes": "Any additional helpful notes.",
+  "initSql": "Valid SQLite CREATE TABLE and INSERT INTO statements to build the in-memory database for this exact problem, matching the tables and sample data exactly."
+}
 
 [CRITICAL CONSTRAINTS]
 1. DO NOT provide the SQL solution. You are administering the test, not taking it.
-2. Ensure the question logically makes sense and the Example Output matches the Example Input.
+2. Ensure the question logically makes sense and the expected output matches the sample data perfectly.
 3. Make the question feel like a real-world production issue, not a textbook exercise.
-
-[OUTPUT FORMAT]
-You MUST output the result purely as a JSON object matching this exact structure, with NO markdown code blocks around the JSON:
-{
-  "markdown": "The full markdown formatted problem description... (using # Problem Context, # Schema Definition, etc. as described above)",
-  "initSql": "Valid SQLite CREATE TABLE and INSERT INTO statements to build the in-memory database for this exact problem, matching the Schema Definition and Example Input Data exactly."
-}`;
+4. Output ONLY valid JSON, do NOT wrap it in markdown code blocks.`;
 
   return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1500, false, 'json_object');
 }

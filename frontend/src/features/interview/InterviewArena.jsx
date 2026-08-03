@@ -45,6 +45,8 @@ export function InterviewArena() {
   const [isDryRunning, setIsDryRunning] = useState(false);
   const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [fullscreenWarning, setFullscreenWarning] = useState(false);
+  const fullscreenTimeoutRef = useRef(null);
   const [leftTab, setLeftTab] = useState('problem'); // 'problem' or 'chat'
   const [bottomPanel, setBottomPanel] = useState(null); // 'ai' | 'results' | null
   const [queryResult, setQueryResult] = useState(null);
@@ -55,7 +57,7 @@ export function InterviewArena() {
   const messagesEndRef = useRef(null);
   const isSubmittedRef = useRef(false);
 
-  const [initialTask, setInitialTask] = useState('');
+  const [initialTask, setInitialTask] = useState(null);
   const [generatingQuestion, setGeneratingQuestion] = useState(true);
 
   // Restore or Initialize Session
@@ -95,11 +97,11 @@ export function InterviewArena() {
             taskData = JSON.parse(cleaned);
           }
 
-          setInitialTask(taskData.markdown);
+          setInitialTask(taskData);
           
           let cleanInitSql = taskData.initSql || '-- init';
           cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-          initWithSql(cleanInitSql);
+          initWithSql({ id: 'interview-db', initSql: cleanInitSql });
           
           const welcomeMsg = {
             role: 'assistant',
@@ -108,20 +110,49 @@ export function InterviewArena() {
           setMessages([welcomeMsg]);
           
           saveSessionState({
-            difficulty, companyName, roleName, candidateName, initialTask: taskData.markdown,
+            difficulty, companyName, roleName, candidateName, initialTask: taskData,
             initSql: cleanInitSql, messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
           });
         } catch (err) {
           console.error(err);
-          const fallbackMd = "Identify the top 3 users by total transaction volume in the last 30 days.\n\n**Schema**\n- `users` (user_id, name)\n- `transactions` (transaction_id, user_id, amount, date)";
-          const fallbackSql = `
-            CREATE TABLE users (user_id INT, name TEXT);
-            CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL, date DATE);
-            INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie'), (4, 'David');
-            INSERT INTO transactions VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02'), (3, 1, 200, '2023-10-05');
-          `;
-          setInitialTask(fallbackMd);
-          initWithSql(fallbackSql);
+          const fallbackTask = {
+            problemStatement: "Identify the top 3 users by total transaction volume in the last 30 days.",
+            explanation: "You need to join the users and transactions tables, aggregate the total amount per user, and limit the result to the top 3.",
+            tables: [
+              {
+                name: "users",
+                columns: [
+                  { name: "user_id", type: "INT", description: "Unique identifier for the user" },
+                  { name: "name", type: "TEXT", description: "Name of the user" }
+                ],
+                sampleData: [
+                  { user_id: 1, name: 'Alice' }, { user_id: 2, name: 'Bob' }, { user_id: 3, name: 'Charlie' }
+                ]
+              },
+              {
+                name: "transactions",
+                columns: [
+                  { name: "transaction_id", type: "INT", description: "Unique identifier for the transaction" },
+                  { name: "user_id", type: "INT", description: "User who made the transaction" },
+                  { name: "amount", type: "DECIMAL", description: "Transaction amount" },
+                  { name: "date", type: "DATE", description: "Transaction date" }
+                ],
+                sampleData: [
+                  { transaction_id: 1, user_id: 1, amount: 100, date: '2023-10-01' },
+                  { transaction_id: 2, user_id: 2, amount: 150, date: '2023-10-02' }
+                ]
+              }
+            ],
+            expectedOutput: [
+              { name: "Alice", total_volume: 300 }
+            ],
+            constraints: "Do not include users with no transactions. If there is a tie, return any valid combination.",
+            notes: "Assume all dates are within the last 30 days for this sample.",
+            initSql: "CREATE TABLE users (user_id INT, name TEXT); CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL, date DATE); INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie'); INSERT INTO transactions VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02');"
+          };
+          
+          setInitialTask(fallbackTask);
+          initWithSql({ id: 'interview-db', initSql: fallbackTask.initSql });
         } finally {
           setGeneratingQuestion(false);
         }
@@ -195,16 +226,27 @@ export function InterviewArena() {
     };
     
     const onFullscreenChange = () => {
-      if (!document.fullscreenElement) enforceViolation('Exited fullscreen mode.');
+      if (!document.fullscreenElement && !isSubmittedRef.current && !isTerminated) {
+        setFullscreenWarning(true);
+        // Give them 15 seconds to click the button to return to fullscreen
+        fullscreenTimeoutRef.current = setTimeout(() => {
+          if (!document.fullscreenElement && !isSubmittedRef.current && !isTerminated) {
+            enforceViolation('Exited fullscreen mode for too long.');
+          }
+        }, 15000);
+      } else {
+        setFullscreenWarning(false);
+        if (fullscreenTimeoutRef.current) clearTimeout(fullscreenTimeoutRef.current);
+      }
     };
     
     const onWindowBlur = () => {
-      // 1-second grace period for interacting with browser UI (like the screen share "Hide" banner)
+      // 3-second grace period for interacting with browser UI (like the screen share "Hide" banner)
       setTimeout(() => {
         if (!document.hasFocus() && !isSubmittedRef.current && !isTerminated) {
           enforceViolation('Window lost focus. (Alt-Tabbed or clicked external monitor).');
         }
-      }, 1000);
+      }, 3000);
     };
 
     const disableCopyPaste = (e) => {
@@ -497,6 +539,24 @@ export function InterviewArena() {
         <Button onClick={() => navigate('/')} variant="outline" size="lg">Back to Home</Button>
       </div>
 
+      {fullscreenWarning && !isTerminated && !isSubmittedRef.current && (
+        <div className="fixed inset-0 z-[9999] bg-bg/95 backdrop-blur-md flex flex-col items-center justify-center">
+          <ShieldAlert size={64} className="text-error mb-6 animate-pulse" />
+          <h2 className="text-3xl font-black text-text mb-4">Fullscreen Exited</h2>
+          <p className="text-text-secondary mb-8 max-w-md text-center leading-relaxed">
+            You have exited fullscreen mode (likely by clicking a browser notification). You must return to fullscreen immediately or your interview will be terminated.
+          </p>
+          <Button 
+            size="lg" 
+            onClick={() => {
+              document.documentElement.requestFullscreen().catch(e => console.error(e));
+            }}
+          >
+            Return to Fullscreen
+          </Button>
+        </div>
+      )}
+
       <div className={`w-full h-screen bg-bg flex flex-col select-none overflow-hidden ${isTerminated ? 'blur-md pointer-events-none' : ''}`}>
         
         {/* Header */}
@@ -537,10 +597,37 @@ export function InterviewArena() {
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left: Chat */}
-          {/* Left: Problem / Chat */}
-          <div className="w-[45%] min-w-[400px] max-w-[700px] border-r border-border flex flex-col bg-surface-2">
+        <div className="flex flex-1 overflow-hidden shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
+          {/* Pane 1: Schema Explorer (Left sidebar) */}
+          <aside className="w-64 shrink-0 bg-surface border-r border-border hidden lg:flex flex-col z-10">
+            <div className="p-3 border-b border-border bg-surface-2 shrink-0">
+              <h2 className="font-bold text-sm flex items-center gap-2 text-text uppercase tracking-wider text-[11px]"><Database size={14} className="text-primary" /> Schema</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-bg">
+              {generatingQuestion ? (
+                <div className="text-center text-xs text-text-secondary mt-10">Generating Schema...</div>
+              ) : (
+                initialTask?.tables?.map((table) => (
+                  <div key={table.name} className="mb-5">
+                    <div className="font-bold text-xs mb-2 text-text flex items-center gap-1.5 uppercase tracking-wide">
+                      <span className="text-primary">●</span> {table.name}
+                    </div>
+                    <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
+                      {table.columns?.map((col, i) => (
+                        <div key={i} className="px-3 py-1.5 flex justify-between text-xs border-b border-border last:border-b-0 hover:bg-surface-2">
+                          <span className="font-medium text-text font-mono">{col.name}</span>
+                          <span className="text-text-secondary text-[10px] uppercase font-mono">{col.type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
+
+          {/* Pane 2: Problem / Chat (Middle pane) */}
+          <div className="w-[45%] min-w-[350px] max-w-[600px] border-r border-border flex flex-col bg-surface-2 z-10">
             <div className="flex bg-surface border-b border-border px-4 pt-2 gap-1 shrink-0">
               <button
                 onClick={() => setLeftTab('problem')}
@@ -561,7 +648,7 @@ export function InterviewArena() {
 
             <div className="flex-1 relative overflow-hidden bg-bg">
               {leftTab === 'problem' && (
-                <div className="absolute inset-0 overflow-y-auto p-6 custom-scrollbar text-text prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-4 prose-pre:bg-surface-2 prose-pre:border prose-pre:border-border prose-pre:rounded-xl prose-th:bg-surface-2 prose-td:border-border prose-th:border-border">
+                <div className="absolute inset-0 overflow-y-auto p-6 custom-scrollbar bg-bg text-text">
                   {generatingQuestion ? (
                     <div className="flex flex-col items-center justify-center h-full text-text-secondary">
                       <Loader2 size={32} className="animate-spin text-primary mb-4" />
@@ -569,7 +656,92 @@ export function InterviewArena() {
                       <p className="text-xs mt-2 opacity-70">Tailoring to {companyName} • {difficulty} level</p>
                     </div>
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{initialTask}</ReactMarkdown>
+                    <div className="flex flex-col gap-6 text-[14px]">
+                      <div>
+                        <h3 className="font-black text-lg mb-2 tracking-tight text-text">Problem Statement</h3>
+                        <p className="leading-relaxed text-text-secondary">{initialTask?.problemStatement}</p>
+                      </div>
+                      
+                      {initialTask?.explanation && (
+                        <div>
+                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Explanation</h3>
+                          <p className="leading-relaxed text-text-secondary">{initialTask?.explanation}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <h3 className="font-black text-lg mb-3 tracking-tight text-text">Sample Data</h3>
+                        {initialTask?.tables?.map((t) => (
+                          <div key={t.name} className="mb-4">
+                            <h4 className="font-bold text-sm text-text mb-2 font-mono">{t.name}</h4>
+                            <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+                              <table className="w-full text-left border-collapse">
+                                <thead className="bg-surface-2 text-xs uppercase text-text-secondary">
+                                  <tr>
+                                    {Object.keys(t.sampleData?.[0] || {}).map(k => (
+                                      <th key={k} className="px-3 py-2 border-b border-border font-mono">{k}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {t.sampleData?.map((row, i) => (
+                                    <tr key={i} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
+                                      {Object.values(row).map((v, j) => (
+                                        <td key={j} className="px-3 py-2 text-[13px] font-mono">{String(v)}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {initialTask?.expectedOutput?.length > 0 && (
+                        <div>
+                          <h3 className="font-black text-lg mb-3 tracking-tight text-text">Expected Output</h3>
+                          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+                            <table className="w-full text-left border-collapse">
+                              <thead className="bg-surface-2 text-xs uppercase text-text-secondary">
+                                <tr>
+                                  {Object.keys(initialTask.expectedOutput[0]).map(k => (
+                                    <th key={k} className="px-3 py-2 border-b border-border font-mono">{k}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {initialTask.expectedOutput.map((row, i) => (
+                                  <tr key={i} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
+                                    {Object.values(row).map((v, j) => (
+                                      <td key={j} className="px-3 py-2 text-[13px] font-mono">{String(v)}</td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {initialTask?.constraints && (
+                        <div>
+                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Constraints</h3>
+                          <p className="leading-relaxed text-[13px] text-text-secondary bg-surface-2 p-3 rounded-lg border border-border">
+                            {initialTask.constraints}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {initialTask?.notes && (
+                        <div>
+                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Notes</h3>
+                          <p className="leading-relaxed text-[13px] text-text-secondary italic">
+                            {initialTask.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
