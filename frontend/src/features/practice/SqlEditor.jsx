@@ -97,6 +97,7 @@ export function SqlEditor({
   // Use stable event handlers to prevent stale closures without re-triggering effects
   const stableOnRun = useEvent(() => {
     if (!disabled) onRun();
+    return null;
   });
   
   const stableOnChange = useEvent(onChange);
@@ -112,6 +113,7 @@ export function SqlEditor({
     } catch {
       // ignore formatting errors
     }
+    return null;
   });
 
   const [shortcuts, setShortcuts] = useState(() => loadShortcuts());
@@ -353,7 +355,7 @@ export function SqlEditor({
           height="100%"
           language="sql"
           value={value}
-          onChange={v => onChange(v ?? '')}
+          onChange={v => stableOnChange(v ?? '')}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorMount}
           theme={darkMode ? 'earthy-dark' : 'earthy-light'}
