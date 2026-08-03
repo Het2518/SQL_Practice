@@ -182,7 +182,6 @@ class SqlWorkerManager {
       });
 
       this.worker.postMessage({ type, payload, id });
-    });
   }
 }
 
