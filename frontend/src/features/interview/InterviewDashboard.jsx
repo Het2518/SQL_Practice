@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Briefcase, FileText } from 'lucide-react';
+import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Briefcase, FileText, Rocket, Landmark, Zap, Database } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';
@@ -20,10 +20,10 @@ const DIFFICULTIES = [
 ];
 
 const COMPANIES = [
-  { id: 'faang', name: 'FAANG / Big Tech', logo: '🚀' },
-  { id: 'fintech', name: 'FinTech (Stripe, Plaid)', logo: '💳' },
-  { id: 'startup', name: 'High-Growth Startup', logo: '🦄' },
-  { id: 'data', name: 'Data Eng (Databricks)', logo: '📊' },
+  { id: 'faang', name: 'FAANG / Big Tech', icon: Rocket, color: 'text-blue-500' },
+  { id: 'fintech', name: 'FinTech (Stripe, Plaid)', icon: Landmark, color: 'text-emerald-500' },
+  { id: 'startup', name: 'High-Growth Startup', icon: Zap, color: 'text-purple-500' },
+  { id: 'data', name: 'Data Eng (Databricks)', icon: Database, color: 'text-orange-500' },
 ];
 
 export function InterviewPage({ user, onShowAuth, onShowSettings }) {
@@ -86,10 +86,10 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-12 w-full grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="max-w-5xl mx-auto px-6 py-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-10">
         
         {/* Left Column: Configuration */}
-        <div className="lg:col-span-2 flex flex-col gap-10">
+        <div className="lg:col-span-7 flex flex-col gap-10">
           {/* Candidate Info */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -136,11 +136,11 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
                   onClick={() => setCompany(c.id)}
                   className={`flex items-center gap-3 py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer ${
                     company === c.id
-                      ? 'border-primary bg-primary/10 text-text shadow-sm'
+                      ? 'border-primary bg-primary/5 text-text shadow-sm'
                       : 'border-border bg-surface hover:bg-surface-2 text-text-secondary'
                   }`}
                 >
-                  <span className="text-xl">{c.logo}</span>
+                  <c.icon size={20} className={company === c.id ? 'text-primary' : c.color} />
                   <span className="text-left">{c.name}</span>
                 </button>
               ))}
@@ -195,7 +195,7 @@ export function InterviewPage({ user, onShowAuth, onShowSettings }) {
         </div>
 
         {/* Right Column: Summary & Actions */}
-        <div className="lg:border-l lg:border-border lg:pl-10 flex flex-col gap-6">
+        <div className="lg:col-span-5 lg:border-l lg:border-border lg:pl-10 flex flex-col gap-6">
           <div className="bg-surface-2 rounded-2xl p-6 border border-border">
             <h3 className="text-lg font-bold text-text mb-4 flex items-center gap-2">
               <FileText size={18} className="text-text-secondary" />

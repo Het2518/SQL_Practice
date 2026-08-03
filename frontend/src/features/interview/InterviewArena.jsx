@@ -132,8 +132,20 @@ export function InterviewArena() {
   useEffect(() => {
     if (isSubmittedRef.current || isTerminated) return;
 
+    let gracePeriodActive = true;
+    const graceTimer = setTimeout(() => {
+      gracePeriodActive = false;
+      if (!document.fullscreenElement && !isSubmittedRef.current) {
+        enforceViolation('Exited fullscreen mode.');
+      }
+    }, 4000);
+
     const enforceViolation = (reason) => {
       if (isSubmittedRef.current || isTerminated) return;
+      if (gracePeriodActive) {
+        console.warn('Violation ignored (grace period):', reason);
+        return;
+      }
       isSubmittedRef.current = true;
       addViolation('integrity_breach', reason);
       try {
@@ -198,6 +210,7 @@ export function InterviewArena() {
     if (screenStream) screenStream.getTracks().forEach(t => t.addEventListener('ended', handleStreamEnd));
 
     return () => {
+      clearTimeout(graceTimer);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
       window.removeEventListener('blur', onWindowBlur);
@@ -235,7 +248,7 @@ export function InterviewArena() {
       const responseText = data.data?.choices?.[0]?.message?.content || '';
       setMessages((prev) => [...prev, { role: 'assistant', content: responseText }]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: '❌ Sorry, I encountered a network error. Try again.' }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: Network request failed. Please try again.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -260,7 +273,7 @@ export function InterviewArena() {
       const responseText = data.data?.choices?.[0]?.message?.content || '';
       setDryRunFeedback(responseText);
     } catch (err) {
-      setDryRunFeedback('❌ Sorry, I encountered a network error.');
+      setDryRunFeedback('⚠️ Error: Network request failed. Please try again.');
     } finally {
       setIsDryRunning(false);
     }
