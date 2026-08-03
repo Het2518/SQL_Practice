@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
-import { BookOpen, Code2, Database, ShieldAlert, Target, PlayCircle, Trophy, Bot, Star, TerminalSquare, CheckCircle, AlertTriangle } from 'lucide-react';
+import { BookOpen, Code2, Database, ShieldAlert, Target, PlayCircle, Trophy, Bot, Star, TerminalSquare, CheckCircle, AlertTriangle, Eye, Search, Link, Zap } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 
 export function UserGuide({ user, onShowAuth, onShowSettings }) {
@@ -158,7 +158,7 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">2</div>
                 <div>
                   <strong className="text-text block mb-1">Live Table Preview</strong>
-                  Hover over any table name in the sidebar and click the <strong>Eye Icon (👁️)</strong>. This opens a full-screen Data Preview modal showing schema definitions, constraints, and a paginated view of up to 50,000 real records.
+                  Hover over any table name in the sidebar and click the <strong>Eye Icon (<Eye size={16} className="inline-block text-primary align-text-bottom" />)</strong>. This opens a full-screen Data Preview modal showing schema definitions, constraints, and a paginated view of up to 50,000 real records.
                 </div>
               </div>
             </div>
@@ -175,7 +175,7 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
             <div className="grid gap-6 mt-6">
               <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
                 <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
-                  🔍 Execution Explainer (Ctrl+E)
+                  <Search size={20} className="text-primary" /> Execution Explainer (Ctrl+E)
                 </h4>
                 <p className="m-0 text-base text-text-secondary leading-relaxed">
                   Generates a step-by-step breakdown of how the database engine parses your query (FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY). It also automatically hooks into SQLite's native <code>EXPLAIN QUERY PLAN</code> to show you B-Tree usage and table scans.
@@ -183,7 +183,7 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
               </div>
               <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
                 <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
-                  🔗 Animated Join Visualizer
+                  <Link size={20} className="text-primary" /> Animated Join Visualizer
                 </h4>
                 <p className="m-0 text-base text-text-secondary leading-relaxed">
                   If your query contains JOINs, clicking the Visualizer tool in the results panel will draw an animated Venn-diagram style visualization showing exactly how INNER, LEFT, or FULL joins operated on your specific tables.
@@ -191,7 +191,7 @@ export function UserGuide({ user, onShowAuth, onShowSettings }) {
               </div>
               <div className="p-6 bg-surface-2 border border-border rounded-xl hover:border-primary/50 transition-colors">
                 <h4 className="m-0 mb-3 text-text flex items-center gap-2 text-lg font-bold">
-                  ⚡ Index Advisor
+                  <Zap size={20} className="text-primary" /> Index Advisor
                 </h4>
                 <p className="m-0 text-base text-text-secondary leading-relaxed">
                   Analyzes your <code>WHERE</code> and <code>JOIN</code> clauses and proactively recommends specific <code>CREATE INDEX</code> statements to speed up your query on massive datasets.
