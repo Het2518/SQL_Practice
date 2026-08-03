@@ -101,7 +101,7 @@ export function InterviewArena() {
           
           let cleanInitSql = taskData.initSql || '-- init';
           cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-          initWithSql({ id: 'interview-db', initSql: cleanInitSql });
+          initWithSql(cleanInitSql);
           
           const welcomeMsg = {
             role: 'assistant',
@@ -152,7 +152,7 @@ export function InterviewArena() {
           };
           
           setInitialTask(fallbackTask);
-          initWithSql({ id: 'interview-db', initSql: fallbackTask.initSql });
+          initWithSql(fallbackTask.initSql);
         } finally {
           setGeneratingQuestion(false);
         }
