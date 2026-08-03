@@ -8,7 +8,7 @@ import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { sqlWorkerManager } from '@/workers/SqlWorkerManager';
-import { useProctorStore } from '@/stores/useProctorStore';
+import { useProctorStore } from './useProctorStore';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { useSettingsStore } from '@/stores/useSettingsStore';
