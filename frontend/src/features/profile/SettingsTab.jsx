@@ -59,6 +59,8 @@ function PasswordField({ label, value, onChange }) {
   );
 }
 
+import { Button } from '@/shared/ui/Button';
+
 function ChangePasswordSection() {
   const [current, setCurrent]   = useState('');
   const [next, setNext]         = useState('');
@@ -93,11 +95,15 @@ function ChangePasswordSection() {
             {msg}
           </div>
         )}
-        <button type="submit" disabled={status === 'loading'}
-          className="self-start flex items-center gap-2 px-5 py-2.5 bg-primary text-white border-none rounded-xl cursor-pointer font-bold text-[13px] hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          {status === 'loading' ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+        <Button 
+          type="submit" 
+          variant="primary"
+          isLoading={status === 'loading'}
+          disabled={status === 'loading'}
+          className="self-start rounded-xl font-bold px-6"
+        >
           {status === 'loading' ? 'Updating...' : 'Update Password'}
-        </button>
+        </Button>
       </form>
     </SettingSection>
   );
