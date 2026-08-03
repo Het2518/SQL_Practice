@@ -9,6 +9,7 @@ import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { Settings, X, Bot, Download, UploadCloud, RotateCcw, Trash2, ClipboardCopy, HardDrive, Keyboard, Search } from 'lucide-react';
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (
@@ -225,220 +226,238 @@ export function SettingsModal({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-md animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full max-w-[560px] bg-surface rounded-2xl overflow-hidden flex flex-col shadow-xl border border-border mx-4 max-h-[90vh]">
+      <div className="w-full max-w-[600px] bg-surface/95 dark:bg-surface-2/95 backdrop-blur-2xl rounded-[28px] overflow-hidden flex flex-col shadow-2xl shadow-black/20 border border-border/50 mx-4 max-h-[85vh] transform transition-all">
         {/* Header */}
-        <div className="pt-5 px-6 pb-0 bg-surface">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[20px]">⚙️</span>
-              <h2 className="text-[18px] font-bold m-0 text-text">
+        <div className="pt-6 px-8 pb-0 bg-transparent">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                <Settings size={20} className="animate-[spin_4s_linear_infinite]" />
+              </div>
+              <h2 className="text-2xl font-black m-0 text-text tracking-tight">
                 Preferences
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-surface-2 text-text-secondary hover:text-text transition-colors"
+              className="p-2 rounded-xl bg-bg border border-border hover:bg-surface-3 text-text-secondary hover:text-text hover:border-primary/50 transition-all"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
 
-          <div className="flex gap-4 border-b border-border">
+          <div className="flex gap-2 border-b border-border pb-4">
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-4 py-3 border-none bg-transparent cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+              className={`px-5 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'general'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'bg-transparent text-text-secondary hover:bg-surface-2 hover:text-text border border-transparent hover:border-border'
               }`}
             >
-              General Settings
+              <Settings size={16} /> General
             </button>
             <button
               onClick={() => setActiveTab('shortcuts')}
-              className={`px-4 py-3 border-none bg-transparent cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+              className={`px-5 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'shortcuts'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'bg-transparent text-text-secondary hover:bg-surface-2 hover:text-text border border-transparent hover:border-border'
               }`}
             >
-              Keyboard Shortcuts
+              <Keyboard size={16} /> Shortcuts
             </button>
             <button
               onClick={() => setActiveTab('ai')}
-              className={`flex-1 bg-transparent border-none py-3 cursor-pointer text-sm font-semibold border-b-2 transition-colors ${
+              className={`flex-1 flex justify-center px-5 py-2.5 rounded-xl cursor-pointer text-sm font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'ai'
-                  ? 'border-purple-500 text-purple-500'
-                  : 'border-transparent text-muted'
+                  ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                  : 'bg-transparent text-text-secondary hover:bg-surface-2 hover:text-text border border-transparent hover:border-border'
               }`}
             >
-              AI Config
+              <Bot size={16} /> AI Config
             </button>
           </div>
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-8 overflow-y-auto flex-1 custom-scrollbar space-y-8">
           {activeTab === 'general' ? (
             <>
-              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0">
-                Editor & Workspace
-              </h3>
-              <ToggleRow
-                label="Dark Mode"
-                description="Use a darker, eye-friendly color theme"
-                checked={local.darkMode}
-                onChange={(v) => set('darkMode', v)}
-              />
-              <ToggleRow
-                label="Auto Complete SQL"
-                description="Show intelligent keyword and schema suggestions while typing"
-                checked={local.autoCompleteSql}
-                onChange={(v) => set('autoCompleteSql', v)}
-              />
-              <ToggleRow
-                label="Auto Run After Typing"
-                description="Execute query automatically after 1 second of inactivity"
-                checked={local.autoRunAfterTyping}
-                onChange={(v) => set('autoRunAfterTyping', v)}
-              />
-              <ToggleRow
-                label="Persist Editor Text"
-                description="Remember your SQL query text when you switch between questions"
-                checked={local.persistEditorText}
-                onChange={(v) => set('persistEditorText', v)}
-              />
+              <div>
+                <h3 className="text-xs uppercase text-primary tracking-widest mb-4 font-black flex items-center gap-2">
+                  <Settings size={14} /> Editor & Workspace
+                </h3>
+                <div className="space-y-2">
+                  <ToggleRow
+                    label="Dark Mode"
+                    description="Use a darker, eye-friendly color theme"
+                    checked={local.darkMode}
+                    onChange={(v) => set('darkMode', v)}
+                  />
+                  <ToggleRow
+                    label="Auto Complete SQL"
+                    description="Show intelligent keyword and schema suggestions while typing"
+                    checked={local.autoCompleteSql}
+                    onChange={(v) => set('autoCompleteSql', v)}
+                  />
+                  <ToggleRow
+                    label="Auto Run After Typing"
+                    description="Execute query automatically after 1 second of inactivity"
+                    checked={local.autoRunAfterTyping}
+                    onChange={(v) => set('autoRunAfterTyping', v)}
+                  />
+                  <ToggleRow
+                    label="Persist Editor Text"
+                    description="Remember your SQL query text when you switch between questions"
+                    checked={local.persistEditorText}
+                    onChange={(v) => set('persistEditorText', v)}
+                  />
 
-              <div className="flex items-center justify-between p-3 bg-surface border border-border rounded-lg mt-2 mb-6">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-semibold text-text">
-                    Editor Font Size
-                  </span>
-                  <span className="text-xs text-muted">
-                    Adjust the size of the code text
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => set('editorFontSize', Math.max(10, local.editorFontSize - 1))}
-                    className="w-7 h-7 rounded-md border border-border bg-surface-2 text-text cursor-pointer flex items-center justify-center hover:bg-surface-3 transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="text-[15px] font-semibold w-6 text-center text-text">
-                    {local.editorFontSize}
-                  </span>
-                  <button
-                    onClick={() => set('editorFontSize', Math.min(28, local.editorFontSize + 1))}
-                    className="w-7 h-7 rounded-md border border-border bg-surface-2 text-text cursor-pointer flex items-center justify-center hover:bg-surface-3 transition-colors"
-                  >
-                    +
-                  </button>
+                  <div className="flex items-center justify-between p-4 bg-surface border border-border rounded-xl mt-2 transition-colors hover:border-primary/50">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm font-bold text-text">
+                        Editor Font Size
+                      </span>
+                      <span className="text-xs text-text-secondary">
+                        Adjust the size of the code text
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-bg p-1 rounded-lg border border-border">
+                      <button
+                        onClick={() => set('editorFontSize', Math.max(10, local.editorFontSize - 1))}
+                        className="w-8 h-8 rounded-md bg-surface text-text cursor-pointer flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all font-bold shadow-sm"
+                      >
+                        -
+                      </button>
+                      <span className="text-[15px] font-bold w-8 text-center text-text">
+                        {local.editorFontSize}
+                      </span>
+                      <button
+                        onClick={() => set('editorFontSize', Math.min(28, local.editorFontSize + 1))}
+                        className="w-8 h-8 rounded-md bg-surface text-text cursor-pointer flex items-center justify-center hover:bg-primary hover:text-white hover:border-primary transition-all font-bold shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
-                Experience
-              </h3>
-              <ToggleRow
-                label="Timed Challenges"
-                description="Enable a countdown timer for practice sessions"
-                checked={local.timedChallenges}
-                onChange={(v) => set('timedChallenges', v)}
-              />
-
-              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
-                Data & Backup
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={handleExport} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
-                  📤 Export Backup
-                </button>
-                <input
-                  ref={importRef}
-                  type="file"
-                  accept=".json"
-                  className="hidden"
-                  onChange={handleImport}
+              <div>
+                <h3 className="text-xs uppercase text-primary tracking-widest mb-4 font-black flex items-center gap-2">
+                  <Database size={14} /> Experience
+                </h3>
+                <ToggleRow
+                  label="Timed Challenges"
+                  description="Enable a countdown timer for practice sessions"
+                  checked={local.timedChallenges}
+                  onChange={(v) => set('timedChallenges', v)}
                 />
-                <button onClick={() => importRef.current?.click()} className="px-4 py-2 bg-surface-2 hover:bg-surface-3 text-text rounded-lg text-sm font-semibold transition-colors border border-border flex items-center gap-2 justify-center">
-                  📥 Import Backup
-                </button>
               </div>
 
-              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold m-0 mt-6">
-                Storage Management ({storageSize})
-              </h3>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleResetGeneral}
-                  className="btn btn-ghost w-full text-text"
-                >
-                  🔄 Reset General Settings
-                </button>
-                <div className="mt-6">
-                  <button
-                    onClick={async () => {
-                      const progress = localStorage.getItem('sql-practice-progress') || '{}';
-                      await navigator.clipboard.writeText(progress);
-                      alert('Progress copied to clipboard!');
-                    }}
-                    className="w-full px-4 py-2 hover:bg-surface-2 text-text rounded-lg text-sm font-semibold transition-colors mb-2"
-                  >
-                    Copy Raw Progress Data
+              <div>
+                <h3 className="text-xs uppercase text-primary tracking-widest mb-4 font-black flex items-center gap-2">
+                  <HardDrive size={14} /> Data & Backup
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={handleExport} className="px-4 py-3 bg-bg hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-text rounded-xl text-sm font-bold transition-all border border-border flex items-center gap-2 justify-center shadow-sm">
+                    <Download size={16} /> Export Backup
                   </button>
-                  <button
-                    onClick={handleClearAllData}
-                    className="w-full px-4 py-2 hover:bg-red-500/10 text-red-500 rounded-lg text-sm font-bold transition-colors"
-                  >
-                    ⚠️ Hard Reset All Progress
+                  <input
+                    ref={importRef}
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleImport}
+                  />
+                  <button onClick={() => importRef.current?.click()} className="px-4 py-3 bg-bg hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-text rounded-xl text-sm font-bold transition-all border border-border flex items-center gap-2 justify-center shadow-sm">
+                    <UploadCloud size={16} /> Import Backup
                   </button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs uppercase text-primary tracking-widest mb-4 font-black flex items-center justify-between">
+                  <div className="flex items-center gap-2"><Trash2 size={14} /> Storage Management</div>
+                  <span className="text-text-secondary bg-bg px-2 py-1 rounded-md lowercase tracking-normal">{storageSize} used</span>
+                </h3>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleResetGeneral}
+                    className="w-full px-4 py-3 bg-bg hover:bg-surface-3 text-text rounded-xl text-sm font-bold transition-all border border-border flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw size={16} /> Reset General Settings
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                    <button
+                      onClick={async () => {
+                        const progress = localStorage.getItem('sql-practice-progress') || '{}';
+                        await navigator.clipboard.writeText(progress);
+                        alert('Progress copied to clipboard!');
+                      }}
+                      className="w-full px-4 py-3 hover:bg-primary/10 hover:text-primary hover:border-primary/30 text-text border border-border rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-bg"
+                    >
+                      <ClipboardCopy size={16} /> Copy Raw Progress
+                    </button>
+                    <button
+                      onClick={handleClearAllData}
+                      className="w-full px-4 py-3 bg-error/5 border border-error/20 hover:bg-error hover:text-white text-error rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={16} /> Hard Reset All Progress
+                    </button>
+                  </div>
                 </div>
               </div>
             </>
           ) : activeTab === 'ai' ? (
             <>
-              <h3 className="text-xs uppercase text-muted tracking-[1px] mb-3 font-semibold">
-                AI Configuration
+              <h3 className="text-xs uppercase text-purple-500 tracking-widest mb-4 font-black flex items-center gap-2">
+                <Bot size={14} /> AI Configuration
               </h3>
 
-              <div className="p-5 bg-surface-2 border border-border rounded-xl mt-4">
-                <div className="flex items-center gap-2 mb-3.5">
-                  <span className="text-[20px]">🧠</span>
-                  <div className="font-semibold">Groq API Key (Required for AI Features)</div>
+              <div className="p-6 bg-surface border border-border rounded-2xl shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                    <Bot size={20} />
+                  </div>
+                  <div className="font-bold text-lg text-text tracking-tight">Groq API Key</div>
                 </div>
-                <div className="text-[13px] text-text-secondary mb-4 leading-relaxed">
+                <div className="text-[14px] text-text-secondary mb-6 leading-relaxed">
                   DataDesk uses the ultra-fast Groq API for mock interviews, code explanations, and AI dry runs. 
-                  To use these features, you must provide your own free API key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">console.groq.com</a>.
+                  To use these features, you must provide your own free API key from <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-purple-500 font-bold hover:underline">console.groq.com</a>.
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-text-secondary">Your API Key (stored locally)</label>
-                  <input
-                    type="password"
-                    placeholder="gsk_..."
-                    value={local.groqApiKey || ''}
-                    onChange={(e) => set('groqApiKey', e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-surface text-text text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                  />
+                  <label className="text-xs font-bold uppercase tracking-widest text-text-secondary">Your API Key (Stored Locally)</label>
+                  <div className="relative group">
+                    <input
+                      type="password"
+                      placeholder="gsk_..."
+                      value={local.groqApiKey || ''}
+                      onChange={(e) => set('groqApiKey', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-text text-base font-mono focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all"
+                    />
+                  </div>
                 </div>
               </div>
             </>
           ) : (
             <>
-              <div className="mb-4">
+              <div className="mb-6 relative">
+                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
                 <input
                   type="text"
-                  placeholder="Type to search keybindings..."
+                  placeholder="Search keybindings..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-surface text-text text-sm"
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-border bg-bg text-text text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2 bg-surface p-2 rounded-2xl border border-border">
                 {filteredShortcuts.map((s) => (
                   <ShortcutRow
                     key={s.id}
@@ -449,7 +468,7 @@ export function SettingsModal({ onClose }) {
                   />
                 ))}
                 {filteredShortcuts.length === 0 && (
-                  <div className="text-center text-muted p-5">
+                  <div className="text-center text-text-secondary font-medium p-8">
                     No shortcuts found matching "{searchQuery}"
                   </div>
                 )}
@@ -457,20 +476,20 @@ export function SettingsModal({ onClose }) {
 
               <button
                 onClick={handleResetShortcuts}
-                className="btn btn-ghost w-full mt-6 text-error"
+                className="w-full mt-6 px-4 py-3 bg-error/5 border border-error/20 hover:bg-error hover:text-white text-error rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
               >
-                🔄 Restore Default Keybindings
+                <RotateCcw size={16} /> Restore Default Keybindings
               </button>
             </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-surface">
-          <Button variant="ghost" onClick={onClose}>
+        <div className="px-8 py-5 border-t border-border flex justify-end gap-3 bg-transparent">
+          <Button variant="ghost" onClick={onClose} className="rounded-xl px-6 font-bold">
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSave}>
+          <Button variant="primary" onClick={handleSave} className="rounded-xl px-8 font-bold shadow-lg shadow-primary/20">
             Save Changes
           </Button>
         </div>
