@@ -538,12 +538,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
       if (direction === 'prev' && idx > 0) nextQ = dbQuestions[idx - 1];
       if (direction === 'next' && idx < dbQuestions.length - 1) nextQ = dbQuestions[idx + 1];
       if (nextQ) {
-        setCurrentQ(nextQ);
-        // Restore persisted SQL for this question if setting enabled
-        const savedSql = settings?.persistEditorText ? localStorage.getItem(`sql-persist-${nextQ.id}`) : null;
-        setSql(savedSql || '');
-        setResult(null);
-        setValidation(null);
+        // Sync URL so the useEffect picks up the state correctly
+        navigate(`/practice/${db}?q=${nextQ.id}`);
       }
     },
     [currentQ, dbQuestions]
@@ -552,16 +548,8 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   // Handle selecting question from browser — auto-switch DB if needed
   const handleSelectQuestion = useCallback(
     (q) => {
-      if (q.db !== db) {
-        setDb(q.db);
-      }
-      setCurrentQ(q);
       setShowBrowser(false);
-      setResult(null);
-      setValidation(null);
-      // Restore persisted SQL for this specific question if enabled
-      const savedSql = settings?.persistEditorText ? localStorage.getItem(`sql-persist-${q.id}`) : null;
-      setSql(savedSql || '');
+      navigate(`/practice/${q.db}?q=${q.id}`);
     },
     [db]
   );
@@ -800,12 +788,15 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
                       key={i}
                       className="w-full text-left px-3.5 py-2 text-xs bg-transparent border-none text-text hover:bg-surface-2 cursor-pointer transition-colors rounded-lg truncate"
                       onClick={() => {
-                        if (entry.dbName && entry.dbName !== db)
-                          navigate('/practice/' + entry.dbName);
+                        const targetDb = entry.dbName || db;
+                        let navUrl = '/practice/' + targetDb;
                         if (entry.questionId) {
-                          const q = allQuestions.find((q) => q.id === entry.questionId);
-                          if (q) setCurrentQ(q);
+                          navUrl += '?q=' + entry.questionId;
+                          if (settings?.persistEditorText) {
+                            localStorage.setItem(`sql-persist-${entry.questionId}`, entry.sql);
+                          }
                         }
+                        navigate(navUrl);
                         setSql(entry.sql);
                         setShowOverflow(false);
                       }}
