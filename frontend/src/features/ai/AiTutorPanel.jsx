@@ -159,24 +159,28 @@ Rules:
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      pre({ node, children, ...props }) {
-                        const child = Array.isArray(children) ? children[0] : children;
-                        if (child && child.props && child.props.node && child.props.node.tagName === 'code') {
-                          const className = child.props.className || '';
-                          const match = /language-(\w+)/.exec(className);
-                          const codeText = String(child.props.children).replace(/\n$/, '');
-                          return <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />;
-                        }
-                        return <pre {...props}>{children}</pre>;
-                      },
-                      code({ node, className, children, ...props }) {
-                        return (
-                          <code className="bg-primary-muted text-text px-1.5 py-0.5 rounded text-[13px] font-mono border border-border" {...props}>
-                            {children}
-                          </code>
-                        );
-                      }
-                    }}
+  pre({ node, children, ...props }) {
+    const child = Array.isArray(children) ? children[0] : children;
+    if (child && child.props && child.props.node && child.props.node.tagName === 'code') {
+      const className = child.props.className || '';
+      const match = /language-(\w+)/.exec(className);
+      const codeText = String(child.props.children).replace(/\n$/, '');
+      return (
+        <div className="not-prose">
+          <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />
+        </div>
+      );
+    }
+    return <pre {...props}>{children}</pre>;
+  },
+  code({ node, className, children, ...props }) {
+    return (
+      <code className="bg-primary-muted text-text px-1.5 py-0.5 rounded text-[13px] font-mono border border-border" {...props}>
+        {children}
+      </code>
+    );
+  }
+}}
                   >
                     {msg.content}
                   </ReactMarkdown>
