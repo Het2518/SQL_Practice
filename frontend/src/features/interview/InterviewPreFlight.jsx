@@ -128,7 +128,8 @@ export function InterviewPreFlight() {
     } catch (err) {
       console.warn('Fullscreen/KeyboardLock failed:', err);
     }
-    navigate(`/interview/arena?${searchParams.toString()}`);
+    useProctorStore.getState().clearSessionState();
+    navigate(`/interview/arena?${searchParams.toString()}&newSession=1`);
   };
 
   return (

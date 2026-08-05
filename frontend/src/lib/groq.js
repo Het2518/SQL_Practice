@@ -47,9 +47,10 @@ function writeCache(key, data) {
  * @param {number} maxTokens
  * @param {boolean} useCache - skip API call if identical prompt was answered recently
  * @param {string} responseFormat - 'text' | 'json_object'
+ * @param {number} temperature - creativity (0.0 to 1.0)
  * @returns {Promise<string>} - assistant message text
  */
-export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true, responseFormat = 'text') {
+export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true, responseFormat = 'text', temperature = 0.3) {
   const cacheKey = getCacheKey(messages, model);
   if (useCache) {
     const cached = readCache(cacheKey);
@@ -80,7 +81,7 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
         model,
         messages,
         max_tokens: maxTokens,
-        temperature: 0.3,
+        temperature: temperature ?? 0.3,
         top_p: 0.9,
         ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {})
       })
@@ -433,9 +434,32 @@ You MUST output the result PURELY as a valid JSON object matching this EXACT str
   return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1800, false, 'json_object');
 }
 
+const INTERVIEW_DOMAIN_POOL = [
+  { domain: 'Aviation & Flight Delays', tables: ['flights', 'airports', 'airlines', 'delay_logs'], hint: 'Calculate flight delay averages, on-time carrier rankings, route cancellations' },
+  { domain: 'Healthcare & Patient Encounters', tables: ['patients', 'clinical_encounters', 'lab_tests', 'physicians'], hint: 'Find patients with abnormal lab values, 30-day readmissions, doctor patient load' },
+  { domain: 'FinTech Lending & Repayments', tables: ['borrowers', 'loan_contracts', 'repayment_schedules', 'credit_scores'], hint: 'Identify delinquent loans, debt-to-income ratios, portfolio risk' },
+  { domain: 'Music & Audio Streaming', tables: ['tracks', 'streaming_events', 'artists', 'user_playlists'], hint: 'Top played tracks per genre, artist monthly listeners, playlist overlap' },
+  { domain: 'E-Commerce Warehousing & Logistics', tables: ['shipments', 'warehouse_locations', 'carrier_routes', 'packages'], hint: 'Delivery turnaround time, warehouse capacity, delayed courier routes' },
+  { domain: 'SaaS Product Analytics & Churn', tables: ['org_tenants', 'subscription_plans', 'feature_usage_events', 'billing_invoices'], hint: 'Month-over-month MRR growth, user seat utilization, churn hazard' },
+  { domain: 'Esports & Gaming Matchmaking', tables: ['players', 'ranked_matches', 'hero_picks', 'tournament_brackets'], hint: 'Win rates by hero, longest win streaks, tier promotion thresholds' },
+  { domain: 'Ride-sharing & Urban Mobility', tables: ['trips', 'driver_shifts', 'surge_zones', 'rider_ratings'], hint: 'Peak hour surge earnings, driver acceptance rate, high-rated drivers' },
+  { domain: 'Hotel & Hospitality Reservations', tables: ['hotel_properties', 'room_bookings', 'guest_profiles', 'seasonal_rates'], hint: 'RevPAR (revenue per available room), occupancy rates, repeat guest loyalty' },
+  { domain: 'Food Delivery & Cloud Kitchens', tables: ['restaurants', 'food_orders', 'delivery_couriers', 'menu_items'], hint: 'Average prep to delivery time, top selling dish combos, courier tips' },
+  { domain: 'Real Estate & Mortgage Market', tables: ['property_listings', 'realtor_agents', 'buyer_inquiries', 'mortgage_quotes'], hint: 'Price per sqft by neighborhood, fastest selling homes, top agents' },
+  { domain: 'Social Network Virality & Graph', tables: ['posts', 'post_reactions', 'follow_edges', 'trending_topics'], hint: 'Engagement rate per follower, viral post reach, mutual friends' },
+  { domain: 'EdTech Course Progress', tables: ['course_catalog', 'student_enrollments', 'quiz_submissions', 'instructors'], hint: 'Course completion rates, drop-off lesson identification, top instructors' },
+  { domain: 'Telecommunications & Cellular Data', tables: ['mobile_subscribers', 'call_detail_records', 'data_sessions', 'rate_plans'], hint: 'Data overage analytics, international roaming charges, dropped call hotspots' },
+  { domain: 'Cybersecurity Threat Intelligence', tables: ['auth_attempts', 'firewall_events', 'threat_ips', 'api_credentials'], hint: 'Brute force attack detection, suspicious IP geo-anomalies, credential stuffing' },
+  { domain: 'Job Marketplace & Tech Recruiting', tables: ['job_postings', 'applications', 'interview_stages', 'recruiter_teams'], hint: 'Time-to-hire by department, candidate pass-through rates, hiring funnel' },
+  { domain: 'Sports Analytics & Boxscores', tables: ['game_events', 'player_boxscores', 'teams', 'player_injuries'], hint: 'Points per possession, second-half scoring differentials, MVP leaders' },
+  { domain: 'Smart Home & Energy IoT', tables: ['smart_devices', 'hourly_power_readings', 'residences', 'device_alerts'], hint: 'Peak wattage consumption, anomalous standby power drain, offline devices' },
+  { domain: 'Car Rental & Fleet Maintenance', tables: ['rental_agreements', 'vehicles', 'maintenance_work_orders', 'depot_branches'], hint: 'Vehicle utilization percentage, overdue maintenance flags, popular car models' },
+  { domain: 'Cryptocurrency Trading & Wallets', tables: ['market_trades', 'crypto_wallets', 'token_pairs', 'liquidity_pools'], hint: 'Whale transaction volume, 24h trading volume by pair, slippage tracking' },
+];
+
 /**
  * Generates a complete interview session: 5 SQL coding questions + 5 MCQ questions.
- * All questions are produced in a single Groq API call.
+ * Highly randomized: selects 5 distinct domains on every call with temperature=0.85.
  * @returns {Promise<string>} JSON string: { sql_questions: [...5], mcq_questions: [...5] }
  */
 export async function generateFullInterviewSession({ difficulty = 'mixed', companyName = 'FAANG', candidateName = 'Candidate', roleName = 'Software Engineer' }) {
@@ -447,67 +471,93 @@ export async function generateFullInterviewSession({ difficulty = 'mixed', compa
   };
   const levels = difficultyMap[difficulty] || difficultyMap.mixed;
 
+  // Shuffle and select 5 completely different domains
+  const shuffledDomains = [...INTERVIEW_DOMAIN_POOL].sort(() => 0.5 - Math.random());
+  const selectedDomains = shuffledDomains.slice(0, 5);
+
+  const randomSessionId = `SESSION_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
   const prompt = `[SYSTEM IDENTITY]
-You are a Principal SQL Interview Panel Lead at ${companyName}. You are designing a complete structured SQL interview for ${candidateName} applying for a ${roleName} role.
+You are a Principal SQL Interview Panel Lead at ${companyName}. You are designing a brand-new, completely custom and unique SQL interview session for ${candidateName} applying for a ${roleName} role.
+Unique Session ID: ${randomSessionId}
 
 [TASK]
-Generate a COMPLETE interview session with exactly:
-- 5 SQL CODING QUESTIONS (Q1-Q5, progressive difficulty)
+Generate a complete, FRESH, non-repetitive interview session with:
+- 5 SQL CODING QUESTIONS (Q1-Q5, progressive difficulty across 5 DIFFERENT business domains)
 - 5 MCQ CONCEPTUAL QUESTIONS (Q6-Q10)
 
+[MANDATORY ASSIGNED DOMAINS FOR SQL QUESTIONS]
+You MUST strictly use the following distinct domain scenarios for each question (DO NOT use generic 'users' or 'customers' for all questions):
+- Q1 (${levels[0]}): Domain: "${selectedDomains[0].domain}" (Suggested tables: ${selectedDomains[0].tables.join(', ')}). Theme: ${selectedDomains[0].hint}
+- Q2 (${levels[1]}): Domain: "${selectedDomains[1].domain}" (Suggested tables: ${selectedDomains[1].tables.join(', ')}). Theme: ${selectedDomains[1].hint}
+- Q3 (${levels[2]}): Domain: "${selectedDomains[2].domain}" (Suggested tables: ${selectedDomains[2].tables.join(', ')}). Theme: ${selectedDomains[2].hint}
+- Q4 (${levels[3]}): Domain: "${selectedDomains[3].domain}" (Suggested tables: ${selectedDomains[3].tables.join(', ')}). Theme: ${selectedDomains[3].hint}
+- Q5 (${levels[4]}): Domain: "${selectedDomains[4].domain}" (Suggested tables: ${selectedDomains[4].tables.join(', ')}). Theme: ${selectedDomains[4].hint}
+
 [SQL QUESTION DIFFICULTY PROGRESSION]
-Q1: ${levels[0]} — warm-up
-Q2: ${levels[1]} — basic joins and aggregation
-Q3: ${levels[2]} — window functions or CTEs
-Q4: ${levels[3]} — multi-step analytics
-Q5: ${levels[4]} — advanced challenge
+Q1: ${levels[0]} — warm-up (basic SELECT, WHERE filtering, aggregate like COUNT/AVG/SUM, ORDER BY)
+Q2: ${levels[1]} — multi-table joins (INNER/LEFT JOIN, GROUP BY, HAVING)
+Q3: ${levels[2]} — window functions (ROW_NUMBER, RANK, DENSE_RANK, LEAD/LAG, PARTITION BY) or CTEs
+Q4: ${levels[3]} — multi-step analytics (subqueries, self-joins, conditional aggregation CASE WHEN, date math)
+Q5: ${levels[4]} — advanced challenge (cohort retention, cumulative sums, churn analysis, gaps & islands, complex CTEs)
 
 [SQL QUESTION RULES]
-Each of the 5 SQL questions MUST:
-1. Be a UNIQUE business scenario from a DIFFERENT domain (e-commerce, HR/payroll, social/analytics, logistics, finance)
-2. Use ONLY SQLite-compatible syntax: INTEGER, TEXT, REAL column types. No ENUM, no SERIAL, no GENERATED ALWAYS
-3. Have 2-3 tables with 3-5 rows of realistic sample data each
-4. Include a self-contained "initSql" with CREATE TABLE IF NOT EXISTS + INSERT INTO statements using double-quoted identifiers
-5. NOT include the SQL solution
+Each of the 5 SQL questions MUST include:
+1. "problemStatement": Clear 2-3 sentence business problem statement specifying exact output columns and sorting.
+2. "explanation": 2 sentences explaining the business logic and how the tables relate.
+3. "constraints": Edge cases, tie-breaking rules, NULL handling, and ORDER BY requirements.
+4. "tables": 2-3 tables with REALISTIC names specific to that domain. For EACH table:
+   - "name": table name in snake_case (e.g. "${selectedDomains[0].tables[0]}")
+   - "columns": array of {"name": "col_name", "type": "INTEGER"|"TEXT"|"REAL"}
+   - "sampleData": array of 3 to 5 realistic sample row objects with authentic values
+5. "expectedOutput": array of 2 to 4 expected output row objects matching what the correct query produces on the sampleData.
+6. "initSql": complete self-contained SQLite DDL + INSERT statements with double-quoted identifiers. Use ONLY INTEGER, TEXT, REAL types.
 
 [MCQ QUESTION RULES]
-Each of the 5 MCQ questions MUST:
-1. Test a DIFFERENT SQL concept: NULL handling, JOIN types, indexing, window functions, query optimization/EXPLAIN
-2. Have exactly 4 options as plain strings (no "A." prefix, just the answer text)
-3. Have "correctIndex" as 0-3 (the index of the correct answer in the options array)
-4. Include a 1-sentence "explanation" of why the answer is correct
+Each of the 5 MCQ questions MUST test a DIFFERENT advanced concept:
+1. NULL handling & three-valued logic
+2. JOIN types & Cartesian products
+3. Index structures (B-Tree, covering index, cardinality)
+4. Window functions vs GROUP BY behavior
+5. Query optimization, EXPLAIN plan analysis, or transactions/ACID
+Include:
+- "question": Full question text.
+- "options": Array of 4 plain string answers (no "A." prefixes).
+- "correctIndex": Integer 0 to 3.
+- "explanation": 1-2 sentences explaining why the correct answer is right.
 
 [CRITICAL OUTPUT FORMAT]
-Output ONLY a valid JSON object. No markdown. No explanation. Just JSON:
+Output ONLY a valid JSON object. No markdown fences. No preamble. Just pure JSON:
 {
   "sql_questions": [
     {
-      "problemStatement": "2-3 sentence business problem specifying what query to write",
-      "explanation": "What the query should achieve and how tables relate",
+      "problemStatement": "...",
+      "explanation": "...",
+      "constraints": "...",
       "tables": [
         {
-          "name": "snake_case_name",
-          "columns": [{"name": "col_name", "type": "INTEGER|TEXT|REAL"}],
-          "sampleData": [{"col_name": "value"}]
+          "name": "...",
+          "columns": [{"name": "col", "type": "INTEGER"}],
+          "sampleData": [{"col": 1}]
         }
       ],
-      "expectedOutput": [{"output_col": "val"}],
-      "constraints": "Edge cases and ordering requirements",
+      "expectedOutput": [{"col": 1}],
       "initSql": "CREATE TABLE IF NOT EXISTS \\"table\\" (\\"col\\" INTEGER);\\nINSERT INTO \\"table\\" VALUES (1);"
     }
   ],
   "mcq_questions": [
     {
-      "question": "Full question text",
-      "options": ["first option text", "second option text", "third option text", "fourth option text"],
+      "question": "...",
+      "options": ["...", "...", "...", "..."],
       "correctIndex": 0,
-      "explanation": "One sentence explaining why this is correct"
+      "explanation": "..."
     }
   ]
 }`;
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 6000, false, 'json_object');
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 6500, false, 'json_object', 0.85);
 }
+
 
 
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {

@@ -11,34 +11,68 @@ import { NotFoundPage } from '@/pages/NotFoundPage';
 // Lazy load large views for performance with automatic retry for chunk errors
 const lazyRetry = (componentImport) => {
   return new Promise((resolve, reject) => {
-    // try to import the component
     componentImport()
-      .then(resolve)
+      .then((module) => {
+        // Reset retry flag on success so future deploys can retry again
+        window.sessionStorage.removeItem('datadesk_chunk_retry');
+        resolve(module);
+      })
       .catch((error) => {
-        // if it fails, check if we've already retried
         const hasRetried = window.sessionStorage.getItem('datadesk_chunk_retry');
         if (!hasRetried) {
+          // Mark retry BEFORE reloading so we don't loop infinitely
           window.sessionStorage.setItem('datadesk_chunk_retry', 'true');
 
+          // Unregister stale service workers
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker
               .getRegistrations()
-              .then((regs) => {
-                for (let reg of regs) {
-                  reg.unregister();
-                }
-              })
+              .then((regs) => { for (let reg of regs) reg.unregister(); })
               .catch(() => {});
           }
 
-          // cache bust and reload
-          window.location.assign(window.location.pathname + '?reload=' + Date.now());
+          // Hard reload with cache-bust to pick up new chunk hashes
+          window.location.href = window.location.pathname + window.location.search + '?_cb=' + Date.now();
         } else {
+          // Already retried once — clear flag and surface error
+          window.sessionStorage.removeItem('datadesk_chunk_retry');
           reject(error);
         }
       });
   });
 };
+
+// ─── Error Boundary for lazy chunk failures ───────────────────────────────────
+class ChunkErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(err) {
+    if (err?.message?.includes('dynamically imported module') || err?.message?.includes('Failed to fetch')) {
+      // Clear retry flag and hard reload to pick up fresh chunks
+      window.sessionStorage.removeItem('datadesk_chunk_retry');
+      window.location.reload();
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)', color: 'var(--color-text)', padding: '2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔄</div>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Loading a new version...</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>The app was updated. Refreshing automatically.</p>
+          <button onClick={() => window.location.reload()} style={{ padding: '0.75rem 2rem', borderRadius: '0.75rem', background: 'var(--color-primary)', color: '#fff', fontWeight: 700, border: 'none', cursor: 'pointer' }}>Reload Now</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 
 const DbSelector = lazy(() =>
   lazyRetry(() => import('@/pages/HomePage').then((module) => ({ default: module.DbSelector })))
@@ -207,6 +241,7 @@ export default function App() {
   );
 
   return (
+    <ChunkErrorBoundary>
     <Suspense
       fallback={
         <div className="h-screen w-full flex items-center justify-center bg-bg">
@@ -326,6 +361,7 @@ export default function App() {
         </Suspense>
       )}
     </Suspense>
+    </ChunkErrorBoundary>
   );
 }
 
