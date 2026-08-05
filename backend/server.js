@@ -80,8 +80,8 @@ const ALLOWED_ORIGINS = new Set(
 app.use(
   cors({
     origin(origin, callback) {
-      // In production, strictly require a known origin to prevent CSRF bypass
-      if (env.isDev && !origin) return callback(null, true); // Allow curl/postman only in dev
+      // Allow requests with no origin (like mobile apps, curl, or health checks)
+      if (!origin) return callback(null, true);
       if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
       callback(new Error(`CORS: Origin '${origin}' is not allowed.`));
     },
