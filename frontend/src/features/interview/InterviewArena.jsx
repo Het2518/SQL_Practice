@@ -118,7 +118,7 @@ export function InterviewArena() {
     handleFailToReport();
   };
 
-  const { fullscreenWarning, setFullscreenWarning } = useProctoring({
+  useProctoring({
     isSubmittedRef, isTerminated, enforceViolation, addViolation
   });
 
@@ -318,23 +318,6 @@ export function InterviewArena() {
         <Button onClick={() => navigate('/')} variant="outline" size="lg">Back to Home</Button>
       </div>
 
-      {fullscreenWarning && !isTerminated && !isSubmittedRef.current && (
-        <div className="fixed inset-0 z-[9999] bg-bg/95 backdrop-blur-md flex flex-col items-center justify-center">
-          <ShieldAlert size={64} className="text-error mb-6 animate-pulse" />
-          <h2 className="text-3xl font-black text-text mb-4">Fullscreen Exited</h2>
-          <p className="text-text-secondary mb-8 max-w-md text-center leading-relaxed">
-            You have exited fullscreen mode (likely by clicking a browser notification). You must return to fullscreen immediately or your interview will be terminated.
-          </p>
-          <Button 
-            size="lg" 
-            onClick={() => {
-              document.documentElement.requestFullscreen().catch(e => console.error(e));
-            }}
-          >
-            Return to Fullscreen
-          </Button>
-        </div>
-      )}
 
       <div className={`w-full h-screen bg-bg flex flex-col select-none overflow-hidden ${isTerminated ? 'blur-md pointer-events-none' : ''}`}>
         

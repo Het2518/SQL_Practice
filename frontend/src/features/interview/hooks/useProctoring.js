@@ -6,7 +6,6 @@ export function useProctoring({
   enforceViolation,
   addViolation
 }) {
-  const [fullscreenWarning, setFullscreenWarning] = useState(false);
   const fullscreenTimeoutRef = useRef(null);
   const gracePeriodRef = useRef(true);
 
@@ -30,19 +29,7 @@ export function useProctoring({
     const handleFullscreenChange = () => {
       if (gracePeriodRef.current || isSubmittedRef.current || isTerminated) return;
       if (!document.fullscreenElement) {
-        setFullscreenWarning(true);
-        addViolation('Exited fullscreen mode', 30);
-        
-        fullscreenTimeoutRef.current = setTimeout(() => {
-          if (!document.fullscreenElement && !isSubmittedRef.current) {
-            enforceViolation('Failed to return to fullscreen.');
-          }
-        }, 15000);
-      } else {
-        setFullscreenWarning(false);
-        if (fullscreenTimeoutRef.current) {
-          clearTimeout(fullscreenTimeoutRef.current);
-        }
+        enforceViolation('Exited fullscreen mode.');
       }
     };
 
@@ -90,9 +77,4 @@ export function useProctoring({
       document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [isSubmittedRef, isTerminated, enforceViolation, addViolation]);
-
-  return {
-    fullscreenWarning,
-    setFullscreenWarning
-  };
 }
