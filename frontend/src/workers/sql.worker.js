@@ -100,10 +100,30 @@ self.onmessage = async (e) => {
         db = new sqlJS.Database(buffer);
       } else if (payload.initSql) {
         db = new sqlJS.Database();
-        db.run(payload.initSql);
+        const cleanSql = payload.initSql
+          .replace(/```(?:sql|sqlite)?/gi, '')
+          .replace(/```/g, '')
+          .trim();
+        try {
+          db.exec(cleanSql);
+        } catch (execErr) {
+          console.warn('[sql.worker] db.exec failed on batch initSql, attempting statement-by-statement fallback:', execErr.message);
+          // Split into individual statements and execute each
+          const stmts = cleanSql.split(';').map(s => s.trim()).filter(Boolean);
+          for (const stmt of stmts) {
+            try {
+              db.exec(stmt);
+            } catch (stmtErr) {
+              console.warn('[sql.worker] Error executing init statement:', stmt, stmtErr.message);
+            }
+          }
+        }
       } else if (payload.binaryData) {
         // Direct binary upload (e.g. user-uploaded .sqlite file)
         db = new sqlJS.Database(new Uint8Array(payload.binaryData));
+      } else {
+        // Default empty database fallback so db is never uninitialized
+        db = new sqlJS.Database();
       }
       self.postMessage({ id, success: true });
     }

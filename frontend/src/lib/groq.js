@@ -383,28 +383,34 @@ Generate 5 interview questions JSON array:`
 
 export async function generateInterviewTask({ difficulty = 'mixed', companyName = 'FAANG', candidateName = 'Candidate', roleName = 'Software Engineer' }) {
   const prompt = `[SYSTEM IDENTITY]
-You are a Principal Software Engineer and Senior Manager at ${companyName}. You have conducted over 500 technical interviews for ${roleName} roles. Your technical rigor is legendary. You do not accept mediocre questions. You design questions that test deep fundamental understanding of SQL, not just syntax memorization.
+You are a Principal Software Engineer and Senior Hiring Manager at ${companyName}. You have conducted over 500 technical interviews for ${roleName} roles. Your technical rigor is legendary. You design questions that test deep fundamental understanding of SQL, not just syntax memorization.
 
 [TASK]
-Your task is to generate a SINGLE, unique, highly realistic SQL interview question for a candidate named ${candidateName}.
-The difficulty level requested by the candidate is: ${difficulty.toUpperCase()}.
+Generate a SINGLE, realistic, production-grade SQL interview problem tailored for ${companyName} for a candidate named ${candidateName}.
+The requested difficulty level is: ${difficulty.toUpperCase()}.
 
 [DIFFICULTY GUIDELINES]
-- EASY: Focus on basic aggregations, simple joins (INNER/LEFT), WHERE clause filtering, date manipulation, and basic string functions. Provide a 2-table schema.
-- MEDIUM: Focus on Window Functions (ROW_NUMBER, RANK, LEAD, LAG), intermediate CTEs, complex grouping, subqueries, and time-series analysis (e.g., rolling averages, retention). Provide a 3-table schema.
-- HARD: Focus on advanced optimization, Recursive CTEs, Gaps & Islands problems, complex hierarchical data, self-joins, and pivot operations. Provide a 3-to-4 table schema.
-- MIXED: Surprise them with a medium-hard question that touches multiple concepts.
+- EASY: Basic aggregations (COUNT/SUM/AVG), INNER/LEFT joins, WHERE clause filtering, date manipulation, and string operations. Provide a 2-table schema with 3-5 rows each.
+- MEDIUM: Window Functions (ROW_NUMBER, DENSE_RANK, LEAD, LAG, NTILE), CTEs, multi-table joins, subqueries, and time-series analysis (e.g. rolling 7-day revenue, retention). Provide a 2-to-3 table schema with 4-6 rows each.
+- HARD: Advanced analytical SQL, Gaps & Islands problems, Recursive CTEs, complex hierarchical structures, self-joins, or conditional pivots. Provide a 3-to-4 table schema with 4-6 rows each.
+- MIXED: A comprehensive medium-to-hard problem that blends joins, window functions, and aggregation.
+
+[SQLITE WASM COMPATIBILITY & DUMMY DATASET REQUIREMENTS]
+1. SQLite Syntax: All SQL must be 100% compliant with SQLite WASM (use TEXT for dates/strings, INTEGER for IDs/counts, REAL for amounts/percentages).
+2. Quotes & Identifiers: Use clean snake_case table and column names (e.g. "users", "orders", "user_id").
+3. Chunk Dataset: Provide 3 to 6 realistic rows per table in both "sampleData" (JSON array of objects) AND "initSql" (SQLite CREATE TABLE and INSERT INTO statements).
+4. Do NOT use non-SQLite features like GENERATED ALWAYS, ENUM, or postgres-specific functions.
 
 [FORMATTING REQUIREMENTS]
-You MUST output the result purely as a JSON object matching this EXACT structure:
+You MUST output the result PURELY as a valid JSON object matching this EXACT structure:
 {
-  "problemStatement": "Write a realistic 2-3 sentence business scenario and clearly state the exact query the candidate must write.",
-  "explanation": "A brief explanation of what the expected query should achieve.",
+  "problemStatement": "Write a realistic 2-3 sentence business problem statement clearly specifying the expected query.",
+  "explanation": "A concise explanation of the business logic and how the tables relate.",
   "tables": [
     {
       "name": "table_name",
       "columns": [
-        { "name": "column_name", "type": "column_type", "description": "Brief description of the column" }
+        { "name": "column_name", "type": "INTEGER|TEXT|REAL", "description": "Brief description" }
       ],
       "sampleData": [
         { "column_name": "value1" }
@@ -412,20 +418,19 @@ You MUST output the result purely as a JSON object matching this EXACT structure
     }
   ],
   "expectedOutput": [
-    { "column_name": "expected_value" }
+    { "output_col": "sample_val" }
   ],
-  "constraints": "List any specific constraints or edge cases the candidate must handle (e.g. handle ties, null values).",
-  "notes": "Any additional helpful notes.",
-  "initSql": "Valid SQLite CREATE TABLE and INSERT INTO statements to build the in-memory database for this exact problem, matching the tables and sample data exactly."
+  "constraints": "List specific constraints or edge cases (e.g. ties, NULL values, ordering).",
+  "notes": "Any additional context or tips.",
+  "initSql": "CREATE TABLE IF NOT EXISTS \\"table_name\\" (\\"col1\\" INTEGER, \\"col2\\" TEXT);\\nINSERT INTO \\"table_name\\" VALUES (1, 'Alice');"
 }
 
 [CRITICAL CONSTRAINTS]
-1. DO NOT provide the SQL solution. You are administering the test, not taking it.
-2. Ensure the question logically makes sense and the expected output matches the sample data perfectly.
-3. Make the question feel like a real-world production issue, not a textbook exercise.
-4. Output ONLY valid JSON, do NOT wrap it in markdown code blocks.`;
+1. DO NOT provide the SQL solution query. You are administering the test.
+2. Ensure the question logically makes sense and expectedOutput directly matches what the query would return on the sampleData.
+3. Output ONLY valid JSON, do NOT wrap it in markdown code blocks.`;
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1500, false, 'json_object');
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1800, false, 'json_object');
 }
 
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {

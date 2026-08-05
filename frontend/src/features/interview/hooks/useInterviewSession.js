@@ -26,35 +26,84 @@ const FALLBACK_TASK = {
       ],
       sampleData: [
         { transaction_id: 1, user_id: 1, amount: 100, date: '2023-10-01' },
-        { transaction_id: 2, user_id: 2, amount: 150, date: '2023-10-02' }
+        { transaction_id: 2, user_id: 2, amount: 150, date: '2023-10-02' },
+        { transaction_id: 3, user_id: 1, amount: 200, date: '2023-10-03' },
+        { transaction_id: 4, user_id: 3, amount: 50, date: '2023-10-04' }
       ]
     }
   ],
   expectedOutput: [
-    { name: "Alice", total_volume: 300 }
+    { name: "Alice", total_volume: 300 },
+    { name: "Bob", total_volume: 150 },
+    { name: "Charlie", total_volume: 50 }
   ],
   constraints: "Do not include users with no transactions. If there is a tie, return any valid combination.",
   notes: "Assume all dates are within the last 30 days for this sample.",
-  initSql: "CREATE TABLE users (user_id INT, name TEXT); CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL, date DATE); INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie'); INSERT INTO transactions VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02');"
+  initSql: `CREATE TABLE IF NOT EXISTS "users" ("user_id" INTEGER, "name" TEXT);
+CREATE TABLE IF NOT EXISTS "transactions" ("transaction_id" INTEGER, "user_id" INTEGER, "amount" REAL, "date" TEXT);
+INSERT INTO "users" ("user_id", "name") VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');
+INSERT INTO "transactions" ("transaction_id", "user_id", "amount", "date") VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02'), (3, 1, 200, '2023-10-03'), (4, 3, 50, '2023-10-04');`
+};
+
+const mapToSqliteType = (type = 'TEXT') => {
+  const t = String(type).toUpperCase().trim();
+  if (t.includes('INT') || t.includes('SERIAL')) return 'INTEGER';
+  if (t.includes('CHAR') || t.includes('TEXT') || t.includes('STR') || t.includes('VARCHAR') || t.includes('DATE') || t.includes('TIME')) return 'TEXT';
+  if (t.includes('FLOAT') || t.includes('DOUBLE') || t.includes('DEC') || t.includes('NUM') || t.includes('REAL')) return 'REAL';
+  if (t.includes('BOOL')) return 'INTEGER';
+  if (t.includes('BLOB') || t.includes('BYTE')) return 'BLOB';
+  return 'TEXT';
+};
+
+const formatSqlValue = (val) => {
+  if (val === null || val === undefined) return 'NULL';
+  if (typeof val === 'number') return isNaN(val) ? 'NULL' : String(val);
+  if (typeof val === 'boolean') return val ? '1' : '0';
+  return `'${String(val).replace(/'/g, "''")}'`;
 };
 
 const generateInitSqlFromTables = (tables) => {
   if (!tables || !Array.isArray(tables)) return '-- init';
   let sql = '';
   for (const t of tables) {
-    if (!t.name || !t.columns) continue;
-    const cols = t.columns.map(c => `"${c.name}" ${c.type || 'TEXT'}`).join(', ');
-    sql += `CREATE TABLE "${t.name}" (${cols});\n`;
+    if (!t || !t.name) continue;
+    const tableName = String(t.name).trim().replace(/"/g, '');
     
-    if (t.sampleData && Array.isArray(t.sampleData) && t.sampleData.length > 0) {
+    // Columns
+    let colsDefs = '';
+    let colNames = [];
+    if (Array.isArray(t.columns) && t.columns.length > 0) {
+      colsDefs = t.columns.map(c => {
+        const colName = typeof c === 'string' ? c.trim() : (c.name || 'col').trim();
+        colNames.push(colName);
+        const colType = typeof c === 'object' && c.type ? mapToSqliteType(c.type) : 'TEXT';
+        return `"${colName.replace(/"/g, '')}" ${colType}`;
+      }).join(', ');
+    } else if (Array.isArray(t.sampleData) && t.sampleData.length > 0 && typeof t.sampleData[0] === 'object') {
+      colNames = Object.keys(t.sampleData[0]);
+      colsDefs = colNames.map(k => `"${k.replace(/"/g, '')}" TEXT`).join(', ');
+    } else {
+      colsDefs = '"id" INTEGER';
+      colNames = ['id'];
+    }
+
+    sql += `CREATE TABLE IF NOT EXISTS "${tableName}" (${colsDefs});\n`;
+    
+    // Sample Data
+    if (Array.isArray(t.sampleData) && t.sampleData.length > 0) {
       for (const row of t.sampleData) {
-        const keys = Object.keys(row).map(k => `"${k}"`).join(', ');
-        const vals = Object.values(row).map(v => {
-          if (typeof v === 'number') return v;
-          if (v === null) return 'NULL';
-          return `'${String(v).replace(/'/g, "''")}'`;
-        }).join(', ');
-        sql += `INSERT INTO "${t.name}" (${keys}) VALUES (${vals});\n`;
+        if (!row) continue;
+        if (Array.isArray(row)) {
+          const vals = row.map(formatSqlValue).join(', ');
+          sql += `INSERT INTO "${tableName}" VALUES (${vals});\n`;
+        } else if (typeof row === 'object') {
+          const rowKeys = Object.keys(row);
+          if (rowKeys.length > 0) {
+            const keysStr = rowKeys.map(k => `"${k.replace(/"/g, '')}"`).join(', ');
+            const valsStr = rowKeys.map(k => formatSqlValue(row[k])).join(', ');
+            sql += `INSERT INTO "${tableName}" (${keysStr}) VALUES (${valsStr});\n`;
+          }
+        }
       }
     }
   }
@@ -214,6 +263,7 @@ export function useInterviewSession({
     timeLeft,
     initialTask,
     generatingQuestion,
-    isSubmittedRef
+    isSubmittedRef,
+    savedInitSqlRef
   };
 }

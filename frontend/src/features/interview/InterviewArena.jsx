@@ -101,7 +101,8 @@ export function InterviewArena() {
     sql, setSql,
     scratchpad, setScratchpad,
     timeLeft, initialTask, generatingQuestion,
-    isSubmittedRef
+    isSubmittedRef,
+    savedInitSqlRef
   } = useInterviewSession({
     duration, difficulty, companyName, candidateName, roleName,
     restoreSessionState, saveSessionState, initWithSql,
@@ -203,7 +204,24 @@ export function InterviewArena() {
     
     setBottomPanel('results');
     setIsRunning(true);
-    const res = await executeQuery(currentCode);
+    let res = await executeQuery(currentCode);
+
+    // Auto-recovery if database is uninitialized
+    if (res?.error && res.error.toLowerCase().includes('database not initialized')) {
+      const initSqlToUse = savedInitSqlRef?.current || initialTask?.initSql;
+      if (initSqlToUse) {
+        try {
+          await initWithSql(initSqlToUse, {
+            dbKey: `interview_${initialTask?.id || 'session'}`,
+            forceFresh: true
+          });
+          res = await executeQuery(currentCode);
+        } catch (retryErr) {
+          console.error('Auto-recovery database init failed:', retryErr);
+        }
+      }
+    }
+
     setQueryResult(res);
     setIsRunning(false);
   };
