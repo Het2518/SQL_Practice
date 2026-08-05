@@ -226,6 +226,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings, rou
                 dbName={state.db}
                 executeQuery={state.executeQuery}
                 onPreviewTable={(tbl) => state.setPreviewTableName(tbl)}
+                onClose={layout.toggleSidebar}
               />
             </div>
           )}

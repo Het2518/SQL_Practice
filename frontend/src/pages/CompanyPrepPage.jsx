@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
+import { ChevronRight, Clock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { api } from '@/lib/api';
 import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeBase';

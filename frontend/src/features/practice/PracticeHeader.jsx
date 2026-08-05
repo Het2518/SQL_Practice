@@ -85,7 +85,7 @@ export const PracticeHeader = React.memo(function PracticeHeader({
         </div>
       }
       centerContent={
-        <div className="relative flex items-center p-1 bg-surface-2 rounded-lg border border-border shadow-inner mx-4">
+        <div className="relative flex items-center p-1 bg-surface-2 rounded-lg border border-border shadow-inner mx-4 w-[240px]">
           <button
             onClick={() => {
               if (!rightPanelOpen) setRightPanelOpen(true);
@@ -95,7 +95,7 @@ export const PracticeHeader = React.memo(function PracticeHeader({
                 setActiveLeftPane('problem');
               }
             }}
-            className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'problem' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
+            className={`flex-1 relative z-10 flex justify-center items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'problem' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
           >
             <List size={14} /> Description
           </button>
@@ -108,13 +108,14 @@ export const PracticeHeader = React.memo(function PracticeHeader({
                 setActiveLeftPane('discussions');
               }
             }}
-            className={`relative z-10 flex items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'discussions' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
+            className={`flex-1 relative z-10 flex justify-center items-center gap-1.5 px-4 py-1.5 text-[13px] font-semibold cursor-pointer transition-colors rounded-md bg-transparent border-none ${rightPanelOpen && activeLeftPane === 'discussions' ? 'text-text' : 'text-text-secondary hover:text-text'}`}
           >
             Discussion
           </button>
           <div 
-            className="absolute top-1 bottom-1 w-1/2 bg-surface border border-border rounded-md shadow-sm transition-transform duration-200 ease-in-out pointer-events-none" 
+            className="absolute top-1 bottom-1 left-1 bg-surface border border-border rounded-md shadow-sm transition-transform duration-200 ease-in-out pointer-events-none" 
             style={{
+              width: 'calc(50% - 4px)',
               transform: rightPanelOpen 
                 ? (activeLeftPane === 'problem' ? 'translateX(0)' : 'translateX(100%)')
                 : 'scaleX(0)',

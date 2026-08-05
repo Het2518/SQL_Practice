@@ -88,7 +88,8 @@ export function SqlEditor({
   autoComplete = true,
   darkMode = false,
   readOnly = false,
-  customSchema = null, // [{name, columns:[{name,type,pk}]}] — overrides dbName-based autocomplete
+  customSchema = null,
+  headerActions
 }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
@@ -288,7 +289,7 @@ export function SqlEditor({
         // Safe disposal
       }
     };
-  }, [monacoInstance, dbName, autoComplete, customSchema]);
+  }, [monacoInstance, dbName, autoComplete, customSchema, headerActions]);
 
   const editorOptions = useMemo(
     () => ({
@@ -351,6 +352,7 @@ export function SqlEditor({
         >
           Format
         </button>
+        {headerActions}
       </div>
       <div className="flex-1 min-h-0 relative w-full h-full">
         <Editor
