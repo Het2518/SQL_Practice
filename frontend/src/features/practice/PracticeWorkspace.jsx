@@ -57,7 +57,6 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
               darkMode={settings?.darkMode}
               fontSize={settings?.editorFontSize || 14}
               autoComplete={settings?.autoCompleteSql !== false}
-              customSchema={customSchema}
               headerActions={
                 <div className="relative">
                   <button

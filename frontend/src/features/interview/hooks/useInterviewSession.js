@@ -101,7 +101,7 @@ export function useInterviewSession({
       }
       
       initWithSql(cleanInitSql, { 
-        dbKey: `interview_${state.initialTask?.id || 'session'}`, 
+        dbKey: `interview_${saved.initialTask?.id || 'session'}`, 
         forceFresh: true 
       }).catch(err => {
         console.error('Failed to init DB from saved state:', err);
