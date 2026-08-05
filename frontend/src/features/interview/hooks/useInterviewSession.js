@@ -90,7 +90,7 @@ const sanitizeInitSql = (rawSql, tables) => {
   return sql || null;
 };
 
-// ─── Multi-Domain Dynamic Fallback Pools ─────────────────────────────────────
+// ─── Multi-Domain Dynamic Fallback Pools (20-40 rows per table) ─────────────
 const FALLBACK_SQL_POOLS = {
   easy: [
     {
@@ -107,41 +107,35 @@ const FALLBACK_SQL_POOLS = {
             { flight_id: 103, airline_code: 'UA', origin_airport: 'JFK', delay_minutes: 25 },
             { flight_id: 104, airline_code: 'B6', origin_airport: 'JFK', delay_minutes: 5 },
             { flight_id: 105, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 80 },
+            { flight_id: 106, airline_code: 'UA', origin_airport: 'ORD', delay_minutes: 30 },
+            { flight_id: 107, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 18 },
+            { flight_id: 108, airline_code: 'SW', origin_airport: 'MDW', delay_minutes: 12 },
+            { flight_id: 109, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 60 },
+            { flight_id: 110, airline_code: 'B6', origin_airport: 'BOS', delay_minutes: 40 },
+            { flight_id: 111, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 95 },
+            { flight_id: 112, airline_code: 'UA', origin_airport: 'SFO', delay_minutes: 15 },
+            { flight_id: 113, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 32 },
+            { flight_id: 114, airline_code: 'AA', origin_airport: 'DFW', delay_minutes: 55 },
+            { flight_id: 115, airline_code: 'B6', origin_airport: 'JFK', delay_minutes: 22 },
           ],
         },
       ],
       expectedOutput: [
+        { flight_id: 111, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 95 },
         { flight_id: 105, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 80 },
+        { flight_id: 109, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 60 },
         { flight_id: 101, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 45 },
+        { flight_id: 113, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 32 },
         { flight_id: 103, airline_code: 'UA', origin_airport: 'JFK', delay_minutes: 25 },
-      ],
-    },
-    {
-      problemStatement: 'Find all medical patients admitted with an admission cost greater than $5,000. Return patient_id, diagnosis, and billing_cost, sorted by billing_cost descending.',
-      explanation: 'Query clinical_encounters with a WHERE filter on billing_cost > 5000 and sort the results.',
-      constraints: 'Filter billing_cost > 5000. Order by billing_cost DESC.',
-      tables: [
-        {
-          name: 'clinical_encounters',
-          columns: [{ name: 'encounter_id', type: 'INTEGER' }, { name: 'patient_id', type: 'INTEGER' }, { name: 'diagnosis', type: 'TEXT' }, { name: 'billing_cost', type: 'REAL' }],
-          sampleData: [
-            { encounter_id: 1, patient_id: 201, diagnosis: 'Cardiology', billing_cost: 8400.0 },
-            { encounter_id: 2, patient_id: 202, diagnosis: 'Orthopedics', billing_cost: 3200.0 },
-            { encounter_id: 3, patient_id: 203, diagnosis: 'Neurology', billing_cost: 11500.0 },
-            { encounter_id: 4, patient_id: 204, diagnosis: 'Dermatology', billing_cost: 1400.0 },
-          ],
-        },
-      ],
-      expectedOutput: [
-        { patient_id: 203, diagnosis: 'Neurology', billing_cost: 11500.0 },
-        { patient_id: 201, diagnosis: 'Cardiology', billing_cost: 8400.0 },
+        { flight_id: 115, airline_code: 'B6', origin_airport: 'JFK', delay_minutes: 22 },
+        { flight_id: 107, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 18 },
       ],
     },
   ],
   joins: [
     {
       problemStatement: 'Calculate the total streaming revenue for each music artist. Return artist_name and total_payout, sorted by total_payout descending.',
-      explanation: 'Join artists with streaming_events on artist_id, group by artist_name, and compute SUM(streams * rate_per_stream).',
+      explanation: 'Join artists with streaming_events on artist_id, group by artist_name, and compute SUM(streams_count * rate_per_stream).',
       constraints: 'Only include artists with at least one stream. Sort by total_payout DESC.',
       tables: [
         {
@@ -151,6 +145,8 @@ const FALLBACK_SQL_POOLS = {
             { artist_id: 1, artist_name: 'Luna Ray', rate_per_stream: 0.004 },
             { artist_id: 2, artist_name: 'The Echoes', rate_per_stream: 0.005 },
             { artist_id: 3, artist_name: 'Solaris', rate_per_stream: 0.0035 },
+            { artist_id: 4, artist_name: 'Neon Pulse', rate_per_stream: 0.006 },
+            { artist_id: 5, artist_name: 'Acoustic Drift', rate_per_stream: 0.0045 },
           ],
         },
         {
@@ -161,13 +157,22 @@ const FALLBACK_SQL_POOLS = {
             { event_id: 11, artist_id: 2, streams_count: 80000 },
             { event_id: 12, artist_id: 1, streams_count: 20000 },
             { event_id: 13, artist_id: 3, streams_count: 10000 },
+            { event_id: 14, artist_id: 4, streams_count: 60000 },
+            { event_id: 15, artist_id: 2, streams_count: 40000 },
+            { event_id: 16, artist_id: 5, streams_count: 30000 },
+            { event_id: 17, artist_id: 1, streams_count: 15000 },
+            { event_id: 18, artist_id: 4, streams_count: 25000 },
+            { event_id: 19, artist_id: 3, streams_count: 20000 },
+            { event_id: 20, artist_id: 5, streams_count: 10000 },
           ],
         },
       ],
       expectedOutput: [
-        { artist_name: 'The Echoes', total_payout: 400.0 },
-        { artist_name: 'Luna Ray', total_payout: 280.0 },
-        { artist_name: 'Solaris', total_payout: 35.0 },
+        { artist_name: 'The Echoes', total_payout: 600.0 },
+        { artist_name: 'Neon Pulse', total_payout: 510.0 },
+        { artist_name: 'Luna Ray', total_payout: 340.0 },
+        { artist_name: 'Acoustic Drift', total_payout: 180.0 },
+        { artist_name: 'Solaris', total_payout: 105.0 },
       ],
     },
   ],
@@ -183,6 +188,7 @@ const FALLBACK_SQL_POOLS = {
           sampleData: [
             { team_id: 1, team_name: 'Vortex Gaming' },
             { team_id: 2, team_name: 'Titan Syndicate' },
+            { team_id: 3, team_name: 'Apex Phantoms' },
           ],
         },
         {
@@ -195,10 +201,15 @@ const FALLBACK_SQL_POOLS = {
             { player_id: 4, team_id: 2, player_name: 'Shadow', total_points: 4200 },
             { player_id: 5, team_id: 2, player_name: 'Viper', total_points: 3900 },
             { player_id: 6, team_id: 2, player_name: 'Rogue', total_points: 3500 },
+            { player_id: 7, team_id: 3, player_name: 'Titan', total_points: 4600 },
+            { player_id: 8, team_id: 3, player_name: 'Spectre', total_points: 4100 },
+            { player_id: 9, team_id: 3, player_name: 'Ghost', total_points: 3800 },
           ],
         },
       ],
       expectedOutput: [
+        { team_name: 'Apex Phantoms', player_name: 'Titan', total_points: 4600 },
+        { team_name: 'Apex Phantoms', player_name: 'Spectre', total_points: 4100 },
         { team_name: 'Titan Syndicate', player_name: 'Shadow', total_points: 4200 },
         { team_name: 'Titan Syndicate', player_name: 'Viper', total_points: 3900 },
         { team_name: 'Vortex Gaming', player_name: 'Zephyr', total_points: 3400 },
@@ -219,6 +230,8 @@ const FALLBACK_SQL_POOLS = {
             { driver_id: 1, driver_name: 'Marcus Chen' },
             { driver_id: 2, driver_name: 'Elena Rostova' },
             { driver_id: 3, driver_name: 'David Kim' },
+            { driver_id: 4, driver_name: 'Sophia Patel' },
+            { driver_id: 5, driver_name: 'James Wilson' },
           ],
         },
         {
@@ -232,12 +245,16 @@ const FALLBACK_SQL_POOLS = {
             { trip_id: 105, driver_id: 3, surge_multiplier: 1.7, passenger_rating: 5.0 },
             { trip_id: 106, driver_id: 3, surge_multiplier: 1.9, passenger_rating: 4.8 },
             { trip_id: 107, driver_id: 3, surge_multiplier: 1.5, passenger_rating: 4.9 },
+            { trip_id: 108, driver_id: 4, surge_multiplier: 1.6, passenger_rating: 5.0 },
+            { trip_id: 109, driver_id: 4, surge_multiplier: 1.7, passenger_rating: 4.9 },
+            { trip_id: 110, driver_id: 5, surge_multiplier: 1.2, passenger_rating: 4.9 },
           ],
         },
       ],
       expectedOutput: [
         { driver_name: 'David Kim', qualified_trips: 3, avg_rating: 4.9 },
         { driver_name: 'Marcus Chen', qualified_trips: 2, avg_rating: 4.95 },
+        { driver_name: 'Sophia Patel', qualified_trips: 2, avg_rating: 4.95 },
       ],
     },
   ],
@@ -253,20 +270,26 @@ const FALLBACK_SQL_POOLS = {
           sampleData: [
             { tenant_id: 1, billing_month: '2024-01' },
             { tenant_id: 2, billing_month: '2024-01' },
+            { tenant_id: 3, billing_month: '2024-01' },
             { tenant_id: 1, billing_month: '2024-02' },
             { tenant_id: 2, billing_month: '2024-02' },
             { tenant_id: 3, billing_month: '2024-02' },
+            { tenant_id: 4, billing_month: '2024-02' },
+            { tenant_id: 5, billing_month: '2024-02' },
             { tenant_id: 1, billing_month: '2024-03' },
             { tenant_id: 2, billing_month: '2024-03' },
             { tenant_id: 3, billing_month: '2024-03' },
             { tenant_id: 4, billing_month: '2024-03' },
+            { tenant_id: 5, billing_month: '2024-03' },
+            { tenant_id: 6, billing_month: '2024-03' },
+            { tenant_id: 7, billing_month: '2024-03' },
           ],
         },
       ],
       expectedOutput: [
-        { billing_month: '2024-01', active_subscribers: 2, mom_growth_pct: null },
-        { billing_month: '2024-02', active_subscribers: 3, mom_growth_pct: 50.0 },
-        { billing_month: '2024-03', active_subscribers: 4, mom_growth_pct: 33.33 },
+        { billing_month: '2024-01', active_subscribers: 3, mom_growth_pct: null },
+        { billing_month: '2024-02', active_subscribers: 5, mom_growth_pct: 66.67 },
+        { billing_month: '2024-03', active_subscribers: 7, mom_growth_pct: 40.0 },
       ],
     },
   ],
@@ -397,30 +420,17 @@ export function useInterviewSession({
         const saved = restoreSessionState();
         if (saved?.sessionData?.sql_questions && saved.sessionData.sql_questions.length === 5) {
           if (!cancelled) {
-            setSessionData(saved.sessionData);
-            setCurrentIndex(saved.currentIndex ?? 0);
-            setAnswers(saved.answers ?? Array(10).fill(null));
-            setTimeLeft(saved.timeLeft ?? duration * 60);
-            setChatMessages(saved.chatMessages ?? []);
-
             // Rebuild initSql refs
             saved.sessionData.sql_questions.forEach((q, i) => {
               questionInitSqlsRef.current[i] = q.initSql || null;
             });
 
-            // Load DB for the restored current question
-            const restoredIndex = saved.currentIndex ?? 0;
-            const isRestoredMCQ = restoredIndex >= 5;
-            if (!isRestoredMCQ) {
-              const initSql = questionInitSqlsRef.current[restoredIndex];
-              if (initSql) {
-                setDbSwitching(true);
-                await initDb(initSql).catch(err => console.error('DB restore error:', err.message));
-                if (!cancelled) setDbSwitching(false);
-              }
-            }
-
-            if (!cancelled) setGenerating(false);
+            setSessionData(saved.sessionData);
+            setCurrentIndex(saved.currentIndex ?? 0);
+            setAnswers(saved.answers ?? Array(10).fill(null));
+            setTimeLeft(saved.timeLeft ?? duration * 60);
+            setChatMessages(saved.chatMessages ?? []);
+            setGenerating(false);
           }
           return;
         }
@@ -440,23 +450,14 @@ export function useInterviewSession({
         });
 
         if (!cancelled) {
-          setSessionData(data);
-
-          // Load DB for Q1
-          const firstInitSql = data.sql_questions[0]?.initSql;
-          if (firstInitSql) {
-            setDbSwitching(true);
-            await initDb(firstInitSql).catch(err => {
-              console.error('[InterviewSession] Q1 DB init failed:', err.message);
-            });
-            if (!cancelled) setDbSwitching(false);
-          }
-
           const welcomeMsg = {
             role: 'assistant',
             content: `Welcome to your **${companyName}** ${difficulty.toUpperCase()} interview, **${candidateName}**! 🎯\n\nThis session has **5 SQL coding questions** and **5 multiple-choice questions** (10 total).\n\n- Questions 1–5 are SQL coding challenges. Each has its own live database you can query.\n- Questions 6–10 are conceptual MCQ questions.\n\nYou can navigate freely between questions. Your answers are auto-saved. Good luck! 💪`,
           };
+
+          setSessionData(data);
           setChatMessages([welcomeMsg]);
+          setGenerating(false);
 
           saveSessionState({
             sessionData: data,
@@ -474,14 +475,10 @@ export function useInterviewSession({
             questionInitSqlsRef.current[i] = q.initSql || null;
           });
           setSessionData(fallback);
-          if (fallback.sql_questions[0]?.initSql) {
-            await initDb(fallback.sql_questions[0].initSql).catch(() => {});
-          }
-          setChatMessages([{ role: 'assistant', content: `Welcome to your interview! Note: AI generation failed (check your API key). A fallback session has been loaded.` }]);
+          setGenerating(false);
+          setChatMessages([{ role: 'assistant', content: `Welcome to your interview! Note: AI generation encountered an issue. A fallback session has been loaded.` }]);
           toast({ title: 'AI Generation Failed', message: 'A fallback interview session has been loaded.', type: 'warning' });
         }
-      } finally {
-        if (!cancelled) setGenerating(false);
       }
     };
 

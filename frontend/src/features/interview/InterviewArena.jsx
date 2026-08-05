@@ -490,11 +490,6 @@ export function InterviewArena() {
       return;
     }
 
-    if (dbStatus !== 'ready' || dbSwitching) {
-      toast({ title: 'Database Initializing', message: 'Please wait a moment for the database to finish loading.', type: 'info' });
-      return;
-    }
-
     setIsRunning(true);
     try {
       const res = await executeQuery(code);

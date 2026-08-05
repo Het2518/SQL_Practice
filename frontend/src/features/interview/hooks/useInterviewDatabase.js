@@ -103,17 +103,18 @@ export function useInterviewDatabase() {
 
   // ── Public API ──────────────────────────────────────────────────────────────
 
+  const initPromiseRef = useRef(null); // in-flight init promise to await
+
   /**
    * Initialize the in-memory SQLite database with a SQL script.
-   * Strips markdown fences, then tries db.exec(all at once).
-   * Falls back to statement-by-statement if batch exec fails.
+   * Strips markdown fences, then runs INIT message on worker.
    * @param {string} sql - CREATE TABLE + INSERT INTO statements
    * @returns {Promise<void>}
    */
   const initDb = useCallback(async (sql) => {
     if (!sql || !sql.trim() || sql.trim() === '-- init') {
       console.warn('[InterviewDB] initDb called with empty/placeholder SQL. Skipping.');
-      setStatus('ready'); // treat as ready with empty db
+      setStatus('ready');
       return;
     }
 
@@ -121,19 +122,29 @@ export function useInterviewDatabase() {
     setDbError(null);
     initSqlRef.current = sql;
 
-    try {
-      await sendMessage('INIT', { initSql: sql, forceFresh: true }, 30000);
-      setStatus('ready');
-    } catch (err) {
-      console.error('[InterviewDB] initDb failed:', err.message);
-      setStatus('error');
-      setDbError(err.message);
-      throw err;
-    }
+    const initPromise = (async () => {
+      try {
+        await sendMessage('INIT', { initSql: sql, forceFresh: true }, 30000);
+        setStatus('ready');
+      } catch (err) {
+        console.error('[InterviewDB] initDb failed:', err.message);
+        setStatus('error');
+        setDbError(err.message);
+        throw err;
+      } finally {
+        if (initPromiseRef.current === initPromise) {
+          initPromiseRef.current = null;
+        }
+      }
+    })();
+
+    initPromiseRef.current = initPromise;
+    return initPromise;
   }, [sendMessage]);
 
   /**
    * Execute a SQL query against the interview database.
+   * Automatically awaits in-flight database initialization if one is currently in progress.
    * Returns { columns, rows, error?, execTimeMs? }
    * @param {string} sql
    */
@@ -142,17 +153,24 @@ export function useInterviewDatabase() {
       return { columns: [], rows: [], error: 'Please enter a SQL query.' };
     }
 
+    // 1. If currently initializing, smoothly await initialization to finish
+    if (initPromiseRef.current) {
+      try {
+        await initPromiseRef.current;
+      } catch (initErr) {
+        return { columns: [], rows: [], error: `Database initialization failed: ${initErr.message}` };
+      }
+    }
+
+    // 2. If status is still not ready, attempt immediate recovery init
     if (status !== 'ready') {
-      // Attempt recovery if we have the init SQL
-      if (initSqlRef.current && status !== 'loading') {
-        console.warn('[InterviewDB] DB not ready, attempting recovery init...');
+      if (initSqlRef.current) {
+        console.warn('[InterviewDB] DB not ready on executeQuery, running recovery init...');
         try {
           await initDb(initSqlRef.current);
         } catch {
-          return { columns: [], rows: [], error: 'Database is not initialized. Please wait for the question to load.' };
+          return { columns: [], rows: [], error: 'Database is still initializing. Please try again.' };
         }
-      } else {
-        return { columns: [], rows: [], error: 'Database is initializing. Please try again in a moment.' };
       }
     }
 
@@ -160,8 +178,8 @@ export function useInterviewDatabase() {
       const result = await sendMessage('EXECUTE', { sql }, 15000);
       return result;
     } catch (err) {
-      // If the worker somehow lost the db, try recovery once
-      if (err.message.toLowerCase().includes('database not initialized') && initSqlRef.current) {
+      // If the worker lost the db, try recovery once
+      if (err.message && err.message.toLowerCase().includes('database not initialized') && initSqlRef.current) {
         console.warn('[InterviewDB] Worker lost db, attempting hot recovery...');
         try {
           await sendMessage('INIT', { initSql: initSqlRef.current, forceFresh: true }, 30000);

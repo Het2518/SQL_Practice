@@ -509,9 +509,9 @@ Each of the 5 SQL questions MUST include:
 4. "tables": 2-3 tables with REALISTIC names specific to that domain. For EACH table:
    - "name": table name in snake_case (e.g. "${selectedDomains[0].tables[0]}")
    - "columns": array of {"name": "col_name", "type": "INTEGER"|"TEXT"|"REAL"}
-   - "sampleData": array of 3 to 5 realistic sample row objects with authentic values
-5. "expectedOutput": array of 2 to 4 expected output row objects matching what the correct query produces on the sampleData.
-6. "initSql": complete self-contained SQLite DDL + INSERT statements with double-quoted identifiers. Use ONLY INTEGER, TEXT, REAL types.
+   - "sampleData": array of 4 to 6 representative sample row objects with authentic values (for table preview in the UI)
+5. "expectedOutput": array of 3 to 6 expected output row objects matching what the correct query produces on the full dataset.
+6. "initSql": complete self-contained SQLite DDL + INSERT statements. Include 15 to 30 realistic rows per table (minimum 15, maximum 35-40 rows per table; roughly 30 to 80 rows total across all tables for each question). Use double-quoted identifiers and ONLY INTEGER, TEXT, REAL types.
 
 [MCQ QUESTION RULES]
 Each of the 5 MCQ questions MUST test a DIFFERENT advanced concept:
