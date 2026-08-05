@@ -114,12 +114,13 @@ export function useSqlDatabase(dbInput) {
     }
   }, [sendMessage]);
 
-  const initWithSql = useCallback(async (initSql) => {
+  const initWithSql = useCallback(async (initSql, options = {}) => {
+    const { dbKey = 'custom_sql', forceFresh = false } = options;
     setIsLoading(true);
     setError(null);
     try {
-      await sendMessage('INIT', { initSql });
-      currentDbRef.current = '__custom_csv__';
+      await sendMessage('INIT', { initSql, dbKey, forceFresh });
+      currentDbRef.current = dbKey;
       setIsLoading(false);
     } catch (err) {
       setError(`Failed to build database from SQL: ${err.message}`);

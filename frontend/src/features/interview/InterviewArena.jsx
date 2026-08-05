@@ -646,6 +646,7 @@ export function InterviewArena() {
                     onRun={handleRunSql}
                     disabled={isLoading || generatingQuestion}
                     height="100%"
+                    isProctored={true}
                   />
                 ) : (
                   <SqlEditor
@@ -654,6 +655,7 @@ export function InterviewArena() {
                     onRun={handleRunSql}
                     disabled={isLoading || generatingQuestion}
                     height="100%"
+                    isProctored={true}
                   />
                 )}
               </div>

@@ -89,7 +89,8 @@ export function SqlEditor({
   darkMode = false,
   readOnly = false,
   customSchema = null,
-  headerActions
+  headerActions,
+  isProctored = false
 }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
@@ -298,6 +299,7 @@ export function SqlEditor({
       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
       fontLigatures: true,
       minimap: { enabled: false },
+      contextmenu: !isProctored,
       lineNumbers: 'on',
       scrollBeyondLastLine: false,
       wordWrap: 'on',

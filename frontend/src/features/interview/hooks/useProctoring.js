@@ -55,9 +55,24 @@ export function useProctoring({
       addViolation('Window lost focus', 10);
     };
 
+    const handleClipboard = (e) => {
+      if (isSubmittedRef.current || isTerminated) return;
+      e.preventDefault();
+      addViolation('Clipboard actions (copy/cut/paste) are disabled.', 20);
+    };
+
+    const handleContextMenu = (e) => {
+      if (isSubmittedRef.current || isTerminated) return;
+      e.preventDefault();
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
+    document.addEventListener('copy', handleClipboard);
+    document.addEventListener('cut', handleClipboard);
+    document.addEventListener('paste', handleClipboard);
+    document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
       clearTimeout(graceTimer);
@@ -65,6 +80,10 @@ export function useProctoring({
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('copy', handleClipboard);
+      document.removeEventListener('cut', handleClipboard);
+      document.removeEventListener('paste', handleClipboard);
+      document.removeEventListener('contextmenu', handleContextMenu);
     };
   }, [isSubmittedRef, isTerminated, enforceViolation, addViolation]);
 

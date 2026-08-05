@@ -134,12 +134,12 @@ class SqlWorkerManager {
       this.init();
       
       if (type === 'INIT') {
-        const dbKey = payload.dbPath || (payload.initSql ? 'custom_sql' : 'custom_binary');
+        const dbKey = payload.dbKey || payload.dbPath || (payload.initSql ? 'custom_sql' : 'custom_binary');
         this.currentDbKey = dbKey;
         this.lastDbPayload = payload;
 
         // Automatically attempt to restore from IndexedDB if we are loading fresh
-        if (!payload.binaryData) {
+        if (!payload.binaryData && !payload.forceFresh) {
           loadFromIDB(dbKey).then(backup => {
             if (backup) {
               console.warn(`[DataDesk] Restored database '${dbKey}' from IndexedDB backup!`);

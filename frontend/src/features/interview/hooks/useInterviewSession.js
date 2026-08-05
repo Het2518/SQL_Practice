@@ -100,7 +100,10 @@ export function useInterviewSession({
          cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
       }
       
-      initWithSql(cleanInitSql).catch(err => {
+      initWithSql(cleanInitSql, { 
+        dbKey: `interview_${state.initialTask?.id || 'session'}`, 
+        forceFresh: true 
+      }).catch(err => {
         console.error('Failed to init DB from saved state:', err);
         toast({ title: 'Database Error', message: err.message, type: 'error' });
       });
@@ -136,7 +139,10 @@ export function useInterviewSession({
              }
           }
           
-          await initWithSql(cleanInitSql);
+          await initWithSql(cleanInitSql, {
+            dbKey: `interview_${taskData.id || 'session'}`,
+            forceFresh: true
+          });
           
           const welcomeMsg = {
             role: 'assistant',
@@ -151,7 +157,10 @@ export function useInterviewSession({
         } catch (err) {
           console.error(err);
           setInitialTask(FALLBACK_TASK);
-          await initWithSql(FALLBACK_TASK.initSql);
+          await initWithSql(FALLBACK_TASK.initSql, {
+            dbKey: 'interview_fallback',
+            forceFresh: true
+          });
         } finally {
           setGeneratingQuestion(false);
         }

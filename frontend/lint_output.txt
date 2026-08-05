@@ -3,6 +3,446 @@
 > oxlint src
 
 
+  ! eslint(no-unused-vars): Variable 'index' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/features/visualizers/ExecutionPlanTree.jsx:53:11]
+ 52 |     target = detail.match(/TABLE\s+([a-zA-Z0-9_]+)/i)?.[1] || 'Table';
+ 53 |     const index = detail.match(/INDEX\s+([a-zA-Z0-9_]+)/i)?.[1] || '';
+    :           ^^|^^
+    :             `-- 'index' is declared here
+ 54 |     icon = <FastForward size={16} />;
+    `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'TrendingUp' is imported but never used.
+   ,-[src/features/profile/DashboardTab.jsx:4:32]
+ 3 | import {
+ 4 |   ExternalLink, Target, Clock, TrendingUp, Medal, Flame, Zap, CheckCircle,
+   :                                ^^^^^|^^^^
+   :                                     `-- 'TrendingUp' is imported here
+ 5 |   ArrowRight, BarChart2,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Parameter 'quests' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/features/profile/DashboardTab.jsx:143:71]
+ 142 | // ─── Main component ───────────────────────────────────────────────────────────
+ 143 | export function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineEvents }) {
+     :                                                                       ^^^|^^
+     :                                                                          `-- 'quests' is declared here
+ 144 |   const {
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Variable 'rank' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/features/profile/DashboardTab.jsx:147:21]
+ 146 |     easySolved, easyTotal, mediumSolved, mediumTotal, hardSolved, hardTotal,
+ 147 |     skillsProgress, rank, percentile,
+     :                     ^^|^
+     :                       `-- 'rank' is declared here
+ 148 |   } = stats;
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Variable 'percentile' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/features/profile/DashboardTab.jsx:147:27]
+ 146 |     easySolved, easyTotal, mediumSolved, mediumTotal, hardSolved, hardTotal,
+ 147 |     skillsProgress, rank, percentile,
+     :                           ^^^^^|^^^^
+     :                                `-- 'percentile' is declared here
+ 148 |   } = stats;
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'BookOpen' is imported but never used.
+   ,-[src/features/visualizers/TheoryConnector.jsx:3:10]
+ 2 | import { CONCEPTS, CONCEPT_TRIGGERS } from '@/data/concepts';
+ 3 | import { BookOpen, GraduationCap, AlertOctagon, Lightbulb, CheckCircle2, Database, Calculator, Link, LayoutList, TerminalSquare, AlertTriangle, Zap } from 'lucide-react';
+   :          ^^^^|^^^
+   :              `-- 'BookOpen' is imported here
+ 4 | 
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'upperSql' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/features/visualizers/TheoryConnector.jsx:129:9]
+ 128 | const detectConcept = (sql) => {
+ 129 |   const upperSql = sql.toUpperCase();
+     :         ^^^^|^^^
+     :             `-- 'upperSql' is declared here
+ 130 |   for (const [pattern, conceptId] of Object.entries(CONCEPT_TRIGGERS)) {
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'Moon' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:10]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :          ^^|^
+   :            `-- 'Moon' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Type' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:21]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :                     ^^|^
+   :                       `-- 'Type' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Play' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:27]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :                           ^^|^
+   :                             `-- 'Play' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Save' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:40]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :                                        ^^|^
+   :                                          `-- 'Save' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Trash2' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:69]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :                                                                     ^^^|^^
+   :                                                                        `-- 'Trash2' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Loader2' is imported but never used.
+   ,-[src/features/profile/SettingsTab.jsx:2:106]
+ 1 | import React, { useState } from 'react';
+ 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+   :                                                                                                          ^^^|^^^
+   :                                                                                                             `-- 'Loader2' is imported here
+ 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useMemo' is imported but never used.
+   ,-[src/pages/HomePage.jsx:1:17]
+ 1 | import React, { useMemo, useState } from 'react';
+   :                 ^^^|^^^
+   :                    `-- 'useMemo' is imported here
+ 2 | import { useNavigate } from 'react-router-dom';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useState' is imported but never used.
+   ,-[src/pages/HomePage.jsx:1:26]
+ 1 | import React, { useMemo, useState } from 'react';
+   :                          ^^^^|^^^
+   :                              `-- 'useState' is imported here
+ 2 | import { useNavigate } from 'react-router-dom';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'BookOpen' is imported but never used.
+   ,-[src/pages/HomePage.jsx:5:3]
+ 4 | import {
+ 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
+   :   ^^^^|^^^
+   :       `-- 'BookOpen' is imported here
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
+   ,-[src/pages/HomePage.jsx:6:34]
+ 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+   :                                  ^^|^^
+   :                                    `-- 'Clock' is imported here
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'BarChart3' is imported but never used.
+   ,-[src/pages/HomePage.jsx:6:41]
+ 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+   :                                         ^^^^|^^^^
+   :                                             `-- 'BarChart3' is imported here
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'ChevronRight' is imported but never used.
+   ,-[src/pages/HomePage.jsx:7:3]
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   :   ^^^^^^|^^^^^
+   :         `-- 'ChevronRight' is imported here
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'TrendingUp' is imported but never used.
+   ,-[src/pages/HomePage.jsx:7:25]
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   :                         ^^^^^|^^^^
+   :                              `-- 'TrendingUp' is imported here
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Building2' is imported but never used.
+   ,-[src/pages/HomePage.jsx:7:37]
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   :                                     ^^^^|^^^^
+   :                                         `-- 'Building2' is imported here
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Code' is imported but never used.
+   ,-[src/pages/HomePage.jsx:7:58]
+ 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+   :                                                          ^^|^
+   :                                                            `-- 'Code' is imported here
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Code2' is imported but never used.
+   ,-[src/pages/HomePage.jsx:8:3]
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   :   ^^|^^
+   :     `-- 'Code2' is imported here
+ 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Link2' is imported but never used.
+   ,-[src/pages/HomePage.jsx:8:10]
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   :          ^^|^^
+   :            `-- 'Link2' is imported here
+ 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Star' is imported but never used.
+   ,-[src/pages/HomePage.jsx:8:56]
+ 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
+ 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+   :                                                        ^^|^
+   :                                                          `-- 'Star' is imported here
+ 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Users' is imported but never used.
+    ,-[src/pages/HomePage.jsx:9:3]
+  8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
+  9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
+    :   ^^|^^
+    :     `-- 'Users' is imported here
+ 10 | } from 'lucide-react';
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useAuth' is imported but never used.
+    ,-[src/pages/HomePage.jsx:16:10]
+ 15 | import { allQuestions, getQuestionsForDb } from '@/data/index';
+ 16 | import { useAuth } from '@/stores/useAuthStore';
+    :          ^^^|^^^
+    :             `-- 'useAuth' is imported here
+ 17 | import { useProgressStore } from '@/stores/useProgressStore';
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useGamificationStore' is imported but never used.
+    ,-[src/pages/HomePage.jsx:18:10]
+ 17 | import { useProgressStore } from '@/stores/useProgressStore';
+ 18 | import { useGamificationStore } from '@/stores/useGamificationStore';
+    :          ^^^^^^^^^^|^^^^^^^^^
+    :                    `-- 'useGamificationStore' is imported here
+ 19 | 
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+    ,-[src/features/visualizers/JoinAnalysisModal.jsx:89:17]
+ 88 |           if (finalRes?.rows) fr = finalRes.rows[0][0];
+ 89 |         } catch(e) {}
+    :                 |
+    :                 `-- 'e' is declared here
+ 90 |         
+    `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Variable 'limit' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/features/visualizers/JoinAnalysisModal.jsx:120:13]
+ 119 |     try {
+ 120 |       const limit = 5;
+     :             ^^|^^
+     :               `-- 'limit' is declared here
+ 121 |       const lAlias = node.leftAlias || node.leftTable;
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Variable 'lAlias' is declared but never used. Unused variables should start with a '_'.
+     ,-[src/features/visualizers/JoinAnalysisModal.jsx:121:13]
+ 120 |       const limit = 5;
+ 121 |       const lAlias = node.leftAlias || node.leftTable;
+     :             ^^^|^^
+     :                `-- 'lAlias' is declared here
+ 122 |       const rAlias = node.rightAlias || node.rightTable;
+     `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+     ,-[src/features/visualizers/JoinAnalysisModal.jsx:208:13]
+ 207 |       });
+ 208 |     } catch(e) {
+     :             |
+     :             `-- 'e' is declared here
+ 209 |       setSimulatorData({ left: null, right: null, loading: false });
+     `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+    ,-[src/workers/SqlWorkerManager.js:47:11]
+ 46 |     });
+ 47 |   } catch(e) { 
+    :           |
+    :           `-- 'e' is declared here
+ 48 |     return null; 
+    `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Parameter 'i' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/features/visualizers/TableNode.jsx:27:32]
+ 26 |       <div className="flex flex-col py-1">
+ 27 |         {table.columns.map((c, i) => (
+    :                                |
+    :                                `-- 'i' is declared here
+ 28 |           <div 
+    `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Identifier 'useMemo' is imported but never used.
+   ,-[src/features/visualizers/InteractiveERDiagram.jsx:1:17]
+ 1 | import React, { useMemo, useEffect, useState, useCallback } from 'react';
+   :                 ^^^|^^^
+   :                    `-- 'useMemo' is imported here
+ 2 | import {
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useCallback' is imported but never used.
+   ,-[src/features/visualizers/InteractiveERDiagram.jsx:1:47]
+ 1 | import React, { useMemo, useEffect, useState, useCallback } from 'react';
+   :                                               ^^^^^|^^^^^
+   :                                                    `-- 'useCallback' is imported here
+ 2 | import {
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'bg' is assigned a value but never used. Unused variables should start with a '_'.
+    ,-[src/features/visualizers/NullVisualizer.jsx:63:15]
+ 62 |           let color = 'var(--warning)';
+ 63 |           let bg = 'var(--warning-muted)';
+    :               ^|
+    :                `-- 'bg' is declared here
+ 64 |           if (percentage > 25) { color = 'var(--warning)'; bg = 'var(--warning-muted)'; }
+ 65 |           if (percentage > 60) { color = 'var(--error)'; bg = 'var(--error-muted)'; }
+    :                                                          ^|
+    :                                                           `-- it was last assigned here
+ 66 | 
+    `----
+  help: Did you mean to use this variable?
+
+  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
+   ,-[src/features/profile/MockInterviewsTab.jsx:4:40]
+ 3 | import { api } from '@/lib/api';
+ 4 | import { Target, CheckCircle, XCircle, Clock, Calendar, TrendingUp, BarChart2, Swords, ArrowRight } from 'lucide-react';
+   :                                        ^^|^^
+   :                                          `-- 'Clock' is imported here
+ 5 | import { Link } from 'react-router-dom';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
+   ,-[src/features/gamification/DailyChallengeWidget.jsx:3:36]
+ 2 | import { useNavigate } from 'react-router-dom';
+ 3 | import { Target, ArrowRight, Star, Clock } from 'lucide-react';
+   :                                    ^^|^^
+   :                                      `-- 'Clock' is imported here
+ 4 | import { getDailyChallenge } from '@/utils/dailyChallenge';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'AlertTriangle' is imported but never used.
+   ,-[src/features/visualizers/IndexAdvisor.jsx:3:15]
+ 2 | import { getIndexInfo } from '@/utils/sqlAnalysis';
+ 3 | import { Zap, AlertTriangle, FileCode2, CheckCircle2 } from 'lucide-react';
+   :               ^^^^^^|^^^^^^
+   :                     `-- 'AlertTriangle' is imported here
+ 4 | 
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'upperSql' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/features/visualizers/IndexAdvisor.jsx:48:19]
+ 47 |             // Find which of these columns appear in the SQL (simple heuristic)
+ 48 |             const upperSql = sql.toUpperCase();
+    :                   ^^^^|^^^
+    :                       `-- 'upperSql' is declared here
+ 49 |             
+    `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Parameter 'aiSolution' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/features/practice/QuestionAiSection.jsx:14:3]
+ 13 |   lastValidation,
+ 14 |   aiSolution,
+    :   ^^^^^|^^^^
+    :        `-- 'aiSolution' is declared here
+ 15 |   aiSolutionLoading,
+    `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'aiSolutionError' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/features/practice/QuestionAiSection.jsx:16:3]
+ 15 |   aiSolutionLoading,
+ 16 |   aiSolutionError,
+    :   ^^^^^^^|^^^^^^^
+    :          `-- 'aiSolutionError' is declared here
+ 17 |   aiExpectedResult,
+    `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'executeQuery' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/features/practice/QuestionAiSection.jsx:21:3]
+ 20 |   setAiExpectedResult,
+ 21 |   executeQuery
+    :   ^^^^^^|^^^^^
+    :         `-- 'executeQuery' is declared here
+ 22 | }) {
+    `----
+  help: Consider removing this parameter.
+
   ! eslint(no-unused-vars): Identifier 'useState' is imported but never used.
    ,-[src/features/gamification/ConfettiBlast.jsx:1:10]
  1 | import { useState, useCallback } from 'react';
@@ -32,89 +472,6 @@
    `----
   help: Consider removing this parameter.
 
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-    ,-[src/features/ai/useProactiveTutor.js:54:16]
- 53 |         }
- 54 |       } catch (e) {
-    :                |
-    :                `-- 'e' is declared here
- 55 |         // Ignore background network/rate limit errors silently
-    `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-    ,-[src/workers/SqlWorkerManager.js:47:11]
- 46 |     });
- 47 |   } catch(e) { 
-    :           |
-    :           `-- 'e' is declared here
- 48 |     return null; 
-    `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Parameter 'i' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/features/visualizers/TableNode.jsx:27:32]
- 26 |       <div className="flex flex-col py-1">
- 27 |         {table.columns.map((c, i) => (
-    :                                |
-    :                                `-- 'i' is declared here
- 28 |           <div 
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-     ,-[src/features/interview/hooks/useInterviewSession.js:122:19]
- 121 |             taskData = JSON.parse(taskText);
- 122 |           } catch(e) {
-     :                   |
-     :                   `-- 'e' is declared here
- 123 |             const cleaned = taskText.replace(/```json/i, '').replace(/```/g, '').trim();
-     `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
-   ,-[src/features/profile/MockInterviewsTab.jsx:4:40]
- 3 | import { api } from '@/lib/api';
- 4 | import { Target, CheckCircle, XCircle, Clock, Calendar, TrendingUp, BarChart2, Swords, ArrowRight } from 'lucide-react';
-   :                                        ^^|^^
-   :                                          `-- 'Clock' is imported here
- 5 | import { Link } from 'react-router-dom';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useRef' is imported but never used.
-   ,-[src/features/ai/QuerySafetyGuard.jsx:1:40]
- 1 | import React, { useState, useCallback, useRef } from 'react';
-   :                                        ^^^|^^
-   :                                           `-- 'useRef' is imported here
- 2 | import { groqChat, buildSafetyPrompt } from '@/lib/groq';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Variable 'bg' is assigned a value but never used. Unused variables should start with a '_'.
-    ,-[src/features/visualizers/NullVisualizer.jsx:63:15]
- 62 |           let color = 'var(--warning)';
- 63 |           let bg = 'var(--warning-muted)';
-    :               ^|
-    :                `-- 'bg' is declared here
- 64 |           if (percentage > 25) { color = 'var(--warning)'; bg = 'var(--warning-muted)'; }
- 65 |           if (percentage > 60) { color = 'var(--error)'; bg = 'var(--error-muted)'; }
-    :                                                          ^|
-    :                                                           `-- it was last assigned here
- 66 | 
-    `----
-  help: Did you mean to use this variable?
-
-  ! eslint(no-unused-vars): Variable 'APPROACH_LABELS' is declared but never used. Unused variables should start with a '_'.
-   ,-[src/features/ai/AiSolutionReview.jsx:6:7]
- 5 | 
- 6 | const APPROACH_LABELS = {
-   :       ^^^^^^^|^^^^^^^
-   :              `-- 'APPROACH_LABELS' is declared here
- 7 |   optimized: { label: 'Optimized Query', icon: <Zap size={12} />, color: 'var(--success)' },
-   `----
-  help: Consider removing this declaration.
-
   ! eslint(no-unused-vars): Identifier 'Medal' is imported but never used.
    ,-[src/features/profile/LeaderboardTab.jsx:3:18]
  2 | import { api } from '@/lib/api';
@@ -134,6 +491,106 @@
  4 | 
    `----
   help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Check' is imported but never used.
+   ,-[src/features/visualizers/AnimatedJoinVisualizer.jsx:2:34]
+ 1 | import React, { useState, useEffect, useRef } from 'react';
+ 2 | import { Play, Pause, RotateCcw, Check, X, AlertTriangle, SkipBack, SkipForward, FastForward } from 'lucide-react';
+   :                                  ^^|^^
+   :                                    `-- 'Check' is imported here
+ 3 | import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'FastForward' is imported but never used.
+   ,-[src/features/visualizers/AnimatedJoinVisualizer.jsx:2:82]
+ 1 | import React, { useState, useEffect, useRef } from 'react';
+ 2 | import { Play, Pause, RotateCcw, Check, X, AlertTriangle, SkipBack, SkipForward, FastForward } from 'lucide-react';
+   :                                                                                  ^^^^^|^^^^^
+   :                                                                                       `-- 'FastForward' is imported here
+ 3 | import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+     ,-[src/features/practice/SqlEditor.jsx:289:16]
+ 288 |         disposable.dispose();
+ 289 |       } catch (e) {
+     :                |
+     :                `-- 'e' is declared here
+ 290 |         // Safe disposal
+     `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/stores/useAuthStore.js:13:37]
+ 12 |  */
+ 13 | export const useAuth = create((set, get) => {
+    :                                     ^|^
+    :                                      `-- 'get' is declared here
+ 14 |   if (typeof window !== 'undefined' && !authExpiredListenerBound) {
+    `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Identifier 'useProgressStore' is imported but never used.
+   ,-[src/stores/useGamificationStore.js:3:10]
+ 2 | import { api } from '@/lib/api';
+ 3 | import { useProgressStore } from './useProgressStore';
+   :          ^^^^^^^^|^^^^^^^
+   :                  `-- 'useProgressStore' is imported here
+ 4 | 
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/stores/useGamificationStore.js:45:50]
+ 44 | 
+ 45 | export const useGamificationStore = create((set, get) => ({
+    :                                                  ^|^
+    :                                                   `-- 'get' is declared here
+ 46 |   gameState: DEFAULT_STATE,
+    `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Identifier 'ArrowLeft' is imported but never used.
+    ,-[src/pages/CustomDatasetPage.jsx:18:3]
+ 17 |   PanelRightOpen,
+ 18 |   ArrowLeft,
+    :   ^^^^|^^^^
+    :       `-- 'ArrowLeft' is imported here
+ 19 |   ListOrdered,
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'ShieldAlert' is imported but never used.
+   ,-[src/features/interview/CompanyGrid.jsx:3:10]
+ 2 | import { useNavigate } from 'react-router-dom';
+ 3 | import { ShieldAlert } from 'lucide-react';
+   :          ^^^^^|^^^^^
+   :               `-- 'ShieldAlert' is imported here
+ 4 | 
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Parameter 'onSelect' is declared but never used. Unused parameters should start with a '_'.
+   ,-[src/features/interview/CompanyGrid.jsx:5:42]
+ 4 | 
+ 5 | export function CompanyGrid({ companies, onSelect, onClose }) {
+   :                                          ^^^^|^^^
+   :                                              `-- 'onSelect' is declared here
+ 6 |   const navigate = useNavigate();
+   `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/stores/useProgressStore.js:19:46]
+ 18 | 
+ 19 | export const useProgressStore = create((set, get) => ({
+    :                                              ^|^
+    :                                               `-- 'get' is declared here
+ 20 |   progress: {},
+    `----
+  help: Consider removing this parameter.
 
   ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
     ,-[src/features/interview/useProctorStore.js:33:13]
@@ -165,35 +622,25 @@
     `----
   help: Consider handling this error.
 
-  ! eslint(no-unused-vars): Identifier 'api' is imported but never used.
-    ,-[src/lib/groq.js:11:10]
- 10 | 
- 11 | import { api } from '@/lib/api';
-    :          ^|^
-    :           `-- 'api' is imported here
- 12 | 
+  ! eslint(no-unused-vars): Variable 'user' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/pages/TermsAndServices.jsx:10:11]
+  9 |   const navigate = useNavigate();
+ 10 |   const { user } = useAuth();
+    :           ^^|^
+    :             `-- 'user' is declared here
+ 11 | 
     `----
-  help: Consider removing this import.
+  help: Consider removing this declaration.
 
   ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-    ,-[src/lib/groq.js:66:12]
- 65 |     }
- 66 |   } catch (e) {}
-    :            |
-    :            `-- 'e' is declared here
- 67 | 
+    ,-[src/features/ai/useProactiveTutor.js:54:16]
+ 53 |         }
+ 54 |       } catch (e) {
+    :                |
+    :                `-- 'e' is declared here
+ 55 |         // Ignore background network/rate limit errors silently
     `----
   help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Parameter 'isCorrect' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/lib/groq.js:115:57]
- 114 |  */
- 115 | export function buildHintPrompt({ question, studentSQL, isCorrect, dbSchema }) {
-     :                                                         ^^^^|^^^^
-     :                                                             `-- 'isCorrect' is declared here
- 116 |   const schemaSnippet = dbSchema ? `\nRelevant tables: ${dbSchema.slice(0, 300)}` : '';
-     `----
-  help: Consider removing this parameter.
 
   ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
     ,-[src/workers/sql.worker.js:53:12]
@@ -255,15 +702,34 @@
      `----
   help: Consider handling this error.
 
-  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
-     ,-[src/hooks/useSqlDatabase.jsx:134:14]
- 133 |       return await sendMessage('GET_SCHEMA', {});
- 134 |     } catch (err) {
-     :              ^|^
-     :               `-- 'err' is declared here
- 135 |       return { tables: [] };
-     `----
-  help: Consider handling this error.
+  ! eslint(no-unused-vars): Identifier 'useRef' is imported but never used.
+   ,-[src/features/ai/QuerySafetyGuard.jsx:1:40]
+ 1 | import React, { useState, useCallback, useRef } from 'react';
+   :                                        ^^^|^^
+   :                                           `-- 'useRef' is imported here
+ 2 | import { groqChat, buildSafetyPrompt } from '@/lib/groq';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'user' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/pages/PrivacyPolicy.jsx:10:11]
+  9 |   const navigate = useNavigate();
+ 10 |   const { user } = useAuth();
+    :           ^^|^
+    :             `-- 'user' is declared here
+ 11 | 
+    `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'Tag' is imported but never used.
+   ,-[src/features/interview/CompanyFilterPanel.jsx:2:38]
+ 1 | import React, { useState, useEffect } from 'react';
+ 2 | import { ArrowLeft, Clock, BarChart, Tag, Play, Database } from 'lucide-react';
+   :                                      ^|^
+   :                                       `-- 'Tag' is imported here
+ 3 | import { useNavigate } from 'react-router-dom';
+   `----
+  help: Consider removing this import.
 
   ! eslint(no-unused-vars): Identifier 'User' is imported but never used.
    ,-[src/features/interview/InterviewReport.jsx:3:98]
@@ -325,86 +791,6 @@
      `----
   help: Consider removing this parameter.
 
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-    ,-[src/features/visualizers/JoinAnalysisModal.jsx:89:17]
- 88 |           if (finalRes?.rows) fr = finalRes.rows[0][0];
- 89 |         } catch(e) {}
-    :                 |
-    :                 `-- 'e' is declared here
- 90 |         
-    `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Variable 'limit' is declared but never used. Unused variables should start with a '_'.
-     ,-[src/features/visualizers/JoinAnalysisModal.jsx:120:13]
- 119 |     try {
- 120 |       const limit = 5;
-     :             ^^|^^
-     :               `-- 'limit' is declared here
- 121 |       const lAlias = node.leftAlias || node.leftTable;
-     `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Variable 'lAlias' is declared but never used. Unused variables should start with a '_'.
-     ,-[src/features/visualizers/JoinAnalysisModal.jsx:121:13]
- 120 |       const limit = 5;
- 121 |       const lAlias = node.leftAlias || node.leftTable;
-     :             ^^^|^^
-     :                `-- 'lAlias' is declared here
- 122 |       const rAlias = node.rightAlias || node.rightTable;
-     `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-     ,-[src/features/visualizers/JoinAnalysisModal.jsx:208:13]
- 207 |       });
- 208 |     } catch(e) {
-     :             |
-     :             `-- 'e' is declared here
- 209 |       setSimulatorData({ left: null, right: null, loading: false });
-     `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Identifier 'getQuestionsForDb' is imported but never used.
-   ,-[src/hooks/useQueryExecution.js:2:10]
- 1 | import { useState, useCallback } from 'react';
- 2 | import { getQuestionsForDb } from '@/data/index';
-   :          ^^^^^^^^|^^^^^^^^
-   :                  `-- 'getQuestionsForDb' is imported here
- 3 | import { isDailyChallenge } from '@/utils/dailyChallenge';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Parameter 'runVerification' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/hooks/useQueryExecution.js:16:3]
- 15 |   executeQuery,
- 16 |   runVerification,
-    :   ^^^^^^^|^^^^^^^
-    :          `-- 'runVerification' is declared here
- 17 |   validateAnswer,
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Identifier 'ArrowLeft' is imported but never used.
-   ,-[src/features/interview/InterviewPreFlight.jsx:3:68]
- 2 | import { useNavigate, useSearchParams } from 'react-router-dom';
- 3 | import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera, Mic, FileText, Check } from 'lucide-react';
-   :                                                                    ^^^^|^^^^
-   :                                                                        `-- 'ArrowLeft' is imported here
- 4 | import { Button } from '@/shared/ui/Button';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'FileText' is imported but never used.
-   ,-[src/features/interview/InterviewPreFlight.jsx:3:92]
- 2 | import { useNavigate, useSearchParams } from 'react-router-dom';
- 3 | import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera, Mic, FileText, Check } from 'lucide-react';
-   :                                                                                            ^^^^|^^^
-   :                                                                                                `-- 'FileText' is imported here
- 4 | import { Button } from '@/shared/ui/Button';
-   `----
-  help: Consider removing this import.
-
   ! eslint(no-unused-vars): Parameter 'question' is declared but never used. Unused parameters should start with a '_'.
     ,-[src/features/ai/AutoHintMiddleware.js:78:36]
  77 | // ── C. Constraint & logic validation ─────────────────────────────────────────
@@ -416,30 +802,171 @@
   help: Consider removing this parameter.
 
   ! eslint(no-unused-vars): Identifier 'useMemo' is imported but never used.
-   ,-[src/features/visualizers/InteractiveERDiagram.jsx:1:17]
- 1 | import React, { useMemo, useEffect, useState, useCallback } from 'react';
-   :                 ^^^|^^^
-   :                    `-- 'useMemo' is imported here
- 2 | import {
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useCallback' is imported but never used.
-   ,-[src/features/visualizers/InteractiveERDiagram.jsx:1:47]
- 1 | import React, { useMemo, useEffect, useState, useCallback } from 'react';
-   :                                               ^^^^^|^^^^^
-   :                                                    `-- 'useCallback' is imported here
- 2 | import {
+   ,-[src/pages/CompanyPrepPage.jsx:1:27]
+ 1 | import React, { useState, useMemo } from 'react';
+   :                           ^^^|^^^
+   :                              `-- 'useMemo' is imported here
+ 2 | import { useQuery } from '@tanstack/react-query';
    `----
   help: Consider removing this import.
 
   ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
-   ,-[src/features/gamification/DailyChallengeWidget.jsx:3:36]
- 2 | import { useNavigate } from 'react-router-dom';
- 3 | import { Target, ArrowRight, Star, Clock } from 'lucide-react';
-   :                                    ^^|^^
-   :                                      `-- 'Clock' is imported here
- 4 | import { getDailyChallenge } from '@/utils/dailyChallenge';
+   ,-[src/pages/CompanyPrepPage.jsx:4:24]
+ 3 | import { useParams, useNavigate, Link } from 'react-router-dom';
+ 4 | import { ChevronRight, Clock } from 'lucide-react';
+   :                        ^^|^^
+   :                          `-- 'Clock' is imported here
+ 5 | import { Helmet } from 'react-helmet-async';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'APPROACH_LABELS' is declared but never used. Unused variables should start with a '_'.
+   ,-[src/features/ai/AiSolutionReview.jsx:6:7]
+ 5 | 
+ 6 | const APPROACH_LABELS = {
+   :       ^^^^^^^|^^^^^^^
+   :              `-- 'APPROACH_LABELS' is declared here
+ 7 |   optimized: { label: 'Optimized Query', icon: <Zap size={12} />, color: 'var(--success)' },
+   `----
+  help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Identifier 'TableCell' is imported but never used.
+   ,-[src/features/practice/ResultsPanel.jsx:3:10]
+ 2 | import { DiffTable } from './DiffTable';
+ 3 | import { TableCell, NullSummaryPanel } from '@/features/visualizers/NullVisualizer';
+   :          ^^^^|^^^^
+   :              `-- 'TableCell' is imported here
+ 4 | import { ExecutionPlanTree } from '@/features/visualizers/ExecutionPlanTree';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'useGamificationStore' is imported but never used.
+   ,-[src/pages/PracticePage.jsx:8:10]
+ 7 | import { useProgressStore } from '@/stores/useProgressStore';
+ 8 | import { useGamificationStore } from '@/stores/useGamificationStore';
+   :          ^^^^^^^^^^|^^^^^^^^^
+   :                    `-- 'useGamificationStore' is imported here
+ 9 | import { useSettingsStore } from '@/stores/useSettingsStore';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Button' is imported but never used.
+    ,-[src/pages/PracticePage.jsx:13:10]
+ 12 | import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
+ 13 | import { Button } from '@/shared/ui/Button';
+    :          ^^^|^^
+    :             `-- 'Button' is imported here
+ 14 | import { Database } from 'lucide-react';
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Database' is imported but never used.
+    ,-[src/pages/PracticePage.jsx:14:10]
+ 13 | import { Button } from '@/shared/ui/Button';
+ 14 | import { Database } from 'lucide-react';
+    :          ^^^^|^^^
+    :              `-- 'Database' is imported here
+ 15 | import { getQuestionsForDb } from '@/data/index';
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Code2' is imported but never used.
+   ,-[src/features/ai/AiTutorPanel.jsx:2:39]
+ 1 | import React, { useState, useEffect, useRef } from 'react';
+ 2 | import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
+   :                                       ^^|^^
+   :                                         `-- 'Code2' is imported here
+ 3 | import { Button } from '@/shared/ui/Button';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Play' is imported but never used.
+   ,-[src/features/ai/AiTutorPanel.jsx:2:46]
+ 1 | import React, { useState, useEffect, useRef } from 'react';
+ 2 | import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
+   :                                              ^^|^
+   :                                                `-- 'Play' is imported here
+ 3 | import { Button } from '@/shared/ui/Button';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
+    ,-[src/features/ai/AiTutorPanel.jsx:73:14]
+ 72 |       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
+ 73 |     } catch (err) {
+    :              ^|^
+    :               `-- 'err' is declared here
+ 74 |       setMessages((prev) => [
+    `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Parameter 'node' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/features/ai/AiTutorPanel.jsx:162:9]
+ 161 |                     components={{
+ 162 |   pre({ node, children, ...props }) {
+     :         ^^|^
+     :           `-- 'node' is declared here
+ 163 |     const child = Array.isArray(children) ? children[0] : children;
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'node' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/features/ai/AiTutorPanel.jsx:176:10]
+ 175 |   },
+ 176 |   code({ node, className, children, ...props }) {
+     :          ^^|^
+     :            `-- 'node' is declared here
+ 177 |     return (
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'className' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/features/ai/AiTutorPanel.jsx:176:16]
+ 175 |   },
+ 176 |   code({ node, className, children, ...props }) {
+     :                ^^^^|^^^^
+     :                    `-- 'className' is declared here
+ 177 |     return (
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'columns' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/utils/sqlAnalysis.js:263:33]
+ 262 | 
+ 263 | const hasPartialDependencies = (columns, indexes) => {
+     :                                 ^^^|^^^
+     :                                    `-- 'columns' is declared here
+ 264 |   return false; // Heuristic: assumed false unless explicitly violated in our educational DBs
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'indexes' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/utils/sqlAnalysis.js:263:42]
+ 262 | 
+ 263 | const hasPartialDependencies = (columns, indexes) => {
+     :                                          ^^^|^^^
+     :                                             `-- 'indexes' is declared here
+ 264 |   return false; // Heuristic: assumed false unless explicitly violated in our educational DBs
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
+     ,-[src/utils/sqlAnalysis.js:305:12]
+ 304 |     return { nf: 'Unnormalized', reason: 'Lacks a primary key.' };
+ 305 |   } catch (err) {
+     :            ^|^
+     :             `-- 'err' is declared here
+ 306 |     return { nf: 'Unknown', reason: 'Error analyzing schema.' };
+     `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Identifier 'Link' is imported but never used.
+   ,-[src/pages/AuthPage.jsx:2:36]
+ 1 | import React, { useState, useEffect } from 'react';
+ 2 | import { useNavigate, useLocation, Link } from 'react-router-dom';
+   :                                    ^^|^
+   :                                      `-- 'Link' is imported here
+ 3 | import { useAuth } from '@/stores/useAuthStore';
    `----
   help: Consider removing this import.
 
@@ -473,45 +1000,115 @@
     `----
   help: Consider handling this error.
 
-  ! eslint(no-unused-vars): Identifier 'TrendingUp' is imported but never used.
-   ,-[src/features/profile/DashboardTab.jsx:4:32]
- 3 | import {
- 4 |   ExternalLink, Target, Clock, TrendingUp, Medal, Flame, Zap, CheckCircle,
-   :                                ^^^^^|^^^^
-   :                                     `-- 'TrendingUp' is imported here
- 5 |   ArrowRight, BarChart2,
+  ! eslint(no-unused-vars): Identifier 'ArrowLeft' is imported but never used.
+   ,-[src/features/interview/InterviewPreFlight.jsx:3:68]
+ 2 | import { useNavigate, useSearchParams } from 'react-router-dom';
+ 3 | import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera, Mic, FileText, Check } from 'lucide-react';
+   :                                                                    ^^^^|^^^^
+   :                                                                        `-- 'ArrowLeft' is imported here
+ 4 | import { Button } from '@/shared/ui/Button';
    `----
   help: Consider removing this import.
 
-  ! eslint(no-unused-vars): Parameter 'quests' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/features/profile/DashboardTab.jsx:143:71]
- 142 | // ─── Main component ───────────────────────────────────────────────────────────
- 143 | export function DashboardTab({ stats, gameState, nextRecommendations, quests, timelineEvents }) {
-     :                                                                       ^^^|^^
-     :                                                                          `-- 'quests' is declared here
- 144 |   const {
+  ! eslint(no-unused-vars): Identifier 'FileText' is imported but never used.
+   ,-[src/features/interview/InterviewPreFlight.jsx:3:92]
+ 2 | import { useNavigate, useSearchParams } from 'react-router-dom';
+ 3 | import { ShieldAlert, CheckCircle, Monitor, Wifi, Key, ArrowRight, ArrowLeft, Camera, Mic, FileText, Check } from 'lucide-react';
+   :                                                                                            ^^^^|^^^
+   :                                                                                                `-- 'FileText' is imported here
+ 4 | import { Button } from '@/shared/ui/Button';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'api' is imported but never used.
+    ,-[src/lib/groq.js:11:10]
+ 10 | 
+ 11 | import { api } from '@/lib/api';
+    :          ^|^
+    :           `-- 'api' is imported here
+ 12 | 
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+    ,-[src/lib/groq.js:66:12]
+ 65 |     }
+ 66 |   } catch (e) {}
+    :            |
+    :            `-- 'e' is declared here
+ 67 | 
+    `----
+  help: Consider handling this error.
+
+  ! eslint(no-unused-vars): Parameter 'isCorrect' is declared but never used. Unused parameters should start with a '_'.
+     ,-[src/lib/groq.js:115:57]
+ 114 |  */
+ 115 | export function buildHintPrompt({ question, studentSQL, isCorrect, dbSchema }) {
+     :                                                         ^^^^|^^^^
+     :                                                             `-- 'isCorrect' is declared here
+ 116 |   const schemaSnippet = dbSchema ? `\nRelevant tables: ${dbSchema.slice(0, 300)}` : '';
      `----
   help: Consider removing this parameter.
 
-  ! eslint(no-unused-vars): Variable 'rank' is declared but never used. Unused variables should start with a '_'.
-     ,-[src/features/profile/DashboardTab.jsx:147:21]
- 146 |     easySolved, easyTotal, mediumSolved, mediumTotal, hardSolved, hardTotal,
- 147 |     skillsProgress, rank, percentile,
-     :                     ^^|^
-     :                       `-- 'rank' is declared here
- 148 |   } = stats;
-     `----
+  ! eslint(no-unused-vars): Identifier 'Menu' is imported but never used.
+    ,-[src/shared/ui/Header.jsx:12:3]
+ 11 |   Trophy,
+ 12 |   Menu,
+    :   ^^|^
+    :     `-- 'Menu' is imported here
+ 13 |   X,
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'X' is imported but never used.
+    ,-[src/shared/ui/Header.jsx:13:3]
+ 12 |   Menu,
+ 13 |   X,
+    :   |
+    :   `-- 'X' is imported here
+ 14 |   Flame,
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Identifier 'Button' is imported but never used.
+    ,-[src/shared/ui/Header.jsx:17:10]
+ 16 | } from 'lucide-react';
+ 17 | import { Button } from '@/shared/ui/Button';
+    :          ^^^|^^
+    :             `-- 'Button' is imported here
+ 18 | import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
+    `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-vars): Variable 'isMobileMenuOpen' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/shared/ui/Header.jsx:26:10]
+ 25 |   const [showLeaderboard, setShowLeaderboard] = useState(false);
+ 26 |   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    :          ^^^^^^^^|^^^^^^^
+    :                  `-- 'isMobileMenuOpen' is declared here
+ 27 |   const { settings, toggleDarkMode } = useSettingsStore();
+    `----
   help: Consider removing this declaration.
 
-  ! eslint(no-unused-vars): Variable 'percentile' is declared but never used. Unused variables should start with a '_'.
-     ,-[src/features/profile/DashboardTab.jsx:147:27]
- 146 |     easySolved, easyTotal, mediumSolved, mediumTotal, hardSolved, hardTotal,
- 147 |     skillsProgress, rank, percentile,
-     :                           ^^^^^|^^^^
-     :                                `-- 'percentile' is declared here
- 148 |   } = stats;
-     `----
+  ! eslint(no-unused-vars): Variable 'setIsMobileMenuOpen' is declared but never used. Unused variables should start with a '_'.
+    ,-[src/shared/ui/Header.jsx:26:28]
+ 25 |   const [showLeaderboard, setShowLeaderboard] = useState(false);
+ 26 |   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    :                            ^^^^^^^^^|^^^^^^^^^
+    :                                     `-- 'setIsMobileMenuOpen' is declared here
+ 27 |   const { settings, toggleDarkMode } = useSettingsStore();
+    `----
   help: Consider removing this declaration.
+
+  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
+     ,-[src/hooks/useSqlDatabase.jsx:135:14]
+ 134 |       return await sendMessage('GET_SCHEMA', {});
+ 135 |     } catch (err) {
+     :              ^|^
+     :               `-- 'err' is declared here
+ 136 |       return { tables: [] };
+     `----
+  help: Consider handling this error.
 
   ! eslint(no-unused-vars): Identifier 'Briefcase' is imported but never used.
    ,-[src/features/interview/InterviewDashboard.jsx:3:72]
@@ -543,55 +1140,72 @@
    `----
   help: Consider removing this import.
 
-  ! eslint(no-unused-vars): Identifier 'AlertTriangle' is imported but never used.
-   ,-[src/features/visualizers/IndexAdvisor.jsx:3:15]
- 2 | import { getIndexInfo } from '@/utils/sqlAnalysis';
- 3 | import { Zap, AlertTriangle, FileCode2, CheckCircle2 } from 'lucide-react';
-   :               ^^^^^^|^^^^^^
-   :                     `-- 'AlertTriangle' is imported here
- 4 | 
+  ! eslint(no-unused-vars): Identifier 'getQuestionsForDb' is imported but never used.
+   ,-[src/hooks/useQueryExecution.js:2:10]
+ 1 | import { useState, useCallback } from 'react';
+ 2 | import { getQuestionsForDb } from '@/data/index';
+   :          ^^^^^^^^|^^^^^^^^
+   :                  `-- 'getQuestionsForDb' is imported here
+ 3 | import { isDailyChallenge } from '@/utils/dailyChallenge';
    `----
   help: Consider removing this import.
 
-  ! eslint(no-unused-vars): Variable 'upperSql' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/features/visualizers/IndexAdvisor.jsx:48:19]
- 47 |             // Find which of these columns appear in the SQL (simple heuristic)
- 48 |             const upperSql = sql.toUpperCase();
-    :                   ^^^^|^^^
-    :                       `-- 'upperSql' is declared here
- 49 |             
+  ! eslint(no-unused-vars): Parameter 'runVerification' is declared but never used. Unused parameters should start with a '_'.
+    ,-[src/hooks/useQueryExecution.js:16:3]
+ 15 |   executeQuery,
+ 16 |   runVerification,
+    :   ^^^^^^^|^^^^^^^
+    :          `-- 'runVerification' is declared here
+ 17 |   validateAnswer,
     `----
-  help: Consider removing this declaration.
+  help: Consider removing this parameter.
 
-  ! eslint(no-unused-vars): Identifier 'Tag' is imported but never used.
-   ,-[src/features/interview/CompanyFilterPanel.jsx:2:38]
- 1 | import React, { useState, useEffect } from 'react';
- 2 | import { ArrowLeft, Clock, BarChart, Tag, Play, Database } from 'lucide-react';
-   :                                      ^|^
-   :                                       `-- 'Tag' is imported here
- 3 | import { useNavigate } from 'react-router-dom';
-   `----
-  help: Consider removing this import.
+  x eslint(no-undef): 'state' is not defined.
+     ,-[src/features/interview/hooks/useInterviewSession.js:104:29]
+ 103 |       initWithSql(cleanInitSql, { 
+ 104 |         dbKey: `interview_${state.initialTask?.id || 'session'}`, 
+     :                             ^^^^^
+ 105 |         forceFresh: true 
+     `----
+  help: Either define 'state' or remove the reference to it. If 'state' is a global variable, add it to the 'globals' configuration.
 
-  ! eslint(no-unused-vars): Identifier 'Link' is imported but never used.
-   ,-[src/pages/AuthPage.jsx:2:36]
- 1 | import React, { useState, useEffect } from 'react';
- 2 | import { useNavigate, useLocation, Link } from 'react-router-dom';
-   :                                    ^^|^
-   :                                      `-- 'Link' is imported here
- 3 | import { useAuth } from '@/stores/useAuthStore';
-   `----
-  help: Consider removing this import.
+  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
+     ,-[src/features/interview/hooks/useInterviewSession.js:125:19]
+ 124 |             taskData = JSON.parse(taskText);
+ 125 |           } catch(e) {
+     :                   |
+     :                   `-- 'e' is declared here
+ 126 |             const cleaned = taskText.replace(/```json/i, '').replace(/```/g, '').trim();
+     `----
+  help: Consider handling this error.
 
-  ! eslint(no-unused-vars): Variable 'index' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/features/visualizers/ExecutionPlanTree.jsx:53:11]
- 52 |     target = detail.match(/TABLE\s+([a-zA-Z0-9_]+)/i)?.[1] || 'Table';
- 53 |     const index = detail.match(/INDEX\s+([a-zA-Z0-9_]+)/i)?.[1] || '';
-    :           ^^|^^
-    :             `-- 'index' is declared here
- 54 |     icon = <FastForward size={16} />;
+  x eslint(no-undef): 'customSchema' is not defined.
+    ,-[src/features/practice/PracticeWorkspace.jsx:60:29]
+ 59 |               autoComplete={settings?.autoCompleteSql !== false}
+ 60 |               customSchema={customSchema}
+    :                             ^^^^^^^^^^^^
+ 61 |               headerActions={
     `----
-  help: Consider removing this declaration.
+  help: Either define 'customSchema' or remove the reference to it. If 'customSchema' is a global variable, add it to the 'globals' configuration.
+
+  ! eslint(no-unused-vars): Identifier 'api' is imported but never used.
+   ,-[src/features/practice/QuestionBrowser.jsx:3:10]
+ 2 | import { DB_INFO } from '@/data/schemas';
+ 3 | import { api } from '@/lib/api';
+   :          ^|^
+   :           `-- 'api' is imported here
+ 4 | import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+   `----
+  help: Consider removing this import.
+
+  ! eslint(no-unused-expressions): Expected expression to be used
+    ,-[src/features/practice/QuestionBrowser.jsx:95:5]
+ 94 |     const next = new Set(set);
+ 95 |     next.has(item) ? next.delete(item) : next.add(item);
+    :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |     return next;
+    `----
+  help: Consider using this expression or removing it
 
   ! eslint(no-unused-vars): Identifier 'generateInterviewTask' is imported but never used.
    ,-[src/features/interview/InterviewArena.jsx:5:10]
@@ -764,629 +1378,14 @@
   help: Consider removing this parameter.
 
   ! eslint(no-unused-vars): Parameter 'node' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/features/interview/InterviewArena.jsx:705:38]
- 704 |                             components={{
- 705 |                               code({ node, inline, className, children, ...props }) {
+     ,-[src/features/interview/InterviewArena.jsx:707:38]
+ 706 |                             components={{
+ 707 |                               code({ node, inline, className, children, ...props }) {
      :                                      ^^|^
      :                                        `-- 'node' is declared here
- 706 |                                 const match = /language-(\w+)/.exec(className || '');
+ 708 |                                 const match = /language-(\w+)/.exec(className || '');
      `----
   help: Consider removing this parameter.
 
-  ! eslint(no-unused-vars): Catch parameter 'e' is caught but never used.
-     ,-[src/features/practice/SqlEditor.jsx:288:16]
- 287 |         disposable.dispose();
- 288 |       } catch (e) {
-     :                |
-     :                `-- 'e' is declared here
- 289 |         // Safe disposal
-     `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Parameter 'columns' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/utils/sqlAnalysis.js:263:33]
- 262 | 
- 263 | const hasPartialDependencies = (columns, indexes) => {
-     :                                 ^^^|^^^
-     :                                    `-- 'columns' is declared here
- 264 |   return false; // Heuristic: assumed false unless explicitly violated in our educational DBs
-     `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'indexes' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/utils/sqlAnalysis.js:263:42]
- 262 | 
- 263 | const hasPartialDependencies = (columns, indexes) => {
-     :                                          ^^^|^^^
-     :                                             `-- 'indexes' is declared here
- 264 |   return false; // Heuristic: assumed false unless explicitly violated in our educational DBs
-     `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
-     ,-[src/utils/sqlAnalysis.js:305:12]
- 304 |     return { nf: 'Unnormalized', reason: 'Lacks a primary key.' };
- 305 |   } catch (err) {
-     :            ^|^
-     :             `-- 'err' is declared here
- 306 |     return { nf: 'Unknown', reason: 'Error analyzing schema.' };
-     `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Identifier 'ShieldAlert' is imported but never used.
-   ,-[src/features/interview/CompanyGrid.jsx:3:10]
- 2 | import { useNavigate } from 'react-router-dom';
- 3 | import { ShieldAlert } from 'lucide-react';
-   :          ^^^^^|^^^^^
-   :               `-- 'ShieldAlert' is imported here
- 4 | 
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Parameter 'onSelect' is declared but never used. Unused parameters should start with a '_'.
-   ,-[src/features/interview/CompanyGrid.jsx:5:42]
- 4 | 
- 5 | export function CompanyGrid({ companies, onSelect, onClose }) {
-   :                                          ^^^^|^^^
-   :                                              `-- 'onSelect' is declared here
- 6 |   const navigate = useNavigate();
-   `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Identifier 'useMemo' is imported but never used.
-   ,-[src/pages/CompanyPrepPage.jsx:1:27]
- 1 | import React, { useState, useMemo } from 'react';
-   :                           ^^^|^^^
-   :                              `-- 'useMemo' is imported here
- 2 | import { useQuery } from '@tanstack/react-query';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'ArrowLeft' is imported but never used.
-   ,-[src/pages/CompanyPrepPage.jsx:4:10]
- 3 | import { useParams, useNavigate, Link } from 'react-router-dom';
- 4 | import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
-   :          ^^^^|^^^^
-   :              `-- 'ArrowLeft' is imported here
- 5 | import { Helmet } from 'react-helmet-async';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
-   ,-[src/pages/CompanyPrepPage.jsx:4:35]
- 3 | import { useParams, useNavigate, Link } from 'react-router-dom';
- 4 | import { ArrowLeft, ChevronRight, Clock } from 'lucide-react';
-   :                                   ^^|^^
-   :                                     `-- 'Clock' is imported here
- 5 | import { Helmet } from 'react-helmet-async';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Code2' is imported but never used.
-   ,-[src/features/ai/AiTutorPanel.jsx:2:39]
- 1 | import React, { useState, useEffect, useRef } from 'react';
- 2 | import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
-   :                                       ^^|^^
-   :                                         `-- 'Code2' is imported here
- 3 | import { Button } from '@/shared/ui/Button';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Play' is imported but never used.
-   ,-[src/features/ai/AiTutorPanel.jsx:2:46]
- 1 | import React, { useState, useEffect, useRef } from 'react';
- 2 | import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
-   :                                              ^^|^
-   :                                                `-- 'Play' is imported here
- 3 | import { Button } from '@/shared/ui/Button';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
-    ,-[src/features/ai/AiTutorPanel.jsx:73:14]
- 72 |       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
- 73 |     } catch (err) {
-    :              ^|^
-    :               `-- 'err' is declared here
- 74 |       setMessages((prev) => [
-    `----
-  help: Consider handling this error.
-
-  ! eslint(no-unused-vars): Parameter 'node' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/features/ai/AiTutorPanel.jsx:162:9]
- 161 |                     components={{
- 162 |   pre({ node, children, ...props }) {
-     :         ^^|^
-     :           `-- 'node' is declared here
- 163 |     const child = Array.isArray(children) ? children[0] : children;
-     `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'node' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/features/ai/AiTutorPanel.jsx:176:10]
- 175 |   },
- 176 |   code({ node, className, children, ...props }) {
-     :          ^^|^
-     :            `-- 'node' is declared here
- 177 |     return (
-     `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'className' is declared but never used. Unused parameters should start with a '_'.
-     ,-[src/features/ai/AiTutorPanel.jsx:176:16]
- 175 |   },
- 176 |   code({ node, className, children, ...props }) {
-     :                ^^^^|^^^^
-     :                    `-- 'className' is declared here
- 177 |     return (
-     `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Identifier 'TableCell' is imported but never used.
-   ,-[src/features/practice/ResultsPanel.jsx:3:10]
- 2 | import { DiffTable } from './DiffTable';
- 3 | import { TableCell, NullSummaryPanel } from '@/features/visualizers/NullVisualizer';
-   :          ^^^^|^^^^
-   :              `-- 'TableCell' is imported here
- 4 | import { ExecutionPlanTree } from '@/features/visualizers/ExecutionPlanTree';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Parameter 'aiSolution' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/features/practice/QuestionAiSection.jsx:14:3]
- 13 |   lastValidation,
- 14 |   aiSolution,
-    :   ^^^^^|^^^^
-    :        `-- 'aiSolution' is declared here
- 15 |   aiSolutionLoading,
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'aiSolutionError' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/features/practice/QuestionAiSection.jsx:16:3]
- 15 |   aiSolutionLoading,
- 16 |   aiSolutionError,
-    :   ^^^^^^^|^^^^^^^
-    :          `-- 'aiSolutionError' is declared here
- 17 |   aiExpectedResult,
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'executeQuery' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/features/practice/QuestionAiSection.jsx:21:3]
- 20 |   setAiExpectedResult,
- 21 |   executeQuery
-    :   ^^^^^^|^^^^^
-    :         `-- 'executeQuery' is declared here
- 22 | }) {
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Variable 'user' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/pages/PrivacyPolicy.jsx:10:11]
-  9 |   const navigate = useNavigate();
- 10 |   const { user } = useAuth();
-    :           ^^|^
-    :             `-- 'user' is declared here
- 11 | 
-    `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Identifier 'api' is imported but never used.
-   ,-[src/features/practice/QuestionBrowser.jsx:3:10]
- 2 | import { DB_INFO } from '@/data/schemas';
- 3 | import { api } from '@/lib/api';
-   :          ^|^
-   :           `-- 'api' is imported here
- 4 | import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-expressions): Expected expression to be used
-    ,-[src/features/practice/QuestionBrowser.jsx:95:5]
- 94 |     const next = new Set(set);
- 95 |     next.has(item) ? next.delete(item) : next.add(item);
-    :     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- 96 |     return next;
-    `----
-  help: Consider using this expression or removing it
-
-  ! eslint(no-unused-vars): Identifier 'Moon' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:10]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :          ^^|^
-   :            `-- 'Moon' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Type' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:21]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :                     ^^|^
-   :                       `-- 'Type' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Play' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:27]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :                           ^^|^
-   :                             `-- 'Play' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Save' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:40]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :                                        ^^|^
-   :                                          `-- 'Save' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Trash2' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:69]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :                                                                     ^^^|^^
-   :                                                                        `-- 'Trash2' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Loader2' is imported but never used.
-   ,-[src/features/profile/SettingsTab.jsx:2:106]
- 1 | import React, { useState } from 'react';
- 2 | import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-   :                                                                                                          ^^^|^^^
-   :                                                                                                             `-- 'Loader2' is imported here
- 3 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useGamificationStore' is imported but never used.
-   ,-[src/pages/PracticePage.jsx:8:10]
- 7 | import { useProgressStore } from '@/stores/useProgressStore';
- 8 | import { useGamificationStore } from '@/stores/useGamificationStore';
-   :          ^^^^^^^^^^|^^^^^^^^^
-   :                    `-- 'useGamificationStore' is imported here
- 9 | import { useSettingsStore } from '@/stores/useSettingsStore';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Button' is imported but never used.
-    ,-[src/pages/PracticePage.jsx:13:10]
- 12 | import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
- 13 | import { Button } from '@/shared/ui/Button';
-    :          ^^^|^^
-    :             `-- 'Button' is imported here
- 14 | import { Database } from 'lucide-react';
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Database' is imported but never used.
-    ,-[src/pages/PracticePage.jsx:14:10]
- 13 | import { Button } from '@/shared/ui/Button';
- 14 | import { Database } from 'lucide-react';
-    :          ^^^^|^^^
-    :              `-- 'Database' is imported here
- 15 | import { getQuestionsForDb } from '@/data/index';
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Variable 'user' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/pages/TermsAndServices.jsx:10:11]
-  9 |   const navigate = useNavigate();
- 10 |   const { user } = useAuth();
-    :           ^^|^
-    :             `-- 'user' is declared here
- 11 | 
-    `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Identifier 'BookOpen' is imported but never used.
-   ,-[src/features/visualizers/TheoryConnector.jsx:3:10]
- 2 | import { CONCEPTS, CONCEPT_TRIGGERS } from '@/data/concepts';
- 3 | import { BookOpen, GraduationCap, AlertOctagon, Lightbulb, CheckCircle2, Database, Calculator, Link, LayoutList, TerminalSquare, AlertTriangle, Zap } from 'lucide-react';
-   :          ^^^^|^^^
-   :              `-- 'BookOpen' is imported here
- 4 | 
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Variable 'upperSql' is declared but never used. Unused variables should start with a '_'.
-     ,-[src/features/visualizers/TheoryConnector.jsx:129:9]
- 128 | const detectConcept = (sql) => {
- 129 |   const upperSql = sql.toUpperCase();
-     :         ^^^^|^^^
-     :             `-- 'upperSql' is declared here
- 130 |   for (const [pattern, conceptId] of Object.entries(CONCEPT_TRIGGERS)) {
-     `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/stores/useProgressStore.js:19:46]
- 18 | 
- 19 | export const useProgressStore = create((set, get) => ({
-    :                                              ^|^
-    :                                               `-- 'get' is declared here
- 20 |   progress: {},
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Identifier 'useProgressStore' is imported but never used.
-   ,-[src/stores/useGamificationStore.js:3:10]
- 2 | import { api } from '@/lib/api';
- 3 | import { useProgressStore } from './useProgressStore';
-   :          ^^^^^^^^|^^^^^^^
-   :                  `-- 'useProgressStore' is imported here
- 4 | 
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/stores/useGamificationStore.js:45:50]
- 44 | 
- 45 | export const useGamificationStore = create((set, get) => ({
-    :                                                  ^|^
-    :                                                   `-- 'get' is declared here
- 46 |   gameState: DEFAULT_STATE,
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Parameter 'get' is declared but never used. Unused parameters should start with a '_'.
-    ,-[src/stores/useAuthStore.js:13:37]
- 12 |  */
- 13 | export const useAuth = create((set, get) => {
-    :                                     ^|^
-    :                                      `-- 'get' is declared here
- 14 |   if (typeof window !== 'undefined' && !authExpiredListenerBound) {
-    `----
-  help: Consider removing this parameter.
-
-  ! eslint(no-unused-vars): Identifier 'Menu' is imported but never used.
-    ,-[src/shared/ui/Header.jsx:12:3]
- 11 |   Trophy,
- 12 |   Menu,
-    :   ^^|^
-    :     `-- 'Menu' is imported here
- 13 |   X,
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'X' is imported but never used.
-    ,-[src/shared/ui/Header.jsx:13:3]
- 12 |   Menu,
- 13 |   X,
-    :   |
-    :   `-- 'X' is imported here
- 14 |   Flame,
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Button' is imported but never used.
-    ,-[src/shared/ui/Header.jsx:17:10]
- 16 | } from 'lucide-react';
- 17 | import { Button } from '@/shared/ui/Button';
-    :          ^^^|^^
-    :             `-- 'Button' is imported here
- 18 | import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Variable 'isMobileMenuOpen' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/shared/ui/Header.jsx:26:10]
- 25 |   const [showLeaderboard, setShowLeaderboard] = useState(false);
- 26 |   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    :          ^^^^^^^^|^^^^^^^
-    :                  `-- 'isMobileMenuOpen' is declared here
- 27 |   const { settings, toggleDarkMode } = useSettingsStore();
-    `----
-  help: Consider removing this declaration.
-
-  ! eslint(no-unused-vars): Variable 'setIsMobileMenuOpen' is declared but never used. Unused variables should start with a '_'.
-    ,-[src/shared/ui/Header.jsx:26:28]
- 25 |   const [showLeaderboard, setShowLeaderboard] = useState(false);
- 26 |   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    :                            ^^^^^^^^^|^^^^^^^^^
-    :                                     `-- 'setIsMobileMenuOpen' is declared here
- 27 |   const { settings, toggleDarkMode } = useSettingsStore();
-    `----
-  help: Consider removing this declaration.
-
-  x eslint(no-undef): 'customSchema' is not defined.
-    ,-[src/features/practice/PracticeWorkspace.jsx:60:29]
- 59 |               autoComplete={settings?.autoCompleteSql !== false}
- 60 |               customSchema={customSchema}
-    :                             ^^^^^^^^^^^^
- 61 |               headerActions={
-    `----
-  help: Either define 'customSchema' or remove the reference to it. If 'customSchema' is a global variable, add it to the 'globals' configuration.
-
-  ! eslint(no-unused-vars): Identifier 'useMemo' is imported but never used.
-   ,-[src/pages/HomePage.jsx:1:17]
- 1 | import React, { useMemo, useState } from 'react';
-   :                 ^^^|^^^
-   :                    `-- 'useMemo' is imported here
- 2 | import { useNavigate } from 'react-router-dom';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useState' is imported but never used.
-   ,-[src/pages/HomePage.jsx:1:26]
- 1 | import React, { useMemo, useState } from 'react';
-   :                          ^^^^|^^^
-   :                              `-- 'useState' is imported here
- 2 | import { useNavigate } from 'react-router-dom';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'BookOpen' is imported but never used.
-   ,-[src/pages/HomePage.jsx:5:3]
- 4 | import {
- 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
-   :   ^^^^|^^^
-   :       `-- 'BookOpen' is imported here
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Clock' is imported but never used.
-   ,-[src/pages/HomePage.jsx:6:34]
- 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
-   :                                  ^^|^^
-   :                                    `-- 'Clock' is imported here
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'BarChart3' is imported but never used.
-   ,-[src/pages/HomePage.jsx:6:41]
- 5 |   BookOpen, Target, Play, ArrowRight, Briefcase, Zap, Bot,
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
-   :                                         ^^^^|^^^^
-   :                                             `-- 'BarChart3' is imported here
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'ChevronRight' is imported but never used.
-   ,-[src/pages/HomePage.jsx:7:3]
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   :   ^^^^^^|^^^^^
-   :         `-- 'ChevronRight' is imported here
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'TrendingUp' is imported but never used.
-   ,-[src/pages/HomePage.jsx:7:25]
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   :                         ^^^^^|^^^^
-   :                              `-- 'TrendingUp' is imported here
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Building2' is imported but never used.
-   ,-[src/pages/HomePage.jsx:7:37]
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   :                                     ^^^^|^^^^
-   :                                         `-- 'Building2' is imported here
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Code' is imported but never used.
-   ,-[src/pages/HomePage.jsx:7:58]
- 6 |   Database, Trophy, CheckCircle, Clock, BarChart3, Upload,
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
-   :                                                          ^^|^
-   :                                                            `-- 'Code' is imported here
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Code2' is imported but never used.
-   ,-[src/pages/HomePage.jsx:8:3]
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   :   ^^|^^
-   :     `-- 'Code2' is imported here
- 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Link2' is imported but never used.
-   ,-[src/pages/HomePage.jsx:8:10]
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   :          ^^|^^
-   :            `-- 'Link2' is imported here
- 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Star' is imported but never used.
-   ,-[src/pages/HomePage.jsx:8:56]
- 7 |   ChevronRight, Layers, TrendingUp, Building2, Terminal, Code,
- 8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-   :                                                        ^^|^
-   :                                                          `-- 'Star' is imported here
- 9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Users' is imported but never used.
-    ,-[src/pages/HomePage.jsx:9:3]
-  8 |   Code2, Link2, Sparkles, LayoutTemplate, ShieldAlert, Star,
-  9 |   Users, Activity, Lock, Cpu, Globe, ArrowUpRight
-    :   ^^|^^
-    :     `-- 'Users' is imported here
- 10 | } from 'lucide-react';
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useAuth' is imported but never used.
-    ,-[src/pages/HomePage.jsx:16:10]
- 15 | import { allQuestions, getQuestionsForDb } from '@/data/index';
- 16 | import { useAuth } from '@/stores/useAuthStore';
-    :          ^^^|^^^
-    :             `-- 'useAuth' is imported here
- 17 | import { useProgressStore } from '@/stores/useProgressStore';
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'useGamificationStore' is imported but never used.
-    ,-[src/pages/HomePage.jsx:18:10]
- 17 | import { useProgressStore } from '@/stores/useProgressStore';
- 18 | import { useGamificationStore } from '@/stores/useGamificationStore';
-    :          ^^^^^^^^^^|^^^^^^^^^
-    :                    `-- 'useGamificationStore' is imported here
- 19 | 
-    `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'Check' is imported but never used.
-   ,-[src/features/visualizers/AnimatedJoinVisualizer.jsx:2:34]
- 1 | import React, { useState, useEffect, useRef } from 'react';
- 2 | import { Play, Pause, RotateCcw, Check, X, AlertTriangle, SkipBack, SkipForward, FastForward } from 'lucide-react';
-   :                                  ^^|^^
-   :                                    `-- 'Check' is imported here
- 3 | import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'FastForward' is imported but never used.
-   ,-[src/features/visualizers/AnimatedJoinVisualizer.jsx:2:82]
- 1 | import React, { useState, useEffect, useRef } from 'react';
- 2 | import { Play, Pause, RotateCcw, Check, X, AlertTriangle, SkipBack, SkipForward, FastForward } from 'lucide-react';
-   :                                                                                  ^^^^^|^^^^^
-   :                                                                                       `-- 'FastForward' is imported here
- 3 | import { detectTablesAndJoins } from '@/utils/sqlJoinParser';
-   `----
-  help: Consider removing this import.
-
-  ! eslint(no-unused-vars): Identifier 'ArrowLeft' is imported but never used.
-    ,-[src/pages/CustomDatasetPage.jsx:18:3]
- 17 |   PanelRightOpen,
- 18 |   ArrowLeft,
-    :   ^^^^|^^^^
-    :       `-- 'ArrowLeft' is imported here
- 19 |   ListOrdered,
-    `----
-  help: Consider removing this import.
-
-Found 138 warnings and 1 error.
-Finished in 34ms on 135 files with 96 rules using 12 threads.
+Found 137 warnings and 2 errors.
+Finished in 118ms on 135 files with 96 rules using 12 threads.
