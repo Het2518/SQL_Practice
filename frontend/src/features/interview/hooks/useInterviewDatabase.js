@@ -1,50 +1,30 @@
 /**
  * useInterviewDatabase.js
  *
- * A DEDICATED, self-contained sql.js (WASM) database hook exclusively for the
- * Interview Arena. It spawns its OWN Worker instance completely separate from
- * the global SqlWorkerManager singleton used by the Practice/Custom pages.
- *
- * Why? The root cause of "Database not initialized" was that SqlWorkerManager
- * is a module-level singleton. All pages share one worker, so whichever page
- * last called INIT wins. The Interview Arena's INIT was being clobbered by
- * navigations or vice-versa. This hook owns its worker from mount to unmount.
- *
- * Lifecycle:
- *  - on mount: spawn worker, load sql-wasm.js
- *  - initDb(sql):  run INIT message, set dbReady = true
- *  - executeQuery(sql): waits for dbReady, then runs EXECUTE
- *  - on unmount: terminate worker
+ * A dedicated, self-contained sql.js (WASM) database hook exclusively for the
+ * Interview Arena. It owns its dedicated Worker instance from mount to unmount.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
-// Import the worker using Vite's ?worker syntax so it's correctly bundled
 import SqlWorker from '../../../workers/sql.worker.js?worker';
 
-const BASE_URL = import.meta.env.BASE_URL || '/';
-
-// ─── Small helper: create a new dedicated worker instance ────────────────────
-function createSqlWorker() {
-  return new SqlWorker();
-}
-
-// ─── State machine: 'idle' | 'loading' | 'ready' | 'error' ──────────────────
 export function useInterviewDatabase() {
   const workerRef = useRef(null);
   const pendingRef = useRef(new Map()); // msgId → { resolve, reject }
   const counterRef = useRef(1);
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
   const [dbError, setDbError] = useState(null);
-  const initSqlRef = useRef(null); // keep for recovery
+
+  const initSqlRef = useRef(null);
+  const isReadyRef = useRef(false);
+  const initPromiseRef = useRef(null);
 
   // ── Spawn & wire up the worker ──────────────────────────────────────────────
   useEffect(() => {
-    const worker = createSqlWorker();
+    const worker = new SqlWorker();
     workerRef.current = worker;
 
     worker.onmessage = (e) => {
-      const { id, success, data, error, type, payload } = e.data;
-
-      // Progress messages have no pending promise entry
+      const { id, success, data, error, type } = e.data;
       if (type === 'PROGRESS') return;
 
       const pending = pendingRef.current.get(id);
@@ -54,29 +34,30 @@ export function useInterviewDatabase() {
       if (success) {
         pending.resolve(data);
       } else {
-        pending.reject(new Error(error || 'Unknown worker error'));
+        pending.reject(new Error(error || 'Worker operation failed'));
       }
     };
 
     worker.onerror = (err) => {
-      console.error('[InterviewDB] Worker crashed:', err.message);
-      // Reject all pending
+      console.error('[InterviewDB] Worker error:', err?.message);
       for (const { reject } of pendingRef.current.values()) {
-        reject(new Error('SQL Worker crashed. Please refresh the page.'));
+        reject(new Error(err?.message || 'SQL Worker crashed'));
       }
       pendingRef.current.clear();
+      isReadyRef.current = false;
       setStatus('error');
-      setDbError('SQL Worker crashed unexpectedly.');
+      setDbError('SQL Worker error.');
     };
 
     return () => {
       worker.terminate();
       workerRef.current = null;
+      isReadyRef.current = false;
     };
-  }, []); // run once on mount
+  }, []);
 
   // ── Low-level message dispatch ──────────────────────────────────────────────
-  const sendMessage = useCallback((type, payload, timeoutMs = 20000) => {
+  const sendMessage = useCallback((type, payload, timeoutMs = 25000) => {
     return new Promise((resolve, reject) => {
       const worker = workerRef.current;
       if (!worker) {
@@ -88,7 +69,7 @@ export function useInterviewDatabase() {
       const timeoutId = setTimeout(() => {
         if (pendingRef.current.has(id)) {
           pendingRef.current.delete(id);
-          reject(new Error('Query timed out after 20 seconds.'));
+          reject(new Error('Query execution timed out.'));
         }
       }, timeoutMs);
 
@@ -101,30 +82,22 @@ export function useInterviewDatabase() {
     });
   }, []);
 
-  // ── Public API ──────────────────────────────────────────────────────────────
-
-  const initPromiseRef = useRef(null); // in-flight init promise to await
-
-  /**
-   * Initialize the in-memory SQLite database with a SQL script.
-   * Strips markdown fences, then runs INIT message on worker.
-   * @param {string} sql - CREATE TABLE + INSERT INTO statements
-   * @returns {Promise<void>}
-   */
+  // ── Init DB ─────────────────────────────────────────────────────────────────
   const initDb = useCallback(async (sql) => {
     if (!sql || !sql.trim() || sql.trim() === '-- init') {
-      console.warn('[InterviewDB] initDb called with empty/placeholder SQL. Skipping.');
+      isReadyRef.current = true;
       setStatus('ready');
       return;
     }
 
+    initSqlRef.current = sql;
     setStatus('loading');
     setDbError(null);
-    initSqlRef.current = sql;
 
-    const initPromise = (async () => {
+    const promise = (async () => {
       try {
         await sendMessage('INIT', { initSql: sql, forceFresh: true }, 30000);
+        isReadyRef.current = true;
         setStatus('ready');
       } catch (err) {
         console.error('[InterviewDB] initDb failed:', err.message);
@@ -132,71 +105,62 @@ export function useInterviewDatabase() {
         setDbError(err.message);
         throw err;
       } finally {
-        if (initPromiseRef.current === initPromise) {
+        if (initPromiseRef.current === promise) {
           initPromiseRef.current = null;
         }
       }
     })();
 
-    initPromiseRef.current = initPromise;
-    return initPromise;
+    initPromiseRef.current = promise;
+    return promise;
   }, [sendMessage]);
 
-  /**
-   * Execute a SQL query against the interview database.
-   * Automatically awaits in-flight database initialization if one is currently in progress.
-   * Returns { columns, rows, error?, execTimeMs? }
-   * @param {string} sql
-   */
+  // ── Execute Query ───────────────────────────────────────────────────────────
   const executeQuery = useCallback(async (sql) => {
     if (!sql || !sql.trim()) {
       return { columns: [], rows: [], error: 'Please enter a SQL query.' };
     }
 
-    // 1. If currently initializing, smoothly await initialization to finish
+    // 1. Await any active initialization in progress
     if (initPromiseRef.current) {
       try {
         await initPromiseRef.current;
-      } catch (initErr) {
-        return { columns: [], rows: [], error: `Database initialization failed: ${initErr.message}` };
+      } catch (err) {
+        console.warn('[InterviewDB] In-flight init failed:', err.message);
       }
     }
 
-    // 2. If status is still not ready, attempt immediate recovery init
-    if (status !== 'ready') {
-      if (initSqlRef.current) {
-        console.warn('[InterviewDB] DB not ready on executeQuery, running recovery init...');
-        try {
-          await initDb(initSqlRef.current);
-        } catch {
-          return { columns: [], rows: [], error: 'Database is still initializing. Please try again.' };
-        }
+    // 2. If worker hasn't been initialized yet, run init once
+    if (!isReadyRef.current && initSqlRef.current) {
+      try {
+        await sendMessage('INIT', { initSql: initSqlRef.current, forceFresh: true }, 30000);
+        isReadyRef.current = true;
+        setStatus('ready');
+      } catch (err) {
+        console.warn('[InterviewDB] On-demand init failed:', err.message);
       }
     }
 
+    // 3. Execute directly on the worker
     try {
       const result = await sendMessage('EXECUTE', { sql }, 15000);
-      return result;
+      return result || { columns: [], rows: [] };
     } catch (err) {
-      // If the worker lost the db, try recovery once
+      // If the worker threw because db wasn't initialized, attempt recovery and execute
       if (err.message && err.message.toLowerCase().includes('database not initialized') && initSqlRef.current) {
-        console.warn('[InterviewDB] Worker lost db, attempting hot recovery...');
         try {
           await sendMessage('INIT', { initSql: initSqlRef.current, forceFresh: true }, 30000);
+          isReadyRef.current = true;
           setStatus('ready');
-          const retry = await sendMessage('EXECUTE', { sql }, 15000);
-          return retry;
-        } catch (recErr) {
-          return { columns: [], rows: [], error: recErr.message };
+          return await sendMessage('EXECUTE', { sql }, 15000);
+        } catch (retryErr) {
+          return { columns: [], rows: [], error: retryErr.message };
         }
       }
       return { columns: [], rows: [], error: err.message };
     }
-  }, [sendMessage, status, initDb]);
+  }, [sendMessage]);
 
-  /**
-   * Reset the database back to its initial state (re-runs initSql).
-   */
   const resetDb = useCallback(async () => {
     if (initSqlRef.current) {
       await initDb(initSqlRef.current);
@@ -204,7 +168,6 @@ export function useInterviewDatabase() {
   }, [initDb]);
 
   return {
-    /** 'idle' | 'loading' | 'ready' | 'error' */
     dbStatus: status,
     dbError,
     dbReady: status === 'ready',

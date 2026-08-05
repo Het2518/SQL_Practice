@@ -24,10 +24,10 @@ function PermCard({ icon: Icon, title, subtitle, granted, onGrant, label }) {
       <button
         onClick={!granted ? onGrant : undefined}
         disabled={granted}
-        className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+        className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
           granted
-            ? 'bg-success/10 text-success cursor-default border border-success/20'
-            : 'bg-primary text-white hover:bg-primary/90 active:scale-95 shadow-md shadow-primary/20'
+            ? 'bg-success/15 text-success cursor-default border border-success/30 font-bold'
+            : 'bg-primary text-primary-foreground hover:opacity-90 active:scale-95 shadow-sm cursor-pointer'
         }`}
       >
         {granted ? '✓ Granted' : label}
@@ -180,8 +180,8 @@ export function InterviewPermissions() {
               onClick={handleNext}
               className={`flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
                 allGranted
-                  ? 'bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:scale-[1.02]'
-                  : 'bg-surface-2 text-text-secondary border border-border cursor-not-allowed'
+                  ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20 hover:scale-[1.02] cursor-pointer'
+                  : 'bg-surface-2 text-text-secondary/50 border border-border cursor-not-allowed opacity-60'
               }`}
             >
               Continue to Pre-Flight

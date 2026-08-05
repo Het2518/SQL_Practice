@@ -84,8 +84,9 @@ const sanitizeInitSql = (rawSql, tables) => {
   let sql = rawSql
     ? rawSql.replace(/```(?:sql|sqlite)?\s*/gi, '').replace(/```/g, '').trim()
     : null;
-  if (!sql || !sql.toLowerCase().includes('create table')) {
-    sql = buildInitSqlFromTables(tables);
+  if (!sql || !sql.toLowerCase().includes('create table') || !sql.toLowerCase().includes('insert into')) {
+    const generated = buildInitSqlFromTables(tables);
+    if (generated) sql = generated;
   }
   return sql || null;
 };
