@@ -115,6 +115,7 @@ export function InterviewArena() {
     try {
       if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     } catch (e) {}
+    handleFailToReport();
   };
 
   const { fullscreenWarning, setFullscreenWarning } = useProctoring({
@@ -208,7 +209,7 @@ export function InterviewArena() {
   };
 
 
-  const handleFailToReport = () => {
+  function handleFailToReport() {
     clearSessionState();
     try {
       const { stopAllStreams } = useProctorStore.getState();

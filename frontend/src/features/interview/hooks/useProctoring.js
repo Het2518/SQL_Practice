@@ -8,21 +8,27 @@ export function useProctoring({
 }) {
   const [fullscreenWarning, setFullscreenWarning] = useState(false);
   const fullscreenTimeoutRef = useRef(null);
+  const gracePeriodRef = useRef(true);
 
   // Zero-Tolerance Anti-Cheat
   useEffect(() => {
     if (isSubmittedRef.current || isTerminated) return;
 
-    let gracePeriodActive = true;
     const graceTimer = setTimeout(() => {
-      gracePeriodActive = false;
+      gracePeriodRef.current = false;
       if (!document.fullscreenElement && !isSubmittedRef.current) {
-        enforceViolation('Exited fullscreen mode.');
+        enforceViolation('Exited fullscreen mode immediately after starting.');
       }
     }, 5000);
 
+    return () => clearTimeout(graceTimer);
+  }, []); // Run once on mount
+
+  useEffect(() => {
+    if (isSubmittedRef.current || isTerminated) return;
+
     const handleFullscreenChange = () => {
-      if (gracePeriodActive || isSubmittedRef.current || isTerminated) return;
+      if (gracePeriodRef.current || isSubmittedRef.current || isTerminated) return;
       if (!document.fullscreenElement) {
         setFullscreenWarning(true);
         addViolation('Exited fullscreen mode', 30);
@@ -41,15 +47,14 @@ export function useProctoring({
     };
 
     const handleVisibilityChange = () => {
-      if (gracePeriodActive || isSubmittedRef.current || isTerminated) return;
+      if (gracePeriodRef.current || isSubmittedRef.current || isTerminated) return;
       if (document.hidden) {
-        addViolation('Tab switched or minimized', 50);
         enforceViolation('Tab switching is strictly prohibited.');
       }
     };
 
     const handleBlur = () => {
-      if (gracePeriodActive || isSubmittedRef.current || isTerminated) return;
+      if (gracePeriodRef.current || isSubmittedRef.current || isTerminated) return;
       // In dev mode with dev tools open, blur triggers constantly.
       // We only flag it as a minor warning, not an immediate termination.
       addViolation('Window lost focus', 10);
@@ -58,7 +63,7 @@ export function useProctoring({
     const handleClipboard = (e) => {
       if (isSubmittedRef.current || isTerminated) return;
       e.preventDefault();
-      addViolation('Clipboard actions (copy/cut/paste) are disabled.', 20);
+      enforceViolation('Clipboard actions (copy/cut/paste) are strictly prohibited.');
     };
 
     const handleContextMenu = (e) => {
@@ -75,7 +80,6 @@ export function useProctoring({
     document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
-      clearTimeout(graceTimer);
       if (fullscreenTimeoutRef.current) clearTimeout(fullscreenTimeoutRef.current);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
