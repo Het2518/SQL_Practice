@@ -1032,6 +1032,34 @@ export function InterviewArena() {
             </div>
           )}
         </div>
+
+        {/* Live Proctoring PIP Feed */}
+        {cameraStream && (
+          <div className="fixed bottom-4 right-4 z-40 bg-surface/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 transition-all">
+            <div className="flex items-center justify-between gap-3 px-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-success">
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                PROCTORING ACTIVE
+              </div>
+              <span className="text-[9px] font-bold text-text-secondary bg-surface-2 px-1.5 py-0.5 rounded border border-border">
+                Live Feed
+              </span>
+            </div>
+            <div className="w-36 h-24 bg-black rounded-xl overflow-hidden relative border border-border shadow-inner">
+              <video
+                ref={(el) => {
+                  if (el && cameraStream && el.srcObject !== cameraStream) {
+                    el.srcObject = cameraStream;
+                  }
+                }}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover transform -scale-x-100"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

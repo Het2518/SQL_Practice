@@ -1,9 +1,11 @@
+import initSqlJs from 'sql.js';
+import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
+
 let db = null;
 let SQL = null;
 let currentSchema = null; // Caches GET_SCHEMA results to avoid repetitive O(N) COUNT(*) scans
 
 const BASE_URL = import.meta?.env?.BASE_URL || '/';
-const SQL_JS_URL = `${BASE_URL}sql-wasm.js`;
 
 // Beast Optimization: LRU Cache for query results
 const queryCache = new Map();
@@ -36,10 +38,8 @@ function setCachedResult(sql, result) {
 async function loadSqlJs() {
   if (SQL) return SQL;
 
-  importScripts(SQL_JS_URL);
-
-  SQL = await self.initSqlJs({
-    locateFile: file => `${BASE_URL}${file}`
+  SQL = await initSqlJs({
+    locateFile: () => sqlWasmUrl
   });
   return SQL;
 }
