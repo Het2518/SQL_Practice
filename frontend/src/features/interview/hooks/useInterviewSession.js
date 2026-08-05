@@ -81,6 +81,7 @@ export function useInterviewSession({
   const [initialTask, setInitialTask] = useState(null);
   const [generatingQuestion, setGeneratingQuestion] = useState(true);
   const isSubmittedRef = useRef(false);
+  const savedInitSqlRef = useRef(null);
 
   useEffect(() => {
     const saved = restoreSessionState();
@@ -94,11 +95,14 @@ export function useInterviewSession({
       setGeneratingQuestion(false);
       
       let cleanInitSql = saved.initSql;
-      if (!cleanInitSql || cleanInitSql === '-- init') {
-         cleanInitSql = generateInitSqlFromTables(saved.initialTask?.tables);
-      } else {
+      if (cleanInitSql) {
          cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
       }
+      if (!cleanInitSql || cleanInitSql === '-- init' || !cleanInitSql.toLowerCase().includes('create table')) {
+         cleanInitSql = generateInitSqlFromTables(saved.initialTask?.tables);
+      }
+      
+      savedInitSqlRef.current = cleanInitSql;
       
       initWithSql(cleanInitSql, { 
         dbKey: `interview_${saved.initialTask?.id || 'session'}`, 
@@ -139,6 +143,8 @@ export function useInterviewSession({
              }
           }
           
+          savedInitSqlRef.current = cleanInitSql;
+          
           await initWithSql(cleanInitSql, {
             dbKey: `interview_${taskData.id || 'session'}`,
             forceFresh: true
@@ -157,6 +163,7 @@ export function useInterviewSession({
         } catch (err) {
           console.error(err);
           setInitialTask(FALLBACK_TASK);
+          savedInitSqlRef.current = FALLBACK_TASK.initSql;
           await initWithSql(FALLBACK_TASK.initSql, {
             dbKey: 'interview_fallback',
             forceFresh: true
@@ -186,7 +193,7 @@ export function useInterviewSession({
       if (!isSubmittedRef.current && !isTerminated) {
         saveSessionState({
           difficulty, companyName, roleName, candidateName, initialTask,
-          messages, sql, scratchpad, timeLeft
+          messages, sql, scratchpad, timeLeft, initSql: savedInitSqlRef.current
         });
       }
     }, 5000);

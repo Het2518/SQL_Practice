@@ -43,10 +43,19 @@ export function useSqlDatabase(dbInput) {
     try {
       let payload = {};
       if (typeof input === 'string') {
-        currentDbRef.current = input;
-        payload = { dbPath: dbPaths[input] };
+        if (dbPaths[input]) {
+          currentDbRef.current = input;
+          payload = { dbPath: dbPaths[input] };
+        } else if (input.startsWith('interview_') || input === 'custom_sql') {
+           // We cannot re-initialize without the actual SQL string
+           throw new Error('Cannot reset a custom database without its initialization string.');
+        } else if (input === '__custom__') {
+           throw new Error('Cannot reset a custom binary database without the file.');
+        } else {
+           throw new Error('Invalid database input');
+        }
       } else if (input && input.initSql) {
-        currentDbRef.current = input.id;
+        currentDbRef.current = input.id || 'custom_sql';
         payload = { initSql: input.initSql };
       } else {
         throw new Error('Invalid database input');
