@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Lint (Oxlint)
-        run: npx oxlint@latest
+        run: npm run lint
 
       - name: Build (Vite)
         run: npm run build

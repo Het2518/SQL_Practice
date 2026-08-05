@@ -17,6 +17,13 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 
+const formatTime = (seconds) => {
+  if (seconds <= 0) return '00:00';
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+};
+
 export function InterviewArena() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

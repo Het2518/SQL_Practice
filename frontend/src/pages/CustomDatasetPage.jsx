@@ -88,7 +88,11 @@ function SchemaSidebar({ schema, onInsert }) {
   const toggle = (name) =>
     setExpanded((prev) => {
       const s = new Set(prev);
-      s.has(name) ? s.delete(name) : s.add(name);
+      if (s.has(name)) {
+        s.delete(name);
+      } else {
+        s.add(name);
+      }
       return s;
     });
 

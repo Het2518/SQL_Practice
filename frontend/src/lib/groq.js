@@ -273,7 +273,7 @@ RULES:
     ], MODEL_SMART, 1024, false);
 
     // Clean up potential markdown if the model disobeys
-    let cleanSql = response.replace(/`\``sql/g, '').replace(/`\``/g, '').trim();
+    let cleanSql = response.replace(/```sql/g, '').replace(/```/g, '').trim();
     return cleanSql;
   } catch (err) {
     throw new Error('Failed to generate schema: ' + err.message);
