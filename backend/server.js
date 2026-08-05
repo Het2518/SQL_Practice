@@ -44,48 +44,83 @@ app.use((req, res, next) => {
   next();
 });
 
+const clientUrls = (process.env.CLIENT_URL || '')
+  .split(',')
+  .map((u) => u.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const STATIC_ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:4173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:4173',
+  'https://datadesk-sql.vercel.app',
+  ...clientUrls,
+]);
+
+function isOriginAllowed(origin) {
+  if (!origin) return true; // Allow non-browser requests (curl, server-to-server, health checks)
+  const normalized = origin.trim().replace(/\/+$/, '');
+  if (STATIC_ALLOWED_ORIGINS.has(normalized)) return true;
+
+  try {
+    const url = new URL(normalized);
+    // Allow all Vercel deployments for datadesk
+    if (url.hostname.endsWith('.vercel.app') && (url.hostname.startsWith('datadesk') || url.hostname === 'datadesk-sql.vercel.app')) {
+      return true;
+    }
+    // Allow localhost on any port
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 // ── Security Headers ─────────────────────────────────────────────────────────
 app.use(
   helmet({
-    // Content-Security-Policy: restrict resource origins
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", env.clientUrl].filter(Boolean),
+        connectSrc: ["'self'", 'https://datadesk-sql.vercel.app', ...clientUrls].filter(Boolean),
         fontSrc: ["'self'", 'https:', 'data:'],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
       },
     },
-    // Cross-Origin-Embedder-Policy can break some assets — leave permissive for API
     crossOriginEmbedderPolicy: false,
-    // Enforce HTTPS in production
     hsts: env.isDev ? false : { maxAge: 31536000, includeSubDomains: true, preload: true },
   })
 );
 
-// ── CORS: Explicit allowlist only — no substring matching ────────────────────
-const ALLOWED_ORIGINS = new Set(
-  [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-    env.clientUrl,
-  ].filter(Boolean)
-);
-
+// ── CORS ────────────────────────────────────────────────────────────────────
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, or health checks)
-      if (!origin) return callback(null, true);
-      if (ALLOWED_ORIGINS.has(origin)) return callback(null, true);
-      callback(new Error(`CORS: Origin '${origin}' is not allowed.`));
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-CSRF-Token',
+      'X-Request-ID',
+      'Cache-Control',
+      'Pragma',
+    ],
+    exposedHeaders: ['X-Request-ID', 'X-CSRF-Token'],
   })
 );
 
