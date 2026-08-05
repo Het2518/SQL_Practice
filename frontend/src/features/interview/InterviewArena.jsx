@@ -4,7 +4,8 @@ import {
   Bot, User, Loader2, ShieldAlert, Clock, Smartphone, AlertOctagon,
   Keyboard, X, CheckCircle2, Sun, Moon, Play, RotateCcw, Database,
   ChevronLeft, ChevronRight, Code2, MessageSquare, FileText, CheckCircle,
-  Circle, HelpCircle, ListChecks, Table, Sparkles, Check, Info, AlertCircle
+  Circle, HelpCircle, ListChecks, Table, Sparkles, Check, Info, AlertCircle,
+  GripHorizontal, Minimize2, Maximize2, Copy
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { chatInterview } from '@/lib/groq';
@@ -96,6 +97,35 @@ function SchemaPanel({ question, dbStatus }) {
   );
 }
 
+function CopyableTableName({ name }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(name);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-3 hover:bg-primary/10 border border-border hover:border-primary/40 transition-all text-text cursor-pointer"
+      title="Click to copy table name"
+    >
+      <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+      <span className="font-mono text-xs font-extrabold text-primary">{name}</span>
+      {copied ? (
+        <span className="text-[10px] text-success font-semibold flex items-center gap-0.5">
+          <Check size={11} /> Copied
+        </span>
+      ) : (
+        <Copy size={11} className="text-text-secondary opacity-50 group-hover:opacity-100 group-hover:text-primary transition-opacity" />
+      )}
+    </button>
+  );
+}
+
 // ─── Problem Detail View (Problem, Explanation, Tables with Samples, Expected Output) ──
 
 function ProblemDetailView({ question, sqlIndex, difficulty, dbSwitching }) {
@@ -148,7 +178,7 @@ function ProblemDetailView({ question, sqlIndex, difficulty, dbSwitching }) {
           <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary mb-2 flex items-center gap-1.5">
             <AlertCircle size={14} className="text-warning" /> Constraints & Requirements
           </h3>
-          <div className="text-xs text-text-secondary bg-warning/5 border border-warning/20 rounded-xl p-3.5">
+          <div className="text-xs text-text-secondary bg-warning/5 border border-warning/20 rounded-xl p-3.5 leading-relaxed">
             {question.constraints}
           </div>
         </div>
@@ -157,34 +187,38 @@ function ProblemDetailView({ question, sqlIndex, difficulty, dbSwitching }) {
       {/* 4. Table Information & Top 5 Sample Rows */}
       {question.tables && question.tables.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-            <Table size={14} className="text-primary" /> Input Tables & Sample Data
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+              <Table size={14} className="text-primary" /> Input Tables & Sample Data
+            </h3>
+            <span className="text-[10px] text-text-secondary font-medium">Click table name to copy</span>
+          </div>
 
           {question.tables.map((table, tIdx) => {
-            const cols = table.columns?.map(c => c.name) || (table.sampleData?.[0] ? Object.keys(table.sampleData[0]) : []);
+            const cols = table.columns?.map(c => (typeof c === 'string' ? c : c.name)) || (table.sampleData?.[0] ? Object.keys(table.sampleData[0]) : []);
             const sampleRows = (table.sampleData || []).slice(0, 5);
 
             return (
               <div key={table.name || tIdx} className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
                 {/* Table Header */}
-                <div className="px-3.5 py-2.5 bg-surface-2 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-mono text-xs font-bold text-text">
-                    <span className="w-2 h-2 rounded-full bg-primary" />
-                    {table.name}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {table.columns?.map((c, ci) => (
-                      <span key={ci} className="text-[10px] font-mono text-text-secondary bg-surface-3 px-1.5 py-0.5 rounded border border-border/50">
-                        {c.name} <span className="opacity-60 text-[9px]">({c.type})</span>
-                      </span>
-                    ))}
+                <div className="px-3.5 py-2.5 bg-surface-2 border-b border-border flex flex-wrap items-center justify-between gap-2">
+                  <CopyableTableName name={table.name} />
+                  <div className="flex flex-wrap items-center gap-1">
+                    {table.columns?.map((c, ci) => {
+                      const colName = typeof c === 'string' ? c : c.name;
+                      const colType = typeof c === 'object' && c.type ? c.type : 'TEXT';
+                      return (
+                        <span key={ci} className="text-[10px] font-mono text-text-secondary bg-surface px-2 py-0.5 rounded-md border border-border">
+                          {colName} <span className="opacity-60 text-[9px] font-bold">({colType})</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* Sample Data Table */}
                 {sampleRows.length > 0 ? (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-xs text-left border-collapse">
                       <thead>
                         <tr className="bg-surface-3 border-b border-border text-[11px] font-mono text-text-secondary">
@@ -228,7 +262,7 @@ function ProblemDetailView({ question, sqlIndex, difficulty, dbSwitching }) {
               <span>Expected Output Sample</span>
               <span className="text-[10px] opacity-80 font-normal">Matching rows</span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-xs text-left border-collapse font-mono">
                 <thead>
                   <tr className="bg-surface-3 border-b border-border text-[11px] text-text-secondary">
@@ -370,6 +404,120 @@ function McqCard({ question, mcqIndex, savedAnswer, onAnswer }) {
   );
 }
 
+// ─── Draggable Proctoring Picture-in-Picture Feed ─────────────────────────────
+
+function DraggableProctorFeed({ cameraStream, screenStream }) {
+  const videoRef = useRef(null);
+  const [pos, setPos] = useState(() => ({
+    x: typeof window !== 'undefined' ? Math.max(16, window.innerWidth - 190) : 100,
+    y: typeof window !== 'undefined' ? Math.max(16, window.innerHeight - 170) : 100,
+  }));
+  const [isDragging, setIsDragging] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, origX: 0, origY: 0 });
+
+  useEffect(() => {
+    if (videoRef.current && cameraStream && !isMinimized) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, isMinimized]);
+
+  useEffect(() => {
+    const onResize = () => {
+      setPos(p => ({
+        x: Math.min(p.x, window.innerWidth - (isMinimized ? 130 : 190)),
+        y: Math.min(p.y, window.innerHeight - (isMinimized ? 50 : 170)),
+      }));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [isMinimized]);
+
+  const handlePointerDown = (e) => {
+    if (e.target.closest('button')) return;
+    setIsDragging(true);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: pos.x,
+      origY: pos.y,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    const maxX = window.innerWidth - (isMinimized ? 140 : 180);
+    const maxY = window.innerHeight - (isMinimized ? 44 : 150);
+    setPos({
+      x: Math.max(12, Math.min(maxX, dragRef.current.origX + dx)),
+      y: Math.max(12, Math.min(maxY, dragRef.current.origY + dy)),
+    });
+  };
+
+  const handlePointerUp = (e) => {
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  if (!cameraStream && !screenStream) return null;
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      style={{
+        left: `${pos.x}px`,
+        top: `${pos.y}px`,
+        touchAction: 'none',
+      }}
+      className={`fixed z-50 select-none bg-surface/95 backdrop-blur-md border border-border rounded-2xl shadow-2xl transition-[box-shadow,border-color] ${
+        isDragging ? 'shadow-2xl ring-2 ring-primary/50 cursor-grabbing' : 'cursor-grab hover:border-primary/40'
+      } ${isMinimized ? 'p-2' : 'p-2.5'}`}
+    >
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-success">
+          <GripHorizontal size={12} className="text-text-secondary opacity-60" />
+          <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+          <span>PROCTORED</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {screenStream && !isMinimized && (
+            <span className="text-[8px] font-bold text-text-secondary bg-surface-2 px-1 py-0.5 rounded border border-border">
+              Screen
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => setIsMinimized(prev => !prev)}
+            className="p-1 rounded-lg text-text-secondary hover:text-text hover:bg-surface-2 transition-colors cursor-pointer"
+            title={isMinimized ? 'Expand Video' : 'Minimize to Badge'}
+          >
+            {isMinimized ? <Maximize2 size={11} /> : <Minimize2 size={11} />}
+          </button>
+        </div>
+      </div>
+
+      {!isMinimized && cameraStream && (
+        <div className="w-36 h-24 bg-black rounded-xl overflow-hidden relative border border-border shadow-inner mt-1.5 pointer-events-none">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover transform -scale-x-100"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main InterviewArena Component ────────────────────────────────────────────
 
 export function InterviewArena() {
@@ -389,7 +537,7 @@ export function InterviewArena() {
   const candidateName = rawCandidateName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'Candidate';
   const roleName      = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Software Engineer';
 
-  const { cameraStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
+  const { cameraStream, screenStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
 
   // ── Local UI state ──────────────────────────────────────────────────────────
   const [sqlCode, setSqlCode]             = useState('-- Write your SQL solution below\n\n');
@@ -1033,33 +1181,8 @@ export function InterviewArena() {
           )}
         </div>
 
-        {/* Live Proctoring PIP Feed */}
-        {cameraStream && (
-          <div className="fixed bottom-4 right-4 z-40 bg-surface/95 backdrop-blur-md border border-border/80 rounded-2xl shadow-2xl p-2.5 flex flex-col gap-2 transition-all">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-success">
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                PROCTORING ACTIVE
-              </div>
-              <span className="text-[9px] font-bold text-text-secondary bg-surface-2 px-1.5 py-0.5 rounded border border-border">
-                Live Feed
-              </span>
-            </div>
-            <div className="w-36 h-24 bg-black rounded-xl overflow-hidden relative border border-border shadow-inner">
-              <video
-                ref={(el) => {
-                  if (el && cameraStream && el.srcObject !== cameraStream) {
-                    el.srcObject = cameraStream;
-                  }
-                }}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover transform -scale-x-100"
-              />
-            </div>
-          </div>
-        )}
+        {/* Draggable Live Proctoring Feed */}
+        <DraggableProctorFeed cameraStream={cameraStream} screenStream={screenStream} />
       </div>
     </>
   );
