@@ -1,21 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Bot, User, Loader2, ShieldAlert, Clock, Smartphone, Code2, PenTool, AlertOctagon, Keyboard, X, FileText, CheckCircle2, Sun, Moon, Play, RotateCcw, Database } from 'lucide-react';
+import {
+  Bot, User, Loader2, ShieldAlert, Clock, Smartphone, AlertOctagon,
+  Keyboard, X, CheckCircle2, Sun, Moon, Play, RotateCcw, Database,
+  ChevronLeft, ChevronRight, Code2, MessageSquare, FileText, CheckCircle,
+  Circle, HelpCircle, ListChecks
+} from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
-import { generateInterviewTask, chatInterview, dryRunInterview } from '@/lib/groq';
-import { api } from '@/lib/api';
+import { chatInterview } from '@/lib/groq';
 import { useToast } from '@/shared/ui/ToastSystem';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { sqlWorkerManager } from '@/workers/SqlWorkerManager';
 import { useProctorStore } from './useProctorStore';
 import { useInterviewSession } from './hooks/useInterviewSession';
 import { useProctoring } from './hooks/useProctoring';
-import { CodeBlock } from '@/shared/ui/CodeBlock';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const formatTime = (seconds) => {
   if (seconds <= 0) return '00:00';
@@ -24,737 +27,722 @@ const formatTime = (seconds) => {
   return `${m}:${s}`;
 };
 
+// ─── Question Navigator Tile ──────────────────────────────────────────────────
+
+function QTile({ index, isCurrent, isAnswered, isMcq, onClick }) {
+  const label = index + 1;
+  let bg = 'bg-surface-2 hover:bg-surface-3 text-text-secondary border-border';
+  if (isCurrent) bg = 'bg-primary text-white border-primary shadow-lg shadow-primary/30';
+  else if (isAnswered) bg = 'bg-success/15 text-success border-success/40';
+
+  return (
+    <button
+      onClick={onClick}
+      title={`Question ${label}${isMcq ? ' (MCQ)' : ' (SQL)'}`}
+      className={`w-9 h-9 rounded-lg border text-xs font-bold flex items-center justify-center transition-all duration-150 hover:scale-105 ${bg}`}
+    >
+      {isAnswered && !isCurrent ? <CheckCircle size={14} /> : label}
+    </button>
+  );
+}
+
+// ─── Schema sidebar for a SQL question ───────────────────────────────────────
+
+function SchemaPanel({ question, dbStatus }) {
+  if (!question) return <div className="p-4 text-xs text-text-secondary">No schema loaded.</div>;
+  return (
+    <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+      {/* DB status badge */}
+      <div className="mb-3 flex items-center gap-2">
+        <Database size={12} className="text-primary" />
+        <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">Schema</span>
+        <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded ${
+          dbStatus === 'ready' ? 'bg-success/10 text-success border border-success/30' :
+          dbStatus === 'loading' ? 'bg-primary/10 text-primary border border-primary/30 animate-pulse' :
+          'bg-surface-3 text-text-secondary border border-border'
+        }`}>
+          {dbStatus === 'ready' ? 'DB READY' : dbStatus === 'loading' ? 'LOADING' : dbStatus.toUpperCase()}
+        </span>
+      </div>
+      {question.tables?.map((table) => (
+        <div key={table.name} className="mb-4">
+          <div className="font-bold text-[10px] mb-1.5 text-text flex items-center gap-1 uppercase tracking-wide">
+            <span className="text-primary">●</span> {table.name}
+          </div>
+          <div className="bg-surface rounded-lg border border-border overflow-hidden">
+            {table.columns?.map((col, i) => (
+              <div key={i} className="px-2 py-1 flex justify-between text-xs border-b border-border last:border-b-0 hover:bg-surface-2">
+                <span className="font-mono text-text">{col.name}</span>
+                <span className="text-text-secondary text-[9px] uppercase font-mono">{col.type}</span>
+              </div>
+            ))}
+          </div>
+          {/* Sample data pill */}
+          {question.tables?.length > 0 && (
+            <p className="text-[9px] text-text-secondary mt-1">{table.sampleData?.length ?? 0} sample rows</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── MCQ Question Card ────────────────────────────────────────────────────────
+
+function McqCard({ question, mcqIndex, savedAnswer, onAnswer }) {
+  const [selected, setSelected] = useState(savedAnswer?.selectedIndex ?? null);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    setSelected(savedAnswer?.selectedIndex ?? null);
+    setRevealed(false);
+  }, [mcqIndex, savedAnswer]);
+
+  const handleSelect = (i) => {
+    setSelected(i);
+    onAnswer({ selectedIndex: i });
+  };
+
+  const labels = ['A', 'B', 'C', 'D'];
+
+  return (
+    <div className="flex-1 overflow-y-auto p-6 md:p-10">
+      <div className="max-w-3xl mx-auto">
+        {/* Question header */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <HelpCircle size={16} className="text-primary" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Multiple Choice</p>
+            <p className="text-xs text-text-secondary">Select the best answer</p>
+          </div>
+        </div>
+
+        {/* Question text */}
+        <div className="bg-surface-2 border border-border rounded-2xl p-6 mb-6">
+          <p className="text-base md:text-lg font-semibold text-text leading-relaxed">{question.question}</p>
+        </div>
+
+        {/* Options */}
+        <div className="space-y-3 mb-6">
+          {question.options?.map((opt, i) => {
+            const isSelected = selected === i;
+            const isCorrect = revealed && i === question.correctIndex;
+            const isWrong = revealed && isSelected && i !== question.correctIndex;
+
+            let optStyle = 'border-border bg-surface hover:bg-surface-2 hover:border-primary/40 text-text cursor-pointer';
+            if (isSelected && !revealed) optStyle = 'border-primary bg-primary/10 text-primary cursor-pointer';
+            if (isCorrect) optStyle = 'border-success bg-success/10 text-success cursor-default';
+            if (isWrong) optStyle = 'border-error bg-error/10 text-error cursor-default';
+
+            return (
+              <button
+                key={i}
+                onClick={() => !revealed && handleSelect(i)}
+                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-150 text-left ${optStyle}`}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border-2 ${
+                  isSelected && !revealed ? 'border-primary bg-primary text-white' :
+                  isCorrect ? 'border-success bg-success text-white' :
+                  isWrong ? 'border-error bg-error text-white' :
+                  'border-border bg-surface-2 text-text-secondary'
+                }`}>
+                  {labels[i]}
+                </div>
+                <span className="text-sm font-medium">{opt}</span>
+                {isCorrect && <CheckCircle size={16} className="ml-auto text-success shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Reveal / explanation */}
+        {selected !== null && !revealed && (
+          <button
+            onClick={() => setRevealed(true)}
+            className="w-full py-3 rounded-xl border border-border bg-surface-2 text-sm font-semibold text-text-secondary hover:border-primary hover:text-primary transition-all"
+          >
+            Check Answer
+          </button>
+        )}
+        {revealed && (
+          <div className={`p-4 rounded-xl border text-sm ${selected === question.correctIndex ? 'border-success/40 bg-success/10 text-success' : 'border-error/40 bg-error/10 text-error'}`}>
+            <p className="font-bold mb-1">{selected === question.correctIndex ? '✓ Correct!' : `✗ Incorrect. Correct answer: ${labels[question.correctIndex]}`}</p>
+            <p className="text-xs opacity-80">{question.explanation}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main InterviewArena ──────────────────────────────────────────────────────
+
 export function InterviewArena() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { settings, toggleDarkMode } = useSettingsStore();
-  
-  const duration = parseInt(searchParams.get('duration') || '30', 10);
-  const rawDifficulty = searchParams.get('difficulty') || 'mixed';
+
+  const duration       = parseInt(searchParams.get('duration') || '30', 10);
+  const rawDifficulty  = searchParams.get('difficulty') || 'mixed';
   const rawCompanyName = searchParams.get('company') || 'FAANG';
   const rawCandidateName = searchParams.get('name') || 'Candidate';
-  const rawRoleName = searchParams.get('role') || 'Software Engineer';
-  
-  // Sanitize to prevent prompt injection
-  const difficulty = ['easy', 'medium', 'hard', 'mixed'].includes(rawDifficulty.toLowerCase()) ? rawDifficulty.toLowerCase() : 'mixed';
-  const companyName = rawCompanyName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'FAANG';
+  const rawRoleName    = searchParams.get('role') || 'Software Engineer';
+
+  const difficulty    = ['easy', 'medium', 'hard', 'mixed'].includes(rawDifficulty.toLowerCase()) ? rawDifficulty.toLowerCase() : 'mixed';
+  const companyName   = rawCompanyName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'FAANG';
   const candidateName = rawCandidateName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'Candidate';
-  const roleName = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Software Engineer';
-  
-  const { cameraStream, screenStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
+  const roleName      = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Software Engineer';
 
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('sql'); // sql or scratchpad
+  const { cameraStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
 
-  const [dryRunFeedback, setDryRunFeedback] = useState('');
-  const [isDryRunning, setIsDryRunning] = useState(false);
-  const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
+  // ── Local UI state ──────────────────────────────────────────────────────────
+  const [sqlCode, setSqlCode]             = useState('-- Write your SQL solution here...\n\n');
+  const [scratchpad, setScratchpad]       = useState('-- Scratchpad for exploration...\n\n');
+  const [activeTab, setActiveTab]         = useState('sql');
+  const [queryResult, setQueryResult]     = useState(null);
+  const [isRunning, setIsRunning]         = useState(false);
+  const [leftPanel, setLeftPanel]         = useState('problem'); // 'problem' | 'schema' | 'chat'
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [leftTab, setLeftTab] = useState('problem'); // 'problem' or 'chat'
-  const [bottomPanel, setBottomPanel] = useState(null); // 'ai' | 'results' | null
-  const [queryResult, setQueryResult] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
-
-  const { executeQuery, initWithSql } = useSqlDatabase();
+  const [chatInput, setChatInput]         = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
 
+  // ── Session ─────────────────────────────────────────────────────────────────
   const handleFinalSubmit = async (isTimeUp = false) => {
     if (isSubmittedRef.current) return;
     isSubmittedRef.current = true;
-    setIsLoading(true);
 
-    try {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        await document.exitFullscreen().catch(() => {});
-      }
-    } catch (e) {}
-
-    try {
-      const { stopAllStreams } = useProctorStore.getState();
-      stopAllStreams();
-    } catch(e) {}
-    
+    try { if (document.fullscreenElement) await document.exitFullscreen().catch(() => {}); } catch {}
+    try { useProctorStore.getState().stopAllStreams(); } catch {}
     clearSessionState();
-    
+
     const payload = {
-      companyName,
-      candidateName,
-      roleName,
-      sql,
-      initialTask,
+      companyName, candidateName, roleName,
+      answers,
+      sessionData,
       durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
-      chatHistory: messages,
-      forceZero: false
+      chatHistory: chatMessages,
+      forceZero: false,
     };
     sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
-    
-    navigate('/interview/report', { 
-      state: { sessionPayload: payload } 
-    });
+    navigate('/interview/report', { state: { sessionPayload: payload } });
   };
 
   const {
-    messages, setMessages,
-    sql, setSql,
-    scratchpad, setScratchpad,
-    timeLeft, initialTask, generatingQuestion,
-    isSubmittedRef,
-    savedInitSqlRef
+    sessionData, currentIndex, currentQuestion, isMCQ, sqlIndex, mcqIndex,
+    totalQuestions, answers, saveAnswer,
+    navigateTo, goNext, goPrev,
+    generating, dbStatus, dbSwitching,
+    timeLeft, chatMessages, setChatMessages,
+    isSubmittedRef, executeQuery,
   } = useInterviewSession({
     duration, difficulty, companyName, candidateName, roleName,
-    restoreSessionState, saveSessionState, initWithSql,
-    isTerminated, handleFinalSubmit, toast
+    restoreSessionState, saveSessionState,
+    isTerminated, handleFinalSubmit, toast,
   });
 
+  // ── Proctoring ──────────────────────────────────────────────────────────────
   const enforceViolation = (reason) => {
     if (isSubmittedRef.current || isTerminated) return;
     isSubmittedRef.current = true;
     addViolation('integrity_breach', reason);
-    try {
-      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    } catch (e) {}
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch {}
     handleFailToReport();
   };
 
-  useProctoring({
-    isSubmittedRef, isTerminated, enforceViolation, addViolation
-  });
+  useProctoring({ isSubmittedRef, isTerminated, enforceViolation, addViolation });
 
-  // Render functions...
-
-  // Ensure streams are explicitly killed on unmount
-  useEffect(() => {
-    return () => {
-      try {
-        const { stopAllStreams } = useProctorStore.getState();
-        stopAllStreams();
-      } catch(e) {}
-    };
+  useEffect(() => () => {
+    try { useProctorStore.getState().stopAllStreams(); } catch {}
   }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [chatMessages]);
 
-  const handleSubmitMsg = async (e) => {
-    e?.preventDefault();
-    if (!input.trim() || isLoading || isTerminated) return;
+  // ── Reset editor when navigating to a new SQL question ─────────────────────
+  useEffect(() => {
+    if (isMCQ) return;
+    const saved = answers[currentIndex];
+    setSqlCode(saved?.sql ?? '-- Write your SQL solution here...\n\n');
+    setQueryResult(null);
+    setActiveTab('sql');
+  }, [currentIndex, isMCQ]);
 
-    const userMsg = input.trim();
-    setInput('');
-    const newMessages = [...messages, { role: 'user', content: userMsg }];
-    setMessages(newMessages);
-    setIsLoading(true);
+  // ── Auto-save SQL editor to answers ────────────────────────────────────────
+  const handleSqlChange = (code) => {
+    setSqlCode(code);
+  };
 
-    try {
-      const responseText = await chatInterview({
-        companyName,
-        initialTask,
-        messages: newMessages
-      });
-      setMessages((prev) => [...prev, { role: 'assistant', content: responseText }]);
-    } catch (err) {
-      if (err.message === 'MISSING_API_KEY') {
-        toast({ title: 'Missing API Key', message: 'Please add your Groq API key in Settings.', type: 'error' });
-      } else {
-        setMessages((prev) => [...prev, { role: 'assistant', content: '⚠️ Error: Network request failed. Please try again.' }]);
-      }
-    } finally {
-      setIsLoading(false);
+  const handleSaveCurrentSql = () => {
+    if (!isMCQ) {
+      saveAnswer({ sql: sqlCode, queryResult });
     }
   };
 
-  const handleDryRun = async () => {
-    if (!sql.trim() || sql === '-- Write your solution here once you understand the requirements...\n\n') {
-      toast({ title: 'No SQL to run', message: 'Write some SQL code first before asking for a dry run.', type: 'info' });
-      return;
-    }
-    
-    setDryRunFeedback('');
-    setBottomPanel('ai');
-    setIsDryRunning(true);
-
-    try {
-      const responseText = await dryRunInterview({
-        companyName,
-        messages,
-        sql
-      });
-      setDryRunFeedback(responseText);
-    } catch (err) {
-      if (err.message === 'MISSING_API_KEY') {
-        setDryRunFeedback('⚠️ Please add your Groq API key in Settings to use the AI Dry Run feature.');
-      } else {
-        setDryRunFeedback('⚠️ Error: Network request failed. Please try again.');
-      }
-    } finally {
-      setIsDryRunning(false);
-    }
-  };
-
+  // ── Run SQL ─────────────────────────────────────────────────────────────────
   const handleRunSql = async () => {
-    const currentCode = activeTab === 'sql' ? sql : scratchpad;
-    if (!currentCode.trim() || currentCode.includes('Write your solution here')) {
-      toast({ title: 'No SQL', message: 'Please write some valid SQL to run.', type: 'info' });
+    const code = activeTab === 'sql' ? sqlCode : scratchpad;
+    if (!code.trim() || code.includes('Write your SQL solution here') || code.includes('Scratchpad for exploration')) {
+      toast({ title: 'No SQL', message: 'Write a query first.', type: 'info' });
       return;
     }
-    
-    setBottomPanel('results');
-    setIsRunning(true);
-    let res = await executeQuery(currentCode);
-
-    // Auto-recovery if database is uninitialized
-    if (res?.error && res.error.toLowerCase().includes('database not initialized')) {
-      const initSqlToUse = savedInitSqlRef?.current || initialTask?.initSql;
-      if (initSqlToUse) {
-        try {
-          await initWithSql(initSqlToUse, {
-            dbKey: `interview_${initialTask?.id || 'session'}`,
-            forceFresh: true
-          });
-          res = await executeQuery(currentCode);
-        } catch (retryErr) {
-          console.error('Auto-recovery database init failed:', retryErr);
-        }
-      }
+    if (dbStatus !== 'ready' || dbSwitching) {
+      toast({ title: 'DB Loading', message: 'Wait for the database to initialize.', type: 'info' });
+      return;
     }
-
+    setIsRunning(true);
+    const res = await executeQuery(code);
     setQueryResult(res);
     setIsRunning(false);
+    // Auto-save answer
+    if (activeTab === 'sql') saveAnswer({ sql: sqlCode, queryResult: res });
   };
 
+  // ── AI chat ─────────────────────────────────────────────────────────────────
+  const handleSendChat = async (e) => {
+    e?.preventDefault();
+    if (!chatInput.trim() || isChatLoading || isTerminated) return;
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    const newMsgs = [...chatMessages, { role: 'user', content: userMsg }];
+    setChatMessages(newMsgs);
+    setIsChatLoading(true);
+    try {
+      const contextTask = currentQuestion
+        ? `${currentQuestion.problemStatement ?? ''}`
+        : 'General SQL interview';
+      const res = await chatInterview({ companyName, initialTask: contextTask, messages: newMsgs });
+      setChatMessages(prev => [...prev, { role: 'assistant', content: res }]);
+    } catch (err) {
+      if (err.message === 'MISSING_API_KEY') {
+        toast({ title: 'Missing API Key', message: 'Add your Groq API key in Settings.', type: 'error' });
+      } else {
+        setChatMessages(prev => [...prev, { role: 'assistant', content: '⚠️ Network error. Please try again.' }]);
+      }
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
 
+  // ── Violation report ─────────────────────────────────────────────────────────
   function handleFailToReport() {
     clearSessionState();
-    try {
-      const { stopAllStreams } = useProctorStore.getState();
-      stopAllStreams();
-    } catch(e) {}
-    
+    try { useProctorStore.getState().stopAllStreams(); } catch {}
     const payload = {
-      companyName,
-      candidateName,
-      roleName,
-      sql,
-      initialTask,
+      companyName, candidateName, roleName,
+      answers, sessionData,
       durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
-      chatHistory: messages,
+      chatHistory: chatMessages,
       forceZero: true,
-      violationMsg: useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation'
+      violationMsg: useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation',
     };
     sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
+    navigate('/interview/report', { state: { sessionPayload: payload } });
+  }
 
-    navigate('/interview/report', { 
-      state: { sessionPayload: payload } 
-    });
-  };
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.key === 'Enter' && !isMCQ) { e.preventDefault(); handleRunSql(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMCQ, sqlCode, scratchpad, activeTab, dbStatus, dbSwitching]);
 
+  // ── Time color ───────────────────────────────────────────────────────────────
+  const timeColor = timeLeft <= 300 ? 'text-error' : timeLeft <= 600 ? 'text-warning' : 'text-success';
+
+  // ── answered count ────────────────────────────────────────────────────────────
+  const answeredCount = answers.filter(a => a !== null).length;
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ════════════════════════════════════════════════════════════════════════════
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: '@media print { body { display: none !important; } }' }} />
 
       {/* ══ TERMINATED OVERLAY ══ */}
       {isTerminated && (
-        <div className="fixed inset-0 z-[200] bg-surface/80 dark:bg-bg/95 backdrop-blur-xl dark:backdrop-blur-3xl overflow-y-auto animate-fade-in">
-          <div className="min-h-full flex items-center justify-center p-4 sm:p-6 relative">
-            {/* Background Ambient Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-error/5 rounded-full blur-[100px] dark:blur-[150px] pointer-events-none" />
-            
-            <div className="w-full max-w-2xl bg-surface dark:bg-surface/80 backdrop-blur-xl border border-border dark:border-error/30 rounded-3xl p-8 sm:p-12 text-center shadow-[0_20px_60px_rgba(0,0,0,0.1)] dark:shadow-[0_0_100px_rgba(239,68,68,0.15)] relative overflow-hidden transform scale-100 animate-in zoom-in-95 duration-500 ease-out z-10">
-              {/* Top Red Gradient Bar */}
+        <div className="fixed inset-0 z-[200] bg-surface/80 backdrop-blur-xl overflow-y-auto flex items-center justify-center p-6">
+          <div className="w-full max-w-2xl bg-surface border border-error/30 rounded-3xl p-12 text-center shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-error to-transparent" />
-            
-            <div className="w-24 h-24 bg-gradient-to-br from-error/20 to-error/5 border border-error/30 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg shadow-error/20 relative">
-              <div className="absolute inset-0 bg-error/20 rounded-full animate-ping opacity-50" />
-              <AlertOctagon size={48} className="text-error" />
+            <div className="w-20 h-20 bg-error/10 border border-error/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertOctagon size={40} className="text-error" />
             </div>
-            
-            <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight text-text">Session Terminated</h1>
-            <p className="text-lg md:text-xl text-text-secondary max-w-xl mx-auto leading-relaxed mb-10">
-              Your interview was automatically halted due to a strict zero-tolerance integrity policy violation.
-            </p>
-            
-            <div className="bg-error/5 dark:bg-[#09090b] border border-error/20 dark:border-border/50 rounded-2xl p-6 text-left mb-10 shadow-inner">
-              <span className="text-xs font-black uppercase tracking-widest text-error/80 mb-2 block flex items-center gap-2">
-                <AlertOctagon size={14} /> Incident Reason
-              </span>
-              <span className="text-error font-medium text-lg leading-snug">
-                {useProctorStore.getState().violations[0]?.message || 'Integrity Policy Violation'}
-              </span>
-            </div>
-            
-            <button 
-              onClick={handleFailToReport}
-              className="w-full sm:w-auto px-10 py-4 bg-error text-white font-bold text-lg rounded-xl shadow-[0_0_30px_rgba(239,68,68,0.3)] hover:shadow-[0_0_50px_rgba(239,68,68,0.5)] hover:scale-[1.02] transition-all"
-            >
+            <h1 className="text-4xl font-black mb-4 text-text">Session Terminated</h1>
+            <p className="text-text-secondary mb-8">Your interview was halted due to an integrity policy violation.</p>
+            <button onClick={handleFailToReport} className="px-10 py-4 bg-error text-white font-bold text-lg rounded-xl hover:opacity-90 transition-all">
               Acknowledge & View Report
             </button>
           </div>
         </div>
-      </div>
       )}
 
-      {/* ══ SHORTCUTS OVERLAY ══ */}
-      {showShortcuts && !isTerminated && (
+      {/* ══ SHORTCUTS MODAL ══ */}
+      {showShortcuts && (
         <div className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-2">
-              <h3 className="font-bold flex items-center gap-2"><Keyboard size={18} className="text-primary"/> Keyboard Rules & Shortcuts</h3>
-              <button onClick={() => setShowShortcuts(false)} className="text-text-secondary hover:text-text"><X size={18}/></button>
+              <h3 className="font-bold flex items-center gap-2"><Keyboard size={18} className="text-primary" /> Shortcuts</h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-text-secondary hover:text-text"><X size={18} /></button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div className="flex justify-between items-center text-sm border-b border-border pb-2">
-                <span className="text-text-secondary">Run / AI Dry Run</span>
+                <span className="text-text-secondary">Run SQL</span>
                 <kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Ctrl + Enter</kbd>
               </div>
-              <div className="flex justify-between items-center text-sm border-b border-border pb-2">
-                <span className="text-text-secondary">Format SQL</span>
-                <kbd className="px-2 py-1 bg-surface-3 rounded font-mono text-xs border border-border">Shift + Alt + F</kbd>
-              </div>
-              <div className="mt-4 bg-error/10 border border-error/20 rounded-xl p-4 text-xs text-error font-medium leading-relaxed">
-                <span className="font-bold block mb-1">PROHIBITED ACTION WARNING:</span>
-                Copy (Ctrl+C), Paste (Ctrl+V), Developer Tools (F12), and exiting Fullscreen (ESC) are strictly monitored and will result in an instant termination.
+              <div className="mt-4 bg-error/10 border border-error/20 rounded-xl p-4 text-xs text-error font-medium">
+                <span className="font-bold block mb-1">PROHIBITED:</span>
+                Copy (Ctrl+C), Paste (Ctrl+V), DevTools (F12), and exiting Fullscreen (ESC) are monitored.
               </div>
             </div>
           </div>
         </div>
       )}
 
-
-      {/* ══ MOBILE WARNING OVERLAY ══ */}
+      {/* ══ MOBILE WARNING ══ */}
       <div className="md:hidden fixed inset-0 z-[100] bg-bg flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-6 border border-primary/20">
-          <Smartphone size={32} />
-        </div>
-        <h2 className="text-2xl font-extrabold text-text mb-3 tracking-tight">Desktop Required</h2>
-        <p className="text-text-secondary mb-8 leading-relaxed max-w-sm">
-          DataDesk's Proctored Interview Arena requires a desktop or tablet for camera access, coding, and screen real estate.
-        </p>
-        <Button onClick={() => navigate('/')} variant="outline" size="lg">Back to Home</Button>
+        <Smartphone size={32} className="text-primary mb-4" />
+        <h2 className="text-2xl font-extrabold text-text mb-3">Desktop Required</h2>
+        <p className="text-text-secondary mb-6">The Interview Arena requires a desktop for full functionality.</p>
+        <Button onClick={() => navigate('/')} variant="outline">Back to Home</Button>
       </div>
 
-
+      {/* ══ MAIN LAYOUT ══ */}
       <div className={`w-full h-screen bg-bg flex flex-col select-none overflow-hidden ${isTerminated ? 'blur-md pointer-events-none' : ''}`}>
-        
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-surface shadow-sm">
-          <div className="flex items-center gap-4">
-            <h1 className="font-black text-xl tracking-tight text-text flex items-center gap-2">
-            {companyName} INTERVIEW
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-error/10 text-error border border-error/20 uppercase tracking-wider ml-2">
-              <ShieldAlert size={10} className="inline mr-1" /> Proctored
+
+        {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-surface shadow-sm shrink-0">
+          {/* Left: company + proctored badge */}
+          <div className="flex items-center gap-2 shrink-0">
+            <h1 className="font-black text-base tracking-tight text-text">{companyName}</h1>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-error/10 text-error border border-error/20 uppercase tracking-wider flex items-center gap-1">
+              <ShieldAlert size={9} /> Proctored
             </span>
-            </h1>
-          </div>
-          
-          {/* Progress Bar (Time) */}
-          <div className="flex-1 max-w-[300px] mx-8 hidden lg:block">
-             <div className="w-full h-1.5 bg-surface-3 rounded-full overflow-hidden">
-               <div className={`h-full transition-all duration-1000 ${timeLeft < 300 ? 'bg-error' : 'bg-primary'}`} style={{ width: `${(timeLeft / (duration * 60)) * 100}%` }} />
-             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div 
-              aria-live="polite"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded font-mono font-bold text-sm tabular-nums ${timeLeft < 300 ? 'bg-error/10 text-error animate-pulse' : 'bg-surface-2 text-text'}`}
-            >
-              <Clock size={16} /> {formatTime(timeLeft)}
+          {/* Center: Question progress bar */}
+          <div className="flex-1 flex items-center gap-2 mx-4">
+            <span className="text-xs text-text-secondary font-semibold whitespace-nowrap">Q{currentIndex + 1}/{totalQuestions}</span>
+            <div className="flex-1 h-1.5 bg-surface-3 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
+                style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
+              />
             </div>
-            <button onClick={() => setShowShortcuts(true)} className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors" title="Keyboard Shortcuts">
-              <Keyboard size={18} />
+            <span className="text-xs text-text-secondary font-semibold whitespace-nowrap">{answeredCount}/{totalQuestions}</span>
+          </div>
+
+          {/* Right: timer + actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className={`font-mono font-black text-sm flex items-center gap-1 ${timeColor}`}>
+              <Clock size={14} /> {formatTime(timeLeft)}
+            </div>
+            <button onClick={toggleDarkMode} className="p-1.5 rounded-lg hover:bg-surface-2 text-text-secondary">
+              {settings.darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+            <button onClick={() => setShowShortcuts(true)} className="p-1.5 rounded-lg hover:bg-surface-2 text-text-secondary">
+              <Keyboard size={16} />
             </button>
             <button
-              onClick={toggleDarkMode}
-              className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors"
-              title={settings.darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              onClick={() => handleFinalSubmit(false)}
+              className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all"
             >
-              {settings.darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              Submit All
             </button>
-            <Button variant="danger" size="sm" onClick={() => handleFinalSubmit(false)} disabled={isLoading || generatingQuestion}>
-              Submit Final Solution
-            </Button>
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
-          {/* Pane 1: Schema Explorer (Left sidebar) */}
-          <aside className="w-64 shrink-0 bg-surface border-r border-border hidden lg:flex flex-col z-10">
-            <div className="p-3 border-b border-border bg-surface-2 shrink-0">
-              <h2 className="font-bold text-sm flex items-center gap-2 text-text uppercase tracking-wider text-[11px]"><Database size={14} className="text-primary" /> Schema</h2>
+        {/* ── BODY ──────────────────────────────────────────────────────────── */}
+        <div className="flex flex-1 overflow-hidden">
+
+          {/* ── QUESTION NAVIGATOR (LEFT SIDEBAR) ──────────────────────────── */}
+          <aside className="w-14 shrink-0 bg-surface border-r border-border hidden lg:flex flex-col items-center py-3 gap-2 overflow-y-auto custom-scrollbar">
+            {/* SQL section */}
+            <div className="w-full px-1 mb-1">
+              <p className="text-[8px] font-black uppercase tracking-widest text-text-secondary text-center mb-2">SQL</p>
+              <div className="flex flex-col gap-1.5 items-center">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <QTile
+                    key={i}
+                    index={i}
+                    isCurrent={currentIndex === i}
+                    isAnswered={answers[i] !== null}
+                    isMcq={false}
+                    onClick={() => navigateTo(i)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-bg">
-              {generatingQuestion ? (
-                <div className="text-center text-xs text-text-secondary mt-10">Generating Schema...</div>
-              ) : (
-                initialTask?.tables?.map((table) => (
-                  <div key={table.name} className="mb-5">
-                    <div className="font-bold text-xs mb-2 text-text flex items-center gap-1.5 uppercase tracking-wide">
-                      <span className="text-primary">●</span> {table.name}
-                    </div>
-                    <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
-                      {table.columns?.map((col, i) => (
-                        <div key={i} className="px-3 py-1.5 flex justify-between text-xs border-b border-border last:border-b-0 hover:bg-surface-2">
-                          <span className="font-medium text-text font-mono">{col.name}</span>
-                          <span className="text-text-secondary text-[10px] uppercase font-mono">{col.type}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="w-8 h-px bg-border my-1" />
+            {/* MCQ section */}
+            <div className="w-full px-1">
+              <p className="text-[8px] font-black uppercase tracking-widest text-text-secondary text-center mb-2">MCQ</p>
+              <div className="flex flex-col gap-1.5 items-center">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <QTile
+                    key={i + 5}
+                    index={i + 5}
+                    isCurrent={currentIndex === i + 5}
+                    isAnswered={answers[i + 5] !== null}
+                    isMcq={true}
+                    onClick={() => navigateTo(i + 5)}
+                  />
+                ))}
+              </div>
             </div>
           </aside>
 
-          {/* Pane 2: Problem / Chat (Middle pane) */}
-          <div className="w-[45%] min-w-[350px] max-w-[600px] border-r border-border flex flex-col bg-surface-2 z-10">
-            <div className="flex bg-surface border-b border-border px-4 pt-2 gap-1 shrink-0">
-              <button
-                onClick={() => setLeftTab('problem')}
-                className={`px-5 py-2.5 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all ${leftTab === 'problem' ? 'bg-bg text-primary border border-border border-b-transparent shadow-[0_-2px_10px_rgba(0,0,0,0.05)]' : 'bg-transparent text-text-secondary hover:bg-surface-2'}`}
-              >
-                <FileText size={16} /> Description
-              </button>
-              <button
-                onClick={() => setLeftTab('chat')}
-                className={`px-5 py-2.5 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all ${leftTab === 'chat' ? 'bg-bg text-primary border border-border border-b-transparent shadow-[0_-2px_10px_rgba(0,0,0,0.05)] relative' : 'bg-transparent text-text-secondary hover:bg-surface-2'}`}
-              >
-                <Bot size={16} /> AI Interviewer
-                {messages.length > 1 && leftTab !== 'chat' && (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-error animate-pulse"></span>
-                )}
-              </button>
+          {/* ── CONTENT AREA ────────────────────────────────────────────────── */}
+          {generating ? (
+            /* Loading state */
+            <div className="flex-1 flex flex-col items-center justify-center gap-6 p-10">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full border-4 border-surface-3 border-t-primary animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Database size={24} className="text-primary" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h2 className="text-2xl font-black text-text mb-2">Generating Interview Session</h2>
+                <p className="text-text-secondary">AI is creating 5 SQL questions + 5 MCQs with live databases...</p>
+                <div className="mt-4 flex items-center justify-center gap-1">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              </div>
             </div>
+          ) : isMCQ ? (
+            /* ── MCQ Panel (full width) ─────────────────────────────────────── */
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* MCQ header */}
+              <div className="px-6 py-3 border-b border-border bg-surface-2 flex items-center gap-3">
+                <ListChecks size={16} className="text-primary" />
+                <span className="text-sm font-bold text-text">MCQ Question {(mcqIndex ?? 0) + 1} of 5</span>
+                <span className="text-xs text-text-secondary ml-auto">Conceptual Knowledge</span>
+              </div>
+              {currentQuestion && (
+                <McqCard
+                  question={currentQuestion}
+                  mcqIndex={mcqIndex}
+                  savedAnswer={answers[currentIndex]}
+                  onAnswer={(ans) => saveAnswer(ans)}
+                />
+              )}
+              {/* MCQ navigation footer */}
+              <div className="px-6 py-4 border-t border-border bg-surface flex justify-between items-center shrink-0">
+                <button onClick={goPrev} disabled={currentIndex === 0} className="flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text disabled:opacity-40 transition-all">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                {currentIndex < totalQuestions - 1 ? (
+                  <button onClick={goNext} className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all">
+                    Next Question <ChevronRight size={16} />
+                  </button>
+                ) : (
+                  <button onClick={() => handleFinalSubmit(false)} className="flex items-center gap-2 px-5 py-2 rounded-xl bg-success text-white text-sm font-bold hover:bg-success/90 transition-all">
+                    <CheckCircle2 size={16} /> Submit Interview
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* ── SQL Question Panel (3-pane layout) ─────────────────────────── */
+            <div className="flex-1 flex overflow-hidden">
 
-            <div className="flex-1 relative overflow-hidden bg-bg">
-              {leftTab === 'problem' && (
-                <div className="absolute inset-0 overflow-y-auto p-6 custom-scrollbar bg-bg text-text">
-                  {generatingQuestion ? (
-                    <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-                      <Loader2 size={32} className="animate-spin text-primary mb-4" />
-                      <p className="font-medium text-text">Generating dynamic SQL problem...</p>
-                      <p className="text-xs mt-2 opacity-70">Tailoring to {companyName} • {difficulty} level</p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-6 text-[14px]">
-                      <div>
-                        <h3 className="font-black text-lg mb-2 tracking-tight text-text">Problem Statement</h3>
-                        <p className="leading-relaxed text-text-secondary">{initialTask?.problemStatement}</p>
-                      </div>
-                      
-                      {initialTask?.explanation && (
-                        <div>
-                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Explanation</h3>
-                          <p className="leading-relaxed text-text-secondary">{initialTask?.explanation}</p>
-                        </div>
+              {/* Left: Problem / Schema / Chat */}
+              <div className="w-[38%] min-w-[300px] max-w-[480px] border-r border-border flex flex-col bg-surface-2">
+                {/* Tab bar */}
+                <div className="flex bg-surface border-b border-border px-2 pt-1.5 gap-0.5 shrink-0">
+                  {[
+                    { id: 'problem', icon: FileText, label: 'Problem' },
+                    { id: 'schema',  icon: Database,  label: 'Schema' },
+                    { id: 'chat',    icon: MessageSquare, label: 'AI Chat' },
+                  ].map(({ id, icon: Icon, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => setLeftPanel(id)}
+                      className={`px-4 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        leftPanel === id
+                          ? 'bg-bg text-primary border border-border border-b-transparent'
+                          : 'bg-transparent text-text-secondary hover:bg-surface-2'
+                      }`}
+                    >
+                      <Icon size={13} /> {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Problem tab */}
+                {leftPanel === 'problem' && currentQuestion && (
+                  <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-xs font-black uppercase tracking-widest text-primary">SQL Q{(sqlIndex ?? 0) + 1}</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-surface-3 text-text-secondary border border-border capitalize">{difficulty}</span>
+                      {dbSwitching && (
+                        <span className="text-xs text-primary animate-pulse ml-auto flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Loading DB...</span>
                       )}
-
-                      <div>
-                        <h3 className="font-black text-lg mb-3 tracking-tight text-text">Sample Data</h3>
-                        {initialTask?.tables?.map((t) => (
-                          <div key={t.name} className="mb-4">
-                            <h4 className="font-bold text-sm text-text mb-2 font-mono">{t.name}</h4>
-                            <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-                              <table className="w-full text-left border-collapse">
-                                <thead className="bg-surface-2 text-xs uppercase text-text-secondary">
-                                  <tr>
-                                    {Object.keys(t.sampleData?.[0] || {}).map(k => (
-                                      <th key={k} className="px-3 py-2 border-b border-border font-mono">{k}</th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {t.sampleData?.map((row, i) => (
-                                    <tr key={i} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
-                                      {Object.values(row).map((v, j) => (
-                                        <td key={j} className="px-3 py-2 text-[13px] font-mono">{String(v)}</td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {initialTask?.expectedOutput?.length > 0 && (
-                        <div>
-                          <h3 className="font-black text-lg mb-3 tracking-tight text-text">Expected Output</h3>
-                          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
-                            <table className="w-full text-left border-collapse">
-                              <thead className="bg-surface-2 text-xs uppercase text-text-secondary">
-                                <tr>
-                                  {Object.keys(initialTask.expectedOutput[0]).map(k => (
-                                    <th key={k} className="px-3 py-2 border-b border-border font-mono">{k}</th>
+                    </div>
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-text-secondary">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {`### Problem Statement\n${currentQuestion.problemStatement ?? ''}\n\n${currentQuestion.explanation ? `**Context:** ${currentQuestion.explanation}` : ''}\n\n${currentQuestion.constraints ? `**Constraints:** ${currentQuestion.constraints}` : ''}\n\n${currentQuestion.tables?.length > 0 ? `**Available tables:** ${currentQuestion.tables.map(t => `\`${t.name}\``).join(', ')}` : ''}`}
+                      </ReactMarkdown>
+                    </div>
+                    {currentQuestion.expectedOutput?.length > 0 && (
+                      <div className="mt-4 p-3 bg-surface-3 rounded-xl border border-border">
+                        <p className="text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Expected Output Preview</p>
+                        <div className="overflow-x-auto">
+                          <table className="text-xs w-full">
+                            <thead>
+                              <tr>
+                                {Object.keys(currentQuestion.expectedOutput[0] ?? {}).map(k => (
+                                  <th key={k} className="text-left py-1 px-2 text-text font-mono border-b border-border">{k}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {currentQuestion.expectedOutput.slice(0, 3).map((row, ri) => (
+                                <tr key={ri}>
+                                  {Object.values(row).map((v, vi) => (
+                                    <td key={vi} className="py-1 px-2 text-text-secondary font-mono">{String(v)}</td>
                                   ))}
                                 </tr>
-                              </thead>
-                              <tbody>
-                                {initialTask.expectedOutput.map((row, i) => (
-                                  <tr key={i} className="border-b border-border last:border-0 hover:bg-surface-2 transition-colors">
-                                    {Object.values(row).map((v, j) => (
-                                      <td key={j} className="px-3 py-2 text-[13px] font-mono">{String(v)}</td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-
-                      {initialTask?.constraints && (
-                        <div>
-                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Constraints</h3>
-                          <p className="leading-relaxed text-[13px] text-text-secondary bg-surface-2 p-3 rounded-lg border border-border">
-                            {initialTask.constraints}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {initialTask?.notes && (
-                        <div>
-                          <h3 className="font-black text-lg mb-2 tracking-tight text-text">Notes</h3>
-                          <p className="leading-relaxed text-[13px] text-text-secondary italic">
-                            {initialTask.notes}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {leftTab === 'chat' && (
-                <div className="absolute inset-0 flex flex-col bg-bg">
-                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
-                    {messages.map((msg, i) => (
-                      <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-primary text-bg' : 'bg-purple-500/10 text-purple-500 border border-purple-500/20'}`}>
-                          {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                        </div>
-                        <div className={`px-5 py-4 rounded-2xl max-w-[95%] text-[14px] leading-relaxed shadow-sm border ${
-                          msg.role === 'user' 
-                            ? 'bg-primary text-primary-foreground border-transparent rounded-tr-sm' 
-                            : 'bg-surface border-border text-text prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:m-0 rounded-tl-sm'
-                        }`}>
-                          {msg.role === 'user' ? (
-                            msg.content
-                          ) : (
-                            <ReactMarkdown 
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-  pre({ node, children, ...props }) {
-    const child = Array.isArray(children) ? children[0] : children;
-    if (child && child.props && child.props.node && child.props.node.tagName === 'code') {
-      const className = child.props.className || '';
-      const match = /language-(\w+)/.exec(className);
-      const codeText = String(child.props.children).replace(/\n$/, '');
-      return (
-        <div className="not-prose">
-          <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />
-        </div>
-      );
-    }
-    return <pre {...props}>{children}</pre>;
-  },
-  code({ node, className, children, ...props }) {
-    return (
-      <code className="bg-primary-muted text-text px-1.5 py-0.5 rounded text-[13px] font-mono border border-border" {...props}>
-        {children}
-      </code>
-    );
-  }
-}}
-                            >
-                              {msg.content}
-                            </ReactMarkdown>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {isLoading && (
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-sm">
-                          <Bot size={16} className="text-purple-500" />
-                        </div>
-                        <div className="px-4 py-3 rounded-2xl bg-surface border border-border rounded-tl-sm flex items-center gap-3 shadow-sm">
-                          <Loader2 size={16} className="animate-spin text-purple-500" />
-                          <span className="text-sm text-text-secondary font-medium">Interviewer is typing...</span>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}
-                    <div ref={messagesEndRef} />
                   </div>
+                )}
 
-                  <form onSubmit={handleSubmitMsg} className="p-4 border-t border-border bg-surface shrink-0">
-                    <div className="flex items-center gap-2 bg-bg border border-border rounded-xl p-1.5 shadow-inner focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                      <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask for hints or clarify schema..."
-                        className="flex-1 bg-transparent border-none text-sm px-3 py-1 outline-none text-text"
-                        disabled={isLoading || generatingQuestion}
-                      />
-                      <Button type="submit" size="sm" disabled={!input.trim() || isLoading || generatingQuestion} className="rounded-lg h-8 px-4 shadow-sm font-bold">
-                        Send
-                      </Button>
+                {/* Schema tab */}
+                {leftPanel === 'schema' && (
+                  <SchemaPanel question={currentQuestion} dbStatus={dbSwitching ? 'loading' : dbStatus} />
+                )}
+
+                {/* Chat tab */}
+                {leftPanel === 'chat' && (
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+                      {chatMessages.map((msg, i) => (
+                        <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-surface-3 text-text-secondary border border-border'}`}>
+                            {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                          </div>
+                          <div className={`max-w-[80%] p-3 rounded-2xl text-xs leading-relaxed ${msg.role === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-surface-3 border border-border text-text rounded-tl-none'}`}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                          </div>
+                        </div>
+                      ))}
+                      {isChatLoading && (
+                        <div className="flex gap-2">
+                          <div className="w-7 h-7 rounded-full bg-surface-3 border border-border flex items-center justify-center">
+                            <Bot size={14} className="text-text-secondary" />
+                          </div>
+                          <div className="bg-surface-3 border border-border rounded-2xl rounded-tl-none p-3">
+                            <Loader2 size={14} className="animate-spin text-text-secondary" />
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
                     </div>
-                  </form>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right: SQL Editor & Scratchpad */}
-          <div className="flex-1 flex flex-col bg-bg relative min-h-0 overflow-hidden">
-            
-            {generatingQuestion && (
-              <div className="absolute inset-0 z-50 bg-bg/90 backdrop-blur-sm flex flex-col items-center justify-center">
-                <Loader2 size={40} className="animate-spin text-primary mb-4" />
-                <h2 className="text-xl font-bold text-text mb-2">Generating Technical Assessment...</h2>
-                <p className="text-sm text-text-secondary text-center max-w-md leading-relaxed">
-                  The AI Principal Engineer is crafting a unique, highly realistic SQL problem tailored to your {difficulty} level.
-                </p>
-              </div>
-            )}
-
-            <div className="flex bg-surface border-b border-border px-4 pt-2 gap-1">
-              <button
-                onClick={() => setActiveTab('sql')}
-                className={`px-6 py-2.5 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'sql' ? 'bg-bg text-primary border border-border border-b-transparent shadow-[0_-2px_10px_rgba(0,0,0,0.05)]' : 'bg-transparent text-text-secondary hover:bg-surface-2'}`}
-              >
-                <Code2 size={16} /> SQL Solution
-              </button>
-              <button
-                onClick={() => setActiveTab('scratchpad')}
-                className={`px-6 py-2.5 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'scratchpad' ? 'bg-bg text-primary border border-border border-b-transparent shadow-[0_-2px_10px_rgba(0,0,0,0.05)]' : 'bg-transparent text-text-secondary hover:bg-surface-2'}`}
-              >
-                <PenTool size={16} /> Scratchpad
-              </button>
-            </div>
-
-            <div className="flex-1 w-full relative flex flex-col min-h-0">
-              <div className="flex-1 relative min-h-0">
-                {activeTab === 'sql' ? (
-                  <SqlEditor
-                    value={sql}
-                    onChange={setSql}
-                    onRun={handleRunSql}
-                    disabled={isLoading || generatingQuestion}
-                    height="100%"
-                    isProctored={true}
-                  />
-                ) : (
-                  <SqlEditor
-                    value={scratchpad}
-                    onChange={setScratchpad}
-                    onRun={handleRunSql}
-                    disabled={isLoading || generatingQuestion}
-                    height="100%"
-                    isProctored={true}
-                  />
+                    <form onSubmit={handleSendChat} className="p-3 border-t border-border bg-surface">
+                      <div className="flex gap-2">
+                        <input
+                          value={chatInput}
+                          onChange={e => setChatInput(e.target.value)}
+                          placeholder="Ask the interviewer..."
+                          disabled={isChatLoading || isTerminated}
+                          className="flex-1 bg-surface-2 border border-border rounded-xl px-3 py-2 text-xs text-text placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                        <button type="submit" disabled={!chatInput.trim() || isChatLoading} className="px-3 py-2 rounded-xl bg-primary text-white text-xs font-bold disabled:opacity-40 hover:bg-primary/90 transition-all">
+                          Send
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 )}
               </div>
 
-              {/* Action Bar */}
-              <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
-                  <Button variant="secondary" size="sm" onClick={() => activeTab === 'sql' ? setSql('') : setScratchpad('')} title="Reset">
-                    <RotateCcw size={13} /> <span className="hidden sm:inline">Reset</span>
-                  </Button>
+              {/* Right: SQL Editor + Results */}
+              <div className="flex-1 flex flex-col overflow-hidden bg-bg">
+                {/* Editor tabs + toolbar */}
+                <div className="flex items-center gap-1 px-3 pt-2 pb-0 border-b border-border bg-surface shrink-0">
+                  <button
+                    onClick={() => setActiveTab('sql')}
+                    className={`px-4 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 transition-all ${activeTab === 'sql' ? 'bg-bg text-primary border border-border border-b-transparent' : 'text-text-secondary hover:bg-surface-2'}`}
+                  >
+                    <Code2 size={13} /> Solution
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('scratch')}
+                    className={`px-4 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 transition-all ${activeTab === 'scratch' ? 'bg-bg text-primary border border-border border-b-transparent' : 'text-text-secondary hover:bg-surface-2'}`}
+                  >
+                    <FileText size={13} /> Scratchpad
+                  </button>
+                  <div className="ml-auto flex items-center gap-2 pb-1">
+                    {answers[currentIndex]?.sql && (
+                      <span className="text-[9px] font-bold text-success border border-success/30 bg-success/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                        <CheckCircle size={9} /> Saved
+                      </span>
+                    )}
+                    <button
+                      onClick={() => { setSqlCode('-- Write your SQL solution here...\n\n'); setQueryResult(null); }}
+                      className="text-text-secondary hover:text-text p-1 rounded"
+                      title="Reset editor"
+                    >
+                      <RotateCcw size={13} />
+                    </button>
+                    <button
+                      onClick={handleRunSql}
+                      disabled={isRunning || dbSwitching}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-all"
+                    >
+                      {isRunning ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                      {isRunning ? 'Running...' : 'Run SQL'}
+                    </button>
+                  </div>
                 </div>
-                <Button size="sm" onClick={handleRunSql} isLoading={isRunning}>
-                  <Play size={13} fill="currentColor" className="mr-1" /> Run Code (Ctrl+Enter)
-                </Button>
+
+                {/* SQL Editor */}
+                <div className="flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+                  <SqlEditor
+                    value={activeTab === 'sql' ? sqlCode : scratchpad}
+                    onChange={activeTab === 'sql' ? handleSqlChange : setScratchpad}
+                    onRun={handleRunSql}
+                    readOnly={isTerminated}
+                  />
+                </div>
+
+                {/* Results panel */}
+                {queryResult && (
+                  <div className="h-48 border-t border-border shrink-0 overflow-hidden">
+                    <ResultsPanel result={queryResult} isLoading={isRunning} />
+                  </div>
+                )}
+
+                {/* SQL navigation footer */}
+                <div className="px-4 py-3 border-t border-border bg-surface flex justify-between items-center shrink-0">
+                  <button onClick={goPrev} disabled={currentIndex === 0} className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text disabled:opacity-40 transition-all">
+                    <ChevronLeft size={15} /> Previous
+                  </button>
+                  <button
+                    onClick={() => { handleSaveCurrentSql(); goNext(); }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all"
+                  >
+                    Save & Next <ChevronRight size={15} />
+                  </button>
+                </div>
               </div>
-
-              {bottomPanel && (
-                <div className="h-[280px] border-t border-border bg-surface flex flex-col shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-10 transition-all duration-300 relative">
-                  <div className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-surface-2">
-                    <h3 className="text-sm font-bold flex items-center gap-2">
-                      {bottomPanel === 'ai' ? (
-                        <>
-                          {isDryRunning ? <Loader2 size={14} className="animate-spin text-purple-500" /> : <CheckCircle2 size={14} className="text-success" />}
-                          AI Code Review (Dry Run)
-                        </>
-                      ) : (
-                        <>
-                          <Database size={14} className="text-blue-500" />
-                          SQL Execution Output
-                        </>
-                      )}
-                    </h3>
-                    <button onClick={() => setBottomPanel(null)} className="p-1 hover:bg-surface-3 rounded text-text-secondary transition-colors"><X size={16} /></button>
-                  </div>
-                  
-                  <div className="flex-1 overflow-hidden relative">
-                    {bottomPanel === 'ai' && (
-                      <div className="absolute inset-0 overflow-y-auto p-5 bg-bg text-sm text-text leading-relaxed prose prose-sm dark:prose-invert max-w-none custom-scrollbar">
-                        {isDryRunning ? (
-                          <div className="flex flex-col items-center justify-center h-full gap-3 text-text-secondary">
-                            <Loader2 size={24} className="animate-spin text-purple-500" /> 
-                            <p className="font-medium text-text">Evaluating execution plan and logic...</p>
-                            <p className="text-xs opacity-70">The AI Principal Engineer is reviewing your SQL.</p>
-                          </div>
-                        ) : (
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              code({ node, inline, className, children, ...props }) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                const codeText = String(children).replace(/\n$/, '');
-                                if (!inline) {
-                                  return (
-                                    <div className="not-prose">
-                                      <CodeBlock code={codeText} language={match ? match[1] : 'sql'} />
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <code className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[13px]" {...props}>
-                                    {children}
-                                  </code>
-                                );
-                              }
-                            }}
-                          >
-                            {dryRunFeedback}
-                          </ReactMarkdown>
-                        )}
-                      </div>
-                    )}
-
-                    {bottomPanel === 'results' && (
-                      <div className="absolute inset-0 bg-bg">
-                        <ResultsPanel 
-                          result={queryResult} 
-                          sql={activeTab === 'sql' ? sql : scratchpad} 
-                          isRunning={isRunning} 
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-            
-            {activeTab === 'sql' && (
-              <div className="p-3 border-t border-border bg-surface-2 flex items-center justify-between z-20 shrink-0">
-                <span className="text-xs text-text-secondary font-mono flex items-center gap-2">
-                  <ShieldAlert size={12} className="text-primary" /> Auto-saving query state.
-                </span>
-                <Button variant="secondary" size="sm" onClick={handleDryRun} disabled={isDryRunning || generatingQuestion} className="shadow-sm font-bold bg-purple-500/10 text-purple-500 border border-purple-500/20 hover:bg-purple-500/20 hover:border-purple-500/30">
-                  <Bot size={16} className="mr-2" /> Request AI Dry Run
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </>

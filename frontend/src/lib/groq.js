@@ -433,6 +433,83 @@ You MUST output the result PURELY as a valid JSON object matching this EXACT str
   return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1800, false, 'json_object');
 }
 
+/**
+ * Generates a complete interview session: 5 SQL coding questions + 5 MCQ questions.
+ * All questions are produced in a single Groq API call.
+ * @returns {Promise<string>} JSON string: { sql_questions: [...5], mcq_questions: [...5] }
+ */
+export async function generateFullInterviewSession({ difficulty = 'mixed', companyName = 'FAANG', candidateName = 'Candidate', roleName = 'Software Engineer' }) {
+  const difficultyMap = {
+    easy: ['EASY', 'EASY', 'EASY-MEDIUM', 'MEDIUM', 'MEDIUM'],
+    medium: ['EASY', 'MEDIUM', 'MEDIUM', 'MEDIUM-HARD', 'HARD'],
+    hard: ['MEDIUM', 'HARD', 'HARD', 'HARD', 'HARD'],
+    mixed: ['EASY', 'EASY-MEDIUM', 'MEDIUM', 'MEDIUM-HARD', 'HARD'],
+  };
+  const levels = difficultyMap[difficulty] || difficultyMap.mixed;
+
+  const prompt = `[SYSTEM IDENTITY]
+You are a Principal SQL Interview Panel Lead at ${companyName}. You are designing a complete structured SQL interview for ${candidateName} applying for a ${roleName} role.
+
+[TASK]
+Generate a COMPLETE interview session with exactly:
+- 5 SQL CODING QUESTIONS (Q1-Q5, progressive difficulty)
+- 5 MCQ CONCEPTUAL QUESTIONS (Q6-Q10)
+
+[SQL QUESTION DIFFICULTY PROGRESSION]
+Q1: ${levels[0]} — warm-up
+Q2: ${levels[1]} — basic joins and aggregation
+Q3: ${levels[2]} — window functions or CTEs
+Q4: ${levels[3]} — multi-step analytics
+Q5: ${levels[4]} — advanced challenge
+
+[SQL QUESTION RULES]
+Each of the 5 SQL questions MUST:
+1. Be a UNIQUE business scenario from a DIFFERENT domain (e-commerce, HR/payroll, social/analytics, logistics, finance)
+2. Use ONLY SQLite-compatible syntax: INTEGER, TEXT, REAL column types. No ENUM, no SERIAL, no GENERATED ALWAYS
+3. Have 2-3 tables with 3-5 rows of realistic sample data each
+4. Include a self-contained "initSql" with CREATE TABLE IF NOT EXISTS + INSERT INTO statements using double-quoted identifiers
+5. NOT include the SQL solution
+
+[MCQ QUESTION RULES]
+Each of the 5 MCQ questions MUST:
+1. Test a DIFFERENT SQL concept: NULL handling, JOIN types, indexing, window functions, query optimization/EXPLAIN
+2. Have exactly 4 options as plain strings (no "A." prefix, just the answer text)
+3. Have "correctIndex" as 0-3 (the index of the correct answer in the options array)
+4. Include a 1-sentence "explanation" of why the answer is correct
+
+[CRITICAL OUTPUT FORMAT]
+Output ONLY a valid JSON object. No markdown. No explanation. Just JSON:
+{
+  "sql_questions": [
+    {
+      "problemStatement": "2-3 sentence business problem specifying what query to write",
+      "explanation": "What the query should achieve and how tables relate",
+      "tables": [
+        {
+          "name": "snake_case_name",
+          "columns": [{"name": "col_name", "type": "INTEGER|TEXT|REAL"}],
+          "sampleData": [{"col_name": "value"}]
+        }
+      ],
+      "expectedOutput": [{"output_col": "val"}],
+      "constraints": "Edge cases and ordering requirements",
+      "initSql": "CREATE TABLE IF NOT EXISTS \\"table\\" (\\"col\\" INTEGER);\\nINSERT INTO \\"table\\" VALUES (1);"
+    }
+  ],
+  "mcq_questions": [
+    {
+      "question": "Full question text",
+      "options": ["first option text", "second option text", "third option text", "fourth option text"],
+      "correctIndex": 0,
+      "explanation": "One sentence explaining why this is correct"
+    }
+  ]
+}`;
+
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 6000, false, 'json_object');
+}
+
+
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {
   const systemPrompt = `[IDENTITY]: You are an uncompromising, elite technical SQL interviewer at ${companyName}.
 [TASK]: The candidate has been given the following problem: "${initialTask.slice(0, 3000)}"
