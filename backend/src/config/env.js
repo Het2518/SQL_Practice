@@ -9,7 +9,6 @@ const RECOMMENDED_ENV_VARS = [
   'EMAIL_USER',
   'EMAIL_PASS',
   'CLIENT_URL',
-  'REDIS_URI',
 ];
 
 /**

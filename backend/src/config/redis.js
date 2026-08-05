@@ -27,8 +27,6 @@ if (env.redisUri) {
   redisClient.on('error', (err) => {
     console.error(`[Redis] Connection error: ${err.message}`);
   });
-} else {
-  console.log('[Redis] REDIS_URI not provided. Redis client disabled.');
 }
 
 module.exports = redisClient;
