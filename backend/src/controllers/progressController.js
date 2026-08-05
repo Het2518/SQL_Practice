@@ -73,10 +73,11 @@ async function getProgress(req, res, next) {
       .limit(20)
       .lean();
 
-    // Map recentSubmissions to the format the frontend expects temporarily
+    // Map recentSubmissions to the format the frontend expects
     const formattedRecentSubmissions = recentSubmissions.map(s => ({
       questionId: s.questionId,
-      title: `Question ${s.questionId}`, // Need question join for real title, but this keeps UI from crashing
+      // Title is stored on the Submission model if provided, otherwise fall back to generic label
+      title: s.questionTitle || `Question ${s.questionId}`,
       status: s.status === 'Accepted' ? 'complete' : 'attempted',
       timestamp: s.createdAt,
     }));
@@ -103,10 +104,13 @@ async function getProgress(req, res, next) {
 
 /**
  * PATCH /api/progress/question
- * Deprecated endpoint - use recordActivity instead.
+ * @deprecated Use POST /api/progress/activity instead.
  */
-async function updateQuestionProgress(req, res, next) {
-  return sendSuccess(res, { message: 'Deprecated. Use POST /api/progress/activity.' });
+async function updateQuestionProgress(req, res) {
+  res.status(410).json({
+    success: false,
+    message: 'This endpoint has been removed. Use POST /api/progress/activity.',
+  });
 }
 
 /**
@@ -124,6 +128,7 @@ async function recordActivity(req, res, next) {
     await Submission.create({
       userId: req.user._id,
       questionId: String(question.id),
+      questionTitle: question.title || null, // Store title for profile activity feed
       sql,
       status: dbStatus,
       executionTimeMs,
@@ -162,8 +167,12 @@ async function recordActivity(req, res, next) {
     }
 
     if (isAccepted) {
-      doc.totalXp += 10;
-      doc.eloRating += 5;
+      // Award XP based on question difficulty
+      const difficulty = (req.body.question?.difficulty || 'easy').toLowerCase();
+      const XP_MAP = { easy: 10, medium: 30, hard: 50 };
+      const xpGain = XP_MAP[difficulty] ?? 10;
+      doc.totalXp += xpGain;
+      doc.eloRating += Math.round(xpGain / 2); // ELO scales with difficulty too
     }
 
     // Compute badges

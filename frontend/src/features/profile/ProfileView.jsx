@@ -6,7 +6,7 @@ import {
   Medal, Share2, BarChart2, MessageSquare, Folder, Swords, Award,
 } from 'lucide-react';
 import { allQuestions } from '@/data/index';
-import { BADGE_DEFS } from '@/hooks/useGamification';
+import { BADGE_DEFS } from '@/stores/useGamificationStore';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { DashboardTab } from './DashboardTab';

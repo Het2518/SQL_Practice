@@ -9,8 +9,14 @@ const AuditLog = require('../models/AuditLog');
 const { signToken } = require('../utils/jwt');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/emailService');
+const { setCsrfCookie } = require('../middleware/csrf');
 
 const generateCode = () => crypto.randomInt(100000, 999999).toString();
+
+/** SHA-256 hash a plain-text code before storing it. */
+function hashCode(code) {
+  return crypto.createHash('sha256').update(code).digest('hex');
+}
 
 /**
  * Returns consistent cookie options based on the request context.
@@ -239,10 +245,11 @@ async function forgotPassword(req, res, next) {
     const user = await User.findOne({ email });
 
     if (user) {
-      user.resetPasswordCode = generateCode();
+      const plainCode = generateCode();
+      user.resetPasswordCode = hashCode(plainCode);  // Store hash, never plaintext
       user.resetPasswordExpires = Date.now() + 15 * 60 * 1000;
       await user.save();
-      const emailResult = await sendPasswordResetEmail(user.email, user.resetPasswordCode);
+      const emailResult = await sendPasswordResetEmail(user.email, plainCode); // Send plaintext to user
       if (!emailResult.success) {
         return sendError(res, { statusCode: 500, message: `Failed to send email. SMTP Error: ${emailResult.error}` });
       }
@@ -264,7 +271,7 @@ async function resetPassword(req, res, next) {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user) return sendError(res, { statusCode: 400, message: 'Invalid request.' });
-    if (user.resetPasswordCode !== code) return sendError(res, { statusCode: 400, message: 'Invalid reset code.' });
+    if (!user.resetPasswordCode || user.resetPasswordCode !== hashCode(code)) return sendError(res, { statusCode: 400, message: 'Invalid reset code.' });
     if (user.resetPasswordExpires < Date.now()) return sendError(res, { statusCode: 400, message: 'Reset code has expired.' });
 
     // The pre-save hook will hash the new password
@@ -364,7 +371,6 @@ async function refreshTokenEndpoint(req, res) {
  * Issues a CSRF token to the client.
  */
 async function getCsrfToken(req, res) {
-  const { setCsrfCookie } = require('../middleware/csrf');
   const token = setCsrfCookie(req, res);
   return sendSuccess(res, { data: { csrfToken: token } });
 }

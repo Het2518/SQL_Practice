@@ -17,7 +17,7 @@ import {
 import { Button } from '@/shared/ui/Button';
 import { LeaderboardModal } from '@/features/gamification/LeaderboardModal';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
 
 export function Header({ leftContent, centerContent, navLinks, onShowAuth, onShowSettings, rightContent }) {

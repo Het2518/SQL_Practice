@@ -1,6 +1,8 @@
 import SqlWorker from './sql.worker.js?worker';
 
-const DB_NAME = 'DataDesk_SQLite_Backup';
+// Bump this version when server-side database files (.sqlite) are updated to invalidate client caches
+const CACHE_VERSION = 2;
+const DB_NAME = `DataDesk_SQLite_Backup_v${CACHE_VERSION}`;
 const STORE_NAME = 'db_backups';
 
 function openIDB() {

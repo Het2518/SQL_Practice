@@ -9,6 +9,7 @@ const RECOMMENDED_ENV_VARS = [
   'EMAIL_USER',
   'EMAIL_PASS',
   'CLIENT_URL',
+  'REDIS_URI',
 ];
 
 /**
@@ -51,11 +52,13 @@ const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   isDev: process.env.NODE_ENV !== 'production',
-  // Email config
   emailHost: process.env.EMAIL_HOST || 'smtp.gmail.com',
   emailPort: parseInt(process.env.EMAIL_PORT, 10) || 465,
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
+  
+  // Redis for rate-limiting (optional)
+  redisUri: process.env.REDIS_URI,
 };
 
 module.exports = { validateEnv, env };

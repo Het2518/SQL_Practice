@@ -9,6 +9,7 @@ import { defaultSettings, SETTINGS_KEY } from './settingsConfig';
 import { ConfirmModal } from '@/shared/ui/ConfirmModal';
 import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { Settings, X, Bot, Download, UploadCloud, RotateCcw, Trash2, ClipboardCopy, HardDrive, Keyboard, Search, Database } from 'lucide-react';
 
 function ToggleRow({ label, description, checked, onChange }) {
@@ -101,6 +102,7 @@ export function SettingsModal({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmState, setConfirmState] = useState(null);
   const [storageSize, setStorageSize] = useState('0 KB');
+  const trapRef = useFocusTrap(true, onClose);
 
   const importRef = useRef();
 
@@ -226,6 +228,7 @@ export function SettingsModal({ onClose }) {
 
   return (
     <div
+      ref={trapRef}
       className="fixed inset-0 z-[1000] flex items-center justify-center bg-bg/80 backdrop-blur-md animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >

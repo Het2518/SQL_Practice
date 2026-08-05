@@ -13,7 +13,7 @@ import { Header } from '@/shared/ui/Header';
 import { DailyChallengeWidget } from '@/features/gamification/DailyChallengeWidget';
 import { DB_INFO } from '@/data/schemas';
 import { allQuestions, getQuestionsForDb } from '@/data/index';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 import { useProgressStore } from '@/stores/useProgressStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
 

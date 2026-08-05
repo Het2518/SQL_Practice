@@ -31,11 +31,7 @@ export const useProgressStore = create((set, get) => ({
       saveLocalProgress(newProgress);
       return { progress: newProgress };
     });
-
-    // Optimistically updated locally; also fire API patch (non-blocking)
-    api.progress.updateQuestion(String(questionId), status).catch((err) => {
-      console.error('[Progress] Failed to sync question update:', err.message);
-    });
+    // Local-optimistic update only. Full progress is synced via recordActivity.
   },
 
   initializeLocalProgress: () => {

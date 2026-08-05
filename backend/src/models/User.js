@@ -34,12 +34,6 @@ const userSchema = new mongoose.Schema(
       trim: true,
       maxlength: [50, 'Display name cannot exceed 50 characters'],
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    verificationCode: String,
-    verificationCodeExpires: Date,
     resetPasswordCode: String,
     resetPasswordExpires: Date,
     
@@ -74,22 +68,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // --- Profile & Social ---
-    bio: {
-      type: String,
-      maxlength: [500, 'Bio cannot exceed 500 characters'],
-    },
-    avatarUrl: String,
-    socialLinks: {
-      github: String,
-      linkedin: String,
-      website: String,
-    },
-    githubId: {
-      type: String, // For future OAuth implementation
-      sparse: true,
-      unique: true,
-    },
+
   },
   {
     timestamps: true, // Adds createdAt and updatedAt

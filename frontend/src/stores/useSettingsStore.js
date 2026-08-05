@@ -27,3 +27,16 @@ export const useSettingsStore = create((set) => ({
       return { settings: updated };
     }),
 }));
+
+// Apply the persisted theme synchronously on module load (before first React render).
+// This prevents a flash of unstyled content without needing a useEffect in App.jsx.
+(function applyInitialTheme() {
+  try {
+    const saved = loadSettings();
+    const isDark = saved.darkMode ?? defaultSettings.darkMode;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  } catch {
+    // If localStorage is unavailable, default to light
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();

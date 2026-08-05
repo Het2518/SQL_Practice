@@ -113,6 +113,28 @@ html[data-theme="dark"],
   --gradient-primary: linear-gradient(135deg, #ffffff 0%, #d4d4d4 100%);
 }
 
+/* ── Z-Index Scale ──────────────────────────────────────────────────────── */
+:root {
+  --z-base:      1;
+  --z-dropdown:  100;
+  --z-sticky:    200;
+  --z-overlay:   500;
+  --z-modal:     1000;
+  --z-popover:   2000;
+  --z-toast:     9000;
+  --z-blocker:   9999;
+}
+
+/* ── Animation & Transition Token Scale ─────────────────────────────────── */
+:root {
+  --duration-instant:  50ms;
+  --duration-fast:     150ms;
+  --duration-base:     250ms;
+  --duration-slow:     400ms;
+  --duration-toast:    4500ms;
+  --duration-toast-leave: 350ms;
+}
+
 /* ── Reset & Globals ── */
 *, *::before, *::after {
   box-sizing: border-box;

@@ -37,6 +37,7 @@ const Button = React.forwardRef(({
   icon: Icon,
   children,
   disabled,
+  'aria-label': ariaLabel,
   ...props
 }, ref) => {
   return (
@@ -44,12 +45,14 @@ const Button = React.forwardRef(({
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
+      aria-label={isLoading ? (ariaLabel ? `${ariaLabel} — loading` : 'Loading…') : ariaLabel}
       {...props}
     >
       {isLoading ? (
-        <RotateCcw className="animate-spin" size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
+        <RotateCcw aria-hidden="true" className="animate-spin" size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
       ) : Icon ? (
-        <Icon size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
+        <Icon aria-hidden="true" size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
       ) : null}
       {children}
     </button>

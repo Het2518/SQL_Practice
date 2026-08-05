@@ -48,6 +48,9 @@ function Toast({ id, type, title, message, onRemove }) {
 
   return (
     <div
+      role="alert"
+      aria-atomic="true"
+      aria-live="assertive"
       className="flex items-start gap-3 py-3.5 pl-5 pr-4 rounded-2xl bg-surface border border-border min-w-[280px] max-w-[360px] relative overflow-hidden cursor-pointer"
       style={{
         boxShadow: `0 8px 40px rgba(0,0,0,0.18), 0 0 0 1px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`,
@@ -103,6 +106,7 @@ function Toast({ id, type, title, message, onRemove }) {
       </div>
 
       <button
+        aria-label="Dismiss notification"
         className="bg-transparent border-none cursor-pointer text-muted text-lg pl-1 shrink-0 leading-none opacity-60 transition-opacity duration-200 hover:opacity-100"
         onMouseEnter={e => e.currentTarget.style.opacity = '1'}
         onMouseLeave={e => e.currentTarget.style.opacity = '0.6'}
@@ -138,7 +142,11 @@ export function ToastProvider({ children }) {
         }
       `}</style>
 
-      <div className="fixed bottom-6 right-6 z-[99999] flex flex-col-reverse gap-2.5 pointer-events-none">
+      <div
+        aria-live="assertive"
+        aria-label="Notifications"
+        className="fixed bottom-6 right-6 z-[99999] flex flex-col-reverse gap-2.5 pointer-events-none"
+      >
         {toasts.map(t => (
           <div key={t.id} className="pointer-events-auto">
             <Toast

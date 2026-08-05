@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { api } from '@/lib/api';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 
 function SectionHeader({ title, description, icon: Icon }) {
   return (

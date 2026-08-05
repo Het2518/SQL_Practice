@@ -168,8 +168,6 @@ export const api = {
   // Progress (protected)
   progress: {
     get: () => apiClient.get('/progress'),
-    updateQuestion: (questionId, status) =>
-      apiClient.patch('/progress/question', { questionId, status }),
     recordActivity: (question, dbName, status, sql, executionTimeMs) =>
       apiClient.post('/progress/activity', { question, dbName, status, sql, executionTimeMs }),
     reset: () => apiClient.delete('/progress/reset'),
@@ -193,7 +191,4 @@ export const api = {
     saveScore: (data) => apiClient.post('/interviews/score', data),
     getHistory: (limit = 50) => apiClient.get('/interviews/history', { params: { limit } }),
   },
-  
-  // AI Proxy (Deprecated: Moved to client-side groq.js)
-  ai: {}
 };

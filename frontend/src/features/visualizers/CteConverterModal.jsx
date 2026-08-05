@@ -3,7 +3,7 @@ import { SqlEditor } from '@/features/practice/SqlEditor';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, onUseConverted }) => {
-  const trapRef = useFocusTrap(isOpen);
+  const trapRef = useFocusTrap(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
@@ -17,7 +17,7 @@ export const CteConverterModal = ({ isOpen, onClose, originalSql, convertedSql, 
               Both queries return identical results. CTEs are preferred for readability, reusability, and debugging.
             </div>
           </div>
-          <button onClick={onClose} className="bg-transparent border-none text-muted cursor-pointer text-xl">✖</button>
+          <button onClick={onClose} aria-label="Close" className="bg-transparent border-none text-muted cursor-pointer text-xl">✖</button>
         </div>
 
         {/* Content */}

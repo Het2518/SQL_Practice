@@ -9,6 +9,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { sqlWorkerManager } from '@/workers/SqlWorkerManager';
 import { useProctorStore } from './useProctorStore';
+import { useInterviewSession } from './hooks/useInterviewSession';
+import { useProctoring } from './hooks/useProctoring';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { useSettingsStore } from '@/stores/useSettingsStore';
@@ -35,20 +37,14 @@ export function InterviewArena() {
   
   const { cameraStream, screenStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
 
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sql, setSql] = useState('-- Write your solution here once you understand the requirements...\n\n');
-  const [scratchpad, setScratchpad] = useState('-- Use this scratchpad for notes or intermediate queries...\n\n');
   const [activeTab, setActiveTab] = useState('sql'); // sql or scratchpad
-  const [timeLeft, setTimeLeft] = useState(duration * 60);
 
   const [dryRunFeedback, setDryRunFeedback] = useState('');
   const [isDryRunning, setIsDryRunning] = useState(false);
   const [isDryRunPanelOpen, setIsDryRunPanelOpen] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  const [fullscreenWarning, setFullscreenWarning] = useState(false);
-  const fullscreenTimeoutRef = useRef(null);
   const [leftTab, setLeftTab] = useState('problem'); // 'problem' or 'chat'
   const [bottomPanel, setBottomPanel] = useState(null); // 'ai' | 'results' | null
   const [queryResult, setQueryResult] = useState(null);
@@ -57,302 +53,68 @@ export function InterviewArena() {
   const { executeQuery, initWithSql } = useSqlDatabase();
 
   const messagesEndRef = useRef(null);
-  const isSubmittedRef = useRef(false);
 
-  const [initialTask, setInitialTask] = useState(null);
-  const [generatingQuestion, setGeneratingQuestion] = useState(true);
+  const handleFinalSubmit = async (isTimeUp = false) => {
+    if (isSubmittedRef.current) return;
+    isSubmittedRef.current = true;
+    setIsLoading(true);
 
-  // Restore or Initialize Session
-  // Guaranteed fallback to build SQL perfectly matching the UI if AI forgets or messes up
-  const generateInitSqlFromTables = (tables) => {
-    if (!tables || !Array.isArray(tables)) return '-- init';
-    let sql = '';
-    for (const t of tables) {
-      if (!t.name || !t.columns) continue;
-      const cols = t.columns.map(c => `"${c.name}" ${c.type || 'TEXT'}`).join(', ');
-      sql += `CREATE TABLE "${t.name}" (${cols});\n`;
-      
-      if (t.sampleData && Array.isArray(t.sampleData) && t.sampleData.length > 0) {
-        for (const row of t.sampleData) {
-          const keys = Object.keys(row).map(k => `"${k}"`).join(', ');
-          const vals = Object.values(row).map(v => {
-            if (typeof v === 'number') return v;
-            if (v === null) return 'NULL';
-            return `'${String(v).replace(/'/g, "''")}'`;
-          }).join(', ');
-          sql += `INSERT INTO "${t.name}" (${keys}) VALUES (${vals});\n`;
-        }
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen().catch(() => {});
       }
-    }
-    return sql || '-- init';
-  };
+    } catch (e) {}
 
-  useEffect(() => {
-    const saved = restoreSessionState();
+    try {
+      const { stopAllStreams } = useProctorStore.getState();
+      stopAllStreams();
+    } catch(e) {}
     
-    // Invalidate legacy sessions that don't have database initialization scripts
-    if (saved && (saved.initSql || saved.initialTask?.tables)) {
-      setInitialTask(saved.initialTask);
-      setMessages(saved.messages || []);
-      setSql(saved.sql || '');
-      setScratchpad(saved.scratchpad || '');
-      setTimeLeft(saved.timeLeft || duration * 60);
-      setGeneratingQuestion(false);
-      
-      let cleanInitSql = saved.initSql;
-      if (!cleanInitSql || cleanInitSql === '-- init') {
-         cleanInitSql = generateInitSqlFromTables(saved.initialTask?.tables);
-      } else {
-         cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-      }
-      
-      initWithSql(cleanInitSql).catch(err => {
-        console.error('Failed to init DB from saved state:', err);
-        toast({ title: 'Database Error', message: err.message, type: 'error' });
-      });
-    } else {
-      const fetchQuestion = async () => {
-        try {
-          const taskText = await generateInterviewTask({
-            difficulty,
-            companyName,
-            candidateName,
-            roleName
-          });
-          
-          if (!taskText) throw new Error('Empty response');
-
-          let taskData;
-          try {
-            taskData = JSON.parse(taskText);
-          } catch(e) {
-            // Fallback parsing just in case model wraps in markdown
-            const cleaned = taskText.replace(/```json/i, '').replace(/```/g, '').trim();
-            taskData = JSON.parse(cleaned);
-          }
-
-          setInitialTask(taskData);
-          
-          let cleanInitSql = taskData.initSql;
-          if (!cleanInitSql || cleanInitSql.trim() === '') {
-             cleanInitSql = generateInitSqlFromTables(taskData.tables);
-          } else {
-             cleanInitSql = cleanInitSql.replace(/```sql/ig, '').replace(/```/g, '').trim();
-             // Just to be ultra-safe, if the AI provided broken SQL, fallback to our generator
-             if (!cleanInitSql.toLowerCase().includes('create table')) {
-               cleanInitSql = generateInitSqlFromTables(taskData.tables);
-             }
-          }
-          
-          await initWithSql(cleanInitSql);
-          
-          const welcomeMsg = {
-            role: 'assistant',
-            content: `Welcome to your ${companyName} interview, ${candidateName}! I'm your interviewer today.\n\nHere is your task:\n\n---\n\n${taskData.markdown}\n\n---\n\nBefore you start writing SQL, please ask me any clarifying questions about the data schema or edge cases.`
-          };
-          setMessages([welcomeMsg]);
-          
-          saveSessionState({
-            difficulty, companyName, roleName, candidateName, initialTask: taskData,
-            initSql: cleanInitSql, messages: [welcomeMsg], sql: '', scratchpad: '', timeLeft: duration * 60
-          });
-        } catch (err) {
-          console.error(err);
-          const fallbackTask = {
-            problemStatement: "Identify the top 3 users by total transaction volume in the last 30 days.",
-            explanation: "You need to join the users and transactions tables, aggregate the total amount per user, and limit the result to the top 3.",
-            tables: [
-              {
-                name: "users",
-                columns: [
-                  { name: "user_id", type: "INT", description: "Unique identifier for the user" },
-                  { name: "name", type: "TEXT", description: "Name of the user" }
-                ],
-                sampleData: [
-                  { user_id: 1, name: 'Alice' }, { user_id: 2, name: 'Bob' }, { user_id: 3, name: 'Charlie' }
-                ]
-              },
-              {
-                name: "transactions",
-                columns: [
-                  { name: "transaction_id", type: "INT", description: "Unique identifier for the transaction" },
-                  { name: "user_id", type: "INT", description: "User who made the transaction" },
-                  { name: "amount", type: "DECIMAL", description: "Transaction amount" },
-                  { name: "date", type: "DATE", description: "Transaction date" }
-                ],
-                sampleData: [
-                  { transaction_id: 1, user_id: 1, amount: 100, date: '2023-10-01' },
-                  { transaction_id: 2, user_id: 2, amount: 150, date: '2023-10-02' }
-                ]
-              }
-            ],
-            expectedOutput: [
-              { name: "Alice", total_volume: 300 }
-            ],
-            constraints: "Do not include users with no transactions. If there is a tie, return any valid combination.",
-            notes: "Assume all dates are within the last 30 days for this sample.",
-            initSql: "CREATE TABLE users (user_id INT, name TEXT); CREATE TABLE transactions (transaction_id INT, user_id INT, amount DECIMAL, date DATE); INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie'); INSERT INTO transactions VALUES (1, 1, 100, '2023-10-01'), (2, 2, 150, '2023-10-02');"
-          };
-          
-          setInitialTask(fallbackTask);
-          await initWithSql(fallbackTask.initSql);
-        } finally {
-          setGeneratingQuestion(false);
-        }
-      };
-      fetchQuestion();
-    }
-  }, []);
-
-  // Timer & Auto-Save
-  useEffect(() => {
-    if (isSubmittedRef.current || generatingQuestion || isTerminated) return;
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleFinalSubmit(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    clearSessionState();
     
-    const saveInterval = setInterval(() => {
-      if (!isSubmittedRef.current && !isTerminated) {
-        saveSessionState({
-          difficulty, companyName, roleName, candidateName, initialTask,
-          messages, sql, scratchpad, timeLeft
-        });
-      }
-    }, 5000);
-
-    return () => {
-      clearInterval(timer);
-      clearInterval(saveInterval);
+    const payload = {
+      companyName,
+      candidateName,
+      roleName,
+      sql,
+      initialTask,
+      durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
+      chatHistory: messages,
+      forceZero: false
     };
-  }, [generatingQuestion, messages, sql, scratchpad, isTerminated]);
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
+    
+    navigate('/interview/report', { 
+      state: { sessionPayload: payload } 
+    });
   };
 
-  // Zero-Tolerance Anti-Cheat
-  useEffect(() => {
+  const {
+    messages, setMessages,
+    sql, setSql,
+    scratchpad, setScratchpad,
+    timeLeft, initialTask, generatingQuestion,
+    isSubmittedRef
+  } = useInterviewSession({
+    duration, difficulty, companyName, candidateName, roleName,
+    restoreSessionState, saveSessionState, initWithSql,
+    isTerminated, handleFinalSubmit, toast
+  });
+
+  const enforceViolation = (reason) => {
     if (isSubmittedRef.current || isTerminated) return;
+    isSubmittedRef.current = true;
+    addViolation('integrity_breach', reason);
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    } catch (e) {}
+  };
 
-    let gracePeriodActive = true;
-    const graceTimer = setTimeout(() => {
-      gracePeriodActive = false;
-      if (!document.fullscreenElement && !isSubmittedRef.current) {
-        enforceViolation('Exited fullscreen mode.');
-      }
-    }, 4000);
+  const { fullscreenWarning, setFullscreenWarning } = useProctoring({
+    isSubmittedRef, isTerminated, enforceViolation, addViolation
+  });
 
-    const enforceViolation = (reason) => {
-      if (isSubmittedRef.current || isTerminated) return;
-      if (gracePeriodActive) {
-        console.warn('Violation ignored (grace period):', reason);
-        return;
-      }
-      isSubmittedRef.current = true;
-      addViolation('integrity_breach', reason);
-      try {
-        if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      } catch (e) {}
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') enforceViolation('Switched tabs or minimized window.');
-    };
-    
-    const onFullscreenChange = () => {
-      if (!document.fullscreenElement && !isSubmittedRef.current && !isTerminated) {
-        setFullscreenWarning(true);
-        // Give them 15 seconds to click the button to return to fullscreen
-        fullscreenTimeoutRef.current = setTimeout(() => {
-          if (!document.fullscreenElement && !isSubmittedRef.current && !isTerminated) {
-            enforceViolation('Exited fullscreen mode for too long.');
-          }
-        }, 15000);
-      } else {
-        setFullscreenWarning(false);
-        if (fullscreenTimeoutRef.current) clearTimeout(fullscreenTimeoutRef.current);
-      }
-    };
-    
-    const onWindowBlur = () => {
-      // 3-second grace period for interacting with browser UI (like the screen share "Hide" banner)
-      setTimeout(() => {
-        if (!document.hasFocus() && !isSubmittedRef.current && !isTerminated) {
-          enforceViolation('Window lost focus. (Alt-Tabbed or clicked external monitor).');
-        }
-      }, 3000);
-    };
-
-    const disableCopyPaste = (e) => {
-      e.preventDefault();
-      enforceViolation('Attempted to use Copy/Paste/Cut.');
-    };
-
-    const disableContextMenu = (e) => {
-      e.preventDefault();
-      toast({ title: 'Warning', message: 'Context menu disabled.', type: 'warning' });
-    };
-
-    const disableKeyboard = (e) => {
-      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'p', 'i', 'j'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-        enforceViolation('Attempted to use prohibited keyboard shortcuts (Copy/Paste/Print/DevTools).');
-      }
-      if (e.key === 'F12' || e.key === 'PrintScreen') {
-        e.preventDefault();
-        enforceViolation('Attempted to use Developer Tools or Print Screen.');
-      }
-      if (e.key === 'Escape') {
-        e.preventDefault(); // Browser handles ESC for fullscreen, handled by onFullscreenChange
-      }
-    };
-
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-
-    const handleStreamEnd = () => {
-      if (!isSubmittedRef.current && !isTerminated) enforceViolation('Camera, Screen, or Mic stream disconnected.');
-    };
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    document.addEventListener('fullscreenchange', onFullscreenChange);
-    window.addEventListener('blur', onWindowBlur);
-    document.addEventListener('copy', disableCopyPaste);
-    document.addEventListener('paste', disableCopyPaste);
-    document.addEventListener('cut', disableCopyPaste);
-    document.addEventListener('contextmenu', disableContextMenu);
-    document.addEventListener('keydown', disableKeyboard);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    if (cameraStream) cameraStream.getTracks().forEach(t => t.addEventListener('ended', handleStreamEnd));
-    if (screenStream) screenStream.getTracks().forEach(t => t.addEventListener('ended', handleStreamEnd));
-
-    return () => {
-      clearTimeout(graceTimer);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-      window.removeEventListener('blur', onWindowBlur);
-      document.removeEventListener('copy', disableCopyPaste);
-      document.removeEventListener('paste', disableCopyPaste);
-      document.removeEventListener('cut', disableCopyPaste);
-      document.removeEventListener('contextmenu', disableContextMenu);
-      document.removeEventListener('keydown', disableKeyboard);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (cameraStream) cameraStream.getTracks().forEach(t => t.removeEventListener('ended', handleStreamEnd));
-      if (screenStream) screenStream.getTracks().forEach(t => t.removeEventListener('ended', handleStreamEnd));
-    };
-  }, [cameraStream, screenStream, isTerminated]);
+  // Render functions...
 
   // Ensure streams are explicitly killed on unmount
   useEffect(() => {
@@ -438,40 +200,6 @@ export function InterviewArena() {
     setIsRunning(false);
   };
 
-  const handleFinalSubmit = async (isTimeUp = false) => {
-    if (isSubmittedRef.current) return;
-    isSubmittedRef.current = true;
-    setIsLoading(true);
-
-    try {
-      if (document.fullscreenElement && document.exitFullscreen) {
-        await document.exitFullscreen().catch(() => {});
-      }
-    } catch (e) {}
-
-    try {
-      const { stopAllStreams } = useProctorStore.getState();
-      stopAllStreams();
-    } catch(e) {}
-    
-    clearSessionState();
-    
-    const payload = {
-      companyName,
-      candidateName,
-      roleName,
-      sql,
-      initialTask,
-      durationMinutes: Math.round((duration * 60 - timeLeft) / 60),
-      chatHistory: messages,
-      forceZero: false
-    };
-    sessionStorage.setItem('pending_interview_report', JSON.stringify(payload));
-    
-    navigate('/interview/report', { 
-      state: { sessionPayload: payload } 
-    });
-  };
 
   const handleFailToReport = () => {
     clearSessionState();
@@ -621,7 +349,10 @@ export function InterviewArena() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded font-mono font-bold text-sm ${timeLeft < 300 ? 'bg-error/10 text-error animate-pulse' : 'bg-surface-2 text-text'}`}>
+            <div 
+              aria-live="polite"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-mono font-bold text-sm tabular-nums ${timeLeft < 300 ? 'bg-error/10 text-error animate-pulse' : 'bg-surface-2 text-text'}`}
+            >
               <Clock size={16} /> {formatTime(timeLeft)}
             </div>
             <button onClick={() => setShowShortcuts(true)} className="p-2 text-text-secondary hover:text-text hover:bg-surface-2 rounded-lg transition-colors" title="Keyboard Shortcuts">

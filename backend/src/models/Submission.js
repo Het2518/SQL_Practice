@@ -15,6 +15,10 @@ const submissionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    questionTitle: {
+      type: String, // Denormalized title stored at write-time to avoid joins
+      default: null,
+    },
     sql: {
       type: String,
       required: true,
@@ -53,6 +57,10 @@ const submissionSchema = new mongoose.Schema(
 
 // Compound index for fast cursor pagination of a user's submissions for a question
 submissionSchema.index({ userId: 1, questionId: 1, createdAt: -1 });
+
+// Indexes for fast retrieval of a user's submission history and status aggregations
+submissionSchema.index({ userId: 1, createdAt: -1 });
+submissionSchema.index({ userId: 1, status: 1 });
 
 // TTL Index: Automatically drops documents when the current time >= expiresAt
 // If expiresAt is null, the document is kept forever.

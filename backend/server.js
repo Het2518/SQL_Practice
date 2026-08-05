@@ -28,9 +28,12 @@ const progressRoutes = require('./src/routes/progressRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
 const interviewRoutes = require('./src/routes/interviewRoutes');
-const aiRoutes = require('./src/routes/aiRoutes');
+
 
 const app = express();
+// Trust first proxy (e.g., Vercel, Heroku, Nginx) for rate-limiting IP resolution.
+// SECURITY NOTE: If the Node server is directly exposed to the internet (no reverse proxy),
+// this must be disabled or configured with specific trusted IP ranges to prevent IP spoofing.
 app.set('trust proxy', 1);
 
 // ── Request ID Middleware (for distributed tracing) ─────────────────────────
@@ -108,7 +111,7 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/interviews', interviewRoutes);
-app.use('/api/ai', aiRoutes);
+
 
 // ── Health Check ────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

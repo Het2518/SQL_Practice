@@ -8,7 +8,7 @@ export function TablePreviewModal({
   tableName,
   onClose
 }) {
-  const trapRef = useFocusTrap(true);
+  const trapRef = useFocusTrap(true, onClose);
   const dbInfo = DB_INFO[db];
   const tableInfo = dbInfo.tables.find(t => t.name === tableName);
   const {

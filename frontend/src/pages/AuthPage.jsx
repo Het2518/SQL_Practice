@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 import { Mail, Lock, User, Terminal, ArrowRight, ShieldCheck, Database, Zap, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Button } from '@/shared/ui/Button';

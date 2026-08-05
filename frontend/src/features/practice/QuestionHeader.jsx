@@ -51,7 +51,10 @@ export const QuestionHeader = React.memo(function QuestionHeader({
 
         <div className="flex items-center gap-2">
           {timedChallenges && (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold tabular-nums border ${timeLeft <= 60 ? 'bg-red-500/10 text-error border-error/30' : 'bg-surface-2 text-text-secondary border-border'}`}>
+            <div 
+              aria-live="polite"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold tabular-nums border ${timeLeft <= 60 ? 'bg-red-500/10 text-error border-error/30' : 'bg-surface-2 text-text-secondary border-border'}`}
+            >
               <Timer size={13} /> {formatTime(timeLeft)}
             </div>
           )}

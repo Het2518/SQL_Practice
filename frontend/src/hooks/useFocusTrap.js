@@ -3,9 +3,10 @@ import { useEffect, useRef } from 'react';
 /**
  * Traps focus within a specified element for accessibility in modals.
  * @param {boolean} isActive - Whether the trap should be active
+ * @param {Function} onClose - Optional callback fired when Escape is pressed
  * @returns {React.RefObject} Ref to attach to the modal container
  */
-export function useFocusTrap(isActive = true) {
+export function useFocusTrap(isActive = true, onClose = null) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -30,7 +31,12 @@ export function useFocusTrap(isActive = true) {
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
-    const handleTabKey = (e) => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+        return;
+      }
+
       if (e.key !== 'Tab') return;
 
       if (e.shiftKey) { // Shift + Tab
@@ -46,7 +52,7 @@ export function useFocusTrap(isActive = true) {
       }
     };
 
-    currentRef.addEventListener('keydown', handleTabKey);
+    currentRef.addEventListener('keydown', handleKeyDown);
 
     // Initial focus
     if (!currentRef.contains(document.activeElement)) {
@@ -55,7 +61,7 @@ export function useFocusTrap(isActive = true) {
     }
 
     return () => {
-      currentRef.removeEventListener('keydown', handleTabKey);
+      currentRef.removeEventListener('keydown', handleKeyDown);
     };
   }, [isActive]);
 

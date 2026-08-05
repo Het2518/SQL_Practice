@@ -26,7 +26,7 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { groqChat, buildSandboxQuestionsPrompt, MODEL_SMART, generateSchema } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
-import '@/styles/sandbox.css';
+import './CustomDatasetPage.css';
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
 function sanitizeColName(n) {

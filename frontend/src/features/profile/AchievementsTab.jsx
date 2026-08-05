@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lock, Target, Award, Shield, Zap, Star, CheckCircle, Flame } from 'lucide-react';
-import { BADGE_DEFS } from '@/hooks/useGamification';
+import { BADGE_DEFS } from '@/stores/useGamificationStore';
 
 // Badge icon mapping — no emoji, use Lucide icons
 const BADGE_ICONS = {

@@ -1,6 +1,18 @@
 'use strict';
 
 const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis').default;
+const redisClient = require('../config/redis');
+
+// Helper to optionally inject the Redis store if the client is connected
+const getStore = () => {
+  if (redisClient) {
+    return new RedisStore({
+      sendCommand: (...args) => redisClient.call(...args),
+    });
+  }
+  return undefined; // Falls back to express-rate-limit's default MemoryStore
+};
 
 /**
  * Strict rate limiter for auth endpoints (login, register, forgot-password).
@@ -16,6 +28,7 @@ const authLimiter = rateLimit({
     success: false,
     message: 'Too many requests from this IP. Please try again after 15 minutes.',
   },
+  store: getStore(),
 });
 
 /**
@@ -31,6 +44,7 @@ const apiLimiter = rateLimit({
     success: false,
     message: 'Too many requests. Please slow down.',
   },
+  store: getStore(),
 });
 
 /**
@@ -46,6 +60,7 @@ const activityLimiter = rateLimit({
     success: false,
     message: 'Too many submissions. Please slow down.',
   },
+  store: getStore(),
 });
 
 /**
@@ -61,6 +76,7 @@ const upvoteLimiter = rateLimit({
     success: false,
     message: 'Too many votes. Please slow down.',
   },
+  store: getStore(),
 });
 
 /**
@@ -76,6 +92,7 @@ const commentLimiter = rateLimit({
     success: false,
     message: 'Too many comments. Please slow down.',
   },
+  store: getStore(),
 });
 
 module.exports = { authLimiter, apiLimiter, activityLimiter, upvoteLimiter, commentLimiter };

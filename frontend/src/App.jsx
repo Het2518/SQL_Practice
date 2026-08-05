@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { loadSettings, saveSettings, defaultSettings } from '@/features/profile/settingsConfig';
+
 import { useProgressStore } from '@/stores/useProgressStore';
 import { useGamificationStore } from '@/stores/useGamificationStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 import { useToast } from '@/shared/ui/ToastSystem';
+import { NotFoundPage } from '@/pages/NotFoundPage';
 
 
 // Lazy load large views for performance with automatic retry for chunk errors
@@ -152,14 +153,6 @@ export default function App() {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Settings dark mode effect is now handled inside useSettingsStore update functions
-  // But we need to initialize it once on mount
-  useEffect(() => {
-    const settings = JSON.parse(localStorage.getItem('sql-platform-settings') ?? '{}');
-    if (settings.darkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -169,13 +162,18 @@ export default function App() {
 
     if (window.location.hash && window.location.hash.includes('error_description')) {
       const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
-      const errorMsg = hashParams.get('error_description');
-      if (errorMsg) {
-        // Use toast instead of alert() — avoids blocking the thread and XSS risk
+      const rawErrorMsg = hashParams.get('error_description');
+      if (rawErrorMsg) {
+        // Sanitize: allow only printable ASCII letters, digits, spaces, and basic punctuation.
+        // This prevents crafted URLs from injecting arbitrary content into the toast.
+        const safeMsg = decodeURIComponent(rawErrorMsg)
+          .replace(/\+/g, ' ')
+          .replace(/[^\w\s.,!?:;'"\-()[\]]/g, '')
+          .slice(0, 200);
         toast({
           type: 'error',
           title: 'Authentication Error',
-          message: decodeURIComponent(errorMsg).replace(/\+/g, ' ').slice(0, 200),
+          message: safeMsg || 'An unknown authentication error occurred.',
         });
         window.history.replaceState(null, '', window.location.pathname);
       }
@@ -319,7 +317,7 @@ export default function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
       {showSettings && (

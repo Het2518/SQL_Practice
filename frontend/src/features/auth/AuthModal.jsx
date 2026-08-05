@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/stores/useAuthStore';
 import { api } from '@/lib/api';
 import { Mail, Lock, User, Zap, X, ShieldCheck, KeyRound, ArrowRight, Loader2 } from 'lucide-react';
 
