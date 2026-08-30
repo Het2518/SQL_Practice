@@ -317,7 +317,7 @@ export const QuestionBrowser = React.memo(function QuestionBrowser({
 
                     return (
                       <tr
-                        key={q.id}
+                        key={`${q.db}-${q.id}`}
                         onClick={() => { onSelectQuestion(q); onClose(); }}
                         className={`border-b border-border cursor-pointer transition-colors duration-100 ${isCurrent ? 'bg-primary/5' : 'bg-surface hover:bg-surface-2'}`}
                       >
