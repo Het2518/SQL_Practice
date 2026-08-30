@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { useAuth } from '@/stores/useAuthStore';
@@ -34,7 +34,8 @@ const AnimatedJoinVisualizer = lazy(() => import('@/features/visualizers/Animate
 const CteConverterModal = lazy(() => import('@/features/visualizers/CteConverterModal').then((m) => ({ default: m.CteConverterModal })));
 const QuestionBrowser = lazy(() => import('@/features/practice/QuestionBrowser').then((m) => ({ default: m.QuestionBrowser })));
 
-export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings, routeDb }) {
+export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
+  const { db: routeDb } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { progress, progressLoaded } = useProgressStore();
