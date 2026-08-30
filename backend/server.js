@@ -57,6 +57,8 @@ const STATIC_ALLOWED_ORIGINS = new Set([
   'http://127.0.0.1:3000',
   'http://127.0.0.1:4173',
   'https://datadesk-sql.vercel.app',
+  'https://datadesk.live',
+  'https://www.datadesk.live',
   ...clientUrls,
 ]);
 
@@ -90,7 +92,7 @@ app.use(
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", 'https://datadesk-sql.vercel.app', ...clientUrls].filter(Boolean),
+        connectSrc: ["'self'", 'https://datadesk-sql.vercel.app', 'https://datadesk.live', 'https://www.datadesk.live', ...clientUrls].filter(Boolean),
         fontSrc: ["'self'", 'https:', 'data:'],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
