@@ -12,7 +12,7 @@ import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
 import { Button } from '@/shared/ui/Button';
 import { Database } from 'lucide-react';
-import { getQuestionsForDb } from '@/data/index';
+import { getQuestionsForDb, allQuestions } from '@/data/index';
 
 import { usePracticeState } from '@/features/practice/hooks/usePracticeState';
 import { usePracticeLayout } from '@/features/practice/hooks/usePracticeLayout';
@@ -32,6 +32,7 @@ const ERDiagramModal = lazy(() => import('@/features/visualizers/InteractiveERDi
 const TablePreviewModal = lazy(() => import('@/features/visualizers/TablePreviewModal').then((m) => ({ default: m.TablePreviewModal })));
 const AnimatedJoinVisualizer = lazy(() => import('@/features/visualizers/AnimatedJoinVisualizer').then((m) => ({ default: m.AnimatedJoinVisualizer })));
 const CteConverterModal = lazy(() => import('@/features/visualizers/CteConverterModal').then((m) => ({ default: m.CteConverterModal })));
+const QuestionBrowser = lazy(() => import('@/features/practice/QuestionBrowser').then((m) => ({ default: m.QuestionBrowser })));
 
 export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings, routeDb }) {
   const navigate = useNavigate();
@@ -250,6 +251,21 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings, rou
         CteConverterModal={CteConverterModal}
         AnimatedJoinVisualizer={AnimatedJoinVisualizer}
       />
+
+      <Suspense fallback={null}>
+        {state.showBrowser && (
+          <QuestionBrowser
+            questions={allQuestions}
+            progress={progress}
+            currentQuestionId={state.currentQ?.id}
+            onSelectQuestion={(q) => {
+              state.setShowBrowser(false);
+              navigate(`/practice/${q.db}?q=${q.id}`);
+            }}
+            onClose={() => state.setShowBrowser(false)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
