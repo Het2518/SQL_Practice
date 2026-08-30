@@ -59,7 +59,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
         <div className="ai-panel-title flex-wrap">
           <Sparkles size={14} strokeWidth={2} />
           <span>AI Personalized Hint</span>
-          <span className="ai-badge">llama-3.1-8b</span>
+          <span className="ai-badge">gpt-oss-20b</span>
         </div>
         {!generated && !loading && (
           <span className="text-xs text-muted font-medium">

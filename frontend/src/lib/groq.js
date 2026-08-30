@@ -11,9 +11,9 @@
 import { api } from '@/lib/api';
 
 // Primary: fastest + cheapest + highest rate limits
-export const MODEL_FAST = 'llama-3.1-8b-instant';
-// Fallback for complex tasks (mock interview final report)
-export const MODEL_SMART = 'llama-3.3-70b-versatile';
+export const MODEL_FAST = 'openai/gpt-oss-20b';
+// Smart model for complex reasoning, evaluations, interviews, custom data generation
+export const MODEL_SMART = 'openai/gpt-oss-120b';
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
