@@ -21,7 +21,7 @@ export const defaultSettings = {
   darkMode: false,
   autoRunAfterTyping: false,
   autoCompleteSql: true,
-  persistEditorText: false,
+  persistEditorText: true,
   timedChallenges: false,
   editorFontSize: 14,
   groqApiKey: '',

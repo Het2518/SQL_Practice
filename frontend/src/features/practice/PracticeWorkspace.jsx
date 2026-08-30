@@ -90,18 +90,18 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
                               if (entry.questionId) {
                                 navUrl += '?q=' + entry.questionId;
                                 if (settings?.persistEditorText) {
-                                  localStorage.setItem(`sql-editor-${entry.questionId}`, entry.query);
+                                  localStorage.setItem(`sql-persist-${entry.questionId}`, entry.sql);
                                 }
                               } else {
                                 if (settings?.persistEditorText) {
-                                  localStorage.setItem(`sql-editor-freemode-${targetDb}`, entry.query);
+                                  localStorage.setItem(`sql-persist-freemode-${targetDb}`, entry.sql);
                                 }
                               }
                               navigate(navUrl);
                               setShowOverflow(false);
                             }}
                           >
-                            <span className="opacity-50 inline-block w-4">{i + 1}.</span> {entry.query}
+                            <span className="opacity-50 inline-block w-4">{i + 1}.</span> {entry.sql}
                           </button>
                         ))}
                       </div>
