@@ -72,10 +72,11 @@ export function useQueryExecution({
     });
 
     try {
-      if (currentQ && currentQ.solutionSQL && !currentQ.isAiGenerated) {
+      const solution = currentQ?.solutionSQL || currentQ?.solution || currentQ?.solution_sql;
+      if (currentQ && solution) {
         const val = await validateAnswer(
           sql,
-          currentQ.solutionSQL,
+          solution,
           currentQ.verificationSQL,
           currentQ.requiresOrder
         );
@@ -101,7 +102,7 @@ export function useQueryExecution({
             difficulty: currentQ?.difficulty,
           });
 
-          onProgressUpdate(currentQ, db, 'complete');
+          onProgressUpdate(currentQ, db, 'complete', sql);
           if (progress[currentQ.id] !== 'complete') {
             const diff = (currentQ.difficulty || '').toLowerCase();
             let pts = diff === 'hard' ? 50 : diff === 'medium' ? 30 : 10;
@@ -121,7 +122,7 @@ export function useQueryExecution({
           }
         } else {
           if (progress[currentQ.id] !== 'complete') {
-            onProgressUpdate(currentQ, db, 'attempted');
+            onProgressUpdate(currentQ, db, 'attempted', sql);
           }
         }
       } else {
@@ -129,9 +130,9 @@ export function useQueryExecution({
         const originalRes = await executeQuery(sql);
         setResult(originalRes);
         if (originalRes.error) {
-          setValidation({ isCorrect: false, message: originalRes.error });
+          setValidation({ isCorrect: false, message: originalRes.error, userResult: originalRes });
         } else {
-          setValidation(null);
+          setValidation({ isCorrect: true, message: 'Query executed successfully.', userResult: originalRes });
         }
       }
     } finally {

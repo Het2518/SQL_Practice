@@ -19,7 +19,15 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('feedback');
 
-  const hasKey = true;
+  const hasKey = Boolean(
+    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
+        return s.groqApiKey && s.groqApiKey.trim();
+      } catch { return false; }
+    })()
+  );
 
   const generateReview = useCallback(async () => {
     if (!hasKey) {
@@ -33,7 +41,8 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
     setLoading(true);
     setError('');
     try {
-      const messages = buildSolutionReviewPrompt({ question, studentSQL, solutionSQL });
+      const sol = solutionSQL || question?.solutionSQL || question?.solution_sql || question?.solution;
+      const messages = buildSolutionReviewPrompt({ question, studentSQL, solutionSQL: sol });
       const raw = await groqChat(messages, undefined, 500, true);
       // Parse JSON response
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -41,19 +50,19 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
       const parsed = JSON.parse(jsonMatch[0]);
       setReview(parsed);
     } catch (err) {
-      if (err.message === 'NO_KEY') {
+      if (err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY') {
         setError('Groq API key not found. Add it in Settings → AI Configuration.');
       } else if (err.message === 'RATE_LIMIT') {
         setError('Rate limit reached. Try again in a few seconds.');
       } else if (err.message === 'BAD_KEY') {
         setError('Invalid API key. Please check your Groq key in Settings.');
       } else {
-        setError('AI review failed. Please try again.');
+        setError(err.message || 'AI review failed. Please try again.');
       }
     } finally {
       setLoading(false);
     }
-  }, [question, studentSQL, solutionSQL]);
+  }, [hasKey, question, studentSQL, solutionSQL]);
 
   return (
     <div className="ai-panel mt-2">

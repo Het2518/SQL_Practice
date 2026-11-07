@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, ChevronUp, ChevronDown, Eye, Loader2, CheckCircle, AlertCircle, Bot } from 'lucide-react';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { api } from '@/lib/api';
 import { useAuth } from '@/stores/useAuthStore';
@@ -157,6 +157,26 @@ export function SettingsTab() {
         <SectionHeader title="Practice" description="Customize your practice session experience." icon={Clock} />
         <ToggleRow label="Timed Challenges" description="Enable a countdown timer during practice questions." checked={settings?.timedChallenges} onChange={(v) => set('timedChallenges', v)} />
         <ToggleRow label="Disable Sponsor Messages" description="Hide sponsor banners in the practice interface." checked={settings?.disableAdvertisements} onChange={(v) => set('disableAdvertisements', v)} />
+      </SettingSection>
+
+      {/* AI Configuration */}
+      <SettingSection>
+        <SectionHeader title="AI Configuration" description="Configure Groq API integration for mock interviews, hints, and reviews." icon={Bot} />
+        <div>
+          <label className="block text-[12px] font-semibold text-muted mb-1.5 uppercase tracking-wider">
+            Groq API Key (Stored Locally)
+          </label>
+          <input
+            type="password"
+            placeholder="gsk_..."
+            value={settings?.groqApiKey || ''}
+            onChange={(e) => set('groqApiKey', e.target.value.trim())}
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-text text-[13px] font-mono outline-none focus:border-primary/50 focus:ring-2 ring-primary/15 transition-all"
+          />
+          <p className="text-[11px] text-muted mt-2">
+            Get your free API key at <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">console.groq.com</a>.
+          </p>
+        </div>
       </SettingSection>
 
       {/* Security */}

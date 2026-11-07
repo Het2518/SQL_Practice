@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lightbulb, ChevronDown, Sparkles } from 'lucide-react';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
+import { AiHintPanel } from '@/features/ai/AiHintPanel';
 
 export function QuestionHintSection({
   question,
   currentSql,
   hasKey,
-  onOpenAiTutor
+  onOpenAiTutor,
+  dbSchemaContext
 }) {
   const [showHints, setShowHints] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [autoHint, setAutoHint] = useState(null);
+  const [showAiHint, setShowAiHint] = useState(false);
+
+  useEffect(() => {
+    setShowAiHint(false);
+    setHintsUsed(0);
+    setAutoHint(null);
+  }, [question?.id]);
 
   const handleToggleHint = () => {
     if (!showHints) {
@@ -54,7 +63,7 @@ export function QuestionHintSection({
       </button>
       
       <div
-        className={`overflow-hidden transition-[max-height] duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] ${showHints ? 'max-h-[700px]' : 'max-h-0'}`}
+        className={`overflow-hidden transition-[max-height] duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] ${showHints ? 'max-h-[2500px]' : 'max-h-0'}`}
       >
         <div className="px-4 pb-4 flex flex-col gap-4">
           {/* Auto-Hint: Client-side analysis result */}
@@ -103,18 +112,37 @@ export function QuestionHintSection({
 
           {/* AI Hint — on demand */}
           {hintsUsed >= 1 && (
-            <div className="border-t border-border pt-3">
-              <button
-                onClick={onOpenAiTutor}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/40 bg-gradient-to-br from-primary/5 to-blue-500/5 cursor-pointer text-[13px] font-semibold text-primary transition-all duration-200 hover:border-primary"
-              >
-                <Sparkles size={13} strokeWidth={2} /> Get AI Personalized Hint
-                {hasKey ? null : (
-                  <span className="text-[10px] text-muted ml-1">
-                    (needs key)
-                  </span>
+            <div className="border-t border-border pt-3 flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setShowAiHint((prev) => !prev)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/40 bg-gradient-to-br from-primary/5 to-blue-500/5 cursor-pointer text-[13px] font-semibold text-primary transition-all duration-200 hover:border-primary"
+                >
+                  <Sparkles size={13} strokeWidth={2} /> {showAiHint ? 'Hide AI Personalized Hint' : 'Get AI Personalized Hint'}
+                  {hasKey ? null : (
+                    <span className="text-[10px] text-muted ml-1">
+                      (needs key)
+                    </span>
+                  )}
+                </button>
+                {onOpenAiTutor && (
+                  <button
+                    onClick={onOpenAiTutor}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-secondary hover:text-text hover:border-primary/40 cursor-pointer text-[12px] font-medium transition-colors"
+                  >
+                    💬 Chat with AI Tutor
+                  </button>
                 )}
-              </button>
+              </div>
+
+              {showAiHint && (
+                <AiHintPanel
+                  question={question}
+                  studentSQL={currentSql}
+                  dbSchemaContext={dbSchemaContext}
+                  autoRun={true}
+                />
+              )}
             </div>
           )}
 

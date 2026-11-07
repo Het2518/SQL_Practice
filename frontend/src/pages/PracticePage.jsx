@@ -33,6 +33,7 @@ const TablePreviewModal = lazy(() => import('@/features/visualizers/TablePreview
 const AnimatedJoinVisualizer = lazy(() => import('@/features/visualizers/AnimatedJoinVisualizer').then((m) => ({ default: m.AnimatedJoinVisualizer })));
 const CteConverterModal = lazy(() => import('@/features/visualizers/CteConverterModal').then((m) => ({ default: m.CteConverterModal })));
 const QuestionBrowser = lazy(() => import('@/features/practice/QuestionBrowser').then((m) => ({ default: m.QuestionBrowser })));
+const AiTutorPanel = lazy(() => import('@/features/ai/AiTutorPanel').then((m) => ({ default: m.AiTutorPanel })));
 
 export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const { db: routeDb } = useParams();
@@ -42,7 +43,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
   const { settings, toggleDarkMode } = useSettingsStore();
   const { toast } = useToast();
   const { fireConfetti } = useConfetti();
-  const { checkSafety } = useQuerySafetyGuard();
+  const { checkSafety, SafetyModal } = useQuerySafetyGuard();
 
   const state = usePracticeState({
     routeDb,
@@ -174,6 +175,7 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
               lastValidation={state.validation}
               dbSchemaContext={state.dbSchemaContext}
               executeQuery={state.executeQuery}
+              onProgressUpdate={onProgressUpdate}
             />
           ) : (
             <DiscussionsPanel questionId={state.currentQ?.id} user={user} onShowAuth={onShowAuth} />
@@ -252,6 +254,20 @@ export function PracticeView({ onShowAuth, onProgressUpdate, onShowSettings }) {
         CteConverterModal={CteConverterModal}
         AnimatedJoinVisualizer={AnimatedJoinVisualizer}
       />
+
+      <SafetyModal />
+
+      <Suspense fallback={null}>
+        {state.showAiTutor && (
+          <AiTutorPanel
+            isOpen={state.showAiTutor}
+            onClose={() => state.setShowAiTutor(false)}
+            question={state.currentQ}
+            currentSql={state.sql}
+            dbSchemaContext={state.dbSchemaContext}
+          />
+        )}
+      </Suspense>
 
       <Suspense fallback={null}>
         {state.showBrowser && (

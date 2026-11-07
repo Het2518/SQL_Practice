@@ -8,12 +8,10 @@
  * React hook: see @/hooks/useGroqKey.js
  */
 
-import { api } from '@/lib/api';
-
-// Primary: fastest + cheapest + highest rate limits
-export const MODEL_FAST = 'openai/gpt-oss-20b';
+// Primary: fastest + cheapest + highest rate limits on Groq
+export const MODEL_FAST = 'llama-3.1-8b-instant';
 // Smart model for complex reasoning, evaluations, interviews, custom data generation
-export const MODEL_SMART = 'openai/gpt-oss-120b';
+export const MODEL_SMART = 'llama-3.3-70b-versatile';
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
@@ -57,12 +55,12 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
     if (cached) return cached;
   }
 
-  let apiKey = import.meta.env.VITE_GROQ_API_KEY || '';
+  let apiKey = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
   try {
     const settingsStr = localStorage.getItem('sql-platform-settings');
     if (settingsStr) {
       const parsed = JSON.parse(settingsStr);
-      if (parsed.groqApiKey) apiKey = parsed.groqApiKey;
+      if (parsed.groqApiKey) apiKey = String(parsed.groqApiKey).trim();
     }
   } catch (e) {}
 
@@ -271,7 +269,7 @@ RULES:
     const response = await groqChat([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
-    ], MODEL_SMART, 1024, false);
+    ], MODEL_SMART, 2500, false);
 
     // Clean up potential markdown if the model disobeys
     let cleanSql = response.replace(/```sql/g, '').replace(/```/g, '').trim();
@@ -358,6 +356,7 @@ STRICT RULES:
 4. Make questions specific, realistic, and answerable using SQL and the given schema.
 5. Vary difficulty: include 2 Easy, 2 Medium, 1 Hard.
 6. Return ONLY a valid JSON array — no markdown, no explanation outside JSON.
+7. Keep each question prompt clear and focused (2-3 sentences max) to ensure the complete JSON array is produced without truncation.
 
 Output format:
 [
@@ -376,6 +375,65 @@ ${topics.map((t, i) => `${i + 1}. ${t}`).join('\n')}
 Generate 5 interview questions JSON array:`
     }
   ];
+}
+
+/**
+ * Safely parses JSON arrays returned by LLMs, robust against markdown fences, preambles, and truncations.
+ */
+export function safeParseJsonArray(raw) {
+  if (!raw || typeof raw !== 'string') return [];
+  // 1. Remove markdown fences (```json or ```)
+  const cleaned = raw.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+
+  // 2. Try direct JSON.parse
+  try {
+    const direct = JSON.parse(cleaned);
+    if (Array.isArray(direct)) return direct;
+    if (direct && typeof direct === 'object') {
+      const arrayProp = Object.values(direct).find(Array.isArray);
+      if (arrayProp) return arrayProp;
+    }
+  } catch {}
+
+  // 3. Locate '[' and ']'
+  const start = cleaned.indexOf('[');
+  if (start !== -1) {
+    const end = cleaned.lastIndexOf(']');
+    if (end > start) {
+      try {
+        const slice = cleaned.slice(start, end + 1);
+        const parsed = JSON.parse(slice);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+
+    // 4. Truncation recovery: backtrack from end to find last completed object '}'
+    const sub = cleaned.slice(start);
+    let lastBrace = sub.lastIndexOf('}');
+    while (lastBrace > 0) {
+      const candidate = sub.slice(0, lastBrace + 1) + ']';
+      try {
+        const parsed = JSON.parse(candidate);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+      lastBrace = sub.lastIndexOf('}', lastBrace - 1);
+    }
+  }
+
+  // 5. Fallback: regex match individual JSON objects
+  const objectMatches = cleaned.match(/\{[^{}]*(?:title|prompt)[^{}]*\}/gi);
+  if (objectMatches && objectMatches.length > 0) {
+    const list = [];
+    for (const item of objectMatches) {
+      try {
+        const obj = JSON.parse(item);
+        if (obj && (obj.title || obj.prompt)) list.push(obj);
+      } catch {}
+    }
+    if (list.length > 0) return list;
+  }
+
+  throw new Error('Failed to parse AI question data. Please retry.');
 }
 
 // ═══════════════════════════════════════════════════════════════════════

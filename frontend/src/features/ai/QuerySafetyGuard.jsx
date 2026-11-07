@@ -38,10 +38,10 @@ export function useQuerySafetyGuard() {
     return issues.length > 0 ? issues[0] : null;
   }
 
-  const checkSafety = useCallback(async (sql, question) => {
+  const checkSafety = useCallback(async (sql) => {
     if (!sql?.trim() || sql.length < 20) return true; // trivially safe
 
-    // Client-side check first (free, instant)
+    // Instant client-side check to catch Cartesian products and infinite recursive CTEs
     const clientIssue = clientPreCheck(sql);
     if (clientIssue) {
       // Show warning immediately based on client analysis
@@ -50,24 +50,6 @@ export function useQuerySafetyGuard() {
       });
     }
 
-    // Only call LLM for complex queries that passed client check
-    if (!hasKey || sql.length < 80) return true;
-
-    try {
-      const messages = buildSafetyPrompt({ sql, question });
-      const raw = await groqChat(messages, undefined, 80, true); // only 80 tokens needed
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) return true; // parse failure = assume safe
-      const result = JSON.parse(jsonMatch[0]);
-
-      if (result.safe === false && result.score < 0.45) {
-        return new Promise((resolve) => {
-          setModal({ warning: result.warning || 'Potentially expensive query detected.', score: result.score, resolve, source: 'ai' });
-        });
-      }
-    } catch {
-      // Any error = assume safe (don't block the student)
-    }
     return true;
   }, []);
 

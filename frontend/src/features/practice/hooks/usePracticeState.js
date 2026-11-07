@@ -79,9 +79,13 @@ export function usePracticeState({ routeDb, progress, progressLoaded, settings, 
   }, [currentQ?.id]);
 
   useEffect(() => {
-    if (settings?.persistEditorText && sql !== undefined && currentQ?.id) {
-      localStorage.setItem(`sql-persist-${currentQ.id}`, sql);
-    }
+    if (!settings?.persistEditorText || sql === undefined || !currentQ?.id) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(`sql-persist-${currentQ.id}`, sql);
+      } catch (e) {}
+    }, 350);
+    return () => clearTimeout(timer);
   }, [sql, currentQ?.id, settings?.persistEditorText]);
 
   const dbSchemaContext = useMemo(() => {
@@ -172,10 +176,11 @@ export function usePracticeState({ routeDb, progress, progressLoaded, settings, 
     });
 
     try {
-      if (currentQ && currentQ.solutionSQL && !currentQ.isAiGenerated) {
+      const solution = currentQ?.solutionSQL || currentQ?.solution || currentQ?.solution_sql;
+      if (currentQ && solution) {
         const val = await validateAnswer(
           sql,
-          currentQ.solutionSQL,
+          solution,
           currentQ.verificationSQL,
           currentQ.requiresOrder
         );
@@ -215,9 +220,9 @@ export function usePracticeState({ routeDb, progress, progressLoaded, settings, 
         const originalRes = await executeQuery(sql);
         setResult(originalRes);
         if (originalRes.error) {
-          setValidation({ isCorrect: false, message: originalRes.error });
+          setValidation({ isCorrect: false, message: originalRes.error, userResult: originalRes });
         } else {
-          setValidation(null);
+          setValidation({ isCorrect: true, message: 'Query executed successfully. Validate with AI in the Solution panel to grade open-ended questions.', userResult: originalRes });
         }
       }
     } finally {

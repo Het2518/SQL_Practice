@@ -44,12 +44,7 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
           }>
             <SqlEditor
               value={sql}
-              onChange={(val) => {
-                setSql(val);
-                if (settings?.persistEditorText) {
-                  localStorage.setItem(`sql-persist-${currentQ?.id}`, val);
-                }
-              }}
+              onChange={setSql}
               onRun={runQuery}
               onFormat={() => setSql(formatSql(sql, { language: 'postgresql' }))}
               dbName={db}

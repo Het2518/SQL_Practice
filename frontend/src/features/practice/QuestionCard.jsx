@@ -23,6 +23,7 @@ export const QuestionCard = React.memo(function QuestionCard({
   lastValidation = null,
   dbSchemaContext = '',
   executeQuery,
+  onProgressUpdate,
 }) {
   const TIMER_DURATION = 5 * 60;
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
@@ -37,7 +38,15 @@ export const QuestionCard = React.memo(function QuestionCard({
   const [realCompanies, setRealCompanies] = useState([]);
 
   // Check API Key
-  const hasKey = true;
+  const hasKey = Boolean(
+    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
+        return s.groqApiKey && s.groqApiKey.trim();
+      } catch { return false; }
+    })()
+  );
 
   useProactiveTutor({
     sql: currentSql,
@@ -104,6 +113,11 @@ export const QuestionCard = React.memo(function QuestionCard({
       return;
     }
 
+    if (!hasKey) {
+      setAiSolutionError('Configure a Groq API key in Settings to auto-generate AI solutions.');
+      return;
+    }
+
     const fetchAiSolution = async () => {
       setAiSolutionLoading(true);
       setAiSolutionError('');
@@ -167,6 +181,7 @@ export const QuestionCard = React.memo(function QuestionCard({
             currentSql={currentSql} 
             hasKey={hasKey} 
             onOpenAiTutor={onOpenAiTutor} 
+            dbSchemaContext={dbSchemaContext}
           />
 
           <QuestionAiSection 
@@ -184,6 +199,7 @@ export const QuestionCard = React.memo(function QuestionCard({
             setAiSolution={setAiSolution}
             setAiExpectedResult={setAiExpectedResult}
             executeQuery={executeQuery}
+            onProgressUpdate={onProgressUpdate}
           />
         </div>
       </div>

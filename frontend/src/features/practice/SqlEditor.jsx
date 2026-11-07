@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react';
 import Editor from '@monaco-editor/react';
 import { format } from 'sql-formatter';
 import { DB_INFO } from '@/data/schemas';
@@ -78,7 +78,7 @@ const handleEditorWillMount = monaco => {
   });
 };
 
-export function SqlEditor({
+export const SqlEditor = React.memo(function SqlEditor({
   value,
   onChange,
   onRun,
@@ -290,7 +290,7 @@ export function SqlEditor({
         // Safe disposal
       }
     };
-  }, [monacoInstance, dbName, autoComplete, customSchema, headerActions]);
+  }, [monacoInstance, dbName, autoComplete, customSchema]);
 
   const editorOptions = useMemo(
     () => ({
@@ -374,4 +374,4 @@ export function SqlEditor({
       </div>
     </div>
   );
-}
+});

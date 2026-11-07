@@ -18,7 +18,8 @@ export function QuestionAiSection({
   expectedResult,
   setAiSolution,
   setAiExpectedResult,
-  executeQuery
+  executeQuery,
+  onProgressUpdate,
 }) {
   const [showSolution, setShowSolution] = useState(false);
   const [aiValidation, setAiValidation] = useState(null);
@@ -32,10 +33,11 @@ export function QuestionAiSection({
     if (!hasKey) return;
     setAiValidationLoading(true);
     try {
+      const sampleRows = lastValidation?.userResult?.rows || lastValidation?.result?.rows || [];
       const msgs = buildAiValidationPrompt({
         questionPrompt: question.prompt,
         userSQL: currentSql,
-        sampleRows: lastValidation?.result?.rows?.slice(0, 5) || [],
+        sampleRows: sampleRows.slice(0, 5),
         schemaContext: dbSchemaContext,
       });
       const raw = await groqChat(msgs, undefined, 300, false);
@@ -44,6 +46,11 @@ export function QuestionAiSection({
         ? JSON.parse(m[0])
         : { correct: false, score: 60, feedback: raw, suggestion: null };
       setAiValidation(parsed);
+      if (parsed.correct && typeof onProgressUpdate === 'function') {
+        onProgressUpdate(question, question.db, 'complete', currentSql);
+      } else if (!parsed.correct && typeof onProgressUpdate === 'function') {
+        onProgressUpdate(question, question.db, 'attempted', currentSql);
+      }
     } catch {
       setAiValidation({
         correct: false,
@@ -175,7 +182,7 @@ export function QuestionAiSection({
                     PostgreSQL
                   </span>
                 </div>
-                <CodeBlock code={question.solution || '-- Solution not provided for this question'} language="sql" />
+                <CodeBlock code={question.solutionSQL || question.solution || question.solution_sql || '-- Solution not provided for this question'} language="sql" />
               </div>
             )}
           </div>

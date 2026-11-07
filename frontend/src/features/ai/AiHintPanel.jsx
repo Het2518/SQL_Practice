@@ -7,12 +7,26 @@ import { Sparkles, AlertTriangle } from 'lucide-react';
  * Called from QuestionCard after user clicks "🤖 AI Hint".
  * Analyzes the student's specific SQL mistake and gives targeted guidance.
  */
-export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
+export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = true }) {
   const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
-  const hasKey = true;
+  const hasKey = Boolean(
+    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
+        return s.groqApiKey && s.groqApiKey.trim();
+      } catch { return false; }
+    })()
+  );
+
+  useEffect(() => {
+    setHint('');
+    setError('');
+    setGenerated(false);
+  }, [question?.id]);
 
   const generateHint = useCallback(async () => {
     if (!hasKey) {
@@ -20,7 +34,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
       return;
     }
     if (!studentSQL?.trim()) {
-      setError('Write some SQL first, then ask for a hint!');
+      setError('Write some SQL in the editor first, then click to get a personalized hint!');
       return;
     }
     setLoading(true);
@@ -32,19 +46,25 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
       setHint(response);
       setGenerated(true);
     } catch (err) {
-      if (err.message === 'NO_KEY') {
+      if (err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY') {
         setError('Groq API key not found. Add it in Settings → AI Configuration.');
       } else if (err.message === 'RATE_LIMIT') {
         setError('Rate limit reached. Wait 10 seconds and try again.');
       } else if (err.message === 'BAD_KEY') {
         setError('Invalid API key. Please check your Groq key in Settings.');
       } else {
-        setError('AI hint failed. Please try again.');
+        setError(err.message || 'AI hint failed. Please try again.');
       }
     } finally {
       setLoading(false);
     }
-  }, [question, studentSQL, dbSchemaContext]);
+  }, [hasKey, question, studentSQL, dbSchemaContext]);
+
+  useEffect(() => {
+    if (autoRun && !generated && !loading && !hint && studentSQL?.trim()) {
+      generateHint();
+    }
+  }, [autoRun, generateHint, generated, loading, hint, studentSQL]);
 
   const handleRegenerate = () => {
     // Clear cache for regeneration by changing a seed (handled by calling again without cache)
@@ -59,7 +79,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext }) {
         <div className="ai-panel-title flex-wrap">
           <Sparkles size={14} strokeWidth={2} />
           <span>AI Personalized Hint</span>
-          <span className="ai-badge">gpt-oss-20b</span>
+          <span className="ai-badge">llama-3.1-8b</span>
         </div>
         {!generated && !loading && (
           <span className="text-xs text-muted font-medium">

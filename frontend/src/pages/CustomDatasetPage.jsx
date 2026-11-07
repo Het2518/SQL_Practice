@@ -23,7 +23,7 @@ import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { groqChat, buildSandboxQuestionsPrompt, MODEL_SMART, generateSchema } from '@/lib/groq';
+import { groqChat, buildSandboxQuestionsPrompt, MODEL_SMART, generateSchema, safeParseJsonArray } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import './CustomDatasetPage.css';
@@ -177,7 +177,15 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
   const [batch, setBatch] = useState(0);
   const [selected, setSelected] = useState(null); // null = list; object = detail
   const [qIndex, setQIndex] = useState(0); // current question index when in detail
-  const hasKey = true;
+  const hasKey = Boolean(
+    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
+        return s.groqApiKey && s.groqApiKey.trim();
+      } catch { return false; }
+    })()
+  );
 
   const generate = useCallback(
     async (batchIndex) => {
@@ -186,16 +194,15 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
       setError(null);
       try {
         const messages = buildSandboxQuestionsPrompt({ schema, sampleData, batch: batchIndex });
-        const raw = await groqChat(messages, MODEL_SMART, 1200, false);
-        const cleaned = raw.replace(/```json|```/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        if (!Array.isArray(parsed)) throw new Error('Bad response.');
+        const raw = await groqChat(messages, MODEL_SMART, 3500, false);
+        const parsed = safeParseJsonArray(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('No questions returned.');
         setQuestions(parsed.slice(0, 5));
         setBatch(batchIndex + 1);
         setSelected(null);
       } catch (err) {
         setError(
-          err.message === 'NO_KEY'
+          err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY'
             ? 'no_key'
             : err.message === 'RATE_LIMIT'
               ? 'rate_limit'

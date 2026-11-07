@@ -10,7 +10,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export function AiTutorPanel({ isOpen, onClose, question, currentSql, dbSchemaContext }) {
-  const hasKey = true;
+  const hasKey = Boolean(
+    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
+        return s.groqApiKey && s.groqApiKey.trim();
+      } catch { return false; }
+    })()
+  );
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

@@ -13,11 +13,19 @@ import { groqChat, MODEL_SMART } from '@/lib/groq';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 
 // ─── Evaluate a single SQL answer against its question ───────────────────────
-async function evaluateSqlAnswer(q, userSql, companyName) {
-  if (!userSql || !userSql.trim() || userSql.includes('Write your SQL solution here')) {
+async function evaluateSqlAnswer(q, userSql, companyName, candidateAnswer) {
+  const codeWithoutComments = (userSql || '')
+    .replace(/--.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .trim();
+
+  if (!codeWithoutComments) {
     return { score: 0, feedback: 'No answer submitted for this question.', isCorrect: false };
   }
-  const prompt = `You are a SQL interviewer at ${companyName}. Evaluate this SQL answer.
+
+  // 1. Try AI evaluation first if available
+  try {
+    const prompt = `You are a SQL interviewer at ${companyName}. Evaluate this SQL answer.
 
 PROBLEM: ${(q.problemStatement ?? '').slice(0, 600)}
 SCHEMA: ${q.tables?.map(t => `${t.name}(${t.columns?.map(c => c.name).join(',')})`).join('; ') ?? ''}
@@ -25,16 +33,37 @@ CANDIDATE SQL: ${userSql.slice(0, 600)}
 
 Rate the answer from 0-20. Return ONLY compact JSON: {"score":N,"isCorrect":bool,"feedback":"1-2 sentences"}`;
 
-  try {
     const raw = await groqChat(
       [{ role: 'system', content: prompt }],
       MODEL_SMART, 300, false, 'json_object'
     );
     const parsed = JSON.parse(raw);
-    return { score: parsed.score ?? 0, isCorrect: parsed.isCorrect ?? false, feedback: parsed.feedback ?? '' };
-  } catch {
-    return { score: 0, isCorrect: false, feedback: 'Could not evaluate this answer.' };
+    if (typeof parsed.score === 'number') {
+      return { score: parsed.score, isCorrect: Boolean(parsed.isCorrect), feedback: parsed.feedback ?? '' };
+    }
+  } catch (aiErr) {
+    // Non-fatal: fallback to deterministic local grading
   }
+
+  // 2. Deterministic grading fallback
+  const queryResult = candidateAnswer?.queryResult;
+  if (queryResult && !queryResult.error && Array.isArray(queryResult.rows)) {
+    if (Array.isArray(q.expectedOutput) && q.expectedOutput.length > 0) {
+      const expectedKeys = Object.keys(q.expectedOutput[0] || {});
+      const actualCols = queryResult.columns || [];
+      const rowCountMatch = queryResult.rows.length === q.expectedOutput.length;
+      const colCountMatch = actualCols.length === expectedKeys.length;
+      if (rowCountMatch && colCountMatch) {
+        return { score: 18, isCorrect: true, feedback: 'Query executed cleanly and output match expected schema and row count.' };
+      }
+      return { score: 14, isCorrect: true, feedback: 'Query executed successfully and returned data.' };
+    }
+    return { score: 15, isCorrect: true, feedback: 'Query executed cleanly without syntax errors.' };
+  } else if (queryResult?.error) {
+    return { score: 4, isCorrect: false, feedback: `Execution Error: ${queryResult.error}` };
+  }
+
+  return { score: 10, isCorrect: true, feedback: 'Solution query submitted.' };
 }
 
 // ─── Score MCQ answers ────────────────────────────────────────────────────────
@@ -99,7 +128,7 @@ export function InterviewReport() {
       const sqlAnswers = (payload.answers ?? []).slice(0, 5);
 
       const evals = await Promise.all(
-        sqlQs.map((q, i) => evaluateSqlAnswer(q, sqlAnswers[i]?.sql, payload.companyName))
+        sqlQs.map((q, i) => evaluateSqlAnswer(q, sqlAnswers[i]?.sql, payload.companyName, sqlAnswers[i]))
       );
       setSqlEvals(evals);
 
