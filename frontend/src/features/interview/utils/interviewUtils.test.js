@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatTime, compareQueryResult } from './interviewUtils';
+import { describe, expect, it } from 'vitest';
+import { compareQueryResult, formatTime } from './interviewUtils';
 
 describe('interviewUtils', () => {
   describe('formatTime', () => {
@@ -64,4 +64,3 @@ describe('interviewUtils', () => {
     });
   });
 });
-
