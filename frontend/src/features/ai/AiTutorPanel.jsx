@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Bot, User, Loader2, Code2, Play } from 'lucide-react';
+import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 // useGroqKey removed

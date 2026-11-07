@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { groqChat, buildHintPrompt } from '@/lib/groq';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 

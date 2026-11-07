@@ -5,13 +5,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { useAuth } from '@/stores/useAuthStore';
 import { useProgressStore } from '@/stores/useProgressStore';
-import { useGamificationStore } from '@/stores/useGamificationStore';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useToast } from '@/shared/ui/ToastSystem';
 import { useConfetti } from '@/features/gamification/ConfettiBlast';
 import { useQuerySafetyGuard } from '@/features/ai/QuerySafetyGuard';
-import { Button } from '@/shared/ui/Button';
-import { Database } from 'lucide-react';
 import { getQuestionsForDb, allQuestions } from '@/data/index';
 
 import { usePracticeState } from '@/features/practice/hooks/usePracticeState';

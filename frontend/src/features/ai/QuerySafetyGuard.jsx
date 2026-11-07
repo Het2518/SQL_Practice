@@ -1,25 +1,15 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { groqChat, buildSafetyPrompt } from '@/lib/groq';
+import React, { useState, useCallback } from 'react';
 
 /**
  * useQuerySafetyGuard — Hook that pre-checks SQL before execution.
- * Runs a very small, cheap prompt (< 200 tokens) to detect:
+ * Runs a fast client-side check to detect:
  *   - Cartesian products (missing JOIN conditions)
  *   - Recursive CTEs without base case
- *   - Extremely expensive aggregations
- *   - Cross joins on large tables
  *
  * Returns: { checkSafety, SafetyModal }
- *
- * Usage:
- *   const { checkSafety, SafetyModal } = useQuerySafetyGuard();
- *   const ok = await checkSafety(sql, question);
- *   if (ok) runQuery();
- *   <SafetyModal />  (renders nothing when not shown)
  */
 export function useQuerySafetyGuard() {
   const [modal, setModal] = useState(null); // null | { warning, score, resolve }
-  const hasKey = true;
 
   // Client-side pre-check to avoid API call for obviously safe queries
   function clientPreCheck(sql) {

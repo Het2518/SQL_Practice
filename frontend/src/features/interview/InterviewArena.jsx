@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Bot, User, Loader2, ShieldAlert, Clock, Smartphone, AlertOctagon,
   Keyboard, X, CheckCircle2, Sun, Moon, Play, RotateCcw, Database,
   ChevronLeft, ChevronRight, Code2, MessageSquare, FileText, CheckCircle,
-  Table, Sparkles, Check, Info, AlertCircle, GripHorizontal, Minimize2,
-  Maximize2, Copy, Bookmark, ChevronDown, ListChecks, ArrowRight,
-  Terminal, Layers, HelpCircle
+  Table, Check, Info, AlertCircle, GripHorizontal, Minimize2,
+  Maximize2, Copy, Bookmark, ChevronDown, ListChecks,
+  Terminal, Layers
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { chatInterview } from '@/lib/groq';
@@ -431,8 +431,6 @@ function SubmitConfirmationModal({
 }) {
   if (!isOpen) return null;
 
-  const totalAnswered = sqlAnsweredCount + mcqAnsweredCount;
-
   return (
     <div className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 animate-fade-in">
       <div className="bg-surface border border-border rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
@@ -547,7 +545,7 @@ export function InterviewArena() {
   const messagesEndRef = useRef(null);
 
   // ── Session ─────────────────────────────────────────────────────────────────
-  const handleFinalSubmit = async (isTimeUp = false) => {
+  const handleFinalSubmit = async (_isTimeUp = false) => {
     if (isSubmittedRef.current) return;
     isSubmittedRef.current = true;
 
