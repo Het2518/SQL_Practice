@@ -8,12 +8,33 @@
  * React hook: see @/hooks/useGroqKey.js
  */
 
-// Primary: fastest + universal + highest rate limits on Groq (30 RPM | 131,072 TPM | 14,400 RPD)
-// Supported on 100% of Groq accounts (free and paid)
+// Primary: fastest + universal models on Groq
 export const MODEL_FAST = 'llama-3.1-8b-instant';
-// Smart model for complex reasoning, evaluations, interviews, custom data generation.
-// Automatically falls back to MODEL_FAST if the user's API key does not have 70B access or is rate-limited.
 export const MODEL_SMART = 'llama-3.3-70b-versatile';
+
+// Production candidate models tried in fallback sequence if a specific model is unavailable or restricted
+export const CANDIDATE_MODELS = [
+  'llama-3.3-70b-versatile',
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
+  'qwen/qwen3.8-27b',
+  'llama-3.1-8b-instant',
+  'gemma2-9b-it',
+  'mixtral-8x7b-32768',
+];
+
+/**
+ * Sanitizes an API key string, stripping unwanted quotes, zero-width characters, or "Bearer " prefixes.
+ */
+export function cleanApiKey(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  let k = raw.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+  if (k.toLowerCase().startsWith('bearer ')) {
+    k = k.slice(7).trim();
+  }
+  k = k.replace(/^["']|["']$/g, '').trim();
+  return k;
+}
 
 /**
  * Returns the active Groq API key from .env, localStorage settings, or sessionStorage.
@@ -21,24 +42,71 @@ export const MODEL_SMART = 'llama-3.3-70b-versatile';
  */
 export function getGroqApiKey() {
   let key = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
-  if (key) return key;
+  if (key) return cleanApiKey(key);
   try {
     const settingsStr = localStorage.getItem('sql-platform-settings');
     if (settingsStr) {
       const parsed = JSON.parse(settingsStr);
       if (parsed.groqApiKey && String(parsed.groqApiKey).trim()) {
-        return String(parsed.groqApiKey).trim();
+        return cleanApiKey(String(parsed.groqApiKey));
       }
     }
   } catch {}
   try {
     const direct = localStorage.getItem('groq_api_key') || sessionStorage.getItem('groq_api_key');
-    if (direct && direct.trim()) return direct.trim();
+    if (direct && direct.trim()) return cleanApiKey(direct);
   } catch {}
   return '';
 }
 
 export const hasGroqKey = () => Boolean(getGroqApiKey());
+
+let cachedModels = null;
+let lastFetchTime = 0;
+
+/**
+ * Queries Groq's models endpoint to discover all active models accessible to this API key.
+ * @param {string|null} apiKeyOverride
+ * @returns {Promise<string[]>}
+ */
+export async function fetchAvailableGroqModels(apiKeyOverride = null) {
+  const apiKey = cleanApiKey(apiKeyOverride || getGroqApiKey());
+  if (!apiKey) return [];
+  if (!apiKeyOverride && cachedModels && Date.now() - lastFetchTime < 10 * 60 * 1000) {
+    return cachedModels;
+  }
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/models', {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        console.warn('[Groq] API key rejected with 401 Unauthorized.');
+      }
+      return [];
+    }
+    const json = await res.json();
+    const rawList = json?.data || [];
+    const chatModels = rawList
+      .map(m => m.id)
+      .filter(id => !id.includes('whisper') && !id.includes('guard') && !id.includes('tts') && !id.includes('distil'));
+
+    if (chatModels.length > 0) {
+      if (!apiKeyOverride) {
+        cachedModels = chatModels;
+        lastFetchTime = Date.now();
+      }
+      return chatModels;
+    }
+    return [];
+  } catch (err) {
+    console.warn('[Groq] Could not query models endpoint:', err.message);
+    return [];
+  }
+}
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
@@ -66,106 +134,135 @@ function writeCache(key, data) {
 }
 
 /**
- * Core chat completion call.
+ * Core chat completion call with dynamic model discovery and multi-model fallback.
  * @param {Array} messages  - [{role, content}]
- * @param {string} model    - MODEL_FAST | MODEL_SMART
+ * @param {string|null} model - Requested model (optional)
  * @param {number} maxTokens
  * @param {boolean} useCache - skip API call if identical prompt was answered recently
  * @param {string} responseFormat - 'text' | 'json_object'
  * @param {number} temperature - creativity (0.0 to 1.0)
  * @returns {Promise<string>} - assistant message text
  */
-export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, useCache = true, responseFormat = 'text', temperature = 0.3) {
-  const cacheKey = getCacheKey(messages, model);
-  if (useCache) {
-    const cached = readCache(cacheKey);
-    if (cached) return cached;
-  }
-
+export async function groqChat(
+  messages,
+  model = null,
+  maxTokens = 512,
+  useCache = true,
+  responseFormat = 'text',
+  temperature = 0.3
+) {
   const apiKey = getGroqApiKey();
   if (!apiKey) {
     throw new Error('MISSING_API_KEY');
   }
 
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: maxTokens,
-        temperature: temperature ?? 0.3,
-        top_p: 0.9,
-        ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {})
-      })
-    });
+  // 1. Fetch live available models for this key
+  const liveModels = await fetchAvailableGroqModels(apiKey).catch(() => []);
 
-    const rawResText = await res.text();
-    let resJson = null;
-    try {
-      resJson = JSON.parse(rawResText);
-    } catch {
-      // not JSON (e.g. Cloudflare HTML or empty response)
+  // 2. Build candidate model queue in order of priority:
+  const toTry = [];
+  if (model) toTry.push(model);
+
+  if (liveModels.length > 0) {
+    // Add models present in live account matching our candidate order
+    for (const cand of CANDIDATE_MODELS) {
+      if (liveModels.includes(cand) && !toTry.includes(cand)) {
+        toTry.push(cand);
+      }
+    }
+    // Add any other remaining chat models from live discovery
+    for (const m of liveModels) {
+      if (!toTry.includes(m)) toTry.push(m);
+    }
+  } else {
+    // Fallback static candidates
+    for (const cand of CANDIDATE_MODELS) {
+      if (!toTry.includes(cand)) toTry.push(cand);
+    }
+  }
+
+  // 3. Try each candidate until one succeeds
+  let lastError = null;
+  for (let i = 0; i < toTry.length; i++) {
+    const activeModel = toTry[i];
+    const cacheKey = getCacheKey(messages, activeModel);
+    if (useCache) {
+      const cached = readCache(cacheKey);
+      if (cached) return cached;
     }
 
-    if (!res.ok) {
-      const errMsg = resJson?.error?.message || rawResText || '';
-
-      // Auto-fallback: if requested model (e.g. llama-3.3-70b-versatile) is 404, restricted, or rate-limited on 70B
-      const isModelRestricted =
-        res.status === 404 ||
-        errMsg.toLowerCase().includes('does not exist') ||
-        errMsg.toLowerCase().includes('access to it') ||
-        errMsg.toLowerCase().includes('model_not_found') ||
-        errMsg.toLowerCase().includes('decommissioned') ||
-        (res.status === 400 && errMsg.toLowerCase().includes('model'));
-
-      if ((isModelRestricted || res.status === 429) && model !== MODEL_FAST) {
-        console.warn(`[Groq] Model ${model} failed (${res.status}: ${errMsg}). Retrying with universal fallback: ${MODEL_FAST}`);
-        return await groqChat(
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: activeModel,
           messages,
-          MODEL_FAST,
-          Math.min(maxTokens, 4096),
-          false,
-          responseFormat,
-          temperature
-        );
+          max_tokens: maxTokens,
+          temperature: temperature ?? 0.3,
+          top_p: 0.9,
+          ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {})
+        })
+      });
+
+      const rawResText = await res.text();
+      let resJson = null;
+      try {
+        resJson = JSON.parse(rawResText);
+      } catch {}
+
+      if (!res.ok) {
+        const errMsg = resJson?.error?.message || rawResText || '';
+
+        // If key is invalid, fail immediately
+        if (res.status === 401) {
+          throw new Error('BAD_KEY');
+        }
+
+        const isModelUnavailable =
+          res.status === 404 ||
+          res.status === 429 ||
+          errMsg.toLowerCase().includes('does not exist') ||
+          errMsg.toLowerCase().includes('access to it') ||
+          errMsg.toLowerCase().includes('model_not_found') ||
+          errMsg.toLowerCase().includes('decommissioned') ||
+          errMsg.toLowerCase().includes('deprecated') ||
+          (res.status === 400 && errMsg.toLowerCase().includes('model'));
+
+        if (isModelUnavailable && i < toTry.length - 1) {
+          console.warn(`[Groq] Model "${activeModel}" failed (${res.status}: ${errMsg}). Retrying with alternate model: "${toTry[i + 1]}"`);
+          lastError = new Error(errMsg);
+          continue;
+        }
+
+        if (res.status === 429) throw new Error('RATE_LIMIT');
+        throw new Error(errMsg || 'Groq API Error');
       }
 
-      if (res.status === 429) throw new Error('RATE_LIMIT');
-      if (res.status === 401) throw new Error('BAD_KEY');
-      throw new Error(errMsg || 'Groq API Error');
-    }
+      if (!resJson) {
+        throw new Error('Groq returned invalid response. Please retry.');
+      }
 
-    if (!resJson) {
-      throw new Error('Groq returned invalid response. Please retry.');
-    }
+      const text = resJson.choices?.[0]?.message?.content?.trim() || '';
+      if (useCache && text) writeCache(cacheKey, text);
+      return text;
+    } catch (err) {
+      if (err.message === 'BAD_KEY') throw err;
+      if (err.message === 'RATE_LIMIT' && i === toTry.length - 1) throw err;
 
-    const text = resJson.choices?.[0]?.message?.content?.trim() || '';
-    if (useCache && text) writeCache(cacheKey, text);
-    return text;
-  } catch (err) {
-    if (err.message === 'MISSING_API_KEY' || err.message === 'RATE_LIMIT' || err.message === 'BAD_KEY') {
+      if (i < toTry.length - 1) {
+        console.warn(`[Groq] Request to "${activeModel}" failed (${err.message}). Retrying with alternate: "${toTry[i + 1]}"`);
+        lastError = err;
+        continue;
+      }
       throw err;
     }
-    // If request to MODEL_SMART threw network/timeout/parse error, retry once with MODEL_FAST
-    if (model !== MODEL_FAST) {
-      console.warn(`[Groq] Call to ${model} threw (${err.message}). Retrying with fallback: ${MODEL_FAST}`);
-      return await groqChat(
-        messages,
-        MODEL_FAST,
-        Math.min(maxTokens, 4096),
-        false,
-        responseFormat,
-        temperature
-      );
-    }
-    throw new Error(err.message || 'Unknown Error');
   }
+
+  throw lastError || new Error('No accessible Groq models available for your API key.');
 }
 
 // ═══════════════════════════════════════════════════════════════════════

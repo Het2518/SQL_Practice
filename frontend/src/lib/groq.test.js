@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { safeParseJsonArray } from './groq';
+import { safeParseJsonArray, cleanApiKey } from './groq';
+
+describe('cleanApiKey', () => {
+  it('strips whitespace, quotes, and Bearer prefix', () => {
+    expect(cleanApiKey('  gsk_12345  ')).toBe('gsk_12345');
+    expect(cleanApiKey('"gsk_12345"')).toBe('gsk_12345');
+    expect(cleanApiKey("'gsk_12345'")).toBe('gsk_12345');
+    expect(cleanApiKey('Bearer gsk_12345')).toBe('gsk_12345');
+    expect(cleanApiKey('bearer "gsk_12345"')).toBe('gsk_12345');
+  });
+
+  it('handles null and undefined safely', () => {
+    expect(cleanApiKey(null)).toBe('');
+    expect(cleanApiKey(undefined)).toBe('');
+  });
+});
 
 describe('safeParseJsonArray', () => {
   it('parses a clean JSON array', () => {

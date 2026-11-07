@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/Button';
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { Settings, X, Bot, Download, UploadCloud, RotateCcw, Trash2, ClipboardCopy, HardDrive, Keyboard, Search, Database } from 'lucide-react';
+import { fetchAvailableGroqModels, cleanApiKey } from '@/lib/groq';
 
 function ToggleRow({ label, description, checked, onChange }) {
   return (
@@ -102,6 +103,8 @@ export function SettingsModal({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [confirmState, setConfirmState] = useState(null);
   const [storageSize, setStorageSize] = useState('0 KB');
+  const [testingKey, setTestingKey] = useState(false);
+  const [keyTestResult, setKeyTestResult] = useState(null);
   const trapRef = useFocusTrap(true, onClose);
 
   const importRef = useRef();
@@ -118,14 +121,44 @@ export function SettingsModal({ onClose }) {
 
   const set = (key, value) => setLocal((prev) => ({ ...prev, [key]: value }));
 
+  const handleTestKey = async () => {
+    const rawKey = local.groqApiKey;
+    if (!rawKey?.trim()) {
+      setKeyTestResult({ success: false, message: 'Please enter a Groq API key first.' });
+      return;
+    }
+    setTestingKey(true);
+    setKeyTestResult(null);
+    try {
+      const models = await fetchAvailableGroqModels(rawKey);
+      if (models.length > 0) {
+        setKeyTestResult({
+          success: true,
+          message: `Connected! Found ${models.length} active models: ${models.slice(0, 3).join(', ')}${models.length > 3 ? '...' : ''}`
+        });
+      } else {
+        setKeyTestResult({
+          success: false,
+          message: 'Could not access models with this key. Check key validity and permissions at console.groq.com/keys'
+        });
+      }
+    } catch (e) {
+      setKeyTestResult({ success: false, message: e.message || 'Connection test failed.' });
+    } finally {
+      setTestingKey(false);
+    }
+  };
+
   const handleSave = () => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(local));
+    const sanitizedKey = cleanApiKey(local.groqApiKey);
+    const toSave = { ...local, groqApiKey: sanitizedKey };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(toSave));
     saveShortcuts(shortcuts);
     
     // Dispatch explicit app-level events so listeners can refresh without reload.
     window.dispatchEvent(new CustomEvent('sql-practice-shortcuts-updated'));
 
-    updateSettings(local);
+    updateSettings(toSave);
     onClose();
   };
 
@@ -440,9 +473,27 @@ export function SettingsModal({ onClose }) {
                       type="password"
                       placeholder="gsk_..."
                       value={local.groqApiKey || ''}
-                      onChange={(e) => set('groqApiKey', e.target.value)}
+                      onChange={(e) => {
+                        set('groqApiKey', e.target.value);
+                        setKeyTestResult(null);
+                      }}
                       className="w-full px-4 py-3 rounded-xl border border-border bg-bg text-text text-base font-mono focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 outline-none transition-all"
                     />
+                  </div>
+                  <div className="flex items-center gap-3 mt-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleTestKey}
+                      disabled={testingKey || !local.groqApiKey?.trim()}
+                      className="px-3.5 py-1.5 rounded-lg border border-border bg-surface text-xs font-semibold text-text hover:bg-surface-2 transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      {testingKey ? 'Checking models...' : '🔍 Test Key & List Models'}
+                    </button>
+                    {keyTestResult && (
+                      <span className={`text-xs font-semibold ${keyTestResult.success ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        {keyTestResult.message}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

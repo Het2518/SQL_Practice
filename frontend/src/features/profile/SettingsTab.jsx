@@ -3,6 +3,7 @@ import { Moon, Sun, Type, Play, Code2, Save, Clock, EyeOff, Shield, Trash2, Chev
 import { useSettingsStore } from '@/stores/useSettingsStore';
 import { api } from '@/lib/api';
 import { useAuth } from '@/stores/useAuthStore';
+import { fetchAvailableGroqModels, cleanApiKey } from '@/lib/groq';
 
 function SectionHeader({ title, description, icon: Icon }) {
   return (
@@ -112,8 +113,45 @@ function ChangePasswordSection() {
 export function SettingsTab() {
   const { settings, updateSettings } = useSettingsStore();
   const { user } = useAuth();
-  const set = (key, val) => updateSettings({ [key]: val });
+  const [testingKey, setTestingKey] = useState(false);
+  const [keyTestResult, setKeyTestResult] = useState(null);
+
+  const set = (key, val) => {
+    if (key === 'groqApiKey') {
+      val = cleanApiKey(val);
+      setKeyTestResult(null);
+    }
+    updateSettings({ [key]: val });
+  };
   const fontSize = settings?.editorFontSize || 14;
+
+  const handleTestKey = async () => {
+    const rawKey = settings?.groqApiKey;
+    if (!rawKey?.trim()) {
+      setKeyTestResult({ success: false, message: 'Please enter a Groq API key first.' });
+      return;
+    }
+    setTestingKey(true);
+    setKeyTestResult(null);
+    try {
+      const models = await fetchAvailableGroqModels(rawKey);
+      if (models.length > 0) {
+        setKeyTestResult({
+          success: true,
+          message: `Connected! Found ${models.length} active models: ${models.slice(0, 3).join(', ')}${models.length > 3 ? '...' : ''}`
+        });
+      } else {
+        setKeyTestResult({
+          success: false,
+          message: 'Could not access models with this key. Check key validity and permissions at console.groq.com/keys'
+        });
+      }
+    } catch (e) {
+      setKeyTestResult({ success: false, message: e.message || 'Connection test failed.' });
+    } finally {
+      setTestingKey(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-5 max-w-2xl">
@@ -170,9 +208,24 @@ export function SettingsTab() {
             type="password"
             placeholder="gsk_..."
             value={settings?.groqApiKey || ''}
-            onChange={(e) => set('groqApiKey', e.target.value.trim())}
+            onChange={(e) => set('groqApiKey', e.target.value)}
             className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-text text-[13px] font-mono outline-none focus:border-primary/50 focus:ring-2 ring-primary/15 transition-all"
           />
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleTestKey}
+              disabled={testingKey || !settings?.groqApiKey?.trim()}
+              className="px-3 py-1.5 rounded-lg border border-border bg-surface-2 text-xs font-semibold text-text hover:bg-surface-3 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {testingKey ? 'Checking models...' : '🔍 Test Key & List Models'}
+            </button>
+            {keyTestResult && (
+              <span className={`text-xs font-semibold ${keyTestResult.success ? 'text-emerald-500' : 'text-amber-500'}`}>
+                {keyTestResult.message}
+              </span>
+            )}
+          </div>
           <p className="text-[11px] text-muted mt-2">
             Get your free API key at <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">console.groq.com</a>.
           </p>

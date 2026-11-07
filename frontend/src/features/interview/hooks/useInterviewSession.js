@@ -486,8 +486,19 @@ export function useInterviewSession({
           });
           setSessionData(fallback);
           setGenerating(false);
-          setChatMessages([{ role: 'assistant', content: `Welcome to your interview! Note: AI generation encountered an issue. A fallback session has been loaded.` }]);
-          toast({ title: 'AI Generation Failed', message: 'A fallback interview session has been loaded.', type: 'warning' });
+
+          let errorNote = 'A fallback session has been loaded.';
+          if (err.message === 'BAD_KEY') {
+            errorNote = 'Your Groq API key is invalid (401). Please check your key in Settings.';
+            toast({ title: 'Invalid Groq API Key', message: 'Update your Groq API key in Settings → AI Configuration.', type: 'error' });
+          } else if (err.message === 'MISSING_API_KEY') {
+            errorNote = 'No Groq API key was found in Settings. A fallback session was loaded.';
+            toast({ title: 'Groq API Key Required', message: 'Add your free Groq key in Settings to generate live AI sessions.', type: 'info' });
+          } else {
+            toast({ title: 'AI Generation Notice', message: `${err.message || 'Could not reach AI'}. A fallback session has been loaded.`, type: 'warning' });
+          }
+
+          setChatMessages([{ role: 'assistant', content: `Welcome to your interview! Note: ${errorNote}` }]);
         }
       }
     };
