@@ -142,3 +142,4 @@ export function compareQueryResult(userResult, expectedOutput) {
     colCountMatch,
   };
 }
+
