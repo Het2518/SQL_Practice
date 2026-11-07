@@ -8,10 +8,37 @@
  * React hook: see @/hooks/useGroqKey.js
  */
 
-// Primary: fastest + cheapest + highest rate limits on Groq
+// Primary: fastest + universal + highest rate limits on Groq (30 RPM | 131,072 TPM | 14,400 RPD)
+// Supported on 100% of Groq accounts (free and paid)
 export const MODEL_FAST = 'llama-3.1-8b-instant';
-// Smart model for complex reasoning, evaluations, interviews, custom data generation
+// Smart model for complex reasoning, evaluations, interviews, custom data generation.
+// Automatically falls back to MODEL_FAST if the user's API key does not have 70B access or is rate-limited.
 export const MODEL_SMART = 'llama-3.3-70b-versatile';
+
+/**
+ * Returns the active Groq API key from .env, localStorage settings, or sessionStorage.
+ * @returns {string}
+ */
+export function getGroqApiKey() {
+  let key = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
+  if (key) return key;
+  try {
+    const settingsStr = localStorage.getItem('sql-platform-settings');
+    if (settingsStr) {
+      const parsed = JSON.parse(settingsStr);
+      if (parsed.groqApiKey && String(parsed.groqApiKey).trim()) {
+        return String(parsed.groqApiKey).trim();
+      }
+    }
+  } catch {}
+  try {
+    const direct = localStorage.getItem('groq_api_key') || sessionStorage.getItem('groq_api_key');
+    if (direct && direct.trim()) return direct.trim();
+  } catch {}
+  return '';
+}
+
+export const hasGroqKey = () => Boolean(getGroqApiKey());
 
 // ── Response cache (sessionStorage) to avoid duplicate API calls ──────────────
 function getCacheKey(messages, model) {
@@ -55,15 +82,7 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
     if (cached) return cached;
   }
 
-  let apiKey = (import.meta.env.VITE_GROQ_API_KEY || '').trim();
-  try {
-    const settingsStr = localStorage.getItem('sql-platform-settings');
-    if (settingsStr) {
-      const parsed = JSON.parse(settingsStr);
-      if (parsed.groqApiKey) apiKey = String(parsed.groqApiKey).trim();
-    }
-  } catch (e) {}
-
+  const apiKey = getGroqApiKey();
   if (!apiKey) {
     throw new Error('MISSING_API_KEY');
   }
@@ -84,20 +103,66 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
         ...(responseFormat === 'json_object' ? { response_format: { type: 'json_object' } } : {})
       })
     });
-    
-    if (!res.ok) {
-       const err = await res.json().catch(() => ({}));
-       if (res.status === 429) throw new Error('RATE_LIMIT');
-       if (res.status === 401) throw new Error('BAD_KEY');
-       throw new Error(err.error?.message || 'Groq API Error');
+
+    const rawResText = await res.text();
+    let resJson = null;
+    try {
+      resJson = JSON.parse(rawResText);
+    } catch {
+      // not JSON (e.g. Cloudflare HTML or empty response)
     }
-    const data = await res.json();
-    const text = data.choices?.[0]?.message?.content?.trim() || '';
-    if (useCache) writeCache(cacheKey, text);
+
+    if (!res.ok) {
+      const errMsg = resJson?.error?.message || rawResText || '';
+
+      // Auto-fallback: if requested model (e.g. llama-3.3-70b-versatile) is 404, restricted, or rate-limited on 70B
+      const isModelRestricted =
+        res.status === 404 ||
+        errMsg.toLowerCase().includes('does not exist') ||
+        errMsg.toLowerCase().includes('access to it') ||
+        errMsg.toLowerCase().includes('model_not_found') ||
+        errMsg.toLowerCase().includes('decommissioned') ||
+        (res.status === 400 && errMsg.toLowerCase().includes('model'));
+
+      if ((isModelRestricted || res.status === 429) && model !== MODEL_FAST) {
+        console.warn(`[Groq] Model ${model} failed (${res.status}: ${errMsg}). Retrying with universal fallback: ${MODEL_FAST}`);
+        return await groqChat(
+          messages,
+          MODEL_FAST,
+          Math.min(maxTokens, 4096),
+          false,
+          responseFormat,
+          temperature
+        );
+      }
+
+      if (res.status === 429) throw new Error('RATE_LIMIT');
+      if (res.status === 401) throw new Error('BAD_KEY');
+      throw new Error(errMsg || 'Groq API Error');
+    }
+
+    if (!resJson) {
+      throw new Error('Groq returned invalid response. Please retry.');
+    }
+
+    const text = resJson.choices?.[0]?.message?.content?.trim() || '';
+    if (useCache && text) writeCache(cacheKey, text);
     return text;
   } catch (err) {
     if (err.message === 'MISSING_API_KEY' || err.message === 'RATE_LIMIT' || err.message === 'BAD_KEY') {
       throw err;
+    }
+    // If request to MODEL_SMART threw network/timeout/parse error, retry once with MODEL_FAST
+    if (model !== MODEL_FAST) {
+      console.warn(`[Groq] Call to ${model} threw (${err.message}). Retrying with fallback: ${MODEL_FAST}`);
+      return await groqChat(
+        messages,
+        MODEL_FAST,
+        Math.min(maxTokens, 4096),
+        false,
+        responseFormat,
+        temperature
+      );
     }
     throw new Error(err.message || 'Unknown Error');
   }
@@ -109,20 +174,25 @@ export async function groqChat(messages, model = MODEL_FAST, maxTokens = 512, us
 
 /**
  * Builds a personalized hint prompt analysing the student's specific mistake.
- * Designed to be SHORT (< 350 input tokens).
+ * If the student hasn't written SQL yet, gives a helpful starting hint.
  */
 export function buildHintPrompt({ question, studentSQL, isCorrect, dbSchema }) {
   const schemaSnippet = dbSchema ? `\nRelevant tables: ${dbSchema.slice(0, 300)}` : '';
+  const hasSql = Boolean(studentSQL && studentSQL.trim());
   return [
     {
       role: 'system',
-      content: `You are a concise SQL interview coach. Analyze the student's SQL query vs the problem requirement and give ONE specific, actionable hint about their mistake. Do NOT reveal the solution. Max 3 sentences. Be direct.`
+      content: `You are a concise SQL interview coach. ${
+        hasSql
+          ? "Analyze the student's SQL query vs the problem requirement and give ONE specific, actionable hint about their mistake. Do NOT reveal the solution. Max 3 sentences."
+          : "The student has not written any SQL yet. Give them ONE friendly, conceptual starting hint explaining which table and clauses (e.g. SELECT, WHERE, GROUP BY, aggregations) to use to start solving this problem. Do NOT reveal the solution. Max 3 sentences."
+      } Be direct.`
     },
     {
       role: 'user',
-      content: `Problem: ${question.prompt?.slice(0, 300)}${schemaSnippet}
-Student SQL: ${studentSQL?.slice(0, 500) || '(empty)'}
-Hint for their specific mistake:`
+      content: `Problem: ${question?.prompt?.slice(0, 300) || question?.title || 'SQL Challenge'}${schemaSnippet}
+Student SQL: ${hasSql ? studentSQL.slice(0, 500) : '(student has not written SQL yet)'}
+Hint:`
     }
   ];
 }
@@ -269,7 +339,7 @@ RULES:
     const response = await groqChat([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
-    ], MODEL_SMART, 2500, false);
+    ], MODEL_FAST, 2500, false);
 
     // Clean up potential markdown if the model disobeys
     let cleanSql = response.replace(/```sql/g, '').replace(/```/g, '').trim();
@@ -489,7 +559,7 @@ You MUST output the result PURELY as a valid JSON object matching this EXACT str
 2. Ensure the question logically makes sense and expectedOutput directly matches what the query would return on the sampleData.
 3. Output ONLY valid JSON, do NOT wrap it in markdown code blocks.`;
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 1800, false, 'json_object');
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_FAST, 1800, false, 'json_object');
 }
 
 const INTERVIEW_DOMAIN_POOL = [
@@ -569,7 +639,7 @@ Each of the 5 SQL questions MUST include:
    - "columns": array of {"name": "col_name", "type": "INTEGER"|"TEXT"|"REAL"}
    - "sampleData": array of 4 to 6 representative sample row objects with authentic values (for table preview in the UI)
 5. "expectedOutput": array of 3 to 6 expected output row objects matching what the correct query produces on the full dataset.
-6. "initSql": complete self-contained SQLite DDL + INSERT statements. Include 15 to 30 realistic rows per table (minimum 15, maximum 35-40 rows per table; roughly 30 to 80 rows total across all tables for each question). Use double-quoted identifiers and ONLY INTEGER, TEXT, REAL types.
+6. "initSql": complete self-contained SQLite DDL + INSERT statements. Include 6 to 12 realistic rows per table (sufficient for joins and aggregations). Use double-quoted identifiers and ONLY INTEGER, TEXT, REAL types.
 
 [MCQ QUESTION RULES]
 Each of the 5 MCQ questions MUST test a DIFFERENT advanced concept:
@@ -613,10 +683,8 @@ Output ONLY a valid JSON object. No markdown fences. No preamble. Just pure JSON
   ]
 }`;
 
-  return await groqChat([{ role: 'system', content: prompt }], MODEL_SMART, 6500, false, 'json_object', 0.85);
+  return await groqChat([{ role: 'system', content: prompt }], MODEL_FAST, 4000, false, 'json_object', 0.8);
 }
-
-
 
 export async function chatInterview({ companyName = 'FAANG', initialTask = '', messages = [] }) {
   const systemPrompt = `[IDENTITY]: You are an uncompromising, elite technical SQL interviewer at ${companyName}.
@@ -633,7 +701,7 @@ export async function chatInterview({ companyName = 'FAANG', initialTask = '', m
     ...messages.map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content.slice(0, 1000) : '' })),
   ];
 
-  return await groqChat(apiMessages, MODEL_SMART, 500, false);
+  return await groqChat(apiMessages, MODEL_FAST, 500, false);
 }
 
 export async function dryRunInterview({ companyName = 'FAANG', sql = '', messages = [] }) {
@@ -647,7 +715,7 @@ export async function dryRunInterview({ companyName = 'FAANG', sql = '', message
     { role: 'user', content: `Here is my current query:\n\n\`\`\`sql\n${sql.slice(0, 3000)}\n\`\`\`` }
   ];
 
-  return await groqChat(apiMessages, MODEL_SMART, 500, false);
+  return await groqChat(apiMessages, MODEL_FAST, 500, false);
 }
 
 export async function evaluateInterview({ companyName = 'FAANG', candidateName = 'Candidate', roleName = 'Software Engineer', initialTask = '', sql = '' }) {
@@ -671,5 +739,5 @@ ${sql.slice(0, 3000)}
   "optimal_sql": "The optimal solution code"
 }`;
 
-  return await groqChat([{ role: 'system', content: systemPrompt }], MODEL_SMART, 1000, false);
+  return await groqChat([{ role: 'system', content: systemPrompt }], MODEL_FAST, 1000, false);
 }

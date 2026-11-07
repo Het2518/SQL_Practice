@@ -1,26 +1,18 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { groqChat, buildHintPrompt } from '@/lib/groq';
+import { groqChat, buildHintPrompt, MODEL_FAST, hasGroqKey } from '@/lib/groq';
 import { Sparkles, AlertTriangle } from 'lucide-react';
 
 /**
  * AiHintPanel — On-demand AI-powered personalized hint.
- * Called from QuestionCard after user clicks "🤖 AI Hint".
- * Analyzes the student's specific SQL mistake and gives targeted guidance.
+ * Called from QuestionCard after user clicks "Get AI Personalized Hint".
+ * Analyzes the student's specific SQL mistake or provides a starting roadmap.
  */
 export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = true }) {
   const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
-  const hasKey = Boolean(
-    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
-    (() => {
-      try {
-        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
-        return s.groqApiKey && s.groqApiKey.trim();
-      } catch { return false; }
-    })()
-  );
+  const hasKey = hasGroqKey();
 
   useEffect(() => {
     setHint('');
@@ -33,23 +25,23 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
       setError('Add your Groq API key in Settings → AI Configuration to unlock AI hints.');
       return;
     }
-    if (!studentSQL?.trim()) {
-      setError('Write some SQL in the editor first, then click to get a personalized hint!');
-      return;
-    }
     setLoading(true);
     setError('');
     setHint('');
     try {
-      const messages = buildHintPrompt({ question, studentSQL, dbSchema: dbSchemaContext });
-      const response = await groqChat(messages, undefined, 200, true);
+      const messages = buildHintPrompt({
+        question,
+        studentSQL: studentSQL || '',
+        dbSchema: dbSchemaContext
+      });
+      const response = await groqChat(messages, MODEL_FAST, 250, true);
       setHint(response);
       setGenerated(true);
     } catch (err) {
       if (err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY') {
         setError('Groq API key not found. Add it in Settings → AI Configuration.');
       } else if (err.message === 'RATE_LIMIT') {
-        setError('Rate limit reached. Wait 10 seconds and try again.');
+        setError('Rate limit reached. Wait a few seconds and try again.');
       } else if (err.message === 'BAD_KEY') {
         setError('Invalid API key. Please check your Groq key in Settings.');
       } else {
@@ -61,14 +53,14 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
   }, [hasKey, question, studentSQL, dbSchemaContext]);
 
   useEffect(() => {
-    if (autoRun && !generated && !loading && !hint && studentSQL?.trim()) {
+    if (autoRun && !generated && !loading && !hint) {
       generateHint();
     }
-  }, [autoRun, generateHint, generated, loading, hint, studentSQL]);
+  }, [autoRun, generateHint, generated, loading, hint]);
 
   const handleRegenerate = () => {
-    // Clear cache for regeneration by changing a seed (handled by calling again without cache)
     setHint('');
+    setError('');
     setGenerated(false);
     generateHint();
   };
@@ -83,7 +75,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
         </div>
         {!generated && !loading && (
           <span className="text-xs text-muted font-medium">
-            Click to analyze your query →
+            Click to analyze query →
           </span>
         )}
         {generated && !loading && (
@@ -105,7 +97,7 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
                 <div className="ai-loading-dot" />
                 <div className="ai-loading-dot" />
               </div>
-              <span>Analyzing your query...</span>
+              <span>{studentSQL?.trim() ? 'Analyzing your query...' : 'Analyzing problem & preparing guidance...'}</span>
             </div>
           )}
           {hint && !loading && (
@@ -114,8 +106,16 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
             </div>
           )}
           {error && !loading && (
-            <div className="text-[13px] text-warning px-3.5 py-2.5 bg-warning-muted rounded-lg border-l-[3px] border-warning flex items-center gap-1.5">
-              <AlertTriangle size={14} className="shrink-0" /> {error}
+            <div className="text-[13px] text-warning px-3.5 py-2.5 bg-warning-muted rounded-lg border-l-[3px] border-warning flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <AlertTriangle size={14} className="shrink-0" /> {error}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); generateHint(); }}
+                className="text-[11px] underline font-semibold cursor-pointer text-warning hover:text-text shrink-0 bg-transparent border-none"
+              >
+                Retry
+              </button>
             </div>
           )}
         </div>

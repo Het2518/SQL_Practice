@@ -4,7 +4,7 @@ import { QuestionBody } from './QuestionBody';
 import { QuestionHintSection } from './QuestionHintSection';
 import { QuestionAiSection } from './QuestionAiSection';
 import { useProactiveTutor } from '@/features/ai/useProactiveTutor';
-import { groqChat, buildAiSolutionPrompt } from '@/lib/groq';
+import { groqChat, buildAiSolutionPrompt, hasGroqKey } from '@/lib/groq';
 
 export const QuestionCard = React.memo(function QuestionCard({
   question,
@@ -38,15 +38,7 @@ export const QuestionCard = React.memo(function QuestionCard({
   const [realCompanies, setRealCompanies] = useState([]);
 
   // Check API Key
-  const hasKey = Boolean(
-    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
-    (() => {
-      try {
-        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
-        return s.groqApiKey && s.groqApiKey.trim();
-      } catch { return false; }
-    })()
-  );
+  const hasKey = hasGroqKey();
 
   useProactiveTutor({
     sql: currentSql,

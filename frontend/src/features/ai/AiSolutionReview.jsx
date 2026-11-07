@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { groqChat, buildSolutionReviewPrompt } from '@/lib/groq';
+import { groqChat, buildSolutionReviewPrompt, hasGroqKey } from '@/lib/groq';
 import { Search, Zap, GitCompare, CheckCircle, XCircle, Clock, Lightbulb, AlertTriangle } from 'lucide-react';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 
@@ -19,15 +19,7 @@ export function AiSolutionReview({ question, studentSQL, solutionSQL }) {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('feedback');
 
-  const hasKey = Boolean(
-    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
-    (() => {
-      try {
-        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
-        return s.groqApiKey && s.groqApiKey.trim();
-      } catch { return false; }
-    })()
-  );
+  const hasKey = hasGroqKey();
 
   const generateReview = useCallback(async () => {
     if (!hasKey) {

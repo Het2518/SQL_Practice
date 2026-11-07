@@ -112,7 +112,7 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
             <Button variant="secondary" size="sm" onClick={() => setSql('')} title="Reset">
               <RotateCcw size={13} /> <span className="hidden sm:inline">Reset</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSql(formatSql(sql, { language: 'postgresql' }))} title="Format">
+            <Button variant="ghost" size="sm" onClick={() => { try { setSql(formatSql(sql, { language: 'sqlite', keywordCase: 'upper' })); } catch {} }} title="Format">
               Format
             </Button>
             <div className="hidden sm:block w-px h-4 bg-border mx-1" />

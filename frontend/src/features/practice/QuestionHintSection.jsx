@@ -44,13 +44,7 @@ export function QuestionHintSection({
     <div className="bg-surface rounded-lg border border-border overflow-hidden">
       <button
         onClick={handleToggleHint}
-        className={`w-full flex items-center justify-between px-4 py-3 border-none cursor-pointer font-semibold text-[13px] transition-all duration-150 ease-in-out ${showHints ? 'bg-amber-500/10 text-warning' : 'bg-transparent text-text-secondary hover:bg-surface'}`}
-        onMouseEnter={(e) => {
-          if (!showHints) e.currentTarget.classList.add('bg-surface');
-        }}
-        onMouseLeave={(e) => {
-          if (!showHints) e.currentTarget.classList.remove('bg-surface');
-        }}
+        className={`w-full flex items-center justify-between px-4 py-3 border-none cursor-pointer font-semibold text-[13px] transition-colors duration-150 ${showHints ? 'bg-amber-500/10 text-warning' : 'bg-transparent text-text-secondary hover:bg-surface-2'}`}
       >
         <div className="flex items-center gap-2">
           <Lightbulb size={15} strokeWidth={2} />
@@ -58,13 +52,11 @@ export function QuestionHintSection({
         </div>
         <ChevronDown
           size={15}
-          className={`transition-transform duration-250 opacity-60 ${showHints ? 'rotate-180' : 'rotate-0'}`}
+          className={`transition-transform duration-200 opacity-60 ${showHints ? 'rotate-180' : 'rotate-0'}`}
         />
       </button>
       
-      <div
-        className={`overflow-hidden transition-[max-height] duration-400 ease-[cubic-bezier(0.4,0,0.2,1)] ${showHints ? 'max-h-[2500px]' : 'max-h-0'}`}
-      >
+      {showHints && (
         <div className="px-4 pb-4 flex flex-col gap-4">
           {/* Auto-Hint: Client-side analysis result */}
           {hintsUsed >= 1 && autoHint && (
@@ -111,40 +103,38 @@ export function QuestionHintSection({
           )}
 
           {/* AI Hint — on demand */}
-          {hintsUsed >= 1 && (
-            <div className="border-t border-border pt-3 flex flex-col gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setShowAiHint((prev) => !prev)}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/40 bg-gradient-to-br from-primary/5 to-blue-500/5 cursor-pointer text-[13px] font-semibold text-primary transition-all duration-200 hover:border-primary"
-                >
-                  <Sparkles size={13} strokeWidth={2} /> {showAiHint ? 'Hide AI Personalized Hint' : 'Get AI Personalized Hint'}
-                  {hasKey ? null : (
-                    <span className="text-[10px] text-muted ml-1">
-                      (needs key)
-                    </span>
-                  )}
-                </button>
-                {onOpenAiTutor && (
-                  <button
-                    onClick={onOpenAiTutor}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-secondary hover:text-text hover:border-primary/40 cursor-pointer text-[12px] font-medium transition-colors"
-                  >
-                    💬 Chat with AI Tutor
-                  </button>
+          <div className="border-t border-border pt-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setShowAiHint((prev) => !prev)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/40 bg-gradient-to-br from-primary/5 to-blue-500/5 cursor-pointer text-[13px] font-semibold text-primary transition-all duration-150 hover:border-primary hover:bg-primary/10 active:scale-[0.98]"
+              >
+                <Sparkles size={13} strokeWidth={2} /> {showAiHint ? 'Hide AI Personalized Hint' : 'Get AI Personalized Hint'}
+                {hasKey ? null : (
+                  <span className="text-[10px] text-muted ml-1">
+                    (needs key)
+                  </span>
                 )}
-              </div>
-
-              {showAiHint && (
-                <AiHintPanel
-                  question={question}
-                  studentSQL={currentSql}
-                  dbSchemaContext={dbSchemaContext}
-                  autoRun={true}
-                />
+              </button>
+              {onOpenAiTutor && (
+                <button
+                  onClick={onOpenAiTutor}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-secondary hover:text-text hover:border-primary/40 cursor-pointer text-[12px] font-medium transition-colors"
+                >
+                  💬 Chat with AI Tutor
+                </button>
               )}
             </div>
-          )}
+
+            {showAiHint && (
+              <AiHintPanel
+                question={question}
+                studentSQL={currentSql}
+                dbSchemaContext={dbSchemaContext}
+                autoRun={true}
+              />
+            )}
+          </div>
 
           {hintsUsed < 3 && (
             <button
@@ -155,7 +145,7 @@ export function QuestionHintSection({
             </button>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

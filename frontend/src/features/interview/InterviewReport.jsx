@@ -9,7 +9,7 @@ import { Button } from '@/shared/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { api } from '@/lib/api';
-import { groqChat, MODEL_SMART } from '@/lib/groq';
+import { groqChat, MODEL_FAST } from '@/lib/groq';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 
 // ─── Evaluate a single SQL answer against its question ───────────────────────
@@ -35,7 +35,7 @@ Rate the answer from 0-20. Return ONLY compact JSON: {"score":N,"isCorrect":bool
 
     const raw = await groqChat(
       [{ role: 'system', content: prompt }],
-      MODEL_SMART, 300, false, 'json_object'
+      MODEL_FAST, 300, false, 'json_object'
     );
     const parsed = JSON.parse(raw);
     if (typeof parsed.score === 'number') {

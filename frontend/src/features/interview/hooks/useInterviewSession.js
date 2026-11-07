@@ -388,16 +388,25 @@ export function useInterviewSession({
     try {
       parsed = JSON.parse(raw);
     } catch {
-      const cleaned = raw.replace(/```json\s*/i, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleaned);
+      let cleaned = String(raw || '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+      try {
+        parsed = JSON.parse(cleaned);
+      } catch {
+        // Strip trailing commas before } or ]
+        cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
+        parsed = JSON.parse(cleaned);
+      }
     }
 
-    if (!parsed?.sql_questions || !Array.isArray(parsed.sql_questions)) throw new Error('Missing sql_questions');
-    if (!parsed?.mcq_questions || !Array.isArray(parsed.mcq_questions)) throw new Error('Missing mcq_questions');
+    const sqlQuestions = parsed?.sql_questions || parsed?.data?.sql_questions || parsed?.session?.sql_questions;
+    const mcqQuestions = parsed?.mcq_questions || parsed?.data?.mcq_questions || parsed?.session?.mcq_questions;
+
+    if (!sqlQuestions || !Array.isArray(sqlQuestions) || sqlQuestions.length === 0) throw new Error('Missing sql_questions');
+    if (!mcqQuestions || !Array.isArray(mcqQuestions) || mcqQuestions.length === 0) throw new Error('Missing mcq_questions');
 
     // Ensure we have exactly 5 of each (trim or pad)
-    const sqlQs = parsed.sql_questions.slice(0, 5);
-    const mcqQs = parsed.mcq_questions.slice(0, 5);
+    const sqlQs = sqlQuestions.slice(0, 5);
+    const mcqQs = mcqQuestions.slice(0, 5);
 
     // Sanitize each SQL question's initSql
     const sanitizedSqlQs = sqlQs.map(q => ({

@@ -3,22 +3,14 @@ import { X, Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { CodeBlock } from '@/shared/ui/CodeBlock';
 // useGroqKey removed
-import { groqChat, MODEL_SMART } from '@/lib/groq';
+import { groqChat, MODEL_FAST, hasGroqKey } from '@/lib/groq';
 import { cn } from '@/lib/utils';
 import posthog from 'posthog-js';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export function AiTutorPanel({ isOpen, onClose, question, currentSql, dbSchemaContext }) {
-  const hasKey = Boolean(
-    (import.meta.env.VITE_GROQ_API_KEY || '').trim() ||
-    (() => {
-      try {
-        const s = JSON.parse(localStorage.getItem('sql-platform-settings') || '{}');
-        return s.groqApiKey && s.groqApiKey.trim();
-      } catch { return false; }
-    })()
-  );
+  const hasKey = hasGroqKey();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +67,7 @@ Rules:
         ...newMessages.map((m) => ({ role: m.role, content: m.content })),
       ];
 
-      const response = await groqChat(apiMessages, MODEL_SMART, 800, false);
+      const response = await groqChat(apiMessages, MODEL_FAST, 800, false);
 
       setMessages((prev) => [...prev, { role: 'assistant', content: response }]);
     } catch (err) {
