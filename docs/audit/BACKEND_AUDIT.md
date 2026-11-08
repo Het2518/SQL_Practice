@@ -1,8 +1,8 @@
 # Backend Audit Report — DataDesk Platform
 
-**Scope:** `backend/`  
-**Technologies:** Node.js, Express.js, MongoDB, Mongoose 8, JWT, express-validator  
-**Status:** Complete  
+**Scope:** `backend/`
+**Technologies:** Node.js, Express.js, MongoDB, Mongoose 8, JWT, express-validator
+**Status:** Complete
 
 ---
 

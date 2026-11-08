@@ -1,7 +1,7 @@
 # Strategic Feature Roadmap — DataDesk Platform
 
-**Target Milestones:** Q4 2026 – Q1 2027  
-**Product Goal:** Establish DataDesk as the definitive browser-first SQL interview preparation platform for Tier-1 technology companies.  
+**Target Milestones:** Q4 2026 – Q1 2027
+**Product Goal:** Establish DataDesk as the definitive browser-first SQL interview preparation platform for Tier-1 technology companies.
 
 ---
 
