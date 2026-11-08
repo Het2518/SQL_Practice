@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, Code2, MessageSquare, FileText, CheckCircle,
   Table, Check, Info, AlertCircle, GripHorizontal, Minimize2,
   Maximize2, Copy, Bookmark, ChevronDown, ListChecks,
-  Terminal, Layers
+  Terminal
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { chatInterview } from '@/lib/groq';
@@ -516,15 +516,12 @@ export function InterviewArena() {
 
   // ── Local UI State ──────────────────────────────────────────────────────────
   const [sqlCode, setSqlCode]                 = useState('-- Write your SQL solution below\n\n');
-  const [scratchpadSql, setScratchpadSql]     = useState('-- Sandbox for quick exploratory queries\nSELECT * FROM \nLIMIT 5;\n');
   const [queryResult, setQueryResult]         = useState(null);
-  const [scratchResult, setScratchResult]     = useState(null);
   const [isRunning, setIsRunning]             = useState(false);
-  const [isScratchRunning, setIsScratchRunning] = useState(false);
   const [executionTimeMs, setExecutionTimeMs] = useState(null);
 
   const [leftPanel, setLeftPanel]             = useState('problem'); // 'problem' | 'schema' | 'chat'
-  const [consoleTab, setConsoleTab]           = useState('result');  // 'result' | 'input' | 'sandbox'
+  const [consoleTab, setConsoleTab]           = useState('result');  // 'result' | 'input'
   const [consoleCollapsed, setConsoleCollapsed] = useState(false);
   const [outputViewMode, setOutputViewMode]   = useState('yours');   // 'yours' | 'expected'
 
@@ -655,21 +652,6 @@ export function InterviewArena() {
       setQueryResult({ columns: [], rows: [], error: err.message });
     } finally {
       setIsRunning(false);
-    }
-  };
-
-  // ── Run Sandbox Scratchpad Query ────────────────────────────────────────────
-  const handleRunScratch = async () => {
-    const trimmed = scratchpadSql.trim();
-    if (!trimmed) return;
-    setIsScratchRunning(true);
-    try {
-      const res = await executeQuery(trimmed);
-      setScratchResult(res);
-    } catch (err) {
-      setScratchResult({ columns: [], rows: [], error: err.message });
-    } finally {
-      setIsScratchRunning(false);
     }
   };
 
@@ -1325,21 +1307,6 @@ export function InterviewArena() {
                         <Table size={12} />
                         <span>Input Tables</span>
                       </button>
-
-                      <button
-                        onClick={() => {
-                          setConsoleCollapsed(false);
-                          setConsoleTab('sandbox');
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                          consoleTab === 'sandbox' && !consoleCollapsed
-                            ? 'bg-surface text-text border border-border shadow-sm'
-                            : 'text-text-secondary hover:text-text hover:bg-surface-3'
-                        }`}
-                      >
-                        <Layers size={12} />
-                        <span>Query Sandbox</span>
-                      </button>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1551,42 +1518,6 @@ export function InterviewArena() {
                         </div>
                       )}
 
-                      {/* Tab 3: Sandbox Scratchpad */}
-                      {consoleTab === 'sandbox' && (
-                        <div className="flex-1 flex flex-col overflow-hidden">
-                          <div className="flex items-center justify-between pb-2 mb-2 border-b border-border">
-                            <span className="text-xs text-text-secondary">
-                              Ad-hoc exploratory SQL sandbox (does not affect your graded solution):
-                            </span>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={handleRunScratch}
-                              disabled={isScratchRunning}
-                              className="font-bold text-xs"
-                            >
-                              {isScratchRunning ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-                              Run Sandbox Query
-                            </Button>
-                          </div>
-                          <textarea
-                            value={scratchpadSql}
-                            onChange={(e) => setScratchpadSql(e.target.value)}
-                            rows={3}
-                            className="w-full bg-surface-2 border border-border rounded-xl p-2.5 font-mono text-xs text-text resize-none focus:outline-none focus:ring-1 focus:ring-primary/40 mb-2"
-                            placeholder="SELECT COUNT(*) FROM table_name;"
-                          />
-                          {scratchResult && (
-                            <div className="flex-1 overflow-auto border border-border rounded-xl p-2 font-mono text-xs">
-                              {scratchResult.error ? (
-                                <span className="text-error">{scratchResult.error}</span>
-                              ) : (
-                                <span>{scratchResult.rows?.length ?? 0} rows returned. Columns: {(scratchResult.columns || []).join(', ')}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   )}
 

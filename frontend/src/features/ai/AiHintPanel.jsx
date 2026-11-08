@@ -1,17 +1,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { groqChat, buildHintPrompt, MODEL_FAST, hasGroqKey } from '@/lib/groq';
-import { Sparkles, AlertTriangle } from 'lucide-react';
+import { runAutoHintAnalysis } from './AutoHintMiddleware';
+import { Sparkles, AlertTriangle, Lightbulb } from 'lucide-react';
 
 /**
  * AiHintPanel — On-demand AI-powered personalized hint.
  * Called from QuestionCard after user clicks "Get AI Personalized Hint".
  * Analyzes the student's specific SQL mistake or provides a starting roadmap.
+ * Seamlessly falls back to instant heuristic AST analysis if offline or keyless.
  */
 export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = true }) {
   const [hint, setHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState(false);
+  const [source, setSource] = useState('ai'); // 'ai' | 'heuristics'
   const hasKey = hasGroqKey();
 
   useEffect(() => {
@@ -21,32 +24,56 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
   }, [question?.id]);
 
   const generateHint = useCallback(async () => {
-    if (!hasKey) {
-      setError('Add your Groq API key in Settings → AI Configuration to unlock AI hints.');
-      return;
-    }
     setLoading(true);
     setError('');
     setHint('');
-    try {
-      const messages = buildHintPrompt({
-        question,
-        studentSQL: studentSQL || '',
-        dbSchema: dbSchemaContext
-      });
-      const response = await groqChat(messages, MODEL_FAST, 250, true);
-      setHint(response);
-      setGenerated(true);
-    } catch (err) {
-      if (err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY') {
-        setError('Groq API key not found. Add it in Settings → AI Configuration.');
-      } else if (err.message === 'RATE_LIMIT') {
-        setError('Rate limit reached. Wait a few seconds and try again.');
-      } else if (err.message === 'BAD_KEY') {
-        setError('Invalid API key. Please check your Groq key in Settings.');
-      } else {
-        setError(err.message || 'AI hint failed. Please try again.');
+
+    // 1. Try Groq AI if key is present
+    if (hasKey) {
+      try {
+        const messages = buildHintPrompt({
+          question,
+          studentSQL: studentSQL || '',
+          dbSchema: dbSchemaContext
+        });
+        const response = await groqChat(messages, MODEL_FAST, 250, true);
+        if (response && response.trim()) {
+          setHint(response);
+          setSource('ai');
+          setGenerated(true);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('[AiHintPanel] Groq call failed, falling back to heuristic analyzer:', err.message);
       }
+    }
+
+    // 2. Fallback to local heuristic AST / question analysis (always succeeds)
+    try {
+      const trimmedSql = (studentSQL || '').trim();
+      if (trimmedSql) {
+        const auto = runAutoHintAnalysis(trimmedSql, question);
+        if (auto?.hint) {
+          setHint(auto.hint);
+          setSource('heuristics');
+          setGenerated(true);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 3. Fallback to question starting hint
+      const baseHint =
+        question?.hint_conceptual ||
+        (Array.isArray(question?.hints) ? question.hints[0] : null) ||
+        'Start by inspecting the table schema in the left panel. Identify the primary table for the FROM clause, then filter relevant rows using WHERE.';
+
+      setHint(baseHint);
+      setSource('heuristics');
+      setGenerated(true);
+    } catch {
+      setError('Could not analyze query. Try again or check the static hints.');
     } finally {
       setLoading(false);
     }
@@ -69,9 +96,9 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
     <div className="ai-panel mt-2">
       <div className="ai-panel-header flex-wrap gap-3" onClick={!generated && !loading ? generateHint : undefined}>
         <div className="ai-panel-title flex-wrap">
-          <Sparkles size={14} strokeWidth={2} />
+          {source === 'ai' ? <Sparkles size={14} strokeWidth={2} /> : <Lightbulb size={14} strokeWidth={2} className="text-amber-400" />}
           <span>AI Personalized Hint</span>
-          <span className="ai-badge">llama-3.1-8b</span>
+          <span className="ai-badge">{source === 'ai' ? 'Groq AI' : 'Instant Coach'}</span>
         </div>
         {!generated && !loading && (
           <span className="text-xs text-muted font-medium">
@@ -103,6 +130,11 @@ export function AiHintPanel({ question, studentSQL, dbSchemaContext, autoRun = t
           {hint && !loading && (
             <div className="ai-hint-text">
               {hint}
+              {!hasKey && (
+                <div className="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted flex items-center justify-between">
+                  <span>💡 Tip: Add your free Groq key in Settings for deeper LLM reasoning.</span>
+                </div>
+              )}
             </div>
           )}
           {error && !loading && (

@@ -384,29 +384,57 @@ export function useInterviewSession({
 
   // ── Parse and validate AI response ───────────────────────────────────────
   const parseSessionData = (raw) => {
-    let parsed;
+    let parsed = null;
+    let cleaned = String(raw || '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(cleaned);
     } catch {
-      let cleaned = String(raw || '').replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
       try {
-        parsed = JSON.parse(cleaned);
-      } catch {
         // Strip trailing commas before } or ]
-        cleaned = cleaned.replace(/,\s*([\]}])/g, '$1');
-        parsed = JSON.parse(cleaned);
+        const noTrailing = cleaned.replace(/,\s*([\]}])/g, '$1');
+        parsed = JSON.parse(noTrailing);
+      } catch {
+        // Truncation salvage: Attempt to balance open brackets and braces
+        try {
+          let candidate = cleaned;
+          const openBraces = (candidate.match(/\{/g) || []).length;
+          const closeBraces = (candidate.match(/\}/g) || []).length;
+          const openBrackets = (candidate.match(/\[/g) || []).length;
+          const closeBrackets = (candidate.match(/\]/g) || []).length;
+
+          if (openBrackets > closeBrackets) {
+            candidate += ']'.repeat(openBrackets - closeBrackets);
+          }
+          if (openBraces > closeBraces) {
+            candidate += '}'.repeat(openBraces - closeBraces);
+          }
+          parsed = JSON.parse(candidate);
+        } catch {}
       }
     }
 
-    const sqlQuestions = parsed?.sql_questions || parsed?.data?.sql_questions || parsed?.session?.sql_questions;
-    const mcqQuestions = parsed?.mcq_questions || parsed?.data?.mcq_questions || parsed?.session?.mcq_questions;
+    const fallback = buildFallbackSession();
+    let sqlQuestions = parsed?.sql_questions || parsed?.data?.sql_questions || parsed?.session?.sql_questions;
+    let mcqQuestions = parsed?.mcq_questions || parsed?.data?.mcq_questions || parsed?.session?.mcq_questions;
 
-    if (!sqlQuestions || !Array.isArray(sqlQuestions) || sqlQuestions.length === 0) throw new Error('Missing sql_questions');
-    if (!mcqQuestions || !Array.isArray(mcqQuestions) || mcqQuestions.length === 0) throw new Error('Missing mcq_questions');
+    if (!Array.isArray(sqlQuestions) || sqlQuestions.length === 0) {
+      sqlQuestions = fallback.sql_questions;
+    }
+    if (!Array.isArray(mcqQuestions) || mcqQuestions.length === 0) {
+      mcqQuestions = fallback.mcq_questions;
+    }
 
-    // Ensure we have exactly 5 of each (trim or pad)
-    const sqlQs = sqlQuestions.slice(0, 5);
-    const mcqQs = mcqQuestions.slice(0, 5);
+    // Ensure we have exactly 5 of each (pad from fallback if partial or truncated)
+    const sqlQs = [...sqlQuestions.slice(0, 5)];
+    while (sqlQs.length < 5) {
+      sqlQs.push(fallback.sql_questions[sqlQs.length]);
+    }
+
+    const mcqQs = [...mcqQuestions.slice(0, 5)];
+    while (mcqQs.length < 5) {
+      mcqQs.push(fallback.mcq_questions[mcqQs.length]);
+    }
 
     // Sanitize each SQL question's initSql
     const sanitizedSqlQs = sqlQs.map(q => ({

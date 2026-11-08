@@ -19,11 +19,12 @@ async function getLeaderboard(req, res, next) {
       .limit(limit)
       .lean();
 
-    // Aggregate real completed question counts per user in one query
+    // Aggregate real distinct completed question counts per user in one query
     const userIds = entries.map(e => e.userId);
     const completedCounts = await Submission.aggregate([
       { $match: { userId: { $in: userIds }, status: 'Accepted' } },
-      { $group: { _id: '$userId', count: { $sum: 1 } } },
+      { $group: { _id: { userId: '$userId', questionId: '$questionId' } } },
+      { $group: { _id: '$_id.userId', count: { $sum: 1 } } },
     ]);
     const countMap = new Map(completedCounts.map(c => [String(c._id), c.count]));
 

@@ -124,6 +124,17 @@ async function recordActivity(req, res, next) {
     const isAccepted = status === 'Accepted' || status === 'complete';
     const dbStatus = isAccepted ? 'Accepted' : 'Error';
 
+    // Check if this question was already accepted previously to prevent infinite XP farming
+    let isFirstTimeSolve = false;
+    if (isAccepted) {
+      const priorAccepted = await Submission.exists({
+        userId: req.user._id,
+        questionId: String(question.id),
+        status: 'Accepted'
+      });
+      isFirstTimeSolve = !priorAccepted;
+    }
+
     // 1. Create the Submission Record
     await Submission.create({
       userId: req.user._id,
@@ -166,14 +177,23 @@ async function recordActivity(req, res, next) {
       doc.maxStreak = Math.max(doc.maxStreak, doc.currentStreak);
     }
 
-    if (isAccepted) {
-      // Award XP based on question difficulty
+    if (isAccepted && isFirstTimeSolve) {
+      // Award XP based on question difficulty ONLY on first-time solve
       const difficulty = (req.body.question?.difficulty || 'easy').toLowerCase();
       const XP_MAP = { easy: 10, medium: 30, hard: 50 };
       const xpGain = XP_MAP[difficulty] ?? 10;
       doc.totalXp += xpGain;
       doc.eloRating += Math.round(xpGain / 2); // ELO scales with difficulty too
     }
+
+    // Deterministic level & rank calculation
+    doc.level = Math.max(1, Math.floor(Math.sqrt((doc.totalXp || 0) / 50)) + 1);
+    if (doc.totalXp >= 3000) doc.rankTitle = 'Grandmaster';
+    else if (doc.totalXp >= 1500) doc.rankTitle = 'Master';
+    else if (doc.totalXp >= 700) doc.rankTitle = 'Expert';
+    else if (doc.totalXp >= 300) doc.rankTitle = 'Specialist';
+    else if (doc.totalXp >= 100) doc.rankTitle = 'Apprentice';
+    else doc.rankTitle = 'Novice';
 
     // Compute badges
     const badgeSet = new Set(doc.badges);
@@ -192,6 +212,10 @@ async function recordActivity(req, res, next) {
         lastPracticeDate: doc.lastPracticeDate,
         badges: doc.badges,
         totalXp: doc.totalXp,
+        level: doc.level,
+        rankTitle: doc.rankTitle,
+        eloRating: doc.eloRating,
+        isFirstTimeSolve,
       },
     });
   } catch (err) {

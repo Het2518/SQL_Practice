@@ -110,11 +110,6 @@ export function QuestionHintSection({
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-primary/40 bg-gradient-to-br from-primary/5 to-blue-500/5 cursor-pointer text-[13px] font-semibold text-primary transition-all duration-150 hover:border-primary hover:bg-primary/10 active:scale-[0.98]"
               >
                 <Sparkles size={13} strokeWidth={2} /> {showAiHint ? 'Hide AI Personalized Hint' : 'Get AI Personalized Hint'}
-                {hasKey ? null : (
-                  <span className="text-[10px] text-muted ml-1">
-                    (needs key)
-                  </span>
-                )}
               </button>
               {onOpenAiTutor && (
                 <button

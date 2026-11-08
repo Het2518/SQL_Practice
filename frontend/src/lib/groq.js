@@ -88,7 +88,13 @@ export async function fetchAvailableGroqModels(apiKeyOverride = null) {
       }
       return [];
     }
-    const json = await res.json();
+    const rawText = await res.text();
+    let json = null;
+    try {
+      json = JSON.parse(rawText);
+    } catch {
+      return [];
+    }
     const rawList = json?.data || [];
     const chatModels = rawList
       .map(m => m.id)
@@ -601,6 +607,66 @@ export function safeParseJsonArray(raw) {
   }
 
   throw new Error('Failed to parse AI question data. Please retry.');
+}
+
+/**
+ * Procedurally generates 5 realistic SQL practice questions from active schema tables.
+ * Used as a fallback when AI generation is unavailable, truncated, or offline.
+ */
+export function generateFallbackSchemaQuestions(schema = []) {
+  if (!Array.isArray(schema) || schema.length === 0) return [];
+  const questions = [];
+  const t1 = schema[0];
+  const t2 = schema[1] || schema[0];
+  const t1Col = t1.columns?.[0]?.name || 'id';
+  const t1Col2 = t1.columns?.[1]?.name || t1Col;
+
+  questions.push({
+    title: `Inspect Top Records from ${t1.name}`,
+    difficulty: 'Easy',
+    topic: 'Basic SELECT & Filtering',
+    prompt: `Write a SQL query to retrieve all columns from "${t1.name}" where "${t1Col}" IS NOT NULL, ordered by "${t1Col}" ASC, limited to the first 10 rows.`
+  });
+
+  questions.push({
+    title: `Aggregate Metrics in ${t1.name}`,
+    difficulty: 'Easy',
+    topic: 'Aggregations',
+    prompt: `Write a query to calculate the total count of rows and distinct count of "${t1Col}" in "${t1.name}". Label the count as "total_rows".`
+  });
+
+  questions.push({
+    title: `Grouped Summary on ${t1.name}`,
+    difficulty: 'Medium',
+    topic: 'GROUP BY & HAVING',
+    prompt: `Write a query grouping "${t1.name}" by "${t1Col2}" and returning only groups that have more than 1 entry, ordered by count descending.`
+  });
+
+  if (schema.length > 1 && t2 !== t1) {
+    const t2Col = t2.columns?.[0]?.name || 'id';
+    questions.push({
+      title: `Cross-Table Analysis: ${t1.name} & ${t2.name}`,
+      difficulty: 'Medium',
+      topic: 'Multi-table JOIN',
+      prompt: `Write an INNER JOIN between "${t1.name}" and "${t2.name}". Match on any common foreign key relationship or write a LEFT JOIN to identify records in "${t1.name}" that have associated records in "${t2.name}".`
+    });
+  } else {
+    questions.push({
+      title: `Rankings with Window Functions on ${t1.name}`,
+      difficulty: 'Medium',
+      topic: 'Window Functions',
+      prompt: `Write a query using ROW_NUMBER() or DENSE_RANK() OVER (ORDER BY "${t1Col}" DESC) to assign a sequential ranking to all records in "${t1.name}".`
+    });
+  }
+
+  questions.push({
+    title: `Complex Analytics with CTE on ${t1.name}`,
+    difficulty: 'Hard',
+    topic: 'Common Table Expressions',
+    prompt: `Construct a Common Table Expression (WITH clause) to filter records in "${t1.name}" where "${t1Col}" is above the average value, then select the top 5 records from that CTE.`
+  });
+
+  return questions;
 }
 
 // ═══════════════════════════════════════════════════════════════════════

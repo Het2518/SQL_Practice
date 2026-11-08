@@ -23,7 +23,7 @@ import { useSqlDatabase } from '@/hooks/useSqlDatabase';
 import { SqlEditor } from '@/features/practice/SqlEditor';
 import { ResultsPanel } from '@/features/practice/ResultsPanel';
 import { useSettingsStore } from '@/stores/useSettingsStore';
-import { groqChat, buildSandboxQuestionsPrompt, MODEL_FAST, generateSchema, safeParseJsonArray, hasGroqKey } from '@/lib/groq';
+import { groqChat, buildSandboxQuestionsPrompt, MODEL_FAST, generateSchema, safeParseJsonArray, generateFallbackSchemaQuestions, hasGroqKey } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import './CustomDatasetPage.css';
@@ -193,13 +193,22 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
         setBatch(batchIndex + 1);
         setSelected(null);
       } catch (err) {
-        setError(
-          err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY'
-            ? 'no_key'
-            : err.message === 'RATE_LIMIT'
-              ? 'rate_limit'
-              : err.message
-        );
+        console.warn('[CustomDataset] AI generation error, using fallback schema questions:', err.message);
+        // Fallback to schema questions so user always gets actionable challenges
+        const fallbackQs = generateFallbackSchemaQuestions(schema);
+        if (fallbackQs && fallbackQs.length > 0) {
+          setQuestions(fallbackQs);
+          setBatch(batchIndex + 1);
+          setSelected(null);
+        } else {
+          setError(
+            err.message === 'NO_KEY' || err.message === 'MISSING_API_KEY'
+              ? 'no_key'
+              : err.message === 'RATE_LIMIT'
+                ? 'rate_limit'
+                : err.message
+          );
+        }
       } finally {
         setLoading(false);
       }
