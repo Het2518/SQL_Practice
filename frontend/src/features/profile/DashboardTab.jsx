@@ -9,7 +9,7 @@ import { RadarChart } from './RadarChart';
 // ─── Design token card wrapper ────────────────────────────────────────────────
 function Card({ children, className = '', noPad }) {
   return (
-    <div className={`relative overflow-hidden bg-surface border border-border/50 rounded-[24px] shadow-[0_4px_16px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.13)] hover:-translate-y-0.5 transition-all duration-300 ${noPad ? '' : 'p-6'} ${className}`}>
+    <div className={`relative overflow-hidden bg-surface border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 ${noPad ? '' : 'p-6'} ${className}`}>
       {children}
     </div>
   );
@@ -28,16 +28,14 @@ function CardHeader({ title, icon: Icon, action }) {
 }
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, icon: Icon, colorClass = 'text-primary', glowColor = 'rgba(99,102,241,0.18)' }) {
+function StatCard({ label, value, sub, icon: Icon, colorClass = 'text-primary' }) {
   return (
     <Card className="group">
-      <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full blur-[40px] transition-all duration-700 group-hover:scale-150"
-        style={{ background: glowColor }} />
       <div className="flex items-center gap-2 mb-3">
-        <Icon size={13} className={colorClass} />
+        <Icon size={14} className={colorClass} />
         <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{label}</span>
       </div>
-      <div className={`text-[30px] font-black tabular-nums tracking-tight leading-none text-text mb-1`}>{value}</div>
+      <div className="text-[28px] font-black tabular-nums tracking-tight leading-none text-text mb-1">{value}</div>
       {sub && <div className="text-[11px] text-muted font-medium mt-1">{sub}</div>}
     </Card>
   );
@@ -70,15 +68,15 @@ function SkillCard({ label, solved, total }) {
   const pct = total > 0 ? Math.min(100, Math.round((solved / total) * 100)) : 0;
   const r = 22, circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
-  const color = pct >= 75 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#6366f1';
+  const color = pct >= 75 ? 'var(--success)' : pct >= 40 ? 'var(--warning)' : 'var(--accent-brand)';
   return (
-    <div className="flex flex-col items-center p-4 bg-surface-2 rounded-[16px] border border-border/40 hover:border-primary/30 hover:-translate-y-1 transition-all duration-200 group cursor-default">
+    <div className="flex flex-col items-center p-4 bg-surface-2 rounded-xl border border-border hover:border-primary/40 transition-colors group cursor-default">
       <div className="relative w-14 h-14 mb-3">
         <svg className="-rotate-90 w-full h-full" viewBox="0 0 56 56">
           <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor" strokeWidth="3" className="text-border/40" />
           <circle cx="28" cy="28" r={r} fill="none" strokeWidth="3" stroke={color}
             strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1s ease-out', filter: `drop-shadow(0 0 4px ${color}60)` }} />
+            style={{ transition: 'stroke-dashoffset 1s ease-out' }} />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center text-[12px] font-black tabular-nums text-text">{pct}%</div>
       </div>
@@ -92,8 +90,8 @@ function SkillCard({ label, solved, total }) {
 function TimelineItem({ event, isFirst }) {
   const inner = (
     <>
-      <div className={`absolute -left-[19px] top-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center z-10 transition-all ${isFirst ? 'border-primary bg-primary shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'border-border bg-surface'}`}>
-        {isFirst && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+      <div className={`absolute -left-[19px] top-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center z-10 transition-all ${isFirst ? 'border-primary bg-primary' : 'border-border bg-surface'}`}>
+        {isFirst && <div className="w-1.5 h-1.5 rounded-full bg-surface" />}
       </div>
       <div className={`text-[13px] font-semibold mb-0.5 flex items-center gap-1.5 ${event.link ? 'text-text group-hover:text-primary transition-colors' : 'text-text-secondary'}`}>
         {event.title}
@@ -121,9 +119,9 @@ function Heatmap({ activity }) {
       const key = date.toISOString().slice(0, 10);
       const count = activity?.[key] || 0;
       let bg = 'var(--surface-2)';
-      if (count === 1) bg = '#6366f150';
-      if (count === 2) bg = '#6366f1';
-      if (count > 2) bg = '#818cf8';
+      if (count === 1) bg = 'var(--accent-brand-muted)';
+      if (count === 2) bg = 'var(--accent-brand)';
+      if (count > 2) bg = 'var(--accent-brand-hover)';
       days.push(
         <div key={d} title={`${count} on ${key}`}
           className="w-[11px] h-[11px] rounded-[2.5px] cursor-default hover:scale-125 transition-transform"
@@ -178,7 +176,7 @@ export function DashboardTab({ stats, gameState, nextRecommendations, quests, ti
           <Heatmap activity={gameState?.activity} />
           <div className="flex items-center justify-end gap-1.5 mt-3">
             <span className="text-[10px] text-muted">Less</span>
-            {['var(--surface-2)', '#6366f150', '#6366f1', '#818cf8'].map((c, i) => (
+            {['var(--surface-2)', 'var(--accent-brand-muted)', 'var(--accent-brand)', 'var(--accent-brand-hover)'].map((c, i) => (
               <div key={i} className="w-[10px] h-[10px] rounded-[2px]" style={{ background: c }} />
             ))}
             <span className="text-[10px] text-muted">More</span>
@@ -198,9 +196,9 @@ export function DashboardTab({ stats, gameState, nextRecommendations, quests, ti
         <Card>
           <CardHeader title="Difficulty Breakdown" icon={BarChart2} />
           <div className="flex flex-col gap-5">
-            <DiffBar label="Easy"   solved={easySolved}   total={easyTotal}   color="#22c55e" bg="rgba(34,197,94,0.08)" />
-            <DiffBar label="Medium" solved={mediumSolved} total={mediumTotal} color="#f59e0b" bg="rgba(245,158,11,0.08)" />
-            <DiffBar label="Hard"   solved={hardSolved}   total={hardTotal}   color="#ef4444" bg="rgba(239,68,68,0.08)" />
+            <DiffBar label="Easy"   solved={easySolved}   total={easyTotal}   color="var(--success)" bg="var(--surface-3)" />
+            <DiffBar label="Medium" solved={mediumSolved} total={mediumTotal} color="var(--warning)" bg="var(--surface-3)" />
+            <DiffBar label="Hard"   solved={hardSolved}   total={hardTotal}   color="var(--error)" bg="var(--surface-3)" />
           </div>
         </Card>
 
@@ -245,7 +243,7 @@ export function DashboardTab({ stats, gameState, nextRecommendations, quests, ti
                   : 'text-error bg-error/8 border-error/20';
                 return (
                   <Link key={q.id} to={`/practice/${q.db}?q=${q.id}`}
-                    className="flex items-center justify-between p-4 rounded-[14px] bg-surface-2 border border-border/40 no-underline hover:border-primary/30 hover:bg-surface-3 transition-all duration-200 group">
+                    className="flex items-center justify-between p-4 rounded-xl bg-surface-2 border border-border no-underline hover:border-primary/40 hover:bg-surface-3 transition-colors duration-150 group">
                     <div className="flex flex-col gap-1.5">
                       <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border w-fit ${diffColor}`}>
                         {q.difficulty}

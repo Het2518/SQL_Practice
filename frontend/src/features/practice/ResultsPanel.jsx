@@ -6,7 +6,7 @@ import { TheoryConnector } from '@/features/visualizers/TheoryConnector';
 import { GroupedResultRow } from '@/features/visualizers/AggregateVisualizer';
 import { DataVisualizer } from '@/features/practice/DataVisualizer';
 import { TableVirtuoso } from 'react-virtuoso';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Terminal, Play, RefreshCw, AlertTriangle } from 'lucide-react';
 
 export const ResultsPanel = React.memo(function ResultsPanel({
   result,
@@ -25,9 +25,9 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
   if (isRunning) {
     return (
-      <div className="flex items-center justify-center h-full gap-3 text-[var(--muted)]">
-        <div className="animate-pulse-glow w-3 h-3 rounded-full bg-[var(--accent)]" />
-        <span>Executing query...</span>
+      <div className="flex items-center justify-center h-full gap-3 text-muted">
+        <div className="animate-spin w-4 h-4 rounded-full border-2 border-primary border-t-transparent" />
+        <span className="text-xs font-medium">Executing query...</span>
       </div>
     );
   }
@@ -36,15 +36,15 @@ export const ResultsPanel = React.memo(function ResultsPanel({
     if (!sql || sql.trim() === '') {
       return (
         <div className="flex flex-col items-center justify-center h-full p-8 bg-surface">
-          <div className="flex flex-col items-center justify-center w-full max-w-[400px] py-12 px-6 border-2 border-dashed border-border rounded-2xl bg-surface-2 gap-4">
-            <div className="w-14 h-14 rounded-full bg-surface border border-border shadow-[0_4px_12px_rgba(0,0,0,0.05)] flex items-center justify-center text-2xl text-text-secondary">
-              ⌨️
+          <div className="flex flex-col items-center justify-center w-full max-w-[400px] py-12 px-6 border-2 border-dashed border-border rounded-xl bg-surface-2 gap-4">
+            <div className="w-12 h-12 rounded-xl bg-surface border border-border shadow-sm flex items-center justify-center text-text-secondary">
+              <Terminal size={22} />
             </div>
             <div className="text-center">
-              <div className="text-text text-[15px] font-semibold mb-1.5 tracking-tight">
+              <div className="text-text text-sm font-semibold mb-1 tracking-tight">
                 Write your SQL query
               </div>
-              <div className="text-[13px] text-text-secondary leading-relaxed">
+              <div className="text-xs text-text-secondary leading-relaxed">
                 Type a query in the editor above to solve the problem
               </div>
             </div>
@@ -55,18 +55,18 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted bg-surface">
-        <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center text-xl text-text-secondary">
-          ▶
+        <div className="w-10 h-10 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-secondary">
+          <Play size={16} className="ml-0.5 fill-current" />
         </div>
         <div className="text-center">
-          <div className="text-text font-medium mb-1">Ready to execute</div>
-          <div className="text-xs">
+          <div className="text-text text-sm font-medium mb-1">Ready to execute</div>
+          <div className="text-xs text-muted">
             Press{' '}
-            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono">
+            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono text-[11px] text-text border border-border">
               Ctrl
             </kbd>{' '}
             +{' '}
-            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono">
+            <kbd className="bg-surface-3 px-1.5 py-0.5 rounded font-mono text-[11px] text-text border border-border">
               Enter
             </kbd>{' '}
             to run
@@ -90,21 +90,32 @@ export const ResultsPanel = React.memo(function ResultsPanel({
       <div className="flex items-center gap-3.5 py-2 px-4 border-b border-border bg-surface-2 shrink-0 text-xs">
         {/* Status Badge */}
         {validation && (
-          <div className={validation.isCorrect ? 'badge badge-success' : 'badge badge-danger'}>
-            {validation.isCorrect ? (
-              <div className="badge badge-success flex items-center gap-1">
-                <CheckCircle size={12} /> Correct
-              </div>
-            ) : (
-              <div className="badge badge-danger flex items-center gap-1">
-                <XCircle size={12} /> Incorrect
-              </div>
-            )}
-          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              validation.isCorrect
+                ? 'bg-success/15 text-success border border-success/30'
+                : 'bg-error/15 text-error border border-error/30'
+            }`}
+          >
+            {validation.isCorrect ? <CheckCircle size={12} /> : <XCircle size={12} />}
+            {validation.isCorrect ? 'Accepted' : 'Wrong Answer'}
+          </span>
         )}
-        {isError && !validation && <div className="badge badge-danger">SQL Error</div>}
-        {isDML && !isError && <div className="badge badge-success">Executed</div>}
-        {!isError && !validation && !isDML && <div className="badge badge-info">Query OK</div>}
+        {isError && !validation && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error/15 text-error border border-error/30">
+            Runtime Error
+          </span>
+        )}
+        {isDML && !isError && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/30">
+            Executed
+          </span>
+        )}
+        {!isError && !validation && !isDML && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-3 text-text-secondary border border-border">
+            Query OK
+          </span>
+        )}
 
         {/* Execution Stats — no emoji, clean text */}
         {!isError && (
@@ -292,8 +303,10 @@ export const ResultsPanel = React.memo(function ResultsPanel({
 
       {isDML && !isError && (
         <div className="flex-1 flex flex-col items-center justify-center text-muted text-sm gap-3">
-          <span className="text-[32px]">🔄</span>
-          <span>
+          <div className="w-10 h-10 rounded-xl bg-surface-2 border border-border flex items-center justify-center text-text-secondary">
+            <RefreshCw size={18} />
+          </div>
+          <span className="text-xs text-text-secondary">
             DML statement executed successfully. Use <strong>Reset DB</strong> to restore original
             data.
           </span>

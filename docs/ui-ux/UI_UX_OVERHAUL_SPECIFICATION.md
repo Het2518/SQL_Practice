@@ -1,9 +1,9 @@
 # Unified UI/UX Design System & Architectural Standardization Specification
 
-**Product:** DataDesk (SQL Practice, Sandbox & Technical Interview Platform)  
-**Document:** Master UI/UX Overhaul & Cross-Platform Theme Harmonization Blueprint  
-**Status:** Approved Architectural Specification  
-**Design Philosophy:** High-Craft Developer First (Linear, Vercel, Supabase, LeetCode grade)  
+**Product:** DataDesk (SQL Practice, Sandbox & Technical Interview Platform)
+**Document:** Master UI/UX Overhaul & Cross-Platform Theme Harmonization Blueprint
+**Status:** Approved Architectural Specification
+**Design Philosophy:** High-Craft Developer First (Linear, Vercel, Supabase, LeetCode grade)
 
 ---
 

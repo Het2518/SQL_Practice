@@ -21,7 +21,7 @@ function SectionHeader({ title, description, icon: Icon }) {
 
 function SettingSection({ children, className = '' }) {
   return (
-    <div className={`bg-surface border border-border/50 rounded-[20px] p-6 ${className}`}>
+    <div className={`bg-surface border border-border rounded-xl p-6 shadow-sm ${className}`}>
       {children}
     </div>
   );

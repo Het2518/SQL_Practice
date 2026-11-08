@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { RotateCcw, Play } from 'lucide-react';
+import { RotateCcw, Play, Wand2, GitFork } from 'lucide-react';
 import { format as formatSql } from 'sql-formatter';
 import { Button } from '@/shared/ui/Button';
 
@@ -123,7 +123,7 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
               style={{ fontSize: 11 }}
               title="Convert to CTE"
             >
-              🪄 <span className="hidden sm:inline">CTE</span>
+              <Wand2 size={12} className="mr-1 inline" /> <span className="hidden sm:inline">CTE</span>
             </Button>
             <Button
               variant="ghost"
@@ -132,7 +132,7 @@ export const PracticeWorkspace = React.memo(function PracticeWorkspace({
               style={{ fontSize: 11 }}
               title="Analyze Joins"
             >
-              🔗 <span className="hidden sm:inline">Joins</span>
+              <GitFork size={12} className="mr-1 inline" /> <span className="hidden sm:inline">Joins</span>
             </Button>
           </div>
           <Button size="sm" onClick={runQuery} isLoading={isRunning}>

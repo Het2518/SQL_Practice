@@ -165,7 +165,7 @@ export function ProfileView({ user, gameState, progress, onHome, onSignOut }) {
   const xpToNext   = nextLeague ? nextLeague.minXP - stats.score : 0;
   const leagueStart = LEAGUES.find((l) => l.name === league.name)?.minXP || 0;
   const leagueXpPct = nextLeague ? Math.min(100, ((stats.score - leagueStart) / (nextLeague.minXP - leagueStart)) * 100) : 100;
-  const level = Math.floor(stats.score / 100) + 1;
+  const level = gameState?.level || Math.floor(Math.sqrt((stats.score || 0) / 50)) + 1;
   const interviewReadiness = Math.min(100, Math.round(
     (stats.totalSolved / Math.max(allQuestions.length, 1)) * 60 +
     (stats.accuracyPct / 100) * 20 +

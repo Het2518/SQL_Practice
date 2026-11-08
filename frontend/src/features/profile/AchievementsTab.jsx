@@ -25,16 +25,13 @@ function BadgeCard({ badge, isEarned }) {
   const rarity = getRarity(badge);
   const IconComp = BADGE_ICONS[badge.id] || Award;
   return (
-    <div className={`relative overflow-hidden rounded-[20px] p-5 border flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 group ${
-      isEarned ? 'hover:shadow-lg cursor-default' : 'opacity-45 grayscale cursor-default'
+    <div className={`relative overflow-hidden rounded-xl p-5 border flex flex-col items-center text-center transition-all duration-200 hover:-translate-y-1 group ${
+      isEarned ? 'hover:shadow-md cursor-default' : 'opacity-45 grayscale cursor-default'
     }`}
       style={{
         background: isEarned ? rarity.bg : 'var(--surface-2)',
         borderColor: isEarned ? rarity.border : 'var(--border)',
-        boxShadow: isEarned ? `0 0 0 0 transparent` : 'none',
       }}
-      onMouseEnter={(e) => { if (isEarned) e.currentTarget.style.boxShadow = `0 8px 30px ${rarity.glow}`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
     >
       {isEarned && (
         <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/8 to-transparent group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
@@ -46,7 +43,7 @@ function BadgeCard({ badge, isEarned }) {
         </div>
       )}
 
-      <div className="w-12 h-12 rounded-[14px] flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110"
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-105"
         style={{ background: isEarned ? rarity.color + '18' : 'var(--border)', border: `1px solid ${isEarned ? rarity.border : 'transparent'}` }}>
         <IconComp size={22} style={{ color: isEarned ? rarity.color : 'var(--muted)' }} strokeWidth={isEarned ? 2 : 1.5} />
       </div>
@@ -64,11 +61,11 @@ function BadgeCard({ badge, isEarned }) {
 function QuestCard({ quest }) {
   const pct     = Math.min(100, (quest.current / quest.target) * 100);
   const isDone  = quest.current >= quest.target;
-  const color   = quest.type === 'streak' ? '#f97316' : quest.type === 'hard' ? '#ef4444' : '#6366f1';
+  const color   = quest.type === 'streak' ? 'var(--warning)' : quest.type === 'hard' ? 'var(--error)' : 'var(--accent-brand)';
   const TypeIcon = quest.type === 'streak' ? Flame : quest.type === 'hard' ? Shield : Target;
   return (
-    <div className="relative overflow-hidden p-5 rounded-[20px] border border-border/40 bg-surface flex flex-col gap-4 hover:-translate-y-0.5 hover:border-primary/25 transition-all duration-200"
-      style={isDone ? { borderColor: '#22c55e50', background: 'rgba(34,197,94,0.04)' } : {}}>
+    <div className="relative overflow-hidden p-5 rounded-xl border border-border bg-surface flex flex-col gap-4 hover:-translate-y-0.5 hover:border-primary/25 transition-all duration-200"
+      style={isDone ? { borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.04)' } : {}}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"

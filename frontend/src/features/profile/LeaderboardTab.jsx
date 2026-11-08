@@ -133,7 +133,7 @@ export function LeaderboardTab({ currentUser, currentScore }) {
     <div className="flex flex-col gap-6">
 
       {/* ─── Podium ─── */}
-      <div className="bg-surface border border-border/50 rounded-[24px] p-8 overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl p-8 overflow-hidden shadow-sm">
         <div className="flex items-center gap-2 mb-8">
           <Trophy size={16} className="text-primary" />
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted">Global Leaderboard</span>
@@ -164,7 +164,7 @@ export function LeaderboardTab({ currentUser, currentScore }) {
       </div>
 
       {/* ─── Rest of table ─── */}
-      <div className="bg-surface border border-border/50 rounded-[24px] overflow-hidden">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-[32px_36px_1fr_auto] gap-4 px-5 py-3 bg-surface-2 border-b border-border/50">
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted">Rank</span>
           <span></span>

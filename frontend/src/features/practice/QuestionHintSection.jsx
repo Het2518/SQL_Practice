@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, ChevronDown, Sparkles } from 'lucide-react';
+import { Lightbulb, ChevronDown, Sparkles, Search, MessageSquare } from 'lucide-react';
 import { runAutoHintAnalysis } from '@/features/ai/AutoHintMiddleware';
 import { AiHintPanel } from '@/features/ai/AiHintPanel';
 
@@ -62,7 +62,7 @@ export function QuestionHintSection({
           {hintsUsed >= 1 && autoHint && (
             <div className="border-t border-border pt-4">
               <h4 className="m-0 mb-1.5 text-[13px] text-warning font-bold flex items-center gap-1.5">
-                🔍 Smart Analysis
+                <Search size={13} className="text-warning inline" /> Smart Analysis
               </h4>
               <p className="m-0 text-[13px] text-text-secondary leading-[1.5]">
                 {autoHint}
@@ -116,7 +116,7 @@ export function QuestionHintSection({
                   onClick={onOpenAiTutor}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface text-text-secondary hover:text-text hover:border-primary/40 cursor-pointer text-[12px] font-medium transition-colors"
                 >
-                  💬 Chat with AI Tutor
+                  <MessageSquare size={13} className="inline" /> Chat with AI Tutor
                 </button>
               )}
             </div>

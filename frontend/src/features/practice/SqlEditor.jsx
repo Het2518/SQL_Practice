@@ -7,74 +7,63 @@ import { loadShortcuts, comboToMonaco } from '@/utils/shortcutManager';
 import { useEvent } from '@/hooks/useEvent';
 
 const handleEditorWillMount = monaco => {
-  monaco.editor.defineTheme('earthy-light', {
+  // Define modern Linear/GitHub developer themes
+  monaco.editor.defineTheme('datadesk-light', {
     base: 'vs',
     inherit: true,
-    rules: [{
-      token: 'keyword',
-      foreground: 'AB886D',
-      fontStyle: 'bold'
-    }, {
-      token: 'string',
-      foreground: '9A887A'
-    }, {
-      token: 'number',
-      foreground: 'AB886D'
-    }, {
-      token: 'identifier',
-      foreground: '493628'
-    }, {
-      token: 'comment',
-      foreground: 'D6C0B3',
-      fontStyle: 'italic'
-    }, {
-      token: 'operator',
-      foreground: 'AB886D'
-    }],
+    rules: [
+      { token: 'keyword', foreground: '0969da', fontStyle: 'bold' },
+      { token: 'string', foreground: '0a3069' },
+      { token: 'number', foreground: 'cf222e' },
+      { token: 'identifier', foreground: '1f2328' },
+      { token: 'comment', foreground: '6e7781', fontStyle: 'italic' },
+      { token: 'operator', foreground: '0550ae' }
+    ],
     colors: {
-      'editor.background': '#FFFFFF',
-      'editor.foreground': '#493628',
-      'editor.lineHighlightBackground': '#F5F2F0',
-      'editorLineNumber.foreground': '#D6C0B3',
-      'editorLineNumber.activeForeground': '#AB886D',
-      'editorCursor.foreground': '#AB886D',
-      'editor.selectionBackground': '#E4E0E1'
+      'editor.background': '#ffffff',
+      'editor.foreground': '#1f2328',
+      'editor.lineHighlightBackground': '#f6f8fa',
+      'editorLineNumber.foreground': '#8c959f',
+      'editorLineNumber.activeForeground': '#1f2328',
+      'editorCursor.foreground': '#0969da',
+      'editor.selectionBackground': '#b6e3ff40'
     }
   });
 
+  monaco.editor.defineTheme('datadesk-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'keyword', foreground: '79c0ff', fontStyle: 'bold' },
+      { token: 'string', foreground: 'a5d6ff' },
+      { token: 'number', foreground: 'ff7b72' },
+      { token: 'identifier', foreground: 'c9d1d9' },
+      { token: 'comment', foreground: '8b949e', fontStyle: 'italic' },
+      { token: 'operator', foreground: '79c0ff' }
+    ],
+    colors: {
+      'editor.background': '#0d1117',
+      'editor.foreground': '#c9d1d9',
+      'editor.lineHighlightBackground': '#161b2280',
+      'editorLineNumber.foreground': '#6e7681',
+      'editorLineNumber.activeForeground': '#f0f6fc',
+      'editorCursor.foreground': '#58a6ff',
+      'editor.selectionBackground': '#388bfd33'
+    }
+  });
+
+  // Backward compatibility aliases
+  monaco.editor.defineTheme('earthy-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [],
+    colors: { 'editor.background': '#ffffff' }
+  });
   monaco.editor.defineTheme('earthy-dark', {
     base: 'vs-dark',
     inherit: true,
-    rules: [{
-      token: 'keyword',
-      foreground: 'C4AFA7',
-      fontStyle: 'bold'
-    }, {
-      token: 'string',
-      foreground: '8A7268'
-    }, {
-      token: 'number',
-      foreground: 'C4AFA7'
-    }, {
-      token: 'identifier',
-      foreground: 'F0EBE8'
-    }, {
-      token: 'comment',
-      foreground: '6B5548',
-      fontStyle: 'italic'
-    }, {
-      token: 'operator',
-      foreground: 'C4AFA7'
-    }],
-    colors: {
-      'editor.background': '#2A2421',
-      'editor.foreground': '#F0EBE8',
-      'editor.lineHighlightBackground': '#322C29',
-      'editorLineNumber.foreground': '#6B5548',
-      'editorLineNumber.activeForeground': '#C4AFA7',
-      'editorCursor.foreground': '#C4AFA7',
-      'editor.selectionBackground': '#3D342F'
-    }
+    rules: [],
+    colors: { 'editor.background': '#0d1117' }
   });
 };
 
@@ -368,7 +357,7 @@ export const SqlEditor = React.memo(function SqlEditor({
           }}
           beforeMount={handleEditorWillMount}
           onMount={handleEditorMount}
-          theme={darkMode ? 'earthy-dark' : 'earthy-light'}
+          theme={darkMode ? 'datadesk-dark' : 'datadesk-light'}
           options={editorOptions}
         />
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Eye, Link2, Copy, AlertTriangle } from 'lucide-react';
 import { DB_INFO } from '@/data/schemas';
 import { analyzeNormalForm } from '@/utils/sqlAnalysis';
 
@@ -348,18 +348,18 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                       <code>{generatedJoinSQL}</code>
                     </pre>
                     <button
-                      className="btn btn-primary mt-2 w-full p-1.5 text-[11px] justify-center"
+                      className="btn btn-primary mt-2 w-full p-1.5 text-[11px] justify-center flex items-center gap-1.5"
                       onClick={() =>
                         navigator.clipboard.writeText(generatedJoinSQL).catch(() => {})
                       }
                     >
-                      📋 Copy JOIN SQL
+                      <Copy size={12} /> Copy JOIN SQL
                     </button>
                   </>
                 )}
                 {Array.isArray(joinPath) && joinPath.length === 0 && (
                   <div className="text-xs text-error flex items-start gap-1.5">
-                    <span>⚠️</span>
+                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                     <span>
                       No direct join path detected between <strong>{selectedTables[0]}</strong> and{' '}
                       <strong>{selectedTables[1]}</strong>. These tables may not share a common key
@@ -423,7 +423,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                         isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-transparent text-muted hover:border-primary hover:text-primary'
                       }`}
                     >
-                      🔗
+                      <Link2 size={12} />
                     </button>
 
                     <button
@@ -434,7 +434,7 @@ export const SchemaSidebar = React.memo(function SchemaSidebar({
                       title="Preview Table Data"
                       className="w-[22px] h-[22px] rounded-md border border-border bg-transparent text-muted text-[11px] cursor-pointer flex items-center justify-center shrink-0 transition-all hover:text-primary hover:border-primary"
                     >
-                      👁
+                      <Eye size={12} />
                     </button>
                   </div>
 

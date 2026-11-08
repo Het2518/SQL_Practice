@@ -1,12 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Target, CheckCircle, XCircle, Clock, Calendar, TrendingUp, BarChart2, Swords, ArrowRight } from 'lucide-react';
+import { Target, CheckCircle, XCircle, Calendar, TrendingUp, BarChart2, Swords, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function StatCard({ label, value, sub, icon: Icon, colorClass = 'text-primary' }) {
   return (
-    <div className="bg-surface border border-border/50 rounded-[20px] p-5 flex flex-col gap-2">
+    <div className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-2 shadow-sm">
       <div className="flex items-center gap-2">
         <Icon size={13} className={colorClass} />
         <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{label}</span>
@@ -38,10 +38,10 @@ function SessionCard({ session }) {
   const date         = new Date(session.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="bg-surface border border-border/40 rounded-[20px] p-5 flex flex-col gap-4 hover:border-primary/25 hover:-translate-y-0.5 transition-all duration-200">
+    <div className="bg-surface border border-border rounded-xl p-5 flex flex-col gap-4 hover:border-primary/30 transition-colors shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[12px] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-base flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-base flex-shrink-0">
             {initial}
           </div>
           <div>
@@ -62,7 +62,7 @@ function SessionCard({ session }) {
         </div>
       </div>
       {session.aiFeedbackSummary && (
-        <div className="bg-bg border border-border/40 rounded-[14px] p-4">
+        <div className="bg-bg border border-border rounded-lg p-4">
           <div className="text-[10px] font-bold uppercase tracking-wider text-muted mb-2">AI Feedback</div>
           <p className="text-[12px] text-text-secondary leading-relaxed m-0">{session.aiFeedbackSummary}</p>
         </div>
@@ -73,9 +73,9 @@ function SessionCard({ session }) {
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center bg-surface border border-border/50 rounded-[24px]">
-      <div className="w-16 h-16 rounded-[20px] bg-primary/8 border border-primary/20 flex items-center justify-center mb-5">
-        <Swords size={28} className="text-primary opacity-60" />
+    <div className="flex flex-col items-center justify-center py-20 text-center bg-surface border border-border rounded-xl shadow-sm">
+      <div className="w-14 h-14 rounded-xl bg-primary/8 border border-primary/20 flex items-center justify-center mb-5">
+        <Swords size={24} className="text-primary opacity-60" />
       </div>
       <h3 className="text-[16px] font-black text-text mb-2">No Interviews Yet</h3>
       <p className="text-[13px] text-muted font-medium max-w-[360px] mb-6 leading-relaxed">
@@ -103,11 +103,11 @@ export function MockInterviewsTab() {
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-surface border border-border/40 rounded-[20px] p-5 animate-pulse h-24" />
+            <div key={i} className="bg-surface border border-border rounded-xl p-5 animate-pulse h-24" />
           ))}
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="bg-surface border border-border/40 rounded-[20px] p-5 animate-pulse h-24" />
+          <div key={i} className="bg-surface border border-border rounded-xl p-5 animate-pulse h-24" />
         ))}
       </div>
     );
@@ -115,7 +115,7 @@ export function MockInterviewsTab() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-border/50 rounded-[24px]">
+      <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-border rounded-xl shadow-sm">
         <XCircle className="w-12 h-12 text-error opacity-40 mb-4" />
         <p className="text-[13px] text-muted font-medium">Failed to load interview history.</p>
       </div>

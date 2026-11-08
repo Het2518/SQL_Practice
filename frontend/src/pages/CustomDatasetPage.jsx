@@ -15,7 +15,6 @@ import {
   AlertCircle,
   PanelRightClose,
   PanelRightOpen,
-  ArrowLeft,
   ListOrdered,
   CheckCircle2,
 } from 'lucide-react';
@@ -26,7 +25,6 @@ import { useSettingsStore } from '@/stores/useSettingsStore';
 import { groqChat, buildSandboxQuestionsPrompt, MODEL_FAST, generateSchema, safeParseJsonArray, generateFallbackSchemaQuestions, hasGroqKey } from '@/lib/groq';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
-import './CustomDatasetPage.css';
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
 function sanitizeColName(n) {
@@ -97,27 +95,27 @@ function SchemaSidebar({ schema, onInsert }) {
     });
 
   return (
-    <aside className="sb-schema-root">
+    <aside className="w-[230px] border-r border-border bg-surface flex flex-col min-h-0 shrink-0 select-none">
       {/* Header */}
-      <div className="sb-schema-header">
-        <div className="sb-schema-name">
-          <Database size={14} color="var(--primary)" />
+      <div className="h-[42px] px-3.5 border-b border-border flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 font-semibold text-xs text-text">
+          <Database size={14} className="text-primary" />
           <span>Dataset</span>
         </div>
         {schema && (
-          <span className="sb-schema-count">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted">
             {schema.length} table{schema.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
-      {/* Tab row (matches your platform) */}
-      <div className="sb-schema-tabs">
-        <button className="sb-schema-tab sb-schema-tab-active">Schema</button>
+      {/* Tab row */}
+      <div className="h-[34px] px-3 bg-surface-2 border-b border-border flex items-center shrink-0">
+        <span className="text-xs font-semibold text-text">Schema</span>
       </div>
 
       {/* Tables */}
-      <div className="sb-schema-body">
+      <div className="flex-1 overflow-y-auto divide-y divide-border">
         {!schema?.length && (
           <div className="px-4 py-6 text-center text-muted text-xs leading-relaxed">
             Upload a CSV or SQLite file to explore schema here.
@@ -125,7 +123,7 @@ function SchemaSidebar({ schema, onInsert }) {
         )}
 
         {schema?.length > 0 && (
-          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-muted tracking-widest uppercase">
+          <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-muted tracking-wider uppercase">
             Tables
           </div>
         )}
@@ -133,30 +131,44 @@ function SchemaSidebar({ schema, onInsert }) {
         {schema?.map((table) => {
           const isOpen = expanded.has(table.name);
           return (
-            <div key={table.name} className="sb-table-group">
-              <div className="sb-table-row" onClick={() => toggle(table.name)}>
-                <ChevronRight size={12} className={`sb-table-chevron${isOpen ? ' open' : ''}`} />
-                <span className="sb-table-name">{table.name}</span>
-                <span className="sb-table-badge">
-                  {(table.rowCount || 0).toLocaleString()} rows
+            <div key={table.name} className="border-b border-border/50 last:border-b-0">
+              <div
+                className="flex items-center gap-1.5 px-3 py-2 cursor-pointer hover:bg-surface-2 transition-colors group"
+                onClick={() => toggle(table.name)}
+              >
+                <ChevronRight
+                  size={12}
+                  className={`text-muted group-hover:text-text transition-transform duration-150 ${
+                    isOpen ? 'rotate-90' : ''
+                  }`}
+                />
+                <span className="text-xs font-semibold text-text truncate flex-1 font-mono">
+                  {table.name}
+                </span>
+                <span className="text-[10px] font-mono text-muted bg-surface-2 px-1.5 py-0.5 rounded border border-border">
+                  {(table.rowCount || 0).toLocaleString()}
                 </span>
               </div>
               {isOpen && (
-                <div className="sb-columns">
+                <div className="bg-bg py-1 border-t border-border/50">
                   {table.columns.map((col) => (
                     <div
                       key={col.name}
-                      className="sb-col-row"
+                      className="flex items-center gap-2 px-4 py-1 text-xs hover:bg-surface-2 cursor-pointer font-mono group"
                       onClick={() => onInsert(col.name)}
                       title={`Insert "${col.name}"`}
                     >
                       {col.pk ? (
-                        <span className="sb-col-icon sb-col-pk">PK</span>
+                        <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                          PK
+                        </span>
                       ) : (
-                        <span className="sb-col-icon sb-col-field">○</span>
+                        <span className="text-[10px] text-muted font-bold">#</span>
                       )}
-                      <span className="sb-col-name">{col.name}</span>
-                      <span className="sb-col-type">{col.type}</span>
+                      <span className="text-text group-hover:text-primary flex-1 truncate">
+                        {col.name}
+                      </span>
+                      <span className="text-[10px] text-muted uppercase">{col.type}</span>
                     </div>
                   ))}
                 </div>
@@ -235,9 +247,13 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
   // ── Collapsed ──────────────────────────────────────────────────────────
   if (!visible) {
     return (
-      <div className="qp-root qp-collapsed">
-        <button className="qp-toggle" onClick={onToggle} title="Show Questions">
-          <PanelRightOpen size={14} />
+      <div className="w-10 border-l border-border bg-surface flex flex-col items-center py-3 shrink-0">
+        <button
+          className="p-1.5 rounded hover:bg-surface-2 text-muted hover:text-text transition-colors"
+          onClick={onToggle}
+          title="Show Questions"
+        >
+          <PanelRightOpen size={16} />
         </button>
       </div>
     );
@@ -246,74 +262,85 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
   // ── Detail view ────────────────────────────────────────────────────────
   if (selected) {
     return (
-      <div className="qp-root">
+      <div className="w-[340px] border-l border-border bg-surface flex flex-col min-h-0 shrink-0">
         {/* Header row: All Questions nav */}
-        <div className="qp-header">
-          <button className="qp-all-btn" onClick={() => setSelected(null)}>
-            <ListOrdered size={12} /> All Questions
+        <div className="h-[42px] px-3 border-b border-border bg-surface-2 flex items-center justify-between shrink-0">
+          <button
+            className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text transition-colors"
+            onClick={() => setSelected(null)}
+          >
+            <ListOrdered size={13} /> All Questions
           </button>
-          <div className="qp-nav">
-            <button className="qp-nav-btn" onClick={() => goTo(-1)} disabled={qIndex <= 0}>
+          <div className="flex items-center gap-1">
+            <button
+              className="p-1 rounded text-xs text-muted hover:text-text disabled:opacity-40"
+              onClick={() => goTo(-1)}
+              disabled={qIndex <= 0}
+            >
               ←
             </button>
-            <span className="qp-nav-pos">
+            <span className="text-[11px] font-mono text-muted">
               {qIndex + 1} / {questions.length}
             </span>
             <button
-              className="qp-nav-btn"
+              className="p-1 rounded text-xs text-muted hover:text-text disabled:opacity-40"
               onClick={() => goTo(1)}
               disabled={qIndex >= questions.length - 1}
             >
               →
             </button>
           </div>
-          <button className="qp-toggle" onClick={onToggle} title="Hide panel">
-            <PanelRightClose size={13} />
+          <button
+            className="p-1 rounded text-muted hover:text-text hover:bg-surface-3 transition-colors"
+            onClick={onToggle}
+            title="Hide panel"
+          >
+            <PanelRightClose size={14} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="qp-detail-body">
-          {/* Badges */}
-          <div className="qp-detail-badges">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex items-center gap-2">
             <Badge variant={selected.difficulty}>{selected.difficulty}</Badge>
-            <span className="qp-detail-status">○ Unsolved</span>
+            <span className="text-[11px] text-muted">○ Challenge</span>
           </div>
 
-          {/* Prompt */}
-          <div className="qp-detail-text">
+          <div className="text-xs text-text leading-relaxed space-y-2">
             {(selected.prompt || '').split('\n').map((line, i) => (
-              <p key={i} className="m-0 mb-2.5">
+              <p key={i} className="m-0">
                 {line}
               </p>
             ))}
           </div>
 
-          {/* Topic tags */}
-          <div className="qp-detail-tags">
-            <span className="qp-tag">{selected.topic}</span>
-            <span className="qp-tag qp-tag-maang">MAANG</span>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-2 border border-border text-text-secondary">
+              {selected.topic}
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
+              MAANG
+            </span>
           </div>
 
-          {/* Hint box */}
-          <div className="qp-hint-box">
-            <div className="qp-hint-label">
-              <Sparkles
-                size={12}
-                className="inline align-middle mr-1"
-              />{' '}
-              Hint
+          <div className="p-3 rounded-xl bg-surface-2 border border-border">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-text mb-1">
+              <Sparkles size={12} className="text-brand" /> Hint
             </div>
-            <div className="qp-hint-text">
-              Write SQL in the editor. Press <kbd>Ctrl+Enter</kbd> to run.
+            <div className="text-xs text-text-secondary leading-relaxed">
+              Write SQL in the editor. Press{' '}
+              <kbd className="px-1 py-0.5 text-[10px] bg-bg border border-border rounded font-mono">
+                Ctrl+Enter
+              </kbd>{' '}
+              to run.
             </div>
           </div>
         </div>
 
-        {/* Powered by */}
-        <div className="qp-footer">
-          <span>
-            <Sparkles size={9} color="var(--accent-1)" /> Powered by Groq AI
+        {/* Footer */}
+        <div className="h-[42px] px-3 border-t border-border bg-surface-2 flex items-center justify-between text-[11px] text-muted shrink-0">
+          <span className="flex items-center gap-1">
+            <Sparkles size={11} className="text-brand" /> Groq AI
           </span>
           <Button
             variant="ghost"
@@ -333,133 +360,127 @@ function QuestionsPanel({ schema, sampleData, onLoadQuestion, visible, onToggle 
 
   // ── List view ──────────────────────────────────────────────────────────
   return (
-    <div className="qp-root">
+    <div className="w-[340px] border-l border-border bg-surface flex flex-col min-h-0 shrink-0">
       {/* Header */}
-      <div className="qp-header">
-        <span className="qp-header-title">
-          <Sparkles size={12} color="var(--accent-1)" /> AI Questions
-          <span className="qp-header-badge">MAANG</span>
-        </span>
+      <div className="h-[42px] px-3 border-b border-border bg-surface-2 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-text">
+          <Sparkles size={13} className="text-brand" /> AI Questions
+          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-brand/10 text-brand">
+            MAANG
+          </span>
+        </div>
         <div className="flex items-center gap-1.5">
           {!loading && questions.length > 0 && (
-            <button className="qp-more-btn" onClick={() => generate(batch)}>
-              <RefreshCw size={10} /> Next 5
+            <button
+              className="flex items-center gap-1 text-[11px] font-medium text-text-secondary hover:text-text px-2 py-1 rounded hover:bg-surface-3 transition-colors"
+              onClick={() => generate(batch)}
+            >
+              <RefreshCw size={11} /> Next 5
             </button>
           )}
           {loading && (
-            <RotateCcw
-              size={12}
-              className="animate-[spin_0.8s_linear_infinite] text-muted"
-            />
+            <RotateCcw size={12} className="animate-spin text-muted" />
           )}
-          <button className="qp-toggle" onClick={onToggle} title="Hide panel">
-            <PanelRightClose size={13} />
+          <button
+            className="p-1 rounded text-muted hover:text-text hover:bg-surface-3 transition-colors"
+            onClick={onToggle}
+            title="Hide panel"
+          >
+            <PanelRightClose size={14} />
           </button>
         </div>
       </div>
 
       {/* List body */}
-      <div className="qp-list-body">
-        {/* No key */}
+      <div className="flex-1 overflow-y-auto divide-y divide-border">
         {!hasKey && (
-          <div className="qp-notice">
-            <AlertCircle size={15} color="var(--warning)" />
+          <div className="m-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
             <div>
               Add your <strong>Groq API key</strong> in Settings to enable AI questions.
             </div>
           </div>
         )}
 
-        {/* Skeletons */}
         {hasKey &&
           loading &&
           Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="px-4 py-3.5 border-b border-border">
-              <div
-                className="h-[9px] rounded w-[30%] mb-2"
-                style={{
-                  background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
-                  backgroundSize: '200%',
-                  animation: `shimmer 1.4s infinite ${i * 0.07}s`,
-                }}
-              />
-              <div
-                className="h-[13px] rounded w-[80%]"
-                style={{
-                  background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
-                  backgroundSize: '200%',
-                  animation: `shimmer 1.4s infinite ${i * 0.1}s`,
-                }}
-              />
+            <div key={i} className="p-3 space-y-2">
+              <div className="h-2.5 bg-surface-3 rounded w-1/3 animate-pulse" />
+              <div className="h-3.5 bg-surface-2 rounded w-4/5 animate-pulse" />
             </div>
           ))}
 
-        {/* Error */}
         {hasKey && !loading && error && (
-          <div className="qp-notice qp-notice-error">
-            <AlertCircle size={14} />
-            <div>
-              {error === 'rate_limit'
-                ? 'Rate limit — wait a moment.'
-                : error === 'no_key'
-                  ? 'Add Groq API key.'
-                  : error}
-              <br />
-              <button className="qp-retry-btn" onClick={() => generate(batch)}>
+          <div className="m-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-error flex items-start gap-2">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <div>
+                {error === 'rate_limit'
+                  ? 'Rate limit — wait a moment.'
+                  : error === 'no_key'
+                    ? 'Add Groq API key.'
+                    : error}
+              </div>
+              <button
+                className="text-xs font-semibold underline hover:no-underline"
+                onClick={() => generate(batch)}
+              >
                 ↺ Retry
               </button>
             </div>
           </div>
         )}
 
-        {/* Empty */}
         {hasKey && !loading && !error && questions.length === 0 && (
-          <div className="qp-empty">
-            <Sparkles size={20} color="var(--accent-1)" />
-            <div className="font-semibold">No questions yet</div>
-            <div className="text-xs text-text-secondary">
+          <div className="p-8 text-center space-y-3">
+            <Sparkles size={24} className="mx-auto text-brand" />
+            <div className="font-semibold text-sm text-text">No questions yet</div>
+            <div className="text-xs text-muted max-w-[220px] mx-auto">
               Generate 5 MAANG-style SQL questions for your dataset.
             </div>
             <Button
               variant="primary"
-              size="md"
+              size="sm"
               onClick={() => generate(0)}
-              className="mt-4"
+              className="mt-2"
             >
               Generate Questions
             </Button>
           </div>
         )}
 
-        {/* Question rows */}
         {hasKey &&
           !loading &&
           !error &&
           questions.map((q, i) => (
             <div
               key={`${batch}-${i}`}
-              className="qp-row"
-              style={{ animationDelay: `${i * 0.05}s` }}
+              className="p-3 hover:bg-surface-2 cursor-pointer transition-colors flex items-start gap-2.5 group"
               onClick={() => openQuestion(q, i)}
             >
-              <div className="qp-row-num">{i + 1}.</div>
-              <div className="qp-row-body">
-                <div className="qp-row-title">{q.title}</div>
-                <div className="qp-row-meta">
+              <span className="text-xs font-mono font-bold text-muted group-hover:text-text mt-0.5">
+                {i + 1}.
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-text truncate mb-1 group-hover:text-primary">
+                  {q.title}
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
                   <Badge variant={q.difficulty}>{q.difficulty}</Badge>
-                  <span className="qp-row-topic">{q.topic}</span>
+                  <span className="text-muted truncate">{q.topic}</span>
                 </div>
               </div>
-              <ChevronRight size={14} className="qp-row-arrow" />
+              <ChevronRight size={14} className="text-muted group-hover:text-text mt-0.5 shrink-0" />
             </div>
           ))}
       </div>
 
       {/* Footer */}
       {hasKey && questions.length > 0 && !loading && (
-        <div className="qp-footer">
-          <span>
-            <Sparkles size={9} color="var(--accent-1)" /> Groq AI · Click a question to load
+        <div className="h-[42px] px-3 border-t border-border bg-surface-2 flex items-center justify-between text-[11px] text-muted shrink-0">
+          <span className="flex items-center gap-1">
+            <Sparkles size={11} className="text-brand" /> Groq AI · Click to load
           </span>
           <Button variant="ghost" size="sm" icon={RefreshCw} onClick={() => generate(batch)}>
             5 More
@@ -500,37 +521,37 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
   // Compact bar after load
   if (schema?.length) {
     return (
-      <div className="sb-topbar">
-        <div className="flex gap-1.5 flex-1 flex-wrap items-center">
+      <div className="h-10 px-3 bg-surface border-b border-border flex items-center gap-2 overflow-x-auto shrink-0">
+        <div className="flex gap-1.5 flex-1 items-center overflow-x-auto">
           {schema.map((t) => (
-            <span key={t.name} className="schema-table-chip">
-              <Database
-                size={12}
-                className="inline-block align-text-bottom mr-1"
-              />{' '}
-              {t.name}
-              <span className="schema-table-chip-count">
-                {(t.rowCount || 0).toLocaleString()} rows
+            <span
+              key={t.name}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-2 border border-border text-xs text-text font-mono shrink-0"
+            >
+              <Database size={12} className="text-primary" />
+              <span>{t.name}</span>
+              <span className="text-[10px] text-muted">
+                ({(t.rowCount || 0).toLocaleString()} rows)
               </span>
             </span>
           ))}
           {uploadStatus?.type === 'success' && (
-            <span className="text-[11px] text-success font-semibold flex items-center gap-1">
+            <span className="text-[11px] text-success font-semibold flex items-center gap-1 ml-1 shrink-0">
               <CheckCircle2 size={12} /> Loaded
             </span>
           )}
         </div>
         <button
-          className="flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
+          className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-md hover:bg-surface-2 text-text transition-colors shrink-0 border border-border"
           onClick={() => inputRef.current?.click()}
         >
-          <Upload size={13} /> Add
+          <Upload size={12} /> Add
         </button>
         <button
-          className="flex items-center gap-1.5 text-[11px] text-error px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
+          className="flex items-center gap-1 text-xs text-error px-2.5 py-1 rounded-md hover:bg-surface-2 transition-colors shrink-0 border border-border hover:border-error/40"
           onClick={onReset}
         >
-          <Trash2 size={13} /> Clear
+          <Trash2 size={12} /> Clear
         </button>
         <input
           ref={inputRef}
@@ -547,147 +568,139 @@ function UploadZone({ onFiles, uploading, schema, uploadStatus, onReset, onAiGen
   // Full upload screen
   return (
     <div className="flex-1 flex flex-col md:flex-row min-h-0 h-full w-full">
-      
-      {/* ── LEFT PANEL: The Hook ── */}
-      <div className="flex-1 bg-surface text-text p-8 md:p-16 flex flex-col justify-center relative overflow-hidden border-r border-border/50">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
-        <div className="absolute top-1/2 left-1/2 translate-x-1/4 -translate-y-1/4 w-[600px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
-        
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] pointer-events-none"
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
-
-        <div className="relative z-10 max-w-xl mx-auto w-full animate-fade-in-up">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-primary/10 bg-primary/5 shadow-sm text-xs font-bold uppercase tracking-widest text-primary backdrop-blur-md">
-            <Database size={14} className="text-primary" /> Custom Sandbox
+      {/* ── LEFT PANEL: Hero Overview ── */}
+      <div className="flex-1 bg-surface text-text p-8 md:p-14 flex flex-col justify-center relative overflow-hidden border-r border-border">
+        <div className="relative z-10 max-w-xl mx-auto w-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-border bg-surface-2 text-xs font-semibold uppercase tracking-wider text-primary">
+            <Database size={13} className="text-primary" /> Custom Sandbox
           </div>
-          
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-text">
-            Bring Your <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">Own Data</span>
+
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight text-text">
+            Bring Your Own Data
           </h1>
-          
-          <p className="text-text-secondary text-lg mb-12 leading-relaxed max-w-md">
+
+          <p className="text-text-secondary text-sm md:text-base mb-8 leading-relaxed max-w-md">
             Practice real SQL against your data instantly. Upload CSV or SQLite files, and let our AI generate MAANG-level questions tailored to your schema.
           </p>
 
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/5 flex items-center justify-center shrink-0 border border-primary/10 shadow-sm backdrop-blur-sm">
-                <Database size={22} className="text-primary" />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center shrink-0 border border-border">
+                <Database size={18} className="text-primary" />
               </div>
               <div>
-                <h4 className="font-bold text-text mb-1">Zero Latency SQLite</h4>
-                <p className="text-sm text-text-secondary leading-relaxed max-w-xs">Your database runs entirely in-browser using WebAssembly. No servers, no waiting.</p>
+                <h4 className="font-semibold text-text text-sm mb-0.5">Zero Latency SQLite</h4>
+                <p className="text-xs text-text-secondary leading-relaxed max-w-xs">
+                  Your database runs entirely in-browser using WebAssembly. No servers, no waiting.
+                </p>
               </div>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-success/5 flex items-center justify-center shrink-0 border border-success/10 shadow-sm backdrop-blur-sm">
-                <Sparkles size={22} className="text-success" />
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center shrink-0 border border-border">
+                <Sparkles size={18} className="text-brand" />
               </div>
               <div>
-                <h4 className="font-bold text-text mb-1">AI-Generated Interviews</h4>
-                <p className="text-sm text-text-secondary leading-relaxed max-w-xs">We automatically analyze your schema and generate complex, real-world questions.</p>
+                <h4 className="font-semibold text-text text-sm mb-0.5">AI-Generated Interviews</h4>
+                <p className="text-xs text-text-secondary leading-relaxed max-w-xs">
+                  We automatically analyze your schema and generate complex, real-world questions.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT PANEL: The Action ── */}
-      <div className="flex-1 bg-bg flex flex-col justify-center items-center p-8 md:p-12 lg:p-16 relative overflow-y-auto custom-scrollbar">
-        
+      {/* ── RIGHT PANEL: File Drag & Drop ── */}
+      <div className="flex-1 bg-bg flex flex-col justify-center items-center p-8 md:p-12 relative overflow-y-auto">
         {/* Upload Zone */}
         <div
-          className={`relative z-10 w-full max-w-[560px] rounded-[32px] p-[2px] transition-all duration-300 animate-fade-in-up shadow-2xl ${dragOver ? 'bg-gradient-to-r from-primary via-blue-500 to-primary scale-[1.02] shadow-primary/20' : 'bg-border/60 hover:bg-border'}`}
-          style={{ animationDelay: '100ms' }}
+          className={`w-full max-w-[500px] rounded-2xl p-8 border-2 border-dashed transition-all duration-200 cursor-pointer text-center bg-surface ${
+            dragOver
+              ? 'border-primary bg-primary/5 scale-[1.01]'
+              : 'border-border hover:border-text-secondary hover:bg-surface-2'
+          }`}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={() => setDragOver(false)}
           onClick={() => !uploading && inputRef.current?.click()}
         >
-          <div className="bg-surface/90 dark:bg-surface-2/90 backdrop-blur-xl rounded-[30px] h-full w-full p-12 flex flex-col items-center justify-center text-center cursor-pointer border border-transparent hover:border-primary/20 transition-all relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,.sqlite,.db"
-              multiple
-              className="hidden"
-              onChange={onChange}
-            />
-            <div className="w-24 h-24 rounded-3xl bg-bg border border-border flex items-center justify-center mb-8 shadow-sm relative z-10 group-hover:-translate-y-1 transition-transform">
-              <div className="absolute inset-0 bg-primary/10 rounded-3xl" />
-              {uploading ? (
-                <RefreshCw size={44} className="animate-spin text-primary" />
-              ) : (
-                <Upload size={44} className={`text-primary transition-transform ${dragOver ? 'animate-bounce' : 'group-hover:scale-110'}`} />
-              )}
-            </div>
-            <h3 className="text-3xl font-black text-text mb-3 relative z-10 tracking-tight">
-              {dragOver ? 'Drop it like it\'s hot!' : uploading ? 'Processing your data...' : 'Drag & Drop Datasets'}
-            </h3>
-            <p className="text-text-secondary text-[15px] mb-8 relative z-10">
-              {uploading ? 'Parsing files in-memory (Zero Latency)...' : 'or click to browse .csv, .sqlite, .db files'}
-            </p>
-            
-            {!uploading && (
-               <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest px-4 py-2 bg-bg rounded-xl border border-border text-text-secondary relative z-10 shadow-sm">
-                 <Database size={14} className="text-primary" /> Multiple CSVs = Multiple tables
-               </div>
-            )}
-
-            {uploading && (
-              <div className="w-full max-w-[300px] h-2 bg-bg rounded-full overflow-hidden border border-border mt-4 relative z-10">
-                <div className="h-full bg-primary animate-pulse w-full rounded-full" />
-              </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".csv,.sqlite,.db"
+            multiple
+            className="hidden"
+            onChange={onChange}
+          />
+          <div className="w-14 h-14 rounded-2xl bg-surface-2 border border-border flex items-center justify-center mx-auto mb-4">
+            {uploading ? (
+              <RefreshCw size={26} className="animate-spin text-primary" />
+            ) : (
+              <Upload size={26} className="text-primary" />
             )}
           </div>
+          <h3 className="text-lg font-bold text-text mb-1.5">
+            {dragOver ? 'Drop files here' : uploading ? 'Processing your data...' : 'Upload Datasets'}
+          </h3>
+          <p className="text-xs text-text-secondary mb-4">
+            {uploading ? 'Parsing files in-memory...' : 'Drag & drop or click to browse .csv, .sqlite, .db files'}
+          </p>
+
+          {!uploading && (
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 bg-surface-2 rounded-full border border-border text-muted">
+              <Database size={12} className="text-primary" /> Multiple CSVs = Multiple tables
+            </div>
+          )}
         </div>
 
         {/* Status Messages */}
         {uploadStatus && (
-          <div className={`mt-6 relative z-10 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold animate-fade-in-up ${uploadStatus.type === 'error' ? 'bg-error/10 text-error border border-error/20' : 'bg-success/10 text-success border border-success/20'}`}>
-            {uploadStatus.type === 'error' ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
+          <div
+            className={`mt-4 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium ${
+              uploadStatus.type === 'error'
+                ? 'bg-error/10 text-error border border-error/20'
+                : 'bg-success/10 text-success border border-success/20'
+            }`}
+          >
+            {uploadStatus.type === 'error' ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
             {uploadStatus.message}
           </div>
         )}
 
         {/* AI Generate Section */}
-        <div className="mt-12 relative z-10 w-full max-w-[560px] animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-          <div className="flex items-center gap-4 mb-6">
+        <div className="mt-8 w-full max-w-[500px]">
+          <div className="flex items-center gap-3 mb-4">
             <div className="h-px bg-border flex-1" />
-            <span className="text-[11px] uppercase tracking-widest text-text-secondary font-bold">Or build with AI</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted font-bold">Or generate with AI</span>
             <div className="h-px bg-border flex-1" />
           </div>
-          
-          <div className="group relative bg-surface p-2.5 rounded-[20px] border border-border shadow-sm hover:shadow-md transition-all hover:border-primary/40 focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/10 flex flex-col sm:flex-row gap-3">
-             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-blue-500/5 to-primary/5 rounded-[20px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-             <div className="flex items-center gap-3 flex-1 px-2">
-               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 relative z-10">
-                 <Sparkles size={18} />
-               </div>
-               <input 
-                 type="text" 
-                 value={aiPrompt}
-                 onChange={e => setAiPrompt(e.target.value)}
-                 placeholder="e.g. A hospital schema..." 
-                 className="flex-1 bg-transparent border-none text-text text-[15px] font-medium outline-none placeholder:text-text-secondary/50 placeholder:font-normal relative z-10 min-w-0"
-                 onKeyDown={e => e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)}
-                 disabled={generatingSchema || uploading}
-               />
-             </div>
-             <Button 
-               onClick={() => onAiGenerate(aiPrompt)} 
-               disabled={!aiPrompt.trim() || generatingSchema || uploading} 
-               variant="primary"
-               className="rounded-xl px-6 py-3 font-bold relative z-10 shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all text-[14px] w-full sm:w-auto"
-             >
-               {generatingSchema ? <RefreshCw size={16} className="animate-spin mr-2" /> : null}
-               {generatingSchema ? 'Building...' : 'Generate Sandbox'}
-             </Button>
+
+          <div className="bg-surface p-2 rounded-xl border border-border shadow-sm flex flex-col sm:flex-row gap-2">
+            <div className="flex items-center gap-2 flex-1 px-2">
+              <Sparkles size={16} className="text-brand shrink-0" />
+              <input
+                type="text"
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="e.g. An airline reservation database..."
+                className="flex-1 bg-transparent border-none text-text text-xs outline-none placeholder:text-muted"
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && !generatingSchema && aiPrompt.trim() && onAiGenerate(aiPrompt)
+                }
+                disabled={generatingSchema || uploading}
+              />
+            </div>
+            <Button
+              onClick={() => onAiGenerate(aiPrompt)}
+              disabled={!aiPrompt.trim() || generatingSchema || uploading}
+              variant="primary"
+              size="sm"
+            >
+              {generatingSchema ? <RefreshCw size={13} className="animate-spin mr-1.5" /> : null}
+              {generatingSchema ? 'Generating...' : 'Build Sandbox'}
+            </Button>
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -813,7 +826,7 @@ export function CustomDatasetPage() {
 
         const tables = (await getSchema())?.tables || [];
         if (!tables.length) throw new Error('AI failed to generate a valid schema. Please try a different prompt.');
-        
+
         setSchema(tables);
         setSql(
           `-- ✅ AI generated ${tables.length} table${tables.length > 1 ? 's' : ''}.\n-- AI questions are generating in the right panel →\n\nSELECT *\nFROM "${tables[0].name}"\nLIMIT 10;`
@@ -884,9 +897,9 @@ export function CustomDatasetPage() {
   const hasData = schema?.length > 0;
 
   return (
-    <div className="sandbox-root flex-1 w-full h-full flex flex-col overflow-hidden page-enter" data-theme={darkMode ? 'dark' : 'light'}>
+    <div className="flex-1 w-full h-full flex flex-col overflow-hidden bg-bg text-text" data-theme={darkMode ? 'dark' : 'light'}>
       {/* ── Nav ── */}
-      <nav className="sandbox-nav">
+      <nav className="h-[48px] px-4 bg-surface border-b border-border flex items-center gap-3 shrink-0 z-20">
         <button
           className="flex items-center gap-1.5 text-xs text-text-secondary hover:text-text px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
           onClick={() => navigate('/')}
@@ -895,33 +908,37 @@ export function CustomDatasetPage() {
         </button>
 
         <div className="flex items-center gap-2">
-          <Database size={15} color="var(--primary)" />
+          <Database size={15} className="text-primary" />
           <span className="font-bold text-sm text-text">
             Custom Dataset
           </span>
-          <span className="text-[10px] font-bold px-[7px] py-[2px] rounded bg-primary-muted text-primary">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary">
             Sandbox
           </span>
         </div>
 
-        {/* Center space placeholder to push right icons to the edge */}
+        {/* Center space */}
         <div className="flex-1" />
 
         {!qPanelVisible && hasData && (
           <button
-            className="flex items-center gap-1.5 text-[11px] px-2 py-1.5 rounded-md hover:bg-surface-2 transition-colors"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md hover:bg-surface-2 transition-colors text-text"
             onClick={() => setQPanelVisible(true)}
           >
-            <Sparkles size={14} color="var(--accent-1)" /> AI Questions
+            <Sparkles size={13} className="text-brand" /> AI Questions
           </button>
         )}
 
-        <button className="flex items-center justify-center px-2 py-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-2 transition-colors" onClick={onToggleDark}>
+        <button
+          className="p-1.5 rounded-md text-text-secondary hover:text-text hover:bg-surface-2 transition-colors"
+          onClick={onToggleDark}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
           {darkMode ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </nav>
 
-      {/* ── Main ── */}
+      {/* ── Main Workspace ── */}
       {!hasData ? (
         <UploadZone
           onFiles={processFiles}
@@ -945,8 +962,8 @@ export function CustomDatasetPage() {
             generatingSchema={generatingSchema}
           />
 
-          {/* ── Layout: Schema | Editor+Results | Questions ── */}
-          <div className="cds-layout">
+          {/* ── 3-Pane IDE Layout: Schema | Editor+Results | Questions ── */}
+          <div className="flex-1 min-h-0 flex overflow-hidden">
             {/* LEFT — Schema */}
             <SchemaSidebar schema={schema} onInsert={(col) => setSql((p) => p + col)} />
 
@@ -973,7 +990,7 @@ export function CustomDatasetPage() {
                     darkMode={darkMode}
                   />
                 </div>
-                <div className="flex items-center justify-between px-3 py-2 bg-surface-2 border-t border-border shrink-0">
+                <div className="h-[40px] px-3 bg-surface-2 border-t border-border flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <Button variant="secondary" size="sm" onClick={() => setSql('')}>
                       <RotateCcw size={13} /> Clear
@@ -984,13 +1001,15 @@ export function CustomDatasetPage() {
                   </Button>
                 </div>
               </div>
-              
+
               {/* RESIZER */}
               <div
-                className={`h-1.5 cursor-row-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10 shrink-0${isDragging ? ' dragging' : ''}`}
+                className={`h-1.5 cursor-row-resize hover:bg-primary/20 active:bg-primary/40 transition-colors z-10 shrink-0 ${
+                  isDragging ? 'bg-primary/30' : 'bg-transparent'
+                }`}
                 onMouseDown={() => setIsDragging(true)}
               />
-              
+
               {/* RESULTS SECTION */}
               <div className="flex-1 min-h-0 relative bg-bg overflow-hidden flex flex-col">
                 <ResultsPanel
