@@ -1,7 +1,7 @@
 # AI Subsystem Audit Report — DataDesk Platform
 
-**Scope:** Groq API Client, Model Fallback Engine, Prompt Engineering, Token Budgets, Error Recovery  
-**Status:** Complete  
+**Scope:** Groq API Client, Model Fallback Engine, Prompt Engineering, Token Budgets, Error Recovery
+**Status:** Complete
 
 ---
 

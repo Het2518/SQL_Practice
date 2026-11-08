@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeParseJsonArray, cleanApiKey } from './groq';
+import { safeParseJsonArray, cleanApiKey, generateFallbackSchemaQuestions } from './groq';
 
 describe('cleanApiKey', () => {
   it('strips whitespace, quotes, and Bearer prefix', () => {
@@ -62,5 +62,36 @@ describe('safeParseJsonArray', () => {
 
   it('throws a descriptive error when no valid JSON questions can be parsed', () => {
     expect(() => safeParseJsonArray('no json content whatsoever')).toThrow('Failed to parse');
+  });
+});
+
+describe('generateFallbackSchemaQuestions', () => {
+  it('returns empty array if schema is empty or null', () => {
+    expect(generateFallbackSchemaQuestions([])).toEqual([]);
+    expect(generateFallbackSchemaQuestions(null)).toEqual([]);
+  });
+
+  it('generates 5 structural questions matching active schema tables and columns', () => {
+    const mockSchema = [
+      { name: 'patients', columns: [{ name: 'patient_id' }, { name: 'age' }, { name: 'gender' }] },
+      { name: 'admissions', columns: [{ name: 'admission_id' }, { name: 'patient_id' }, { name: 'diagnosis' }] }
+    ];
+
+    const questions = generateFallbackSchemaQuestions(mockSchema);
+    expect(questions).toHaveLength(5);
+
+    questions.forEach((q) => {
+      expect(q).toHaveProperty('title');
+      expect(q).toHaveProperty('difficulty');
+      expect(q).toHaveProperty('topic');
+      expect(q).toHaveProperty('prompt');
+      expect(typeof q.prompt).toBe('string');
+      expect(q.prompt.length).toBeGreaterThan(10);
+    });
+
+    // Check that table names are included
+    expect(questions[0].prompt).toContain('patients');
+    expect(questions[0].prompt).toContain('patient_id');
+    expect(questions[3].prompt).toContain('admissions');
   });
 });

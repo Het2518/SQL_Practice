@@ -1,7 +1,7 @@
 # Performance Audit Report — DataDesk Platform
 
-**Scope:** Client WASM Runtime, Network Transfer, Bundle Splitting, DOM Rendering, Database Throughput  
-**Status:** Complete  
+**Scope:** Client WASM Runtime, Network Transfer, Bundle Splitting, DOM Rendering, Database Throughput
+**Status:** Complete
 
 ---
 

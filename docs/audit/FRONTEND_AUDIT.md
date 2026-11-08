@@ -1,8 +1,8 @@
 # Frontend Audit Report — DataDesk Platform
 
-**Scope:** `frontend/src/`  
-**Technologies:** React 19, Vite 6, Tailwind CSS, Zustand, Monaco Editor, Lucide React, React Virtuoso  
-**Status:** Complete  
+**Scope:** `frontend/src/`
+**Technologies:** React 19, Vite 6, Tailwind CSS, Zustand, Monaco Editor, Lucide React, React Virtuoso
+**Status:** Complete
 
 ---
 

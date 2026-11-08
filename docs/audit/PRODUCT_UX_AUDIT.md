@@ -1,7 +1,7 @@
 # Product & UX Audit Report — DataDesk Platform
 
-**Target Audience:** Software Engineers, Data Engineers, Solutions Architects, and Analytics Engineers preparing for technical SQL rounds at Tier-1 tech companies (Google, Meta, Amazon, Uber, Databricks, Netflix).  
-**Status:** Complete  
+**Target Audience:** Software Engineers, Data Engineers, Solutions Architects, and Analytics Engineers preparing for technical SQL rounds at Tier-1 tech companies (Google, Meta, Amazon, Uber, Databricks, Netflix).
+**Status:** Complete
 
 ---
 
