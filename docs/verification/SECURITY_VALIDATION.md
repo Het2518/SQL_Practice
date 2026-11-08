@@ -1,16 +1,13 @@
 # Security & Vulnerability Validation Report — DataDesk Platform
 
-<<<<<<< HEAD
 **Classification:** Application Security Review & Penetration Analysis
 **Auditor:** Application Security Specialist & Penetration Tester
 **Date:** November 2026
 **Security Status:** **Pass with Hardening Recommendations**
-=======
-**Classification:** Application Security Review & Penetration Analysis  
-**Auditor:** Application Security Specialist & Penetration Tester  
-**Date:** November 2026  
-**Security Status:** **Pass with Hardening Recommendations**  
->>>>>>> fac9fcf88031ddd1b42cc286fb3adbf0970dc730
+**Classification:** Application Security Review & Penetration Analysis
+**Auditor:** Application Security Specialist & Penetration Tester
+**Date:** November 2026
+**Security Status:** **Pass with Hardening Recommendations**
 
 ---
 

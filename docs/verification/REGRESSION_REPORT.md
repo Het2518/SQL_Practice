@@ -1,16 +1,13 @@
 # Regression & Discrepancy Report — DataDesk Platform
 
-<<<<<<< HEAD
 **Verification Phase:** Phase 2 Independent Engineering Review
 **Target Commit:** `d69c86ba059c0899b1818f1b6c26f4154868e3e9`
 **Date:** November 2026
 **Status:** Complete
-=======
-**Verification Phase:** Phase 2 Independent Engineering Review  
-**Target Commit:** `d69c86ba059c0899b1818f1b6c26f4154868e3e9`  
-**Date:** November 2026  
-**Status:** Complete  
->>>>>>> fac9fcf88031ddd1b42cc286fb3adbf0970dc730
+**Verification Phase:** Phase 2 Independent Engineering Review
+**Target Commit:** `d69c86ba059c0899b1818f1b6c26f4154868e3e9`
+**Date:** November 2026
+**Status:** Complete
 
 ---
 
