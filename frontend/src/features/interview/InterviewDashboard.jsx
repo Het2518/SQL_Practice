@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Briefcase, FileText, Rocket, Landmark, Zap, Database, ArrowRight, Monitor } from 'lucide-react';
+import { Clock, BarChart, ShieldCheck, AlertTriangle, Building2, User, Rocket, Landmark, Zap, Database, ArrowRight } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Header, HeaderBreadcrumbs } from '@/shared/ui/Header';
 import { Button } from '@/shared/ui/Button';

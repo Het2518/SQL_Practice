@@ -5,6 +5,7 @@ import { ChevronRight, Clock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { api } from '@/lib/api';
 import { getCompanyKB, getDifficultyDistribution } from '@/lib/companyKnowledgeBase';
+import { allQuestions } from '@/data/index';
 import { Button } from '@/shared/ui/Button';
 import { Badge } from '@/shared/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/Card';
@@ -117,6 +118,17 @@ export default function CompanyPrepPage(props) {
     },
     enabled: !!company?._id,
   });
+
+  const displayQuestions = useMemo(() => {
+    if (questions && questions.length > 0) return questions;
+    const cleanCompany = (slug || '').toLowerCase().replace(/[^a-z]/g, '');
+    const matched = allQuestions.filter(q => {
+      const kw = (q.keywords || []).map(k => k.toLowerCase());
+      return kw.some(k => k.includes(cleanCompany) || (companyName && k.includes(companyName.toLowerCase())));
+    });
+    if (matched.length > 0) return matched;
+    return allQuestions.slice(0, 15);
+  }, [questions, slug, companyName]);
 
   return (
     <div className="flex-1 w-full h-full overflow-y-auto bg-bg text-text page-enter">
@@ -306,7 +318,7 @@ export default function CompanyPrepPage(props) {
                   onClick={() => setActiveTab('questions')}
                   className="flex-1 min-w-[160px] justify-center"
                 >
-                  Browse {questions.length} Questions
+                  Browse {displayQuestions.length} Questions
                 </Button>
                 <Button
                   variant="primary"
@@ -333,11 +345,11 @@ export default function CompanyPrepPage(props) {
         {/* ━━ QUESTION BANK ━━ */}
         {activeTab === 'questions' && (
           <div>
-            {loadingQ ? (
+            {loadingQ && displayQuestions.length === 0 ? (
               <div className="py-[60px] text-center text-muted text-sm">
                 Loading questions...
               </div>
-            ) : questions.length === 0 ? (
+            ) : displayQuestions.length === 0 ? (
               <div className="p-[60px] text-center">
                 <div
                   className="text-[15px] font-bold text-text mb-2"
@@ -350,21 +362,21 @@ export default function CompanyPrepPage(props) {
               </div>
             ) : (
               <div
-                className="bg-surface border border-border rounded-xl overflow-hidden"
+                className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm"
               >
                 <div
-                  className="py-3.5 px-5 border-b border-border flex items-center gap-2.5"
+                  className="py-3.5 px-5 border-b border-border flex items-center gap-2.5 bg-surface-2"
                 >
-                  <span className="font-bold text-sm">Question Bank</span>
+                  <span className="font-bold text-sm text-text">Question Bank</span>
                   <span
-                    className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary-muted text-primary"
+                    className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20"
                   >
-                    {questions.length}
+                    {displayQuestions.length}
                   </span>
                 </div>
                 <table className="w-full border-collapse text-[13px]">
                   <thead>
-                    <tr className="bg-surface-2">
+                    <tr className="bg-surface-2 border-b border-border">
                       {['Title', 'Topics', 'Difficulty', 'Time', 'Practice'].map((h, i) => (
                         <th
                           key={h}
@@ -376,22 +388,25 @@ export default function CompanyPrepPage(props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {questions.map((q) => {
-                      const topics = extractTopics(q.solution_sql);
+                    {displayQuestions.map((q) => {
+                      const qTitle = q.title || (q.prompt ? (q.prompt.length > 60 ? q.prompt.slice(0, 60) + '...' : q.prompt) : `Question #${q.id}`);
+                      const qSql = q.solution_sql || q.solutionSQL || '';
+                      const qDb = (q.schema_name || q.db || 'hospital').toLowerCase();
+                      const topics = extractTopics(qSql);
                       return (
                         <tr
                           key={q.id}
                           className="border-t border-border cursor-pointer transition-colors duration-150 hover:bg-surface-2"
                         >
                           <td className="p-3 px-4 font-semibold text-text max-w-[280px]">
-                            {q.title}
+                            {qTitle}
                           </td>
                           <td className="p-3 px-4">
                             <div className="flex gap-1 flex-wrap">
                               {topics.slice(0, 2).map((t) => (
                                 <span
                                   key={t}
-                                  className="px-[7px] py-[2px] rounded-md text-[10px] font-semibold bg-primary-muted text-primary"
+                                  className="px-[7px] py-[2px] rounded-md text-[10px] font-semibold bg-surface-3 border border-border text-text-secondary"
                                 >
                                   {t}
                                 </span>
@@ -406,8 +421,8 @@ export default function CompanyPrepPage(props) {
                           </td>
                           <td className="p-3 px-4 text-right">
                             <Link
-                              to={`/practice/${(q.schema_name || 'ecommerce').toLowerCase()}?q=${q.id}`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md no-underline bg-primary text-primary-foreground font-bold text-xs"
+                              to={`/practice/${qDb}?q=${q.id}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md no-underline bg-primary text-primary-foreground font-bold text-xs hover:bg-primary-hover transition-colors"
                             >
                               Practice
                             </Link>

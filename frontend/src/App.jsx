@@ -293,6 +293,8 @@ export default function App() {
         <Route path="/interview/preflight" element={<InterviewPreFlight />} />
         <Route path="/interview/arena" element={<InterviewArena />} />
         <Route path="/interview/report" element={<InterviewReport />} />
+        <Route path="/company" element={<Navigate to="/company/google" replace />} />
+        <Route path="/company-prep" element={<Navigate to="/company/google" replace />} />
         <Route
           path="/company/:slug"
           element={

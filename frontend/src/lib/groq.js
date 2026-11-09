@@ -15,12 +15,12 @@ export const MODEL_SMART = 'llama-3.3-70b-versatile';
 // Production candidate models tried in fallback sequence if a specific model is unavailable or restricted
 export const CANDIDATE_MODELS = [
   'llama-3.3-70b-versatile',
-  'openai/gpt-oss-20b',
-  'openai/gpt-oss-120b',
-  'qwen/qwen3.8-27b',
   'llama-3.1-8b-instant',
-  'gemma2-9b-it',
-  'mixtral-8x7b-32768',
+  'qwen-2.5-coder-32b',
+  'deepseek-r1-distill-llama-70b',
+  'deepseek-r1-distill-qwen-32b',
+  'qwen-2.5-32b',
+  'llama-3.3-70b-specdec',
 ];
 
 /**
@@ -167,9 +167,12 @@ export async function groqChat(
 
   // 2. Build candidate model queue in order of priority:
   const toTry = [];
-  if (model) toTry.push(model);
 
   if (liveModels.length > 0) {
+    // If the requested model is confirmed available in the user's live account, prioritize it
+    if (model && liveModels.includes(model)) {
+      toTry.push(model);
+    }
     // Add models present in live account matching our candidate order
     for (const cand of CANDIDATE_MODELS) {
       if (liveModels.includes(cand) && !toTry.includes(cand)) {
@@ -180,8 +183,13 @@ export async function groqChat(
     for (const m of liveModels) {
       if (!toTry.includes(m)) toTry.push(m);
     }
+    // If the requested model wasn't discovered but no others were found either, fall back to trying it
+    if (toTry.length === 0 && model) {
+      toTry.push(model);
+    }
   } else {
-    // Fallback static candidates
+    // Fallback static candidates when live discovery endpoint is inaccessible
+    if (model) toTry.push(model);
     for (const cand of CANDIDATE_MODELS) {
       if (!toTry.includes(cand)) toTry.push(cand);
     }

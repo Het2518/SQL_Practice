@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getIndexInfo } from '@/utils/sqlAnalysis';
-import { Zap, AlertTriangle, FileCode2, CheckCircle2 } from 'lucide-react';
+import { Zap, FileCode2, CheckCircle2 } from 'lucide-react';
 
 export const IndexAdvisor = ({ executeQuery, sql, refreshTrigger = 0 }) => {
   const [analysis, setAnalysis] = useState(null);
