@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronRight, Code2, MessageSquare, FileText, CheckCircle,
   Table, Check, Info, AlertCircle, GripHorizontal, Minimize2,
   Maximize2, Copy, Bookmark, ChevronDown, ListChecks,
-  Terminal
+  Terminal, GraduationCap
 } from 'lucide-react';
 import { Button } from '@/shared/ui/Button';
 import { chatInterview } from '@/lib/groq';
@@ -502,15 +502,18 @@ export function InterviewArena() {
   const { settings, toggleDarkMode } = useSettingsStore();
 
   const duration       = parseInt(searchParams.get('duration') || '30', 10);
-  const rawDifficulty  = searchParams.get('difficulty') || 'mixed';
+  const rawDifficulty  = searchParams.get('difficulty') || 'intermediate';
   const rawCompanyName = searchParams.get('company') || 'FAANG';
   const rawCandidateName = searchParams.get('name') || 'Candidate';
-  const rawRoleName    = searchParams.get('role') || 'Software Engineer';
+  const rawRoleName    = searchParams.get('role') || 'Data Engineer';
+  const mode           = searchParams.get('mode') || 'standard';
+  const focusTopic     = searchParams.get('topic') || 'all';
 
-  const difficulty    = ['easy', 'medium', 'hard', 'mixed'].includes(rawDifficulty.toLowerCase()) ? rawDifficulty.toLowerCase() : 'mixed';
+  const validDifficulties = ['beginner', 'intermediate', 'senior', 'master', 'easy', 'medium', 'hard', 'mixed'];
+  const difficulty    = validDifficulties.includes(rawDifficulty.toLowerCase()) ? rawDifficulty.toLowerCase() : 'intermediate';
   const companyName   = rawCompanyName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'FAANG';
   const candidateName = rawCandidateName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 30) || 'Candidate';
-  const roleName      = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Software Engineer';
+  const roleName      = rawRoleName.replace(/[^a-zA-Z0-9 -]/g, '').slice(0, 40) || 'Data Engineer';
 
   const { cameraStream, screenStream, addViolation, isTerminated, restoreSessionState, saveSessionState, clearSessionState } = useProctorStore();
 
@@ -570,7 +573,7 @@ export function InterviewArena() {
     timeLeft, chatMessages, setChatMessages,
     isSubmittedRef, executeQuery,
   } = useInterviewSession({
-    duration, difficulty, companyName, candidateName, roleName,
+    duration, difficulty, companyName, candidateName, roleName, mode, focusTopic,
     restoreSessionState, saveSessionState,
     isTerminated, handleFinalSubmit, toast,
   });
@@ -584,7 +587,7 @@ export function InterviewArena() {
     handleFailToReport();
   };
 
-  useProctoring({ isSubmittedRef, isTerminated, enforceViolation, addViolation });
+  useProctoring({ isSubmittedRef, isTerminated, enforceViolation, addViolation, mode });
 
   useEffect(() => () => {
     try { useProctorStore.getState().stopAllStreams(); } catch {}
@@ -844,10 +847,18 @@ export function InterviewArena() {
           {/* Left: Assessment Brand & Proctoring */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <h1 className="font-black text-sm md:text-base tracking-tight text-text">{companyName} Technical Assessment</h1>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-error/10 text-error border border-error/20 uppercase tracking-wider flex items-center gap-1">
-                <ShieldAlert size={11} /> Proctored
-              </span>
+              <h1 className="font-black text-sm md:text-base tracking-tight text-text">
+                {companyName} {mode === 'learning' ? 'Practice Workshop' : 'Technical Assessment'}
+              </h1>
+              {mode === 'learning' ? (
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 uppercase tracking-wider flex items-center gap-1">
+                  <GraduationCap size={11} /> Learning Mode
+                </span>
+              ) : (
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-error/10 text-error border border-error/20 uppercase tracking-wider flex items-center gap-1">
+                  <ShieldAlert size={11} /> Proctored
+                </span>
+              )}
             </div>
           </div>
 
@@ -1554,7 +1565,9 @@ export function InterviewArena() {
         </div>
 
         {/* Live Proctoring PIP Feed */}
-        <DraggableProctorFeed cameraStream={cameraStream} screenStream={screenStream} />
+        {(cameraStream || screenStream) && (
+          <DraggableProctorFeed cameraStream={cameraStream} screenStream={screenStream} />
+        )}
       </div>
     </>
   );

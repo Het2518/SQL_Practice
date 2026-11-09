@@ -81,9 +81,14 @@ export function InterviewPermissions() {
   };
 
   const allGranted = cameraGranted && screenGranted && micGranted;
+  const isLearningMode = searchParams.get('mode') === 'learning';
 
   const handleNext = () => {
-    if (allGranted) navigate(`/interview/preflight?${searchParams.toString()}`);
+    if (allGranted || isLearningMode) navigate(`/interview/preflight?${searchParams.toString()}`);
+  };
+
+  const handleDirectLaunch = () => {
+    navigate(`/interview/arena?${searchParams.toString()}&newSession=1`);
   };
 
   return (
@@ -175,18 +180,29 @@ export function InterviewPermissions() {
             >
               ← Cancel
             </button>
-            <button
-              disabled={!allGranted}
-              onClick={handleNext}
-              className={`flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
-                allGranted
-                  ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20 hover:scale-[1.02] cursor-pointer'
-                  : 'bg-surface-2 text-text-secondary/50 border border-border cursor-not-allowed opacity-60'
-              }`}
-            >
-              Continue to Pre-Flight
-              <ArrowRight size={16} />
-            </button>
+            <div className="flex items-center gap-3">
+              {isLearningMode && (
+                <button
+                  type="button"
+                  onClick={handleDirectLaunch}
+                  className="px-5 py-2.5 rounded-xl font-bold text-xs border border-emerald-500/30 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all cursor-pointer"
+                >
+                  Skip & Start Learning Mode →
+                </button>
+              )}
+              <button
+                disabled={!allGranted && !isLearningMode}
+                onClick={handleNext}
+                className={`flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                  allGranted || isLearningMode
+                    ? 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20 hover:scale-[1.02] cursor-pointer'
+                    : 'bg-surface-2 text-text-secondary/50 border border-border cursor-not-allowed opacity-60'
+                }`}
+              >
+                Continue to Pre-Flight
+                <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>

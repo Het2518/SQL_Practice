@@ -107,14 +107,16 @@ export function InterviewPreFlight() {
     runChecks();
   }, [cameraStream, screenStream, micStream, settings.groqApiKey]);
 
-  const allClear = checks.network && checks.browser && checks.media && checks.ai;
+  const isLearningMode = searchParams.get('mode') === 'learning';
+  const mediaRequired = !isLearningMode;
+  const allClear = checks.network && checks.browser && (checks.media || !mediaRequired);
 
   const handleStart = async () => {
     if (!allClear) {
-      toast({ title: 'System Checks Failed', message: 'Please resolve the red items before entering.', type: 'error' });
+      toast({ title: 'System Checks Incomplete', message: 'Please ensure browser & media checks pass before entering.', type: 'error' });
       return;
     }
-    if (!agreed) {
+    if (!agreed && !isLearningMode) {
       toast({ title: 'Agreement Required', message: 'You must agree to the integrity policy.', type: 'warning' });
       return;
     }
@@ -181,20 +183,19 @@ export function InterviewPreFlight() {
                 />
                 <CheckItem 
                   icon={<Key size={18} />} 
-                  label="AI Evaluator Ready (API Key)" 
-                  status={checking && !checks.ai ? 'loading' : checks.ai ? 'pass' : 'fail'} 
+                  label={checks.ai ? "AI Live Generation (Key Active)" : "Curated Problem Sets (Key Optional)"} 
+                  status={checking ? 'loading' : 'pass'} 
                 />
 
                 {!checking && !checks.ai && (
-                  <div className="mt-1 p-4 bg-error/5 border border-error/20 rounded-xl flex flex-col gap-3 animate-fade-in shadow-sm">
-                    <p className="text-xs text-error font-medium leading-relaxed">
-                      A free Groq API key is required to power the AI interviewer. 
-                      <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="underline font-bold ml-1 hover:text-error/80">Get one here</a>.
+                  <div className="mt-1 p-3.5 bg-surface-2 border border-border rounded-xl flex flex-col gap-2.5 animate-fade-in shadow-sm">
+                    <p className="text-xs text-text-secondary font-medium leading-relaxed">
+                      💡 Using built-in curated questions. Optional: add your free Groq key for live AI questions:
                     </p>
                     <input 
                       type="password" 
-                      placeholder="Paste your gsk_... key here"
-                      className="w-full bg-surface border border-error/30 rounded-lg px-4 py-2.5 text-sm text-text focus:border-error focus:ring-1 focus:ring-error outline-none font-mono transition-all"
+                      placeholder="Paste optional gsk_... key here"
+                      className="w-full bg-surface border border-border rounded-lg px-3.5 py-2 text-xs text-text focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono transition-all"
                       onChange={(e) => {
                         if (e.target.value.trim().startsWith('gsk_')) {
                           updateSettings({ groqApiKey: e.target.value.trim() });

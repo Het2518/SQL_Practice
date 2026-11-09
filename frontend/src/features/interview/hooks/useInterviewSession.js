@@ -1,22 +1,22 @@
 /**
- * useInterviewSession.js — Multi-Question Interview Session Manager
+ * useInterviewSession.js — Multi-Question Interview & Learning Session Manager
  *
- * Manages a structured 10-question interview:
+ * Manages a structured 10-question interview & learning session:
  *   Q1–Q5  → SQL coding questions (each has its own dedicated SQLite DB)
  *   Q6–Q10 → MCQ conceptual questions (auto-graded, no DB needed)
  *
- * Key design:
- *  - One dedicated SQL worker (via useInterviewDatabase) shared across all SQL questions
- *  - When navigating to a SQL question, the worker re-initializes with that question's initSql
- *  - answers[index] = { sql: '...', queryResult: {...} } for SQL, { selectedIndex: N } for MCQ
- *  - Full session is generated in one AI call at startup (generateFullInterviewSession)
- *  - Session state is persisted to localStorage every 5 seconds
+ * Key features:
+ *  - Dedicated Web Worker SQL engine (WASM) per question
+ *  - Multi-tier dynamic curriculum from Beginner / Foundations up to Staff Master
+ *  - Dynamic fallback catalog with industry-diverse scenarios (no duplicate questions)
+ *  - Level-adapted MCQ conceptual tests
+ *  - Full state persistence and resume support
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { generateFullInterviewSession } from '@/lib/groq';
 import { useInterviewDatabase } from './useInterviewDatabase';
 
-// ─── SQLite helpers (shared with DB init) ─────────────────────────────────────
+// ─── SQLite Helpers ──────────────────────────────────────────────────────────
 
 const mapToSqliteType = (type = 'TEXT') => {
   const t = String(type).toUpperCase().trim();
@@ -91,10 +91,165 @@ const sanitizeInitSql = (rawSql, tables) => {
   return sql || null;
 };
 
-// ─── Multi-Domain Dynamic Fallback Pools (20-40 rows per table) ─────────────
-const FALLBACK_SQL_POOLS = {
-  easy: [
+// ─── Curated Multi-Tier Question Catalog ─────────────────────────────────────
+
+const FALLBACK_CATALOG = {
+  // ── BEGINNER / SQL 101 POOL ────────────────────────────────────────────────
+  beginner: [
     {
+      id: 'beg_ecom_products',
+      industry: 'ecommerce',
+      topic: 'filtering',
+      problemStatement: 'Find all active products with a unit price under $35.00. Return product_id, product_name, and price, sorted by price ascending.',
+      explanation: 'Filter products table where is_active is 1 and price < 35.0, then order results by price in ascending order.',
+      constraints: 'Include only products with is_active = 1. Sort by price ASC.',
+      tables: [
+        {
+          name: 'products',
+          columns: [{ name: 'product_id', type: 'INTEGER' }, { name: 'product_name', type: 'TEXT' }, { name: 'price', type: 'REAL' }, { name: 'is_active', type: 'INTEGER' }],
+          sampleData: [
+            { product_id: 1, product_name: 'Wireless Mouse', price: 24.99, is_active: 1 },
+            { product_id: 2, product_name: 'Mechanical Keyboard', price: 89.99, is_active: 1 },
+            { product_id: 3, product_name: 'USB-C Cable', price: 12.50, is_active: 1 },
+            { product_id: 4, product_name: 'Desk Mat', price: 18.00, is_active: 1 },
+            { product_id: 5, product_name: 'Laptop Stand', price: 45.00, is_active: 1 },
+            { product_id: 6, product_name: 'Webcam Cover', price: 5.99, is_active: 0 },
+            { product_id: 7, product_name: 'Bluetooth Earbuds', price: 29.99, is_active: 1 },
+            { product_id: 8, product_name: '4K Monitor', price: 299.00, is_active: 1 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { product_id: 3, product_name: 'USB-C Cable', price: 12.50 },
+        { product_id: 4, product_name: 'Desk Mat', price: 18.00 },
+        { product_id: 1, product_name: 'Wireless Mouse', price: 24.99 },
+        { product_id: 7, product_name: 'Bluetooth Earbuds', price: 29.99 },
+      ],
+    },
+    {
+      id: 'beg_fintech_deposits',
+      industry: 'fintech',
+      topic: 'filtering',
+      problemStatement: 'Find all completed deposit transactions of $500 or more. Return transaction_id, account_id, amount, and status, sorted by amount descending.',
+      explanation: 'Filter transactions where type = deposit, status = completed, and amount >= 500.',
+      constraints: 'Sort by amount DESC.',
+      tables: [
+        {
+          name: 'transactions',
+          columns: [{ name: 'transaction_id', type: 'INTEGER' }, { name: 'account_id', type: 'INTEGER' }, { name: 'type', type: 'TEXT' }, { name: 'amount', type: 'REAL' }, { name: 'status', type: 'TEXT' }],
+          sampleData: [
+            { transaction_id: 101, account_id: 1, type: 'deposit', amount: 1200.0, status: 'completed' },
+            { transaction_id: 102, account_id: 2, type: 'withdrawal', amount: 300.0, status: 'completed' },
+            { transaction_id: 103, account_id: 3, type: 'deposit', amount: 450.0, status: 'completed' },
+            { transaction_id: 104, account_id: 1, type: 'deposit', amount: 800.0, status: 'completed' },
+            { transaction_id: 105, account_id: 4, type: 'deposit', amount: 2500.0, status: 'completed' },
+            { transaction_id: 106, account_id: 2, type: 'deposit', amount: 750.0, status: 'pending' },
+            { transaction_id: 107, account_id: 5, type: 'deposit', amount: 600.0, status: 'completed' },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { transaction_id: 105, account_id: 4, amount: 2500.0, status: 'completed' },
+        { transaction_id: 101, account_id: 1, amount: 1200.0, status: 'completed' },
+        { transaction_id: 104, account_id: 1, amount: 800.0, status: 'completed' },
+        { transaction_id: 107, account_id: 5, amount: 600.0, status: 'completed' },
+      ],
+    },
+    {
+      id: 'beg_health_patients',
+      industry: 'health',
+      topic: 'filtering',
+      problemStatement: 'Find all patients admitted to the Cardiology ward who are 60 years or older. Return patient_id, full_name, age, and ward, sorted by age descending.',
+      explanation: 'Filter patients where ward is Cardiology and age >= 60, ordering by age DESC.',
+      constraints: 'Sort by age DESC.',
+      tables: [
+        {
+          name: 'patients',
+          columns: [{ name: 'patient_id', type: 'INTEGER' }, { name: 'full_name', type: 'TEXT' }, { name: 'age', type: 'INTEGER' }, { name: 'ward', type: 'TEXT' }],
+          sampleData: [
+            { patient_id: 1, full_name: 'Arthur Dent', age: 65, ward: 'Cardiology' },
+            { patient_id: 2, full_name: 'Sarah Connor', age: 48, ward: 'Cardiology' },
+            { patient_id: 3, full_name: 'Walter White', age: 72, ward: 'Cardiology' },
+            { patient_id: 4, full_name: 'Ellen Ripley', age: 61, ward: 'Neurology' },
+            { patient_id: 5, full_name: 'Bruce Wayne', age: 70, ward: 'Cardiology' },
+            { patient_id: 6, full_name: 'Diana Prince', age: 55, ward: 'Orthopedics' },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { patient_id: 3, full_name: 'Walter White', age: 72, ward: 'Cardiology' },
+        { patient_id: 5, full_name: 'Bruce Wayne', age: 70, ward: 'Cardiology' },
+        { patient_id: 1, full_name: 'Arthur Dent', age: 65, ward: 'Cardiology' },
+      ],
+    },
+    {
+      id: 'beg_hr_salaries',
+      industry: 'faang',
+      topic: 'aggregations',
+      problemStatement: 'Calculate the total headcount and average annual salary for full-time employees. Return total_employees and avg_salary.',
+      explanation: 'Use COUNT(*) and AVG(salary) with WHERE employment_type = full-time.',
+      constraints: 'Round avg_salary to 2 decimal places if applicable.',
+      tables: [
+        {
+          name: 'employees',
+          columns: [{ name: 'employee_id', type: 'INTEGER' }, { name: 'full_name', type: 'TEXT' }, { name: 'employment_type', type: 'TEXT' }, { name: 'salary', type: 'REAL' }],
+          sampleData: [
+            { employee_id: 1, full_name: 'Alice Smith', employment_type: 'full-time', salary: 90000.0 },
+            { employee_id: 2, full_name: 'Bob Jones', employment_type: 'part-time', salary: 40000.0 },
+            { employee_id: 3, full_name: 'Charlie Brown', employment_type: 'full-time', salary: 110000.0 },
+            { employee_id: 4, full_name: 'Diana Evans', employment_type: 'full-time', salary: 95000.0 },
+            { employee_id: 5, full_name: 'Ethan Hunt', employment_type: 'contractor', salary: 85000.0 },
+            { employee_id: 6, full_name: 'Fiona Gallagher', employment_type: 'full-time', salary: 105000.0 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { total_employees: 4, avg_salary: 100000.0 },
+      ],
+    },
+    {
+      id: 'beg_ecom_joins',
+      industry: 'ecommerce',
+      topic: 'joins',
+      problemStatement: 'Join customers with orders to list all placed orders. Return customer_name, order_id, and total_amount, sorted by total_amount descending.',
+      explanation: 'INNER JOIN customers on customer_id, ordered by total_amount DESC.',
+      constraints: 'Sort by total_amount DESC.',
+      tables: [
+        {
+          name: 'customers',
+          columns: [{ name: 'customer_id', type: 'INTEGER' }, { name: 'customer_name', type: 'TEXT' }, { name: 'city', type: 'TEXT' }],
+          sampleData: [
+            { customer_id: 1, customer_name: 'Emma Watson', city: 'London' },
+            { customer_id: 2, customer_name: 'Liam Neeson', city: 'New York' },
+            { customer_id: 3, customer_name: 'Noah Centineo', city: 'Miami' },
+          ],
+        },
+        {
+          name: 'orders',
+          columns: [{ name: 'order_id', type: 'INTEGER' }, { name: 'customer_id', type: 'INTEGER' }, { name: 'total_amount', type: 'REAL' }],
+          sampleData: [
+            { order_id: 501, customer_id: 1, total_amount: 149.99 },
+            { order_id: 502, customer_id: 2, total_amount: 89.50 },
+            { order_id: 503, customer_id: 1, total_amount: 230.00 },
+            { order_id: 504, customer_id: 3, total_amount: 45.00 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { customer_name: 'Emma Watson', order_id: 503, total_amount: 230.00 },
+        { customer_name: 'Emma Watson', order_id: 501, total_amount: 149.99 },
+        { customer_name: 'Liam Neeson', order_id: 502, total_amount: 89.50 },
+        { customer_name: 'Noah Centineo', order_id: 504, total_amount: 45.00 },
+      ],
+    },
+  ],
+
+  // ── INTERMEDIATE / APPLIED POOL ────────────────────────────────────────────
+  intermediate: [
+    {
+      id: 'int_airline_delays',
+      industry: 'airlines',
+      topic: 'filtering',
       problemStatement: 'Find all flights departing from JFK that were delayed by more than 15 minutes. Return flight_id, airline_code, origin_airport, and delay_minutes, sorted by delay_minutes descending.',
       explanation: 'Filter flight_logs where origin_airport is JFK and delay_minutes > 15, then sort by delay_minutes DESC.',
       constraints: 'Include only flights with delay_minutes > 15. Sort by delay_minutes in descending order.',
@@ -116,8 +271,6 @@ const FALLBACK_SQL_POOLS = {
             { flight_id: 111, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 95 },
             { flight_id: 112, airline_code: 'UA', origin_airport: 'SFO', delay_minutes: 15 },
             { flight_id: 113, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 32 },
-            { flight_id: 114, airline_code: 'AA', origin_airport: 'DFW', delay_minutes: 55 },
-            { flight_id: 115, airline_code: 'B6', origin_airport: 'JFK', delay_minutes: 22 },
           ],
         },
       ],
@@ -128,13 +281,13 @@ const FALLBACK_SQL_POOLS = {
         { flight_id: 101, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 45 },
         { flight_id: 113, airline_code: 'DL', origin_airport: 'JFK', delay_minutes: 32 },
         { flight_id: 103, airline_code: 'UA', origin_airport: 'JFK', delay_minutes: 25 },
-        { flight_id: 115, airline_code: 'B6', origin_airport: 'JFK', delay_minutes: 22 },
         { flight_id: 107, airline_code: 'AA', origin_airport: 'JFK', delay_minutes: 18 },
       ],
     },
-  ],
-  joins: [
     {
+      id: 'int_music_payouts',
+      industry: 'startup',
+      topic: 'joins',
       problemStatement: 'Calculate the total streaming revenue for each music artist. Return artist_name and total_payout, sorted by total_payout descending.',
       explanation: 'Join artists with streaming_events on artist_id, group by artist_name, and compute SUM(streams_count * rate_per_stream).',
       constraints: 'Only include artists with at least one stream. Sort by total_payout DESC.',
@@ -176,9 +329,124 @@ const FALLBACK_SQL_POOLS = {
         { artist_name: 'Solaris', total_payout: 105.0 },
       ],
     },
-  ],
-  window: [
     {
+      id: 'int_fintech_merchants',
+      industry: 'fintech',
+      topic: 'aggregations',
+      problemStatement: 'Calculate total volume and average charge for merchants with at least 3 transactions. Return merchant_name, total_volume, and avg_charge, sorted by total_volume descending.',
+      explanation: 'Join merchants with charges on merchant_id, GROUP BY merchant_name, and apply HAVING COUNT(*) >= 3.',
+      constraints: 'Sort by total_volume DESC.',
+      tables: [
+        {
+          name: 'merchants',
+          columns: [{ name: 'merchant_id', type: 'INTEGER' }, { name: 'merchant_name', type: 'TEXT' }],
+          sampleData: [
+            { merchant_id: 1, merchant_name: 'Tech Haven' },
+            { merchant_id: 2, merchant_name: 'Brew & Bean' },
+            { merchant_id: 3, merchant_name: 'Green Grocer' },
+          ],
+        },
+        {
+          name: 'charges',
+          columns: [{ name: 'charge_id', type: 'INTEGER' }, { name: 'merchant_id', type: 'INTEGER' }, { name: 'amount', type: 'REAL' }],
+          sampleData: [
+            { charge_id: 1, merchant_id: 1, amount: 250.0 },
+            { charge_id: 2, merchant_id: 1, amount: 350.0 },
+            { charge_id: 3, merchant_id: 1, amount: 400.0 },
+            { charge_id: 4, merchant_id: 2, amount: 15.0 },
+            { charge_id: 5, merchant_id: 2, amount: 25.0 },
+            { charge_id: 6, merchant_id: 3, amount: 80.0 },
+            { charge_id: 7, merchant_id: 3, amount: 120.0 },
+            { charge_id: 8, merchant_id: 3, amount: 100.0 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { merchant_name: 'Tech Haven', total_volume: 1000.0, avg_charge: 333.33 },
+        { merchant_name: 'Green Grocer', total_volume: 300.0, avg_charge: 100.0 },
+      ],
+    },
+    {
+      id: 'int_hr_dept_salaries',
+      industry: 'faang',
+      topic: 'aggregations',
+      problemStatement: 'Find departments with more than 2 employees that have an average salary greater than $85,000. Return department_name, headcount, and avg_salary, sorted by avg_salary descending.',
+      explanation: 'Join departments with staff on department_id, GROUP BY department_name, and apply HAVING COUNT(*) > 2 AND AVG(salary) > 85000.',
+      constraints: 'Sort by avg_salary DESC.',
+      tables: [
+        {
+          name: 'departments',
+          columns: [{ name: 'department_id', type: 'INTEGER' }, { name: 'department_name', type: 'TEXT' }],
+          sampleData: [
+            { department_id: 1, department_name: 'Engineering' },
+            { department_id: 2, department_name: 'Marketing' },
+            { department_id: 3, department_name: 'Sales' },
+          ],
+        },
+        {
+          name: 'staff',
+          columns: [{ name: 'staff_id', type: 'INTEGER' }, { name: 'department_id', type: 'INTEGER' }, { name: 'salary', type: 'REAL' }],
+          sampleData: [
+            { staff_id: 1, department_id: 1, salary: 120000.0 },
+            { staff_id: 2, department_id: 1, salary: 135000.0 },
+            { staff_id: 3, department_id: 1, salary: 110000.0 },
+            { staff_id: 4, department_id: 2, salary: 70000.0 },
+            { staff_id: 5, department_id: 2, salary: 75000.0 },
+            { staff_id: 6, department_id: 3, salary: 90000.0 },
+            { staff_id: 7, department_id: 3, salary: 95000.0 },
+            { staff_id: 8, department_id: 3, salary: 88000.0 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { department_name: 'Engineering', headcount: 3, avg_salary: 121666.67 },
+        { department_name: 'Sales', headcount: 3, avg_salary: 91000.0 },
+      ],
+    },
+    {
+      id: 'int_cloud_pipelines',
+      industry: 'data',
+      topic: 'subqueries',
+      problemStatement: 'Identify cloud clusters that experienced more than 1 failed pipeline run. Return cluster_name and failed_runs, sorted by failed_runs descending.',
+      explanation: 'Filter pipeline_runs where status = failed, group by cluster_id, count failures, and join cluster_name.',
+      constraints: 'Sort by failed_runs DESC.',
+      tables: [
+        {
+          name: 'clusters',
+          columns: [{ name: 'cluster_id', type: 'INTEGER' }, { name: 'cluster_name', type: 'TEXT' }],
+          sampleData: [
+            { cluster_id: 1, cluster_name: 'etl-prod-cluster' },
+            { cluster_id: 2, cluster_name: 'ml-train-cluster' },
+            { cluster_id: 3, cluster_name: 'bi-reporting-cluster' },
+          ],
+        },
+        {
+          name: 'pipeline_runs',
+          columns: [{ name: 'run_id', type: 'INTEGER' }, { name: 'cluster_id', type: 'INTEGER' }, { name: 'status', type: 'TEXT' }],
+          sampleData: [
+            { run_id: 1, cluster_id: 1, status: 'failed' },
+            { run_id: 2, cluster_id: 1, status: 'failed' },
+            { run_id: 3, cluster_id: 1, status: 'success' },
+            { run_id: 4, cluster_id: 2, status: 'failed' },
+            { run_id: 5, cluster_id: 3, status: 'failed' },
+            { run_id: 6, cluster_id: 3, status: 'failed' },
+            { run_id: 7, cluster_id: 3, status: 'failed' },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { cluster_name: 'bi-reporting-cluster', failed_runs: 3 },
+        { cluster_name: 'etl-prod-cluster', failed_runs: 2 },
+      ],
+    },
+  ],
+
+  // ── SENIOR / PRODUCTION POOL ───────────────────────────────────────────────
+  senior: [
+    {
+      id: 'sen_esports_ranks',
+      industry: 'startup',
+      topic: 'window',
       problemStatement: 'Rank the top 2 highest scoring esports players within each tournament team. Return team_name, player_name, and total_points.',
       explanation: 'Use DENSE_RANK() or ROW_NUMBER() partitioned by team_id ordered by total_points descending, then filter rank <= 2.',
       constraints: 'Order by team_name ASC, total_points DESC.',
@@ -217,10 +485,11 @@ const FALLBACK_SQL_POOLS = {
         { team_name: 'Vortex Gaming', player_name: 'Blaze', total_points: 3100 },
       ],
     },
-  ],
-  analytics: [
     {
-      problemStatement: 'Identify ride-sharing drivers who have completed at least 2 trips with a surge multiplier >= 1.5 and an average passenger rating >= 4.8. Return driver_name, qualified_trips, and avg_rating.',
+      id: 'sen_rideshare_surge',
+      industry: 'startup',
+      topic: 'analytics',
+      problemStatement: 'Identify ride-sharing drivers who have completed at least 2 trips with surge >= 1.5 and avg rating >= 4.8. Return driver_name, qualified_trips, and avg_rating.',
       explanation: 'Filter trips by surge >= 1.5, group by driver, and apply HAVING COUNT(*) >= 2 AND AVG(rating) >= 4.8.',
       constraints: 'Round avg_rating to 2 decimal places. Sort by qualified_trips DESC, avg_rating DESC.',
       tables: [
@@ -258,9 +527,37 @@ const FALLBACK_SQL_POOLS = {
         { driver_name: 'Sophia Patel', qualified_trips: 2, avg_rating: 4.95 },
       ],
     },
-  ],
-  advanced: [
     {
+      id: 'sen_fintech_running_balance',
+      industry: 'fintech',
+      topic: 'window',
+      problemStatement: 'Calculate the running account balance for account_id = 1001 ordered chronologically by transaction_date. Return txn_id, txn_date, amount, and running_balance.',
+      explanation: 'Use SUM(amount) OVER (PARTITION BY account_id ORDER BY txn_date ASC, txn_id ASC).',
+      constraints: 'Filter for account_id = 1001. Sort by txn_date ASC, txn_id ASC.',
+      tables: [
+        {
+          name: 'bank_ledger',
+          columns: [{ name: 'txn_id', type: 'INTEGER' }, { name: 'account_id', type: 'INTEGER' }, { name: 'txn_date', type: 'TEXT' }, { name: 'amount', type: 'REAL' }],
+          sampleData: [
+            { txn_id: 1, account_id: 1001, txn_date: '2024-01-01', amount: 500.0 },
+            { txn_id: 2, account_id: 1001, txn_date: '2024-01-03', amount: -150.0 },
+            { txn_id: 3, account_id: 1002, txn_date: '2024-01-04', amount: 800.0 },
+            { txn_id: 4, account_id: 1001, txn_date: '2024-01-05', amount: 200.0 },
+            { txn_id: 5, account_id: 1001, txn_date: '2024-01-08', amount: -50.0 },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { txn_id: 1, txn_date: '2024-01-01', amount: 500.0, running_balance: 500.0 },
+        { txn_id: 2, txn_date: '2024-01-03', amount: -150.0, running_balance: 350.0 },
+        { txn_id: 4, txn_date: '2024-01-05', amount: 200.0, running_balance: 550.0 },
+        { txn_id: 5, txn_date: '2024-01-08', amount: -50.0, running_balance: 500.0 },
+      ],
+    },
+    {
+      id: 'sen_saas_mom_growth',
+      industry: 'data',
+      topic: 'analytics',
       problemStatement: 'Calculate month-over-month active SaaS subscriber growth percentage for 2024. Return billing_month, active_subscribers, and mom_growth_pct.',
       explanation: 'Count distinct active subscribers by month, then use LAG() to compute ((current - previous) / previous) * 100.',
       constraints: 'Order chronologically by billing_month ASC. Format growth percentage rounded to 2 decimal places.',
@@ -294,39 +591,175 @@ const FALLBACK_SQL_POOLS = {
       ],
     },
   ],
+
+  // ── MASTER / STAFF ARCHITECT POOL ──────────────────────────────────────────
+  master: [
+    {
+      id: 'mas_gaps_islands',
+      industry: 'faang',
+      topic: 'optimization',
+      problemStatement: 'Identify consecutive login streaks of 3 or more days for each user (Gaps & Islands). Return user_id, streak_start, and streak_days, sorted by streak_days descending.',
+      explanation: 'Use DATE(login_date, -ROW_NUMBER() OVER ...) to group contiguous days into islands, then filter COUNT(*) >= 3.',
+      constraints: 'Sort by streak_days DESC, user_id ASC.',
+      tables: [
+        {
+          name: 'user_logins',
+          columns: [{ name: 'user_id', type: 'INTEGER' }, { name: 'login_date', type: 'TEXT' }],
+          sampleData: [
+            { user_id: 1, login_date: '2024-01-01' },
+            { user_id: 1, login_date: '2024-01-02' },
+            { user_id: 1, login_date: '2024-01-03' },
+            { user_id: 1, login_date: '2024-01-04' },
+            { user_id: 2, login_date: '2024-01-01' },
+            { user_id: 2, login_date: '2024-01-03' },
+            { user_id: 3, login_date: '2024-01-05' },
+            { user_id: 3, login_date: '2024-01-06' },
+            { user_id: 3, login_date: '2024-01-07' },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { user_id: 1, streak_start: '2024-01-01', streak_days: 4 },
+        { user_id: 3, streak_start: '2024-01-05', streak_days: 3 },
+      ],
+    },
+    {
+      id: 'mas_cohort_retention',
+      industry: 'ecommerce',
+      topic: 'analytics',
+      problemStatement: 'Calculate the month-1 customer retention percentage for users acquired in 2024-01. Return signup_month, active_users_m0, active_users_m1, and retention_rate_pct.',
+      explanation: 'Track users registered in month 0 who also made an order in month 1, dividing active_users_m1 by active_users_m0.',
+      constraints: 'Round retention_rate_pct to 2 decimal places.',
+      tables: [
+        {
+          name: 'signups',
+          columns: [{ name: 'user_id', type: 'INTEGER' }, { name: 'signup_month', type: 'TEXT' }],
+          sampleData: [
+            { user_id: 101, signup_month: '2024-01' },
+            { user_id: 102, signup_month: '2024-01' },
+            { user_id: 103, signup_month: '2024-01' },
+            { user_id: 104, signup_month: '2024-01' },
+          ],
+        },
+        {
+          name: 'monthly_activity',
+          columns: [{ name: 'user_id', type: 'INTEGER' }, { name: 'activity_month', type: 'TEXT' }],
+          sampleData: [
+            { user_id: 101, activity_month: '2024-02' },
+            { user_id: 102, activity_month: '2024-02' },
+            { user_id: 103, activity_month: '2024-03' },
+          ],
+        },
+      ],
+      expectedOutput: [
+        { signup_month: '2024-01', active_users_m0: 4, active_users_m1: 2, retention_rate_pct: 50.0 },
+      ],
+    },
+  ],
 };
 
-const buildFallbackSession = () => {
-  const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+// ─── Level-Tailored MCQ Pools ────────────────────────────────────────────────
 
-  const q1 = { ...pickRandom(FALLBACK_SQL_POOLS.easy) };
-  q1.initSql = buildInitSqlFromTables(q1.tables);
-
-  const q2 = { ...pickRandom(FALLBACK_SQL_POOLS.joins) };
-  q2.initSql = buildInitSqlFromTables(q2.tables);
-
-  const q3 = { ...pickRandom(FALLBACK_SQL_POOLS.window) };
-  q3.initSql = buildInitSqlFromTables(q3.tables);
-
-  const q4 = { ...pickRandom(FALLBACK_SQL_POOLS.analytics) };
-  q4.initSql = buildInitSqlFromTables(q4.tables);
-
-  const q5 = { ...pickRandom(FALLBACK_SQL_POOLS.advanced) };
-  q5.initSql = buildInitSqlFromTables(q5.tables);
-
-  const fallbackMcqQuestions = [
+const FALLBACK_MCQS = {
+  beginner: [
+    { question: 'What is the primary difference between WHERE and HAVING in SQL?', options: ['WHERE filters rows before grouping; HAVING filters aggregated groups', 'HAVING filters rows before grouping; WHERE filters after grouping', 'They are completely interchangeable aliases', 'HAVING only works with string columns'], correctIndex: 0, explanation: 'WHERE evaluates individual rows prior to GROUP BY. HAVING evaluates aggregated group metrics.' },
+    { question: 'What happens when you run COUNT(column_name) on a column with NULL values?', options: ['NULL values are ignored and not counted', 'NULL values raise a runtime error', 'NULL values are converted to zero', 'All rows including NULLs are counted'], correctIndex: 0, explanation: 'COUNT(column) skips NULL values, while COUNT(*) counts every record in the table.' },
+    { question: 'Which SQL keyword is used to remove duplicate rows from a query result set?', options: ['DISTINCT', 'UNIQUE', 'GROUP', 'DEDUPE'], correctIndex: 0, explanation: 'The DISTINCT keyword in the SELECT clause removes duplicate rows from the final result set.' },
+    { question: 'What is the default sort order when ORDER BY is specified without ASC or DESC?', options: ['ASC (Ascending)', 'DESC (Descending)', 'Random order', 'Primary key order'], correctIndex: 0, explanation: 'In standard SQL, ORDER BY defaults to ascending (ASC) order if not specified.' },
+    { question: 'What does an INNER JOIN return between Table A and Table B?', options: ['Only rows where there is a matching key in both tables', 'All rows from Table A regardless of Table B', 'All rows from both tables filled with NULLs', 'A Cartesian product of all rows'], correctIndex: 0, explanation: 'INNER JOIN selects records that have matching values in both joined tables.' },
+  ],
+  intermediate: [
     { question: 'What does LEFT JOIN return when there is no matching row in the right table?', options: ['NULL for right table columns', 'The row is excluded', 'An error is raised', 'Zero for numeric columns'], correctIndex: 0, explanation: 'LEFT JOIN preserves all rows from the left table and fills right table columns with NULL if no match exists.' },
-    { question: 'Which SQL clause is used to filter aggregated results?', options: ['WHERE', 'HAVING', 'GROUP BY', 'ORDER BY'], correctIndex: 1, explanation: 'HAVING filters after aggregation (GROUP BY), while WHERE filters individual rows before aggregation.' },
-    { question: 'What is the result of NULL = NULL in SQL?', options: ['TRUE', 'FALSE', 'NULL', 'Error'], correctIndex: 2, explanation: 'Any comparison with NULL yields NULL (unknown), not TRUE or FALSE. Use IS NULL to check for NULL.' },
-    { question: 'Which window function assigns a sequential integer rank without gaps to each row?', options: ['ROW_NUMBER()', 'RANK()', 'DENSE_RANK()', 'NTILE()'], correctIndex: 2, explanation: 'DENSE_RANK() assigns consecutive ranks with no gaps when there are ties, unlike RANK() which skips numbers.' },
-    { question: 'What is a covering index?', options: ['An index on every column', 'An index that includes all columns needed by a query, avoiding a table lookup', 'An index on the primary key', 'An index used in a JOIN'], correctIndex: 1, explanation: 'A covering index includes all columns needed for a query so the DB engine can answer it from the index alone without reading the table.' },
-  ];
+    { question: 'What is the result of evaluating NULL = NULL in standard SQL three-valued logic?', options: ['NULL (Unknown)', 'TRUE', 'FALSE', 'Syntax error'], correctIndex: 0, explanation: 'In SQL three-valued logic, any comparison with NULL evaluates to NULL (unknown). Use IS NULL to check for nulls.' },
+    { question: 'How does COALESCE(col1, col2, "N/A") operate in SQL?', options: ['Returns the first non-NULL expression from the list', 'Returns the concatenation of all columns', 'Returns NULL if any argument is NULL', 'Converts all values into strings'], correctIndex: 0, explanation: 'COALESCE evaluates arguments in sequence and returns the first non-null value.' },
+    { question: 'What is the logical query processing order in standard SQL?', options: ['FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY', 'SELECT -> FROM -> WHERE -> GROUP BY -> ORDER BY', 'WHERE -> FROM -> SELECT -> GROUP BY -> HAVING', 'FROM -> SELECT -> WHERE -> HAVING -> ORDER BY'], correctIndex: 0, explanation: 'SQL conceptually begins by determining the data sources in FROM, filtering with WHERE, grouping with GROUP BY, filtering groups with HAVING, evaluating projections in SELECT, and finally ordering results with ORDER BY.' },
+    { question: 'When is the IN operator required instead of the = operator for subqueries in a WHERE clause?', options: ['When the subquery can return multiple rows', 'When the subquery returns NULL', 'When joining across different database engines', 'When comparing float numbers'], correctIndex: 0, explanation: 'The equality operator = expects a single scalar value. When a subquery can return multiple records, IN or ANY must be used.' },
+  ],
+  senior: [
+    { question: 'What is the key difference between RANK() and DENSE_RANK() in window functions?', options: ['RANK() leaves gaps in sequence numbers after ties; DENSE_RANK() leaves no gaps', 'DENSE_RANK() sorts descending while RANK() sorts ascending', 'RANK() is only for numeric columns', 'They produce identical values in all cases'], correctIndex: 0, explanation: 'When ties occur, RANK() skips subsequent ranking positions (e.g. 1, 1, 3), whereas DENSE_RANK() produces consecutive rank numbers (e.g. 1, 1, 2).' },
+    { question: 'What is a covering index in database optimization?', options: ['An index that includes all columns needed by a query, avoiding table heap lookups', 'An index on every column in a table', 'An index that covers foreign keys only', 'A full-text search index'], correctIndex: 0, explanation: 'A covering index contains all columns referenced in the SELECT, WHERE, and JOIN clauses, enabling the engine to fulfill the query directly from index pages.' },
+    { question: 'In window functions, what is the default frame when ORDER BY is present without a ROWS/RANGE clause?', options: ['RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW', 'ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING', 'ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING', 'RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING'], correctIndex: 0, explanation: 'When ORDER BY is specified without an explicit frame, SQL defaults to RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, causing ties to be aggregated together.' },
+    { question: 'Which transaction isolation level completely prevents dirty reads, non-repeatable reads, and phantom reads?', options: ['SERIALIZABLE', 'REPEATABLE READ', 'READ COMMITTED', 'READ UNCOMMITTED'], correctIndex: 0, explanation: 'SERIALIZABLE is the highest isolation level and provides full serial execution guarantees, eliminating dirty reads, non-repeatable reads, and phantom rows.' },
+    { question: 'What is the performance implication of a Cartesian product (CROSS JOIN) between two tables of size N and M?', options: ['It generates N * M rows, causing exponential quadratic execution overhead', 'The database optimizer automatically rewrites it into an index scan', 'It runs in O(N + M) linear time', 'It causes a table corruption error in SQLite'], correctIndex: 0, explanation: 'Unconstrained joins generate an N x M result set, which quickly exhausts memory and causes severe I/O degradation on non-trivial datasets.' },
+  ],
+  master: [
+    { question: 'How does Multi-Version Concurrency Control (MVCC) eliminate read-write blocking in modern databases?', options: ['Readers read snapshot versions without acquiring shared locks against concurrent writers', 'Writers immediately terminate any reading transactions', 'All queries are buffered into an in-memory queue', 'Tables are cloned into temp files on every query'], correctIndex: 0, explanation: 'MVCC maintains multiple version tuples of data records, allowing read operations to access historical snapshots without conflicting with active write transactions.' },
+    { question: 'What is lock escalation in relational database engines?', options: ['Converting many fine-grained row/page locks into a single table lock when lock memory thresholds are exceeded', 'Escalating read locks to write locks automatically', 'Granting admin privileges during a deadlock', 'Promoting a non-clustered index into a clustered index'], correctIndex: 0, explanation: 'Lock escalation occurs when the database manager converts numerous individual row locks into an exclusive table lock to conserve lock memory, reducing concurrency.' },
+    { question: 'What is the danger of an unindexed correlated subquery inside a large SELECT projection?', options: ['It forces row-by-row nested loop execution (O(N*M)) rather than a set-based hash/merge join', 'It always raises a division by zero error', 'It corrupts the write-ahead log', 'It forces an automatic server restart'], correctIndex: 0, explanation: 'Correlated subqueries in the projection evaluate once per outer row, resulting in pathological O(N*M) performance when unindexed.' },
+    { question: 'What is the role of a Write-Ahead Log (WAL) checkpoint in database durability?', options: ['Flushes modified pages from memory buffer pool to data files and updates the checkpoint LSN', 'Deletes all indexes to rebuild them faster', 'Terminates idle client connections', 'Compresses archived transaction logs into zip files'], correctIndex: 0, explanation: 'Checkpointing synchronizes dirty pages from the buffer cache to persistent storage, establishing a recovery point and enabling log truncation.' },
+    { question: 'How does a cost-based optimizer (CBO) choose between a Hash Join and an Index Nested Loop Join?', options: ['It estimates cardinality and compares disk I/O / CPU costs based on table statistics and index selectivity', 'It always chooses Hash Join for all queries', 'It picks whichever table was created first in DDL', 'It checks user role permissions'], correctIndex: 0, explanation: 'The CBO calculates mathematical cost estimates based on catalog statistics, column histograms, and whether selective indexes exist on join keys.' },
+  ],
+};
 
-  return { sql_questions: [q1, q2, q3, q4, q5], mcq_questions: fallbackMcqQuestions };
+// ─── Dynamic Fallback Generator ──────────────────────────────────────────────
+
+const shuffle = (arr) => [...arr].sort(() => 0.5 - Math.random());
+
+const buildFallbackSession = ({ difficulty = 'intermediate', companyName = 'FAANG', roleName = 'Data Engineer', focusTopic = 'all' } = {}) => {
+  const normDiff = ['beginner', 'intermediate', 'senior', 'master', 'mixed', 'easy', 'medium', 'hard'].includes(String(difficulty).toLowerCase())
+    ? String(difficulty).toLowerCase()
+    : 'intermediate';
+
+  const diffKey = normDiff === 'easy' ? 'beginner' : normDiff === 'medium' ? 'intermediate' : normDiff === 'hard' ? 'senior' : normDiff;
+
+  let selectedSql = [];
+
+  if (diffKey === 'beginner') {
+    // 5 beginner questions
+    const pool = shuffle(FALLBACK_CATALOG.beginner);
+    selectedSql = pool.slice(0, 5);
+  } else if (diffKey === 'intermediate') {
+    // 5 intermediate questions
+    const pool = shuffle(FALLBACK_CATALOG.intermediate);
+    selectedSql = pool.slice(0, 5);
+  } else if (diffKey === 'senior') {
+    // 5 senior questions
+    const pool = shuffle(FALLBACK_CATALOG.senior);
+    selectedSql = pool.slice(0, 5);
+  } else if (diffKey === 'master') {
+    // Combine master + senior for a deep 5-question test
+    const pool = shuffle([...FALLBACK_CATALOG.master, ...FALLBACK_CATALOG.senior]);
+    selectedSql = pool.slice(0, 5);
+  } else {
+    // Mixed adaptive ladder: 1 beginner, 2 intermediate, 1 senior, 1 master
+    const b = shuffle(FALLBACK_CATALOG.beginner)[0];
+    const i = shuffle(FALLBACK_CATALOG.intermediate).slice(0, 2);
+    const s = shuffle(FALLBACK_CATALOG.senior)[0];
+    const m = shuffle(FALLBACK_CATALOG.master)[0];
+    selectedSql = [b, ...i, s, m].filter(Boolean);
+  }
+
+  // Ensure 5 questions minimum by padding with other tiers if needed
+  if (selectedSql.length < 5) {
+    const allRemaining = shuffle([
+      ...FALLBACK_CATALOG.intermediate,
+      ...FALLBACK_CATALOG.senior,
+      ...FALLBACK_CATALOG.beginner,
+    ]);
+    for (const q of allRemaining) {
+      if (!selectedSql.some(s => s.id === q.id)) {
+        selectedSql.push(q);
+        if (selectedSql.length >= 5) break;
+      }
+    }
+  }
+
+  // Build initSql for each question
+  const sql_questions = selectedSql.slice(0, 5).map(q => {
+    const clone = { ...q };
+    clone.initSql = buildInitSqlFromTables(clone.tables);
+    return clone;
+  });
+
+  // Select level-appropriate MCQs
+  const mcqPool = FALLBACK_MCQS[diffKey] || FALLBACK_MCQS.intermediate;
+  const mcq_questions = shuffle(mcqPool).slice(0, 5);
+
+  return { sql_questions, mcq_questions };
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main hook
+// Main Hook
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useInterviewSession({
@@ -335,6 +768,8 @@ export function useInterviewSession({
   companyName,
   candidateName,
   roleName,
+  mode = 'standard',
+  focusTopic = 'all',
   restoreSessionState,
   saveSessionState,
   isTerminated,
@@ -348,8 +783,6 @@ export function useInterviewSession({
   const [sessionData, setSessionData]       = useState(null); // { sql_questions: [], mcq_questions: [] }
   const [currentIndex, setCurrentIndex]     = useState(0);    // 0-9
   const [answers, setAnswers]               = useState(Array(10).fill(null));
-  // answers[0..4] = { sql: '...', queryResult: {...} } | null
-  // answers[5..9] = { selectedIndex: N } | null
 
   const [generating, setGenerating]         = useState(true);
   const [dbSwitching, setDbSwitching]       = useState(false);
@@ -391,11 +824,9 @@ export function useInterviewSession({
       parsed = JSON.parse(cleaned);
     } catch {
       try {
-        // Strip trailing commas before } or ]
         const noTrailing = cleaned.replace(/,\s*([\]}])/g, '$1');
         parsed = JSON.parse(noTrailing);
       } catch {
-        // Truncation salvage: Attempt to balance open brackets and braces
         try {
           let candidate = cleaned;
           const openBraces = (candidate.match(/\{/g) || []).length;
@@ -414,7 +845,7 @@ export function useInterviewSession({
       }
     }
 
-    const fallback = buildFallbackSession();
+    const fallback = buildFallbackSession({ difficulty, companyName, roleName, focusTopic });
     let sqlQuestions = parsed?.sql_questions || parsed?.data?.sql_questions || parsed?.session?.sql_questions;
     let mcqQuestions = parsed?.mcq_questions || parsed?.data?.mcq_questions || parsed?.session?.mcq_questions;
 
@@ -425,7 +856,6 @@ export function useInterviewSession({
       mcqQuestions = fallback.mcq_questions;
     }
 
-    // Ensure we have exactly 5 of each (pad from fallback if partial or truncated)
     const sqlQs = [...sqlQuestions.slice(0, 5)];
     while (sqlQs.length < 5) {
       sqlQs.push(fallback.sql_questions[sqlQs.length]);
@@ -436,7 +866,6 @@ export function useInterviewSession({
       mcqQs.push(fallback.mcq_questions[mcqQs.length]);
     }
 
-    // Sanitize each SQL question's initSql
     const sanitizedSqlQs = sqlQs.map(q => ({
       ...q,
       initSql: sanitizeInitSql(q.initSql, q.tables),
@@ -458,7 +887,6 @@ export function useInterviewSession({
         const saved = restoreSessionState();
         if (saved?.sessionData?.sql_questions && saved.sessionData.sql_questions.length === 5) {
           if (!cancelled) {
-            // Rebuild initSql refs
             saved.sessionData.sql_questions.forEach((q, i) => {
               questionInitSqlsRef.current[i] = q.initSql || null;
             });
@@ -474,15 +902,22 @@ export function useInterviewSession({
         }
       }
 
-      // 2. Generate fresh session
+      // 2. Generate fresh session matching chosen parameters
       try {
-        const raw = await generateFullInterviewSession({ difficulty, companyName, candidateName, roleName });
+        const raw = await generateFullInterviewSession({
+          difficulty,
+          companyName,
+          candidateName,
+          roleName,
+          focusTopic,
+          mode,
+        });
+
         if (cancelled) return;
         if (!raw) throw new Error('Empty AI response');
 
         const data = parseSessionData(raw);
 
-        // Store initSqls
         data.sql_questions.forEach((q, i) => {
           questionInitSqlsRef.current[i] = q.initSql || null;
         });
@@ -490,7 +925,7 @@ export function useInterviewSession({
         if (!cancelled) {
           const welcomeMsg = {
             role: 'assistant',
-            content: `Welcome to your **${companyName}** ${difficulty.toUpperCase()} interview, **${candidateName}**! 🎯\n\nThis session has **5 SQL coding questions** and **5 multiple-choice questions** (10 total).\n\n- Questions 1–5 are SQL coding challenges. Each has its own live database you can query.\n- Questions 6–10 are conceptual MCQ questions.\n\nYou can navigate freely between questions. Your answers are auto-saved. Good luck! 💪`,
+            content: `Welcome to your **${companyName}** ${difficulty.toUpperCase()} ${mode === 'learning' ? 'learning workshop' : 'interview'}, **${candidateName}**! 🎯\n\nThis session contains **5 hands-on SQL problems** and **5 conceptual questions** tailored specifically for a **${roleName}** track.\n\n- Questions 1–5 have live, dedicated SQLite databases for execution.\n- Questions 6–10 test key core SQL mechanics.\n\nTake your time, write your queries, and run them to verify results! Good luck! 💪`,
           };
 
           setSessionData(data);
@@ -506,27 +941,30 @@ export function useInterviewSession({
           });
         }
       } catch (err) {
-        console.error('[InterviewSession] Session generation failed, using fallback:', err.message);
+        console.error('[InterviewSession] Session generation using dynamic fallback:', err.message);
         if (!cancelled) {
-          const fallback = buildFallbackSession();
+          const fallback = buildFallbackSession({ difficulty, companyName, roleName, focusTopic });
           fallback.sql_questions.forEach((q, i) => {
             questionInitSqlsRef.current[i] = q.initSql || null;
           });
           setSessionData(fallback);
           setGenerating(false);
 
-          let errorNote = 'A fallback session has been loaded.';
+          let errorNote = `Curated ${difficulty.toUpperCase()} question set loaded.`;
           if (err.message === 'BAD_KEY') {
-            errorNote = 'Your Groq API key is invalid (401). Please check your key in Settings.';
+            errorNote = 'Your Groq API key is invalid (401). Using curated questions.';
             toast({ title: 'Invalid Groq API Key', message: 'Update your Groq API key in Settings → AI Configuration.', type: 'error' });
           } else if (err.message === 'MISSING_API_KEY') {
-            errorNote = 'No Groq API key was found in Settings. A fallback session was loaded.';
-            toast({ title: 'Groq API Key Required', message: 'Add your free Groq key in Settings to generate live AI sessions.', type: 'info' });
+            errorNote = 'Using built-in curriculum tailored to your selected level.';
+            toast({ title: 'Curated Question Set', message: `Loaded 10 ${difficulty.toUpperCase()} questions for ${companyName}.`, type: 'info' });
           } else {
-            toast({ title: 'AI Generation Notice', message: `${err.message || 'Could not reach AI'}. A fallback session has been loaded.`, type: 'warning' });
+            toast({ title: 'Curriculum Active', message: `Loaded tailored ${difficulty.toUpperCase()} session for ${companyName}.`, type: 'info' });
           }
 
-          setChatMessages([{ role: 'assistant', content: `Welcome to your interview! Note: ${errorNote}` }]);
+          setChatMessages([{
+            role: 'assistant',
+            content: `Welcome to your **${companyName}** ${difficulty.toUpperCase()} session! 🎯\n\n${errorNote}\n\nWork through the 5 SQL challenges and 5 conceptual questions at your own pace.`
+          }]);
         }
       }
     };
@@ -538,30 +976,35 @@ export function useInterviewSession({
 
   // ── Navigate between questions ────────────────────────────────────────────
   const navigateTo = useCallback((index) => {
-    if (index < 0 || index >= totalQuestions) return;
-    setCurrentIndex(index);
-  }, []);
+    if (index >= 0 && index < totalQuestions) {
+      setCurrentIndex(index);
+    }
+  }, [totalQuestions]);
 
   const goNext = useCallback(() => {
-    setCurrentIndex(prev => Math.min(prev + 1, totalQuestions - 1));
-  }, []);
+    if (currentIndex < totalQuestions - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  }, [currentIndex, totalQuestions]);
 
   const goPrev = useCallback(() => {
-    setCurrentIndex(prev => Math.max(prev - 1, 0));
-  }, []);
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  }, [currentIndex]);
 
-  // ── Save an answer for current question ───────────────────────────────────
-  const saveAnswer = useCallback((answer) => {
+  // ── Save answer for current question ──────────────────────────────────────
+  const saveAnswer = useCallback((answerData) => {
     setAnswers(prev => {
       const next = [...prev];
-      next[currentIndex] = answer;
+      next[currentIndex] = answerData;
       return next;
     });
   }, [currentIndex]);
 
-  // ── Timer ─────────────────────────────────────────────────────────────────
+  // ── Timer countdown ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (isSubmittedRef.current || generating || isTerminated) return;
+    if (generating || isTerminated || isSubmittedRef.current) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -577,21 +1020,24 @@ export function useInterviewSession({
     return () => clearInterval(timer);
   }, [generating, isTerminated, handleFinalSubmit]);
 
-  // ── Auto-save every 5 s ───────────────────────────────────────────────────
+  // ── Auto-save session state every 5 seconds ───────────────────────────────
   useEffect(() => {
-    if (generating || isTerminated || isSubmittedRef.current || !sessionData) return;
+    if (generating || !sessionData) return;
 
     const interval = setInterval(() => {
-      if (!isSubmittedRef.current && !isTerminated) {
-        saveSessionState({ sessionData, currentIndex, answers, timeLeft, chatMessages });
-      }
+      saveSessionState({
+        sessionData,
+        currentIndex,
+        answers,
+        timeLeft,
+        chatMessages,
+      });
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [generating, sessionData, currentIndex, answers, timeLeft, chatMessages, isTerminated, saveSessionState]);
+  }, [sessionData, currentIndex, answers, timeLeft, chatMessages, saveSessionState, generating]);
 
   return {
-    // Session data
     sessionData,
     currentIndex,
     currentQuestion,
@@ -601,24 +1047,15 @@ export function useInterviewSession({
     totalQuestions,
     answers,
     saveAnswer,
-
-    // Navigation
     navigateTo,
     goNext,
     goPrev,
-
-    // Status
     generating,
     dbStatus,
-    dbError,
     dbSwitching,
     timeLeft,
-
-    // Chat
     chatMessages,
     setChatMessages,
-
-    // Refs & DB ops
     isSubmittedRef,
     executeQuery,
   };

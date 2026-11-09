@@ -4,14 +4,16 @@ export function useProctoring({
   isSubmittedRef,
   isTerminated,
   enforceViolation,
-  addViolation
+  addViolation,
+  mode = 'standard'
 }) {
   const fullscreenTimeoutRef = useRef(null);
   const gracePeriodRef = useRef(true);
+  const isLearning = mode === 'learning';
 
-  // Zero-Tolerance Anti-Cheat
+  // Zero-Tolerance Anti-Cheat (skipped in Learning Mode)
   useEffect(() => {
-    if (isSubmittedRef.current || isTerminated) return;
+    if (isLearning || isSubmittedRef.current || isTerminated) return;
 
     const graceTimer = setTimeout(() => {
       gracePeriodRef.current = false;
@@ -21,10 +23,10 @@ export function useProctoring({
     }, 5000);
 
     return () => clearTimeout(graceTimer);
-  }, []); // Run once on mount
+  }, [isLearning, isSubmittedRef, isTerminated, enforceViolation]);
 
   useEffect(() => {
-    if (isSubmittedRef.current || isTerminated) return;
+    if (isLearning || isSubmittedRef.current || isTerminated) return;
 
     const handleFullscreenChange = () => {
       if (gracePeriodRef.current || isSubmittedRef.current || isTerminated) return;
@@ -76,5 +78,5 @@ export function useProctoring({
       document.removeEventListener('paste', handleClipboard);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [isSubmittedRef, isTerminated, enforceViolation, addViolation]);
+  }, [isLearning, isSubmittedRef, isTerminated, enforceViolation, addViolation]);
 }

@@ -758,17 +758,83 @@ const INTERVIEW_DOMAIN_POOL = [
 
 /**
  * Generates a complete interview session: 5 SQL coding questions + 5 MCQ questions.
- * Highly randomized: selects 5 distinct domains on every call with temperature=0.85.
+ * Tailored dynamically from Beginner foundations up to Master staff architect level.
  * @returns {Promise<string>} JSON string: { sql_questions: [...5], mcq_questions: [...5] }
  */
-export async function generateFullInterviewSession({ difficulty = 'mixed', companyName = 'FAANG', candidateName = 'Candidate', roleName = 'Software Engineer' }) {
-  const difficultyMap = {
-    easy: ['EASY', 'EASY', 'EASY-MEDIUM', 'MEDIUM', 'MEDIUM'],
-    medium: ['EASY', 'MEDIUM', 'MEDIUM', 'MEDIUM-HARD', 'HARD'],
-    hard: ['MEDIUM', 'HARD', 'HARD', 'HARD', 'HARD'],
-    mixed: ['EASY', 'EASY-MEDIUM', 'MEDIUM', 'MEDIUM-HARD', 'HARD'],
+export async function generateFullInterviewSession({
+  difficulty = 'intermediate',
+  companyName = 'FAANG',
+  candidateName = 'Candidate',
+  roleName = 'Data Engineer',
+  focusTopic = 'all',
+  mode = 'standard',
+}) {
+  const normDiff = ['beginner', 'intermediate', 'senior', 'master', 'mixed', 'easy', 'medium', 'hard'].includes(String(difficulty).toLowerCase())
+    ? String(difficulty).toLowerCase()
+    : 'intermediate';
+
+  const diffKey = normDiff === 'easy' ? 'beginner' : normDiff === 'medium' ? 'intermediate' : normDiff === 'hard' ? 'senior' : normDiff;
+
+  const progressionMap = {
+    beginner: [
+      'Q1 (BEGINNER FOUNDATIONS): Single-table SELECT, WHERE condition (<, >, =, !=), ORDER BY, LIMIT',
+      'Q2 (BEGINNER FILTERS): Multiple filter conditions with AND, OR, IN, BETWEEN, or LIKE with string matching',
+      'Q3 (BEGINNER AGGREGATION): Single-table summary using COUNT(), SUM(), AVG(), MIN(), or MAX() with column aliases',
+      'Q4 (BEGINNER GROUPING): GROUP BY on 1-2 category columns with a HAVING count/sum threshold filter',
+      'Q5 (BEGINNER JOIN): Clean 2-table INNER JOIN on primary_key = foreign_key with straightforward filtering',
+    ],
+    intermediate: [
+      'Q1 (INTERMEDIATE LOGIC): Conditional logic using CASE WHEN or COALESCE with column transformations',
+      'Q2 (INTERMEDIATE RELATIONS): Multi-table INNER and LEFT JOIN with NULL checks or anti-join patterns',
+      'Q3 (INTERMEDIATE AGGREGATION): GROUP BY with multi-metric aggregation and multi-condition HAVING clauses',
+      'Q4 (INTERMEDIATE SUBQUERY): Common Table Expression (CTE) or subquery in WHERE / FROM',
+      'Q5 (INTERMEDIATE TEMPORAL): Date comparisons, intervals, or string manipulation with ordering',
+    ],
+    senior: [
+      'Q1 (SENIOR JOINS): Multi-table relational joins with nested grouping and aggregate metrics',
+      'Q2 (SENIOR WINDOW RANKING): ROW_NUMBER(), RANK(), or DENSE_RANK() partitioned by category or entity',
+      'Q3 (SENIOR WINDOW NAVIGATION): LEAD() or LAG() offset comparison across chronological events',
+      'Q4 (SENIOR CTE PIPELINES): Multi-step CTE pipeline combining staging and transformation stages',
+      'Q5 (SENIOR ROLLING METRICS): Running total, moving average, or cumulative window calculations',
+    ],
+    master: [
+      'Q1 (MASTER PARTITIONED ANALYTICS): Multi-partition analytical window functions with dynamic framing',
+      'Q2 (MASTER RECURSIVE CTE): Recursive Common Table Expression for hierarchical trees or sequences',
+      'Q3 (MASTER GAPS & ISLANDS): Identifying contiguous active date ranges, login streaks, or sequence gaps',
+      'Q4 (MASTER COHORT RETENTION): Month-over-month user cohort retention matrix calculation',
+      'Q5 (MASTER ADVANCED DISTRIBUTION): Cumulative percentile distribution (NTILE, PERCENT_RANK) with tie-breakers',
+    ],
+    mixed: [
+      'Q1 (LEVEL 1 WARMUP): Basic SELECT, WHERE filtering, aggregate like COUNT/AVG/SUM, ORDER BY',
+      'Q2 (LEVEL 2 JOINS): Multi-table joins (INNER/LEFT JOIN, GROUP BY, HAVING)',
+      'Q3 (LEVEL 3 WINDOW): ROW_NUMBER, RANK, DENSE_RANK, LEAD/LAG, PARTITION BY or CTEs',
+      'Q4 (LEVEL 4 ANALYTICS): Multi-step analytics (subqueries, conditional aggregation CASE WHEN, date math)',
+      'Q5 (LEVEL 5 CHALLENGE): Cohort retention, cumulative sums, churn analysis, gaps & islands, complex CTEs',
+    ],
   };
-  const levels = difficultyMap[difficulty] || difficultyMap.mixed;
+
+  const selectedProgression = progressionMap[diffKey] || progressionMap.intermediate;
+
+  const mcqGuide = diffKey === 'beginner'
+    ? `Each of the 5 MCQ questions MUST test an ESSENTIAL SQL 101 FOUNDATION:
+1. Difference between WHERE (row filter before grouping) and HAVING (aggregate filter after grouping)
+2. Behavior of COUNT(*) vs COUNT(column_name) when NULL values are present
+3. The DISTINCT keyword and how it eliminates duplicate rows
+4. Default sorting direction of ORDER BY (ASC vs DESC)
+5. What an INNER JOIN returns when keys do or do not match`
+    : diffKey === 'intermediate'
+    ? `Each of the 5 MCQ questions MUST test an APPLIED SQL CONCEPT:
+1. LEFT JOIN behavior when right table has no match (NULL column generation)
+2. Three-valued logic: result of NULL = NULL and using IS NULL
+3. COALESCE() function usage for fallback defaults
+4. Correlated subquery vs non-correlated subquery execution
+5. Standard SQL execution order (FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY)`
+    : `Each of the 5 MCQ questions MUST test an ADVANCED / PRODUCTION CONCEPT:
+1. Difference between RANK() (skips numbers on tie) and DENSE_RANK() (consecutive numbers)
+2. Covering indexes, index seeks vs index scans, and B-Tree selectivity
+3. Window frame specifications (ROWS BETWEEN vs RANGE BETWEEN)
+4. Transaction isolation anomalies (dirty read, non-repeatable read, phantom read)
+5. Query execution plans, EXPLAIN analysis, and avoiding Cartesian products`;
 
   // Shuffle and select 5 completely different domains
   const shuffledDomains = [...INTERVIEW_DOMAIN_POOL].sort(() => 0.5 - Math.random());
@@ -777,35 +843,37 @@ export async function generateFullInterviewSession({ difficulty = 'mixed', compa
   const randomSessionId = `SESSION_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   const prompt = `[SYSTEM IDENTITY]
-You are a Principal SQL Interview Panel Lead at ${companyName}. You are designing a brand-new, completely custom and unique SQL interview session for ${candidateName} applying for a ${roleName} role.
+You are a Principal SQL Interview Panel Lead and Educator at ${companyName}. You are designing a brand-new, customized SQL interview and learning session for ${candidateName} applying for or practicing for a ${roleName} role.
+Selected Level: ${diffKey.toUpperCase()} | Experience Mode: ${mode.toUpperCase()}
 Unique Session ID: ${randomSessionId}
 
 [TASK]
-Generate a complete, FRESH, non-repetitive interview session with:
-- 5 SQL CODING QUESTIONS (Q1-Q5, progressive difficulty across 5 DIFFERENT business domains)
-- 5 MCQ CONCEPTUAL QUESTIONS (Q6-Q10)
+Generate a complete, FRESH, non-repetitive interview session matching the candidate's exact level (${diffKey.toUpperCase()}) with:
+- 5 SQL CODING QUESTIONS (Q1-Q5, precisely matching the difficulty progression below)
+- 5 MCQ CONCEPTUAL QUESTIONS (Q6-Q10, matching the conceptual guide below)
+${focusTopic && focusTopic !== 'all' ? `[PRIMARY TOPIC EMPHASIS]: Heavily focus questions on ${focusTopic.toUpperCase()} patterns!` : ''}
 
 [MANDATORY ASSIGNED DOMAINS FOR SQL QUESTIONS]
 You MUST strictly use the following distinct domain scenarios for each question (DO NOT use generic 'users' or 'customers' for all questions):
-- Q1 (${levels[0]}): Domain: "${selectedDomains[0].domain}" (Suggested tables: ${selectedDomains[0].tables.join(', ')}). Theme: ${selectedDomains[0].hint}
-- Q2 (${levels[1]}): Domain: "${selectedDomains[1].domain}" (Suggested tables: ${selectedDomains[1].tables.join(', ')}). Theme: ${selectedDomains[1].hint}
-- Q3 (${levels[2]}): Domain: "${selectedDomains[2].domain}" (Suggested tables: ${selectedDomains[2].tables.join(', ')}). Theme: ${selectedDomains[2].hint}
-- Q4 (${levels[3]}): Domain: "${selectedDomains[3].domain}" (Suggested tables: ${selectedDomains[3].tables.join(', ')}). Theme: ${selectedDomains[3].hint}
-- Q5 (${levels[4]}): Domain: "${selectedDomains[4].domain}" (Suggested tables: ${selectedDomains[4].tables.join(', ')}). Theme: ${selectedDomains[4].hint}
+- Q1: Domain: "${selectedDomains[0].domain}" (Suggested tables: ${selectedDomains[0].tables.join(', ')}). Theme: ${selectedDomains[0].hint}
+- Q2: Domain: "${selectedDomains[1].domain}" (Suggested tables: ${selectedDomains[1].tables.join(', ')}). Theme: ${selectedDomains[1].hint}
+- Q3: Domain: "${selectedDomains[2].domain}" (Suggested tables: ${selectedDomains[2].tables.join(', ')}). Theme: ${selectedDomains[2].hint}
+- Q4: Domain: "${selectedDomains[3].domain}" (Suggested tables: ${selectedDomains[3].tables.join(', ')}). Theme: ${selectedDomains[3].hint}
+- Q5: Domain: "${selectedDomains[4].domain}" (Suggested tables: ${selectedDomains[4].tables.join(', ')}). Theme: ${selectedDomains[4].hint}
 
-[SQL QUESTION DIFFICULTY PROGRESSION]
-Q1: ${levels[0]} — warm-up (basic SELECT, WHERE filtering, aggregate like COUNT/AVG/SUM, ORDER BY)
-Q2: ${levels[1]} — multi-table joins (INNER/LEFT JOIN, GROUP BY, HAVING)
-Q3: ${levels[2]} — window functions (ROW_NUMBER, RANK, DENSE_RANK, LEAD/LAG, PARTITION BY) or CTEs
-Q4: ${levels[3]} — multi-step analytics (subqueries, self-joins, conditional aggregation CASE WHEN, date math)
-Q5: ${levels[4]} — advanced challenge (cohort retention, cumulative sums, churn analysis, gaps & islands, complex CTEs)
+[SQL QUESTION DIFFICULTY PROGRESSION FOR ${diffKey.toUpperCase()}]
+${selectedProgression[0]}
+${selectedProgression[1]}
+${selectedProgression[2]}
+${selectedProgression[3]}
+${selectedProgression[4]}
 
 [SQL QUESTION RULES]
 Each of the 5 SQL questions MUST include:
 1. "problemStatement": Clear 2-3 sentence business problem statement specifying exact output columns and sorting.
 2. "explanation": 2 sentences explaining the business logic and how the tables relate.
 3. "constraints": Edge cases, tie-breaking rules, NULL handling, and ORDER BY requirements.
-4. "tables": 2-3 tables with REALISTIC names specific to that domain. For EACH table:
+4. "tables": 1-3 tables with REALISTIC names specific to that domain. For EACH table:
    - "name": table name in snake_case (e.g. "${selectedDomains[0].tables[0]}")
    - "columns": array of {"name": "col_name", "type": "INTEGER"|"TEXT"|"REAL"}
    - "sampleData": array of 4 to 6 representative sample row objects with authentic values (for table preview in the UI)
@@ -813,12 +881,7 @@ Each of the 5 SQL questions MUST include:
 6. "initSql": complete self-contained SQLite DDL + INSERT statements. Include 6 to 12 realistic rows per table (sufficient for joins and aggregations). Use double-quoted identifiers and ONLY INTEGER, TEXT, REAL types.
 
 [MCQ QUESTION RULES]
-Each of the 5 MCQ questions MUST test a DIFFERENT advanced concept:
-1. NULL handling & three-valued logic
-2. JOIN types & Cartesian products
-3. Index structures (B-Tree, covering index, cardinality)
-4. Window functions vs GROUP BY behavior
-5. Query optimization, EXPLAIN plan analysis, or transactions/ACID
+${mcqGuide}
 Include:
 - "question": Full question text.
 - "options": Array of 4 plain string answers (no "A." prefixes).
